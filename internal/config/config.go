@@ -1,0 +1,81 @@
+package config
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/joho/godotenv"
+	"github.com/kelseyhightower/envconfig"
+)
+
+// Config holds all application configuration.
+type Config struct {
+	App      AppConfig
+	HTTP     HTTPConfig
+	Postgres PostgresConfig
+	Redis    RedisConfig
+	Events   EventsConfig
+	Auth     AuthConfig
+}
+
+// AppConfig holds application-level configuration.
+type AppConfig struct {
+	Name        string `envconfig:"APP_NAME" default:"ticketing-api"`
+	Env         string `envconfig:"APP_ENV" default:"development"`
+	Version     string `envconfig:"APP_VERSION" default:"0.1.0"`
+	ServiceName string `envconfig:"SERVICE_NAME" default:"ticketing-service"`
+}
+
+// HTTPConfig holds HTTP server configuration.
+type HTTPConfig struct {
+	Host           string        `envconfig:"HTTP_HOST" default:""`
+	Port           int           `envconfig:"HTTP_PORT" default:"8086"`
+	ReadTimeout    time.Duration `envconfig:"HTTP_READ_TIMEOUT" default:"30s"`
+	WriteTimeout   time.Duration `envconfig:"HTTP_WRITE_TIMEOUT" default:"30s"`
+	IdleTimeout    time.Duration `envconfig:"HTTP_IDLE_TIMEOUT" default:"60s"`
+	AllowedOrigins []string      `envconfig:"HTTP_ALLOWED_ORIGINS" default:"https://accounts.codevertexitsolutions.com,https://ordersapp.codevertexitsolutions.com,https://pos.codevertexitsolutions.com"`
+}
+
+// PostgresConfig holds database configuration.
+type PostgresConfig struct {
+	URL             string        `envconfig:"POSTGRES_URL" required:"true"`
+	MaxOpenConns    int           `envconfig:"POSTGRES_MAX_OPEN_CONNS" default:"25"`
+	MaxIdleConns    int           `envconfig:"POSTGRES_MAX_IDLE_CONNS" default:"10"`
+	ConnMaxIdleTime time.Duration `envconfig:"POSTGRES_CONN_MAX_IDLE_TIME" default:"5m"`
+}
+
+// RedisConfig holds Redis configuration.
+type RedisConfig struct {
+	URL      string `envconfig:"REDIS_URL" default:"redis://localhost:6379"`
+	Password string `envconfig:"REDIS_PASSWORD" default:""`
+	DB       int    `envconfig:"REDIS_DB" default:"0"`
+}
+
+// EventsConfig holds NATS event bus configuration.
+type EventsConfig struct {
+	URL     string `envconfig:"NATS_URL" default:"nats://localhost:4222"`
+	Cluster string `envconfig:"NATS_CLUSTER" default:"bengobox"`
+}
+
+// AuthConfig holds authentication/authorization configuration.
+type AuthConfig struct {
+	ServiceURL          string        `envconfig:"AUTH_SERVICE_URL" default:"http://localhost:8080"`
+	Issuer              string        `envconfig:"AUTH_ISSUER" default:"bengobox-auth"`
+	Audience            string        `envconfig:"AUTH_AUDIENCE" default:"bengobox-ticketing"`
+	JWKSCacheTTL        time.Duration `envconfig:"AUTH_JWKS_CACHE_TTL" default:"1h"`
+	JWKSRefreshInterval time.Duration `envconfig:"AUTH_JWKS_REFRESH_INTERVAL" default:"15m"`
+	EnableAPIKeyAuth    bool          `envconfig:"AUTH_ENABLE_API_KEY" default:"false"`
+}
+
+// Load loads configuration from environment variables.
+func Load() (*Config, error) {
+	// Load .env file if present (for local development)
+	_ = godotenv.Load()
+
+	var cfg Config
+	if err := envconfig.Process("", &cfg); err != nil {
+		return nil, fmt.Errorf("config: failed to process environment variables: %w", err)
+	}
+
+	return &cfg, nil
+}

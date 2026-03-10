@@ -1,0 +1,87 @@
+package router
+
+import (
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
+	"go.uber.org/zap"
+
+	authclient "github.com/Bengo-Hub/shared-auth-client"
+	"github.com/bengobox/ticketing-service/internal/http/handlers"
+	"github.com/bengobox/ticketing-service/internal/modules/identity"
+	"github.com/bengobox/ticketing-service/internal/modules/tickets"
+	sharedmw "github.com/bengobox/ticketing-service/internal/shared/middleware"
+)
+
+// Config holds all module handlers for the router.
+type Config struct {
+	Log             *zap.Logger
+	HealthHandler   *handlers.HealthHandler
+	AuthMiddleware  *authclient.AuthMiddleware
+	AllowedOrigins  []string
+	IdentityHandler *identity.Handler
+	TicketsHandler  *tickets.Handler
+}
+
+// New constructs the chi router with global middleware and base routes.
+func New(cfg Config) http.Handler {
+	r := chi.NewRouter()
+
+	// Global middleware
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Heartbeat("/readyz"))
+	r.Use(sharedmw.RequestID)
+	r.Use(sharedmw.Logging(cfg.Log))
+	r.Use(sharedmw.Recover(cfg.Log))
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   cfg.AllowedOrigins,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Request-ID", "X-Tenant-ID"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
+
+	// Health endpoints (no auth required)
+	r.Get("/healthz", cfg.HealthHandler.Liveness)
+	r.Get("/metrics", cfg.HealthHandler.Metrics)
+
+	// Redirect root path to Swagger documentation
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/v1/docs/", http.StatusMovedPermanently)
+	})
+
+	// API routes
+	r.Route("/api", func(api chi.Router) {
+		api.Route("/v1", func(v1 chi.Router) {
+			// Apply auth middleware to protected routes
+			if cfg.AuthMiddleware != nil {
+				v1.Use(cfg.AuthMiddleware.RequireAuth)
+			}
+
+			// Health status (auth required)
+			v1.Get("/status", cfg.HealthHandler.Status)
+
+			// Tenant-scoped routes
+			v1.Route("/{tenant}", func(tenant chi.Router) {
+				// Identity module (teams, agents)
+				if cfg.IdentityHandler != nil {
+					cfg.IdentityHandler.RegisterRoutes(tenant)
+				}
+
+				// Tickets module (tickets, comments, categories)
+				if cfg.TicketsHandler != nil {
+					cfg.TicketsHandler.RegisterRoutes(tenant)
+				}
+
+				// TODO: Register additional module handlers here
+				// - sla handler
+			})
+		})
+	})
+
+	return r
+}
