@@ -44,9 +44,10 @@ type PostgresConfig struct {
 	ConnMaxIdleTime time.Duration `envconfig:"POSTGRES_CONN_MAX_IDLE_TIME" default:"5m"`
 }
 
-// RedisConfig holds Redis configuration.
+// RedisConfig holds Redis configuration. Uses same keys as other Go backends: REDIS_ADDR, REDIS_PASSWORD.
 type RedisConfig struct {
-	URL      string `envconfig:"REDIS_URL" default:"redis://localhost:6379"`
+	URL      string `envconfig:"REDIS_URL" default:""` // Optional; if set used as-is
+	Addr     string `envconfig:"REDIS_ADDR" default:"localhost:6379"`
 	Password string `envconfig:"REDIS_PASSWORD" default:""`
 	DB       int    `envconfig:"REDIS_DB" default:"0"`
 }
