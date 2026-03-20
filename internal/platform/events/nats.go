@@ -1,27 +1,21 @@
 package events
 
 import (
-	"fmt"
+	"time"
+
+	"github.com/nats-io/nats.go"
 
 	"github.com/bengobox/ticketing-service/internal/config"
-	"github.com/nats-io/nats.go"
 )
 
-// Connection wraps a NATS connection.
-type Connection struct {
-	*nats.Conn
-}
-
-// Connect creates a new NATS connection.
-func Connect(cfg config.EventsConfig) (*Connection, error) {
-	nc, err := nats.Connect(cfg.URL,
+// Connect establishes a NATS connection with sane defaults.
+func Connect(cfg config.EventsConfig) (*nats.Conn, error) {
+	opts := []nats.Option{
 		nats.Name("ticketing-service"),
+		nats.Timeout(5 * time.Second),
+		nats.ReconnectWait(2 * time.Second),
 		nats.MaxReconnects(-1),
-		nats.ReconnectWait(nats.DefaultReconnectWait),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("events: failed to connect to NATS: %w", err)
 	}
 
-	return &Connection{Conn: nc}, nil
+	return nats.Connect(cfg.NATSURL, opts...)
 }

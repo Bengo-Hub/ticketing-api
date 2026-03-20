@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/nats-io/nats.go"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
 	"github.com/bengobox/ticketing-service/internal/platform/database"
-	"github.com/bengobox/ticketing-service/internal/platform/events"
 )
 
 // HealthHandler handles health check endpoints.
@@ -16,11 +16,11 @@ type HealthHandler struct {
 	logger *zap.Logger
 	db     *database.Pool
 	cache  *redis.Client
-	events *events.Connection
+	events *nats.Conn
 }
 
 // NewHealthHandler creates a new health handler.
-func NewHealthHandler(logger *zap.Logger, db *database.Pool, cache *redis.Client, events *events.Connection) *HealthHandler {
+func NewHealthHandler(logger *zap.Logger, db *database.Pool, cache *redis.Client, events *nats.Conn) *HealthHandler {
 	return &HealthHandler{
 		logger: logger,
 		db:     db,
