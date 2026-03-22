@@ -3,7 +3,7 @@ module github.com/bengobox/ticketing-service
 go 1.24.0
 
 // Local development: Map module path to correct GitHub repository
-replace github.com/Bengo-Hub/shared-auth-client => github.com/Bengo-Hub/auth-client v0.3.1
+replace github.com/Bengo-Hub/shared-auth-client => github.com/Bengo-Hub/auth-client v0.5.0
 
 require (
 	entgo.io/ent v0.13.1
