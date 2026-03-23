@@ -21,6 +21,18 @@ func (f AgentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AgentMutation", m)
 }
 
+// The OutboxEventFunc type is an adapter to allow the use of ordinary
+// function as OutboxEvent mutator.
+type OutboxEventFunc func(context.Context, *ent.OutboxEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f OutboxEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.OutboxEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.OutboxEventMutation", m)
+}
+
 // The SLAPolicyFunc type is an adapter to allow the use of ordinary
 // function as SLAPolicy mutator.
 type SLAPolicyFunc func(context.Context, *ent.SLAPolicyMutation) (ent.Value, error)

@@ -5,12 +5,15 @@ import (
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+
+	"github.com/bengobox/ticketing-service/internal/platform/events"
 )
 
 // Service provides ticket business logic.
 type Service struct {
-	repo   Repository
-	logger *zap.Logger
+	repo      Repository
+	logger    *zap.Logger
+	publisher *events.Publisher
 }
 
 // NewService creates a new ticket service.
@@ -19,6 +22,11 @@ func NewService(repo Repository, logger *zap.Logger) *Service {
 		repo:   repo,
 		logger: logger.Named("tickets"),
 	}
+}
+
+// SetPublisher sets the event publisher for ticket lifecycle events.
+func (s *Service) SetPublisher(p *events.Publisher) {
+	s.publisher = p
 }
 
 // Ticket operations
@@ -129,6 +137,15 @@ func (s *Service) UpdateTicketStatus(ctx context.Context, tenantID uuid.UUID, ti
 		zap.String("new_status", string(status)),
 	)
 
+	// Publish resolved event
+	if s.publisher != nil && status == StatusResolved {
+		_ = s.publisher.PublishTicketResolved(ctx, tenantID, map[string]any{
+			"ticket_id":     ticketID.String(),
+			"ticket_number": ticket.TicketNumber,
+			"subject":       ticket.Subject,
+		})
+	}
+
 	return nil
 }
 
@@ -153,6 +170,21 @@ func (s *Service) AssignTicket(ctx context.Context, tenantID uuid.UUID, ticketID
 		zap.Any("agent_id", req.AgentID),
 		zap.Any("team_id", req.TeamID),
 	)
+
+	// Publish assigned event
+	if s.publisher != nil && ticket != nil {
+		agentIDStr := ""
+		if req.AgentID != nil {
+			agentIDStr = req.AgentID.String()
+		}
+		_ = s.publisher.PublishTicketAssigned(ctx, tenantID, map[string]any{
+			"ticket_id":     ticketID.String(),
+			"ticket_number": ticket.TicketNumber,
+			"subject":       ticket.Subject,
+			"agent_id":      agentIDStr,
+			"priority":      string(ticket.Priority),
+		})
+	}
 
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
+	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
 	"github.com/bengobox/ticketing-service/internal/ent/schema"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
 	"github.com/bengobox/ticketing-service/internal/ent/team"
@@ -74,6 +75,32 @@ func init() {
 	agentDescID := agentFields[0].Descriptor()
 	// agent.DefaultID holds the default value on creation for the id field.
 	agent.DefaultID = agentDescID.Default.(func() uuid.UUID)
+	outboxeventFields := schema.OutboxEvent{}.Fields()
+	_ = outboxeventFields
+	// outboxeventDescAggregateType is the schema descriptor for aggregate_type field.
+	outboxeventDescAggregateType := outboxeventFields[2].Descriptor()
+	// outboxevent.AggregateTypeValidator is a validator for the "aggregate_type" field. It is called by the builders before save.
+	outboxevent.AggregateTypeValidator = outboxeventDescAggregateType.Validators[0].(func(string) error)
+	// outboxeventDescEventType is the schema descriptor for event_type field.
+	outboxeventDescEventType := outboxeventFields[4].Descriptor()
+	// outboxevent.EventTypeValidator is a validator for the "event_type" field. It is called by the builders before save.
+	outboxevent.EventTypeValidator = outboxeventDescEventType.Validators[0].(func(string) error)
+	// outboxeventDescStatus is the schema descriptor for status field.
+	outboxeventDescStatus := outboxeventFields[6].Descriptor()
+	// outboxevent.DefaultStatus holds the default value on creation for the status field.
+	outboxevent.DefaultStatus = outboxeventDescStatus.Default.(string)
+	// outboxeventDescAttempts is the schema descriptor for attempts field.
+	outboxeventDescAttempts := outboxeventFields[7].Descriptor()
+	// outboxevent.DefaultAttempts holds the default value on creation for the attempts field.
+	outboxevent.DefaultAttempts = outboxeventDescAttempts.Default.(int)
+	// outboxeventDescCreatedAt is the schema descriptor for created_at field.
+	outboxeventDescCreatedAt := outboxeventFields[11].Descriptor()
+	// outboxevent.DefaultCreatedAt holds the default value on creation for the created_at field.
+	outboxevent.DefaultCreatedAt = outboxeventDescCreatedAt.Default.(func() time.Time)
+	// outboxeventDescID is the schema descriptor for id field.
+	outboxeventDescID := outboxeventFields[0].Descriptor()
+	// outboxevent.DefaultID holds the default value on creation for the id field.
+	outboxevent.DefaultID = outboxeventDescID.Default.(func() uuid.UUID)
 	slapolicyFields := schema.SLAPolicy{}.Fields()
 	_ = slapolicyFields
 	// slapolicyDescName is the schema descriptor for name field.

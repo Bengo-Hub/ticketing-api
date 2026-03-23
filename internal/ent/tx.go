@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Agent is the client for interacting with the Agent builders.
 	Agent *AgentClient
+	// OutboxEvent is the client for interacting with the OutboxEvent builders.
+	OutboxEvent *OutboxEventClient
 	// SLAPolicy is the client for interacting with the SLAPolicy builders.
 	SLAPolicy *SLAPolicyClient
 	// Team is the client for interacting with the Team builders.
@@ -158,6 +160,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Agent = NewAgentClient(tx.config)
+	tx.OutboxEvent = NewOutboxEventClient(tx.config)
 	tx.SLAPolicy = NewSLAPolicyClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
 	tx.Ticket = NewTicketClient(tx.config)

@@ -9,6 +9,9 @@ import (
 // Agent is the predicate function for agent builders.
 type Agent func(*sql.Selector)
 
+// OutboxEvent is the predicate function for outboxevent builders.
+type OutboxEvent func(*sql.Selector)
+
 // SLAPolicy is the predicate function for slapolicy builders.
 type SLAPolicy func(*sql.Selector)
 

@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
+	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
 	"github.com/bengobox/ticketing-service/internal/ent/team"
 	"github.com/bengobox/ticketing-service/internal/ent/ticket"
@@ -80,6 +81,7 @@ func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			agent.Table:            agent.ValidColumn,
+			outboxevent.Table:      outboxevent.ValidColumn,
 			slapolicy.Table:        slapolicy.ValidColumn,
 			team.Table:             team.ValidColumn,
 			ticket.Table:           ticket.ValidColumn,

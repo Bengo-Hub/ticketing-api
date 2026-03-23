@@ -54,8 +54,9 @@ type RedisConfig struct {
 
 // EventsConfig holds NATS event bus configuration.
 type EventsConfig struct {
-	NATSURL string `envconfig:"NATS_URL" default:"nats://localhost:4222"`
-	Cluster string `envconfig:"NATS_CLUSTER" default:"bengobox"`
+	NATSURL    string `envconfig:"NATS_URL" default:"nats://localhost:4222"`
+	StreamName string `envconfig:"NATS_STREAM" default:"ticketing"`
+	Cluster    string `envconfig:"NATS_CLUSTER" default:"bengobox"`
 }
 
 // AuthConfig holds authentication/authorization configuration.

@@ -125,7 +125,7 @@ This document provides detailed integration information for all external service
 - `treasury.payment.failed` - Create payment support ticket
 - `treasury.invoice.overdue` - Create billing support ticket
 
-### Cafe Backend
+### Ordering-Backend
 
 **Integration Type**: Events (NATS) + REST API
 

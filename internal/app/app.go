@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap"
 
 	authclient "github.com/Bengo-Hub/shared-auth-client"
+	eventslib "github.com/Bengo-Hub/shared-events"
 	"github.com/bengobox/ticketing-service/internal/config"
 	"github.com/bengobox/ticketing-service/internal/ent"
 	"github.com/bengobox/ticketing-service/internal/http/handlers"
@@ -28,13 +29,14 @@ import (
 
 // App holds the application dependencies.
 type App struct {
-	cfg        *config.Config
-	log        *zap.Logger
-	httpServer *http.Server
-	db         dbCloser
-	cache      cacheCloser
-	events     eventCloser
-	orm        *ent.Client
+	cfg             *config.Config
+	log             *zap.Logger
+	httpServer      *http.Server
+	db              dbCloser
+	cache           cacheCloser
+	events          eventCloser
+	orm             *ent.Client
+	outboxPublisher *eventslib.Publisher
 }
 
 type dbCloser interface {
@@ -73,6 +75,13 @@ func New(ctx context.Context) (*App, error) {
 	natsConn, err := events.Connect(cfg.Events)
 	if err != nil {
 		log.Warn("app: nats connect failed", zap.Error(err))
+	}
+
+	// Ensure ticketing JetStream stream exists
+	if natsConn != nil {
+		if streamErr := events.EnsureStream(ctx, natsConn, cfg.Events); streamErr != nil {
+			log.Warn("failed to ensure ticketing stream", zap.Error(streamErr))
+		}
 	}
 
 	healthHandler := handlers.NewHealthHandler(log, dbPool, redisClient, natsConn)
@@ -130,8 +139,20 @@ func New(ctx context.Context) (*App, error) {
 	ticketsService := tickets.NewService(ticketsRepo, log)
 	ticketsHandler := tickets.NewHandler(ticketsService, log)
 
-	// TODO: Initialize additional modules here
-	// - sla module
+	// Wire event publisher for ticket lifecycle events (shared-events outbox pattern)
+	var outboxPub *eventslib.Publisher
+	if natsConn != nil {
+		eventPub := events.NewPublisher(sqlDB, log)
+		ticketsService.SetPublisher(eventPub)
+
+		js, jsErr := natsConn.JetStream()
+		if jsErr != nil {
+			log.Warn("jetstream init for outbox publisher", zap.Error(jsErr))
+		} else {
+			pubCfg := eventslib.DefaultPublisherConfig(js, eventPub.OutboxRepo(), log)
+			outboxPub = eventslib.NewPublisher(pubCfg)
+		}
+	}
 
 	router := httprouter.New(httprouter.Config{
 		Log:             log,
@@ -152,18 +173,29 @@ func New(ctx context.Context) (*App, error) {
 	}
 
 	return &App{
-		cfg:        cfg,
-		log:        log,
-		httpServer: httpServer,
-		db:         dbPool,
-		cache:      redisClient,
-		events:     natsConn,
-		orm:        ormClient,
+		cfg:             cfg,
+		log:             log,
+		httpServer:      httpServer,
+		db:              dbPool,
+		cache:           redisClient,
+		events:          natsConn,
+		orm:             ormClient,
+		outboxPublisher: outboxPub,
 	}, nil
 }
 
 // Run starts the HTTP server and blocks until context cancellation.
 func (a *App) Run(ctx context.Context) error {
+	// Start outbox background publisher for ticketing events
+	if a.outboxPublisher != nil {
+		go func() {
+			if err := a.outboxPublisher.Start(ctx); err != nil {
+				a.log.Error("outbox publisher stopped", zap.Error(err))
+			}
+		}()
+		a.log.Info("outbox background publisher started")
+	}
+
 	a.log.Info("starting http server", zap.String("addr", a.httpServer.Addr))
 
 	errCh := make(chan error, 1)
