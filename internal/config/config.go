@@ -29,7 +29,7 @@ type AppConfig struct {
 // HTTPConfig holds HTTP server configuration.
 type HTTPConfig struct {
 	Host           string        `envconfig:"HTTP_HOST" default:""`
-	Port           int           `envconfig:"HTTP_PORT" default:"8086"`
+	Port           int           `envconfig:"HTTP_PORT" default:"4009"`
 	ReadTimeout    time.Duration `envconfig:"HTTP_READ_TIMEOUT" default:"30s"`
 	WriteTimeout   time.Duration `envconfig:"HTTP_WRITE_TIMEOUT" default:"30s"`
 	IdleTimeout    time.Duration `envconfig:"HTTP_IDLE_TIMEOUT" default:"60s"`
