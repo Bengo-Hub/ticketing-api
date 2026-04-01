@@ -22,6 +22,7 @@ func NewPool(ctx context.Context, cfg config.PostgresConfig) (*Pool, error) {
 
 	poolConfig.MaxConns = int32(cfg.MaxOpenConns)
 	poolConfig.MinConns = int32(cfg.MaxIdleConns)
+	poolConfig.MaxConnLifetime = cfg.ConnMaxLifetime
 	poolConfig.MaxConnIdleTime = cfg.ConnMaxIdleTime
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)

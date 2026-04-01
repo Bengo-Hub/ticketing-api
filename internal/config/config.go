@@ -37,10 +37,12 @@ type HTTPConfig struct {
 }
 
 // PostgresConfig holds database configuration.
+// Defaults are conservative to prevent connection exhaustion on shared PostgreSQL (max_connections=100).
 type PostgresConfig struct {
 	URL             string        `envconfig:"POSTGRES_URL" required:"true"`
-	MaxOpenConns    int           `envconfig:"POSTGRES_MAX_OPEN_CONNS" default:"25"`
-	MaxIdleConns    int           `envconfig:"POSTGRES_MAX_IDLE_CONNS" default:"10"`
+	MaxOpenConns    int           `envconfig:"POSTGRES_MAX_OPEN_CONNS" default:"6"`
+	MaxIdleConns    int           `envconfig:"POSTGRES_MAX_IDLE_CONNS" default:"3"`
+	ConnMaxLifetime time.Duration `envconfig:"POSTGRES_CONN_MAX_LIFETIME" default:"15m"`
 	ConnMaxIdleTime time.Duration `envconfig:"POSTGRES_CONN_MAX_IDLE_TIME" default:"5m"`
 }
 
@@ -56,7 +58,7 @@ type RedisConfig struct {
 type EventsConfig struct {
 	NATSURL    string `envconfig:"NATS_URL" default:"nats://localhost:4222"`
 	StreamName string `envconfig:"NATS_STREAM" default:"ticketing"`
-	Cluster    string `envconfig:"NATS_CLUSTER" default:"bengobox"`
+	Cluster    string `envconfig:"NATS_CLUSTER" default:codevertex`
 }
 
 // AuthConfig holds authentication/authorization configuration.
