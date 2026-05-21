@@ -14,6 +14,7 @@ import (
 	sharedcache "github.com/Bengo-Hub/cache"
 	"github.com/bengobox/ticketing-service/internal/http/handlers"
 	"github.com/bengobox/ticketing-service/internal/modules/identity"
+	"github.com/bengobox/ticketing-service/internal/modules/sla"
 	"github.com/bengobox/ticketing-service/internal/modules/tickets"
 	sharedmw "github.com/bengobox/ticketing-service/internal/shared/middleware"
 )
@@ -32,6 +33,7 @@ type Config struct {
 	AllowedOrigins  []string
 	IdentityHandler *identity.Handler
 	TicketsHandler  *tickets.Handler
+	SLAHandler      *sla.Handler
 	TenantResolver  tenantResolver
 }
 
@@ -106,8 +108,10 @@ func New(cfg Config) http.Handler {
 					cfg.TicketsHandler.RegisterRoutes(tenant)
 				}
 
-				// TODO: Register additional module handlers here
-				// - sla handler
+				// SLA module (policies)
+				if cfg.SLAHandler != nil {
+					cfg.SLAHandler.RegisterRoutes(tenant)
+				}
 			})
 		})
 	})

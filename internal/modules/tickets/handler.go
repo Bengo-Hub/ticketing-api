@@ -1,7 +1,6 @@
 package tickets
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 
@@ -12,20 +11,11 @@ import (
 	"go.uber.org/zap"
 )
 
-// notifier is the minimal interface the handler needs from the notifications client.
-type notifier interface {
-	SendTicketCreated(ctx context.Context, tenantSlug, customerEmail string, data map[string]interface{})
-	SendTicketAssigned(ctx context.Context, tenantSlug, agentEmail string, data map[string]interface{})
-	SendTicketResolved(ctx context.Context, tenantSlug, customerEmail string, data map[string]interface{})
-	SendAgentComment(ctx context.Context, tenantSlug, customerEmail string, data map[string]interface{})
-}
-
 // Handler handles HTTP requests for ticket operations.
 type Handler struct {
 	service    *Service
 	logger     *zap.Logger
-	serviceKey string   // INTERNAL_SERVICE_KEY for S2S calls
-	notif      notifier // optional notifications client
+	serviceKey string // INTERNAL_SERVICE_KEY for S2S calls
 }
 
 // NewHandler creates a new ticket handler.
@@ -43,11 +33,6 @@ func NewHandler(service *Service, logger *zap.Logger, opts ...func(*Handler)) *H
 // WithServiceKey sets the internal service key for S2S endpoint validation.
 func WithServiceKey(key string) func(*Handler) {
 	return func(h *Handler) { h.serviceKey = key }
-}
-
-// WithNotificationsClient sets the notifications client for ticket event emails.
-func WithNotificationsClient(n notifier) func(*Handler) {
-	return func(h *Handler) { h.notif = n }
 }
 
 // RegisterRoutes registers the ticket routes.

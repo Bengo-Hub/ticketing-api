@@ -67,3 +67,12 @@ func (p *Publisher) PublishTicketAssigned(ctx context.Context, tenantID uuid.UUI
 func (p *Publisher) PublishTicketResolved(ctx context.Context, tenantID uuid.UUID, data map[string]any) error {
 	return p.publish(ctx, tenantID, "ticket.resolved", data)
 }
+
+// PublishSLABreach publishes an sla.breach event for a ticket that missed its SLA target.
+func (p *Publisher) PublishSLABreach(ctx context.Context, tenantID uuid.UUID, data map[string]any) error {
+	eventType := "sla.first_response_breached"
+	if t, ok := data["event_type"].(string); ok {
+		eventType = t
+	}
+	return p.publish(ctx, tenantID, eventType, data)
+}

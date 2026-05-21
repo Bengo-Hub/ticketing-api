@@ -13,6 +13,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
 
+	"github.com/google/uuid"
 	authclient "github.com/Bengo-Hub/shared-auth-client"
 	eventslib "github.com/Bengo-Hub/shared-events"
 	"github.com/bengobox/ticketing-service/internal/clients"
@@ -21,6 +22,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/http/handlers"
 	httprouter "github.com/bengobox/ticketing-service/internal/http/router"
 	"github.com/bengobox/ticketing-service/internal/modules/identity"
+	"github.com/bengobox/ticketing-service/internal/modules/sla"
 	"github.com/bengobox/ticketing-service/internal/modules/tickets"
 	"github.com/bengobox/ticketing-service/internal/platform/cache"
 	"github.com/bengobox/ticketing-service/internal/platform/database"
@@ -39,6 +41,17 @@ type App struct {
 	events          eventCloser
 	orm             *ent.Client
 	outboxPublisher *eventslib.Publisher
+}
+
+// slaAdapter adapts sla.Service to the tickets.SLAComputer interface.
+type slaAdapter struct{ svc *sla.Service }
+
+func (a *slaAdapter) ComputeDeadlines(ctx context.Context, tenantID uuid.UUID, priorityStr string, categoryID *uuid.UUID, createdAt time.Time) (*time.Time, *time.Time, error) {
+	result, err := a.svc.ComputeDeadlines(ctx, tenantID, sla.Priority(priorityStr), categoryID, createdAt)
+	if err != nil || result == nil {
+		return nil, nil, err
+	}
+	return &result.ResponseDueAt, &result.ResolutionDueAt, nil
 }
 
 type dbCloser interface {
@@ -148,12 +161,18 @@ func New(ctx context.Context) (*App, error) {
 		}
 	}
 
+	// Initialize SLA module
+	slaRepo := sla.NewEntRepository(ormClient)
+	slaService := sla.NewService(slaRepo, log)
+	slaHandler := sla.NewHandler(slaService, log)
+
 	// Initialize tickets module (tickets, comments, categories)
 	ticketsRepo := tickets.NewEntRepository(ormClient)
 	ticketsService := tickets.NewService(ticketsRepo, log)
+	ticketsService.SetSLAService(&slaAdapter{svc: slaService})
+	ticketsService.SetNotifier(notifClient)
 	ticketsHandler := tickets.NewHandler(ticketsService, log,
 		tickets.WithServiceKey(cfg.Auth.InternalServiceKey),
-		tickets.WithNotificationsClient(notifClient),
 	)
 
 	// Wire event publisher for ticket lifecycle events (shared-events outbox pattern)
@@ -172,12 +191,13 @@ func New(ctx context.Context) (*App, error) {
 	}
 
 	router := httprouter.New(httprouter.Config{
-		Log:            log,
-		HealthHandler:  healthHandler,
-		AuthMiddleware: authMiddleware,
-		AllowedOrigins: cfg.HTTP.AllowedOrigins,
+		Log:             log,
+		HealthHandler:   healthHandler,
+		AuthMiddleware:  authMiddleware,
+		AllowedOrigins:  cfg.HTTP.AllowedOrigins,
 		IdentityHandler: identityHandler,
 		TicketsHandler:  ticketsHandler,
+		SLAHandler:      slaHandler,
 		TenantResolver:  tenantResolver,
 	})
 

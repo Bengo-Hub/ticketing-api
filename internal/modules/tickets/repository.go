@@ -50,6 +50,9 @@ type Repository interface {
 	GetTicketCountsByStatus(ctx context.Context, tenantID uuid.UUID) (map[TicketStatus]int, error)
 	GetAgentTicketCount(ctx context.Context, tenantID uuid.UUID, agentID uuid.UUID) (int, error)
 
+	// SLA breach scanning — returns open tickets with past-due SLA targets
+	ListTicketsPendingBreach(ctx context.Context, now time.Time, limit int) ([]*Ticket, error)
+
 	// Ticket number generation
 	GenerateTicketNumber(ctx context.Context, tenantID uuid.UUID) (string, error)
 }

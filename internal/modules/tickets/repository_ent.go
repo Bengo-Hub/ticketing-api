@@ -806,6 +806,35 @@ func (r *EntRepository) GetAgentTicketCount(ctx context.Context, tenantID uuid.U
 		Count(ctx)
 }
 
+func (r *EntRepository) ListTicketsPendingBreach(ctx context.Context, now time.Time, limit int) ([]*Ticket, error) {
+	tickets, err := r.client.Ticket.Query().
+		Where(
+			ticket.DeletedAtIsNil(),
+			ticket.StatusNotIn(ticket.StatusResolved, ticket.StatusClosed, ticket.StatusCancelled),
+			ticket.Or(
+				ticket.And(
+					ticket.SLAResponseDueAtLTE(now),
+					ticket.SLAResponseBreached(false),
+					ticket.FirstResponseAtIsNil(),
+				),
+				ticket.And(
+					ticket.SLAResolutionDueAtLTE(now),
+					ticket.SLAResolutionBreached(false),
+				),
+			),
+		).
+		Limit(limit).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*Ticket, len(tickets))
+	for i, t := range tickets {
+		result[i] = entTicketToModel(t)
+	}
+	return result, nil
+}
+
 func (r *EntRepository) GenerateTicketNumber(ctx context.Context, tenantID uuid.UUID) (string, error) {
 	// Get the current count of tickets for this tenant
 	count, err := r.client.Ticket.Query().

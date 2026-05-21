@@ -1,11 +1,12 @@
 module github.com/bengobox/ticketing-service
 
-go 1.24.0
+go 1.26.0
 
 // Map module alias to correct GitHub repository
 replace github.com/Bengo-Hub/shared-auth-client => github.com/Bengo-Hub/auth-client v0.6.1
 
 require (
+	ariga.io/atlas v0.32.1-0.20250325101103-175b25e1c1b9
 	entgo.io/ent v0.14.5
 	github.com/Bengo-Hub/cache v0.2.0
 	github.com/Bengo-Hub/pagination v0.2.0
@@ -23,7 +24,6 @@ require (
 )
 
 require (
-	ariga.io/atlas v0.32.1-0.20250325101103-175b25e1c1b9 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/bmatcuk/doublestar v1.3.4 // indirect

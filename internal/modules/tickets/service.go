@@ -2,6 +2,7 @@ package tickets
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -9,11 +10,27 @@ import (
 	"github.com/bengobox/ticketing-service/internal/platform/events"
 )
 
+// SLAComputer computes SLA deadlines for new tickets.
+// Takes a string priority and optional category ID, returns the response and resolution due times.
+type SLAComputer interface {
+	ComputeDeadlines(ctx context.Context, tenantID uuid.UUID, priorityStr string, categoryID *uuid.UUID, createdAt time.Time) (*time.Time, *time.Time, error)
+}
+
+// Notifier sends lifecycle notifications fire-and-forget.
+type Notifier interface {
+	SendTicketCreated(ctx context.Context, tenantSlug string, customerEmail string, data map[string]interface{})
+	SendTicketAssigned(ctx context.Context, tenantSlug string, agentEmail string, data map[string]interface{})
+	SendTicketResolved(ctx context.Context, tenantSlug string, customerEmail string, data map[string]interface{})
+	SendAgentComment(ctx context.Context, tenantSlug string, customerEmail string, data map[string]interface{})
+}
+
 // Service provides ticket business logic.
 type Service struct {
 	repo      Repository
 	logger    *zap.Logger
 	publisher *events.Publisher
+	sla       SLAComputer
+	notif     Notifier
 }
 
 // NewService creates a new ticket service.
@@ -27,6 +44,16 @@ func NewService(repo Repository, logger *zap.Logger) *Service {
 // SetPublisher sets the event publisher for ticket lifecycle events.
 func (s *Service) SetPublisher(p *events.Publisher) {
 	s.publisher = p
+}
+
+// SetSLAService wires in the SLA service for deadline computation.
+func (s *Service) SetSLAService(svc SLAComputer) {
+	s.sla = svc
+}
+
+// SetNotifier wires in the notifications client.
+func (s *Service) SetNotifier(n Notifier) {
+	s.notif = n
 }
 
 // Ticket operations
@@ -71,6 +98,19 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 			zap.String("subject", req.Subject),
 		)
 		return nil, err
+	}
+
+	// Compute SLA deadlines if a policy matches this ticket's priority and category.
+	if s.sla != nil {
+		responseDue, resolutionDue, err := s.sla.ComputeDeadlines(ctx, req.TenantID, string(ticket.Priority), ticket.CategoryID, ticket.CreatedAt)
+		if err == nil && (responseDue != nil || resolutionDue != nil) {
+			if setErr := s.repo.SetSLADeadlines(ctx, req.TenantID, ticket.ID, responseDue, resolutionDue); setErr != nil {
+				s.logger.Warn("failed to set sla deadlines", zap.Error(setErr))
+			} else {
+				ticket.SLAResponseDueAt = responseDue
+				ticket.SLAResolutionDueAt = resolutionDue
+			}
+		}
 	}
 
 	s.logger.Info("ticket created",
@@ -137,13 +177,24 @@ func (s *Service) UpdateTicketStatus(ctx context.Context, tenantID uuid.UUID, ti
 		zap.String("new_status", string(status)),
 	)
 
-	// Publish resolved event
-	if s.publisher != nil && status == StatusResolved {
-		_ = s.publisher.PublishTicketResolved(ctx, tenantID, map[string]any{
-			"ticket_id":     ticketID.String(),
-			"ticket_number": ticket.TicketNumber,
-			"subject":       ticket.Subject,
-		})
+	if status == StatusResolved {
+		// Check if resolution SLA was breached
+		if ticket.SLAResolutionDueAt != nil && !ticket.SLAResolutionBreached {
+			if time.Now().After(*ticket.SLAResolutionDueAt) {
+				if err := s.repo.MarkSLABreached(ctx, tenantID, ticketID, false, true); err != nil {
+					s.logger.Warn("failed to mark resolution sla breach", zap.Error(err))
+				}
+			}
+		}
+
+		// Publish resolved event
+		if s.publisher != nil {
+			_ = s.publisher.PublishTicketResolved(ctx, tenantID, map[string]any{
+				"ticket_id":     ticketID.String(),
+				"ticket_number": ticket.TicketNumber,
+				"subject":       ticket.Subject,
+			})
+		}
 	}
 
 	return nil
@@ -237,6 +288,16 @@ func (s *Service) AddComment(ctx context.Context, req *AddCommentRequest) (*Tick
 	if req.AuthorType == AuthorAgent && req.CommentType == CommentPublic {
 		if err := s.repo.MarkFirstResponse(ctx, req.TenantID, req.TicketID); err != nil {
 			s.logger.Warn("failed to mark first response", zap.Error(err))
+		} else {
+			// Check if first-response SLA was breached
+			ticket, tErr := s.repo.GetTicket(ctx, req.TenantID, req.TicketID)
+			if tErr == nil && ticket.SLAResponseDueAt != nil && !ticket.SLAResponseBreached {
+				if time.Now().After(*ticket.SLAResponseDueAt) {
+					if bErr := s.repo.MarkSLABreached(ctx, req.TenantID, req.TicketID, true, false); bErr != nil {
+						s.logger.Warn("failed to mark response sla breach", zap.Error(bErr))
+					}
+				}
+			}
 		}
 	}
 
