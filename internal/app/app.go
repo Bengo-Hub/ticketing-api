@@ -29,6 +29,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/platform/cache"
 	"github.com/bengobox/ticketing-service/internal/platform/database"
 	"github.com/bengobox/ticketing-service/internal/platform/events"
+	"github.com/bengobox/ticketing-service/internal/platform/sse"
 	"github.com/bengobox/ticketing-service/internal/platform/tenantcache"
 	"github.com/bengobox/ticketing-service/internal/shared/logger"
 )
@@ -169,6 +170,9 @@ func New(ctx context.Context) (*App, error) {
 		}
 	}
 
+	// Initialize SSE broker (in-memory pub/sub for real-time clients)
+	sseBroker := sse.New()
+
 	// Initialize KB module
 	kbRepo := kb.NewEntRepository(ormClient)
 	kbService := kb.NewService(kbRepo, log)
@@ -184,6 +188,7 @@ func New(ctx context.Context) (*App, error) {
 	ticketsService := tickets.NewService(ticketsRepo, log)
 	ticketsService.SetSLAService(&slaAdapter{svc: slaService})
 	ticketsService.SetNotifier(notifClient)
+	ticketsService.SetSSEBroker(sseBroker)
 	ticketsHandler := tickets.NewHandler(ticketsService, log,
 		tickets.WithServiceKey(cfg.Auth.InternalServiceKey),
 	)
@@ -214,6 +219,7 @@ func New(ctx context.Context) (*App, error) {
 		PublicTicketsHandler: publicTicketsHandler,
 		SLAHandler:           slaHandler,
 		KBHandler:            kbHandler,
+		SSEBroker:            sseBroker,
 		TenantResolver:       tenantResolver,
 	})
 

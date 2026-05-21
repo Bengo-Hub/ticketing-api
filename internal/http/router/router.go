@@ -17,6 +17,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/modules/kb"
 	"github.com/bengobox/ticketing-service/internal/modules/sla"
 	"github.com/bengobox/ticketing-service/internal/modules/tickets"
+	"github.com/bengobox/ticketing-service/internal/platform/sse"
 	sharedmw "github.com/bengobox/ticketing-service/internal/shared/middleware"
 )
 
@@ -37,6 +38,7 @@ type Config struct {
 	PublicTicketsHandler *tickets.PublicHandler
 	SLAHandler           *sla.Handler
 	KBHandler            *kb.Handler
+	SSEBroker            *sse.Broker
 	TenantResolver       tenantResolver
 }
 
@@ -131,6 +133,11 @@ func New(cfg Config) http.Handler {
 				// KB module (articles)
 				if cfg.KBHandler != nil {
 					cfg.KBHandler.RegisterRoutes(tenant)
+				}
+
+				// SSE streaming endpoints
+				if cfg.TicketsHandler != nil && cfg.SSEBroker != nil {
+					cfg.TicketsHandler.RegisterSSERoutes(tenant, cfg.SSEBroker)
 				}
 			})
 		})

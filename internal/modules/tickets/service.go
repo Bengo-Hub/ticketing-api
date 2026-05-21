@@ -24,6 +24,11 @@ type Notifier interface {
 	SendAgentComment(ctx context.Context, tenantSlug string, customerEmail string, data map[string]interface{})
 }
 
+// SSEPublisher broadcasts real-time events to connected SSE clients.
+type SSEPublisher interface {
+	Publish(tenantID uuid.UUID, eventType string, payload any)
+}
+
 // Service provides ticket business logic.
 type Service struct {
 	repo      Repository
@@ -31,6 +36,7 @@ type Service struct {
 	publisher *events.Publisher
 	sla       SLAComputer
 	notif     Notifier
+	sse       SSEPublisher
 }
 
 // NewService creates a new ticket service.
@@ -54,6 +60,11 @@ func (s *Service) SetSLAService(svc SLAComputer) {
 // SetNotifier wires in the notifications client.
 func (s *Service) SetNotifier(n Notifier) {
 	s.notif = n
+}
+
+// SetSSEBroker wires in the SSE broker for real-time client streaming.
+func (s *Service) SetSSEBroker(b SSEPublisher) {
+	s.sse = b
 }
 
 // Ticket operations
@@ -132,6 +143,10 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 		zap.String("ticket_number", ticket.TicketNumber),
 	)
 
+	if s.sse != nil {
+		s.sse.Publish(ticket.TenantID, "ticket.created", map[string]any{"ticket_id": ticket.ID, "ticket_number": ticket.TicketNumber})
+	}
+
 	return ticket, nil
 }
 
@@ -190,6 +205,10 @@ func (s *Service) UpdateTicketStatus(ctx context.Context, tenantID uuid.UUID, ti
 		zap.String("old_status", string(ticket.Status)),
 		zap.String("new_status", string(status)),
 	)
+
+	if s.sse != nil {
+		s.sse.Publish(tenantID, "ticket.updated", map[string]any{"ticket_id": ticketID, "status": string(status)})
+	}
 
 	if status == StatusResolved {
 		// Check if resolution SLA was breached
@@ -331,6 +350,10 @@ func (s *Service) AddComment(ctx context.Context, req *AddCommentRequest) (*Tick
 		zap.String("ticket_id", req.TicketID.String()),
 		zap.String("comment_id", comment.ID.String()),
 	)
+
+	if s.sse != nil {
+		s.sse.Publish(req.TenantID, "comment.created", map[string]any{"ticket_id": req.TicketID, "comment_id": comment.ID})
+	}
 
 	return comment, nil
 }
