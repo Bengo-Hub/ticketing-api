@@ -14,6 +14,7 @@ import (
 	sharedcache "github.com/Bengo-Hub/cache"
 	"github.com/bengobox/ticketing-service/internal/http/handlers"
 	"github.com/bengobox/ticketing-service/internal/modules/identity"
+	"github.com/bengobox/ticketing-service/internal/modules/kb"
 	"github.com/bengobox/ticketing-service/internal/modules/sla"
 	"github.com/bengobox/ticketing-service/internal/modules/tickets"
 	sharedmw "github.com/bengobox/ticketing-service/internal/shared/middleware"
@@ -31,10 +32,12 @@ type Config struct {
 	HealthHandler   *handlers.HealthHandler
 	AuthMiddleware  *authclient.AuthMiddleware
 	AllowedOrigins  []string
-	IdentityHandler *identity.Handler
-	TicketsHandler  *tickets.Handler
-	SLAHandler      *sla.Handler
-	TenantResolver  tenantResolver
+	IdentityHandler      *identity.Handler
+	TicketsHandler       *tickets.Handler
+	PublicTicketsHandler *tickets.PublicHandler
+	SLAHandler           *sla.Handler
+	KBHandler            *kb.Handler
+	TenantResolver       tenantResolver
 }
 
 // New constructs the chi router with global middleware and base routes.
@@ -74,6 +77,18 @@ func New(cfg Config) http.Handler {
 				v1.Post("/internal/tickets", cfg.TicketsHandler.InternalCreateTicket)
 			}
 
+			// Public (no-auth) tenant-scoped routes
+			if cfg.PublicTicketsHandler != nil || cfg.KBHandler != nil {
+				v1.Route("/{tenant}", func(pub chi.Router) {
+					if cfg.PublicTicketsHandler != nil {
+						cfg.PublicTicketsHandler.RegisterPublicRoutes(pub)
+					}
+					if cfg.KBHandler != nil {
+						cfg.KBHandler.RegisterPublicRoutes(pub)
+					}
+				})
+			}
+
 			// Apply auth middleware to protected routes
 			if cfg.AuthMiddleware != nil {
 				v1.Use(cfg.AuthMiddleware.RequireAuth)
@@ -111,6 +126,11 @@ func New(cfg Config) http.Handler {
 				// SLA module (policies)
 				if cfg.SLAHandler != nil {
 					cfg.SLAHandler.RegisterRoutes(tenant)
+				}
+
+				// KB module (articles)
+				if cfg.KBHandler != nil {
+					cfg.KBHandler.RegisterRoutes(tenant)
 				}
 			})
 		})

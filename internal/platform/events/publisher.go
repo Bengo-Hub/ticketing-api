@@ -68,6 +68,12 @@ func (p *Publisher) PublishTicketResolved(ctx context.Context, tenantID uuid.UUI
 	return p.publish(ctx, tenantID, "ticket.resolved", data)
 }
 
+// PublishCRMActivityRequest publishes a crm.activity.log_requested event for CRM integration.
+// The CRM service subscribes to this subject to log contact/lead activity.
+func (p *Publisher) PublishCRMActivityRequest(ctx context.Context, data map[string]any) error {
+	return p.publish(ctx, uuid.Nil, "crm.activity.log_requested", data)
+}
+
 // PublishSLABreach publishes an sla.breach event for a ticket that missed its SLA target.
 func (p *Publisher) PublishSLABreach(ctx context.Context, tenantID uuid.UUID, data map[string]any) error {
 	eventType := "sla.first_response_breached"

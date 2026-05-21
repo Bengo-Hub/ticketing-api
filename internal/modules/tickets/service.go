@@ -88,6 +88,8 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 		Channel:           req.Channel,
 		OrderID:           req.OrderID,
 		ExternalReference: req.ExternalReference,
+		CRMContactID:      req.CRMContactID,
+		CRMLeadID:         req.CRMLeadID,
 		Tags:              req.Tags,
 		Metadata:          req.Metadata,
 	}
@@ -111,6 +113,18 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 				ticket.SLAResolutionDueAt = resolutionDue
 			}
 		}
+	}
+
+	// Publish CRM activity event if a CRM contact is linked.
+	if s.publisher != nil && ticket.CRMContactID != nil {
+		_ = s.publisher.PublishCRMActivityRequest(ctx, map[string]any{
+			"entity_type":   "contact",
+			"entity_id":     ticket.CRMContactID.String(),
+			"activity_type": "ticket_opened",
+			"external_ref":  ticket.ID.String(),
+			"subject":       ticket.Subject,
+			"source":        "ticketing-api",
+		})
 	}
 
 	s.logger.Info("ticket created",
@@ -194,6 +208,18 @@ func (s *Service) UpdateTicketStatus(ctx context.Context, tenantID uuid.UUID, ti
 				"ticket_number": ticket.TicketNumber,
 				"subject":       ticket.Subject,
 			})
+
+			// Publish CRM activity event if a CRM contact is linked.
+			if ticket.CRMContactID != nil {
+				_ = s.publisher.PublishCRMActivityRequest(ctx, map[string]any{
+					"entity_type":   "contact",
+					"entity_id":     ticket.CRMContactID.String(),
+					"activity_type": "ticket_resolved",
+					"external_ref":  ticketID.String(),
+					"subject":       ticket.Subject,
+					"source":        "ticketing-api",
+				})
+			}
 		}
 	}
 

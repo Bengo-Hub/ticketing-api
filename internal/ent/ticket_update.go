@@ -246,6 +246,46 @@ func (_u *TicketUpdate) ClearExternalReference() *TicketUpdate {
 	return _u
 }
 
+// SetCrmContactID sets the "crm_contact_id" field.
+func (_u *TicketUpdate) SetCrmContactID(v uuid.UUID) *TicketUpdate {
+	_u.mutation.SetCrmContactID(v)
+	return _u
+}
+
+// SetNillableCrmContactID sets the "crm_contact_id" field if the given value is not nil.
+func (_u *TicketUpdate) SetNillableCrmContactID(v *uuid.UUID) *TicketUpdate {
+	if v != nil {
+		_u.SetCrmContactID(*v)
+	}
+	return _u
+}
+
+// ClearCrmContactID clears the value of the "crm_contact_id" field.
+func (_u *TicketUpdate) ClearCrmContactID() *TicketUpdate {
+	_u.mutation.ClearCrmContactID()
+	return _u
+}
+
+// SetCrmLeadID sets the "crm_lead_id" field.
+func (_u *TicketUpdate) SetCrmLeadID(v uuid.UUID) *TicketUpdate {
+	_u.mutation.SetCrmLeadID(v)
+	return _u
+}
+
+// SetNillableCrmLeadID sets the "crm_lead_id" field if the given value is not nil.
+func (_u *TicketUpdate) SetNillableCrmLeadID(v *uuid.UUID) *TicketUpdate {
+	if v != nil {
+		_u.SetCrmLeadID(*v)
+	}
+	return _u
+}
+
+// ClearCrmLeadID clears the value of the "crm_lead_id" field.
+func (_u *TicketUpdate) ClearCrmLeadID() *TicketUpdate {
+	_u.mutation.ClearCrmLeadID()
+	return _u
+}
+
 // SetSLAResponseDueAt sets the "sla_response_due_at" field.
 func (_u *TicketUpdate) SetSLAResponseDueAt(v time.Time) *TicketUpdate {
 	_u.mutation.SetSLAResponseDueAt(v)
@@ -720,6 +760,18 @@ func (_u *TicketUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.ExternalReferenceCleared() {
 		_spec.ClearField(ticket.FieldExternalReference, field.TypeString)
 	}
+	if value, ok := _u.mutation.CrmContactID(); ok {
+		_spec.SetField(ticket.FieldCrmContactID, field.TypeUUID, value)
+	}
+	if _u.mutation.CrmContactIDCleared() {
+		_spec.ClearField(ticket.FieldCrmContactID, field.TypeUUID)
+	}
+	if value, ok := _u.mutation.CrmLeadID(); ok {
+		_spec.SetField(ticket.FieldCrmLeadID, field.TypeUUID, value)
+	}
+	if _u.mutation.CrmLeadIDCleared() {
+		_spec.ClearField(ticket.FieldCrmLeadID, field.TypeUUID)
+	}
 	if value, ok := _u.mutation.SLAResponseDueAt(); ok {
 		_spec.SetField(ticket.FieldSLAResponseDueAt, field.TypeTime, value)
 	}
@@ -1177,6 +1229,46 @@ func (_u *TicketUpdateOne) SetNillableExternalReference(v *string) *TicketUpdate
 // ClearExternalReference clears the value of the "external_reference" field.
 func (_u *TicketUpdateOne) ClearExternalReference() *TicketUpdateOne {
 	_u.mutation.ClearExternalReference()
+	return _u
+}
+
+// SetCrmContactID sets the "crm_contact_id" field.
+func (_u *TicketUpdateOne) SetCrmContactID(v uuid.UUID) *TicketUpdateOne {
+	_u.mutation.SetCrmContactID(v)
+	return _u
+}
+
+// SetNillableCrmContactID sets the "crm_contact_id" field if the given value is not nil.
+func (_u *TicketUpdateOne) SetNillableCrmContactID(v *uuid.UUID) *TicketUpdateOne {
+	if v != nil {
+		_u.SetCrmContactID(*v)
+	}
+	return _u
+}
+
+// ClearCrmContactID clears the value of the "crm_contact_id" field.
+func (_u *TicketUpdateOne) ClearCrmContactID() *TicketUpdateOne {
+	_u.mutation.ClearCrmContactID()
+	return _u
+}
+
+// SetCrmLeadID sets the "crm_lead_id" field.
+func (_u *TicketUpdateOne) SetCrmLeadID(v uuid.UUID) *TicketUpdateOne {
+	_u.mutation.SetCrmLeadID(v)
+	return _u
+}
+
+// SetNillableCrmLeadID sets the "crm_lead_id" field if the given value is not nil.
+func (_u *TicketUpdateOne) SetNillableCrmLeadID(v *uuid.UUID) *TicketUpdateOne {
+	if v != nil {
+		_u.SetCrmLeadID(*v)
+	}
+	return _u
+}
+
+// ClearCrmLeadID clears the value of the "crm_lead_id" field.
+func (_u *TicketUpdateOne) ClearCrmLeadID() *TicketUpdateOne {
+	_u.mutation.ClearCrmLeadID()
 	return _u
 }
 
@@ -1683,6 +1775,18 @@ func (_u *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err erro
 	}
 	if _u.mutation.ExternalReferenceCleared() {
 		_spec.ClearField(ticket.FieldExternalReference, field.TypeString)
+	}
+	if value, ok := _u.mutation.CrmContactID(); ok {
+		_spec.SetField(ticket.FieldCrmContactID, field.TypeUUID, value)
+	}
+	if _u.mutation.CrmContactIDCleared() {
+		_spec.ClearField(ticket.FieldCrmContactID, field.TypeUUID)
+	}
+	if value, ok := _u.mutation.CrmLeadID(); ok {
+		_spec.SetField(ticket.FieldCrmLeadID, field.TypeUUID, value)
+	}
+	if _u.mutation.CrmLeadIDCleared() {
+		_spec.ClearField(ticket.FieldCrmLeadID, field.TypeUUID)
 	}
 	if value, ok := _u.mutation.SLAResponseDueAt(); ok {
 		_spec.SetField(ticket.FieldSLAResponseDueAt, field.TypeTime, value)

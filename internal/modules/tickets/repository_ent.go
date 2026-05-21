@@ -52,6 +52,12 @@ func (r *EntRepository) CreateTicket(ctx context.Context, tenantID uuid.UUID, t 
 	if t.ExternalReference != "" {
 		create = create.SetExternalReference(t.ExternalReference)
 	}
+	if t.CRMContactID != nil {
+		create = create.SetNillableCrmContactID(t.CRMContactID)
+	}
+	if t.CRMLeadID != nil {
+		create = create.SetNillableCrmLeadID(t.CRMLeadID)
+	}
 	if t.Tags != nil {
 		create = create.SetTags(t.Tags)
 	}
@@ -866,6 +872,8 @@ func entTicketToModel(t *ent.Ticket) *Ticket {
 		Channel:               TicketChannel(t.Channel),
 		OrderID:               t.OrderID,
 		ExternalReference:     t.ExternalReference,
+		CRMContactID:          t.CrmContactID,
+		CRMLeadID:             t.CrmLeadID,
 		SLAResponseDueAt:      t.SLAResponseDueAt,
 		SLAResolutionDueAt:    t.SLAResolutionDueAt,
 		SLAResponseBreached:   t.SLAResponseBreached,

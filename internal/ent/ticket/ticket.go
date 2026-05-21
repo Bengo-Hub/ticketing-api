@@ -42,6 +42,10 @@ const (
 	FieldOrderID = "order_id"
 	// FieldExternalReference holds the string denoting the external_reference field in the database.
 	FieldExternalReference = "external_reference"
+	// FieldCrmContactID holds the string denoting the crm_contact_id field in the database.
+	FieldCrmContactID = "crm_contact_id"
+	// FieldCrmLeadID holds the string denoting the crm_lead_id field in the database.
+	FieldCrmLeadID = "crm_lead_id"
 	// FieldSLAResponseDueAt holds the string denoting the sla_response_due_at field in the database.
 	FieldSLAResponseDueAt = "sla_response_due_at"
 	// FieldSLAResolutionDueAt holds the string denoting the sla_resolution_due_at field in the database.
@@ -128,6 +132,8 @@ var Columns = []string{
 	FieldChannel,
 	FieldOrderID,
 	FieldExternalReference,
+	FieldCrmContactID,
+	FieldCrmLeadID,
 	FieldSLAResponseDueAt,
 	FieldSLAResolutionDueAt,
 	FieldSLAResponseBreached,
@@ -342,6 +348,16 @@ func ByOrderID(opts ...sql.OrderTermOption) OrderOption {
 // ByExternalReference orders the results by the external_reference field.
 func ByExternalReference(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldExternalReference, opts...).ToFunc()
+}
+
+// ByCrmContactID orders the results by the crm_contact_id field.
+func ByCrmContactID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCrmContactID, opts...).ToFunc()
+}
+
+// ByCrmLeadID orders the results by the crm_lead_id field.
+func ByCrmLeadID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCrmLeadID, opts...).ToFunc()
 }
 
 // BySLAResponseDueAt orders the results by the sla_response_due_at field.

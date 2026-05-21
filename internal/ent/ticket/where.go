@@ -106,6 +106,16 @@ func ExternalReference(v string) predicate.Ticket {
 	return predicate.Ticket(sql.FieldEQ(FieldExternalReference, v))
 }
 
+// CrmContactID applies equality check predicate on the "crm_contact_id" field. It's identical to CrmContactIDEQ.
+func CrmContactID(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldEQ(FieldCrmContactID, v))
+}
+
+// CrmLeadID applies equality check predicate on the "crm_lead_id" field. It's identical to CrmLeadIDEQ.
+func CrmLeadID(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldEQ(FieldCrmLeadID, v))
+}
+
 // SLAResponseDueAt applies equality check predicate on the "sla_response_due_at" field. It's identical to SLAResponseDueAtEQ.
 func SLAResponseDueAt(v time.Time) predicate.Ticket {
 	return predicate.Ticket(sql.FieldEQ(FieldSLAResponseDueAt, v))
@@ -739,6 +749,106 @@ func ExternalReferenceEqualFold(v string) predicate.Ticket {
 // ExternalReferenceContainsFold applies the ContainsFold predicate on the "external_reference" field.
 func ExternalReferenceContainsFold(v string) predicate.Ticket {
 	return predicate.Ticket(sql.FieldContainsFold(FieldExternalReference, v))
+}
+
+// CrmContactIDEQ applies the EQ predicate on the "crm_contact_id" field.
+func CrmContactIDEQ(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldEQ(FieldCrmContactID, v))
+}
+
+// CrmContactIDNEQ applies the NEQ predicate on the "crm_contact_id" field.
+func CrmContactIDNEQ(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldNEQ(FieldCrmContactID, v))
+}
+
+// CrmContactIDIn applies the In predicate on the "crm_contact_id" field.
+func CrmContactIDIn(vs ...uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldIn(FieldCrmContactID, vs...))
+}
+
+// CrmContactIDNotIn applies the NotIn predicate on the "crm_contact_id" field.
+func CrmContactIDNotIn(vs ...uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldNotIn(FieldCrmContactID, vs...))
+}
+
+// CrmContactIDGT applies the GT predicate on the "crm_contact_id" field.
+func CrmContactIDGT(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldGT(FieldCrmContactID, v))
+}
+
+// CrmContactIDGTE applies the GTE predicate on the "crm_contact_id" field.
+func CrmContactIDGTE(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldGTE(FieldCrmContactID, v))
+}
+
+// CrmContactIDLT applies the LT predicate on the "crm_contact_id" field.
+func CrmContactIDLT(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldLT(FieldCrmContactID, v))
+}
+
+// CrmContactIDLTE applies the LTE predicate on the "crm_contact_id" field.
+func CrmContactIDLTE(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldLTE(FieldCrmContactID, v))
+}
+
+// CrmContactIDIsNil applies the IsNil predicate on the "crm_contact_id" field.
+func CrmContactIDIsNil() predicate.Ticket {
+	return predicate.Ticket(sql.FieldIsNull(FieldCrmContactID))
+}
+
+// CrmContactIDNotNil applies the NotNil predicate on the "crm_contact_id" field.
+func CrmContactIDNotNil() predicate.Ticket {
+	return predicate.Ticket(sql.FieldNotNull(FieldCrmContactID))
+}
+
+// CrmLeadIDEQ applies the EQ predicate on the "crm_lead_id" field.
+func CrmLeadIDEQ(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldEQ(FieldCrmLeadID, v))
+}
+
+// CrmLeadIDNEQ applies the NEQ predicate on the "crm_lead_id" field.
+func CrmLeadIDNEQ(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldNEQ(FieldCrmLeadID, v))
+}
+
+// CrmLeadIDIn applies the In predicate on the "crm_lead_id" field.
+func CrmLeadIDIn(vs ...uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldIn(FieldCrmLeadID, vs...))
+}
+
+// CrmLeadIDNotIn applies the NotIn predicate on the "crm_lead_id" field.
+func CrmLeadIDNotIn(vs ...uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldNotIn(FieldCrmLeadID, vs...))
+}
+
+// CrmLeadIDGT applies the GT predicate on the "crm_lead_id" field.
+func CrmLeadIDGT(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldGT(FieldCrmLeadID, v))
+}
+
+// CrmLeadIDGTE applies the GTE predicate on the "crm_lead_id" field.
+func CrmLeadIDGTE(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldGTE(FieldCrmLeadID, v))
+}
+
+// CrmLeadIDLT applies the LT predicate on the "crm_lead_id" field.
+func CrmLeadIDLT(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldLT(FieldCrmLeadID, v))
+}
+
+// CrmLeadIDLTE applies the LTE predicate on the "crm_lead_id" field.
+func CrmLeadIDLTE(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldLTE(FieldCrmLeadID, v))
+}
+
+// CrmLeadIDIsNil applies the IsNil predicate on the "crm_lead_id" field.
+func CrmLeadIDIsNil() predicate.Ticket {
+	return predicate.Ticket(sql.FieldIsNull(FieldCrmLeadID))
+}
+
+// CrmLeadIDNotNil applies the NotNil predicate on the "crm_lead_id" field.
+func CrmLeadIDNotNil() predicate.Ticket {
+	return predicate.Ticket(sql.FieldNotNull(FieldCrmLeadID))
 }
 
 // SLAResponseDueAtEQ applies the EQ predicate on the "sla_response_due_at" field.

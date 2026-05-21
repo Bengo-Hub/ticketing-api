@@ -70,6 +70,71 @@ var (
 			},
 		},
 	}
+	// KBArticlesColumns holds the columns for the "kb_articles" table.
+	KBArticlesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "author_id", Type: field.TypeUUID},
+		{Name: "title", Type: field.TypeString, Size: 255},
+		{Name: "slug", Type: field.TypeString, Size: 255},
+		{Name: "content", Type: field.TypeString, Size: 2147483647},
+		{Name: "excerpt", Type: field.TypeString, Nullable: true, Size: 500},
+		{Name: "category", Type: field.TypeString, Nullable: true, Size: 100},
+		{Name: "tags", Type: field.TypeJSON, Nullable: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"draft", "published", "archived"}, Default: "draft"},
+		{Name: "is_public", Type: field.TypeBool, Default: true},
+		{Name: "view_count", Type: field.TypeInt, Default: 0},
+		{Name: "helpful_count", Type: field.TypeInt, Default: 0},
+		{Name: "not_helpful_count", Type: field.TypeInt, Default: 0},
+		{Name: "metadata", Type: field.TypeJSON, Nullable: true},
+		{Name: "published_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+	}
+	// KBArticlesTable holds the schema information for the "kb_articles" table.
+	KBArticlesTable = &schema.Table{
+		Name:       "kb_articles",
+		Columns:    KBArticlesColumns,
+		PrimaryKey: []*schema.Column{KBArticlesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "kbarticle_tenant_id_status",
+				Unique:  false,
+				Columns: []*schema.Column{KBArticlesColumns[1], KBArticlesColumns[9]},
+			},
+			{
+				Name:    "kbarticle_tenant_id_slug",
+				Unique:  true,
+				Columns: []*schema.Column{KBArticlesColumns[1], KBArticlesColumns[4]},
+			},
+			{
+				Name:    "kbarticle_tenant_id_category",
+				Unique:  false,
+				Columns: []*schema.Column{KBArticlesColumns[1], KBArticlesColumns[7]},
+			},
+			{
+				Name:    "kbarticle_tenant_id_is_public",
+				Unique:  false,
+				Columns: []*schema.Column{KBArticlesColumns[1], KBArticlesColumns[10]},
+			},
+			{
+				Name:    "kbarticle_author_id",
+				Unique:  false,
+				Columns: []*schema.Column{KBArticlesColumns[2]},
+			},
+			{
+				Name:    "kbarticle_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{KBArticlesColumns[16]},
+			},
+			{
+				Name:    "kbarticle_deleted_at",
+				Unique:  false,
+				Columns: []*schema.Column{KBArticlesColumns[18]},
+			},
+		},
+	}
 	// OutboxEventsColumns holds the columns for the "outbox_events" table.
 	OutboxEventsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -199,6 +264,8 @@ var (
 		{Name: "channel", Type: field.TypeEnum, Enums: []string{"web", "email", "api", "chat", "phone", "internal"}, Default: "web"},
 		{Name: "order_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "external_reference", Type: field.TypeString, Nullable: true, Size: 255},
+		{Name: "crm_contact_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "crm_lead_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "sla_response_due_at", Type: field.TypeTime, Nullable: true},
 		{Name: "sla_resolution_due_at", Type: field.TypeTime, Nullable: true},
 		{Name: "sla_response_breached", Type: field.TypeBool, Default: false},
@@ -225,13 +292,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "tickets_agents_assigned_tickets",
-				Columns:    []*schema.Column{TicketsColumns[27]},
+				Columns:    []*schema.Column{TicketsColumns[29]},
 				RefColumns: []*schema.Column{AgentsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "tickets_ticket_categories_tickets",
-				Columns:    []*schema.Column{TicketsColumns[28]},
+				Columns:    []*schema.Column{TicketsColumns[30]},
 				RefColumns: []*schema.Column{TicketCategoriesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -255,7 +322,7 @@ var (
 			{
 				Name:    "ticket_tenant_id_assigned_agent_id",
 				Unique:  false,
-				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[27]},
+				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[29]},
 			},
 			{
 				Name:    "ticket_tenant_id_assigned_team_id",
@@ -265,7 +332,7 @@ var (
 			{
 				Name:    "ticket_category_id",
 				Unique:  false,
-				Columns: []*schema.Column{TicketsColumns[28]},
+				Columns: []*schema.Column{TicketsColumns[30]},
 			},
 			{
 				Name:    "ticket_order_id",
@@ -278,24 +345,34 @@ var (
 				Columns: []*schema.Column{TicketsColumns[11]},
 			},
 			{
-				Name:    "ticket_sla_response_due_at",
+				Name:    "ticket_crm_contact_id",
 				Unique:  false,
 				Columns: []*schema.Column{TicketsColumns[12]},
 			},
 			{
-				Name:    "ticket_sla_resolution_due_at",
+				Name:    "ticket_crm_lead_id",
 				Unique:  false,
 				Columns: []*schema.Column{TicketsColumns[13]},
 			},
 			{
+				Name:    "ticket_sla_response_due_at",
+				Unique:  false,
+				Columns: []*schema.Column{TicketsColumns[14]},
+			},
+			{
+				Name:    "ticket_sla_resolution_due_at",
+				Unique:  false,
+				Columns: []*schema.Column{TicketsColumns[15]},
+			},
+			{
 				Name:    "ticket_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{TicketsColumns[24]},
+				Columns: []*schema.Column{TicketsColumns[26]},
 			},
 			{
 				Name:    "ticket_deleted_at",
 				Unique:  false,
-				Columns: []*schema.Column{TicketsColumns[26]},
+				Columns: []*schema.Column{TicketsColumns[28]},
 			},
 		},
 	}
@@ -457,6 +534,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AgentsTable,
+		KBArticlesTable,
 		OutboxEventsTable,
 		SLAPoliciesTable,
 		TeamsTable,
@@ -471,6 +549,9 @@ func init() {
 	AgentsTable.ForeignKeys[0].RefTable = TeamsTable
 	AgentsTable.Annotation = &entsql.Annotation{
 		Table: "agents",
+	}
+	KBArticlesTable.Annotation = &entsql.Annotation{
+		Table: "kb_articles",
 	}
 	SLAPoliciesTable.Annotation = &entsql.Annotation{
 		Table: "sla_policies",

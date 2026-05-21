@@ -167,6 +167,34 @@ func (_c *TicketCreate) SetNillableExternalReference(v *string) *TicketCreate {
 	return _c
 }
 
+// SetCrmContactID sets the "crm_contact_id" field.
+func (_c *TicketCreate) SetCrmContactID(v uuid.UUID) *TicketCreate {
+	_c.mutation.SetCrmContactID(v)
+	return _c
+}
+
+// SetNillableCrmContactID sets the "crm_contact_id" field if the given value is not nil.
+func (_c *TicketCreate) SetNillableCrmContactID(v *uuid.UUID) *TicketCreate {
+	if v != nil {
+		_c.SetCrmContactID(*v)
+	}
+	return _c
+}
+
+// SetCrmLeadID sets the "crm_lead_id" field.
+func (_c *TicketCreate) SetCrmLeadID(v uuid.UUID) *TicketCreate {
+	_c.mutation.SetCrmLeadID(v)
+	return _c
+}
+
+// SetNillableCrmLeadID sets the "crm_lead_id" field if the given value is not nil.
+func (_c *TicketCreate) SetNillableCrmLeadID(v *uuid.UUID) *TicketCreate {
+	if v != nil {
+		_c.SetCrmLeadID(*v)
+	}
+	return _c
+}
+
 // SetSLAResponseDueAt sets the "sla_response_due_at" field.
 func (_c *TicketCreate) SetSLAResponseDueAt(v time.Time) *TicketCreate {
 	_c.mutation.SetSLAResponseDueAt(v)
@@ -642,6 +670,14 @@ func (_c *TicketCreate) createSpec() (*Ticket, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.ExternalReference(); ok {
 		_spec.SetField(ticket.FieldExternalReference, field.TypeString, value)
 		_node.ExternalReference = value
+	}
+	if value, ok := _c.mutation.CrmContactID(); ok {
+		_spec.SetField(ticket.FieldCrmContactID, field.TypeUUID, value)
+		_node.CrmContactID = &value
+	}
+	if value, ok := _c.mutation.CrmLeadID(); ok {
+		_spec.SetField(ticket.FieldCrmLeadID, field.TypeUUID, value)
+		_node.CrmLeadID = &value
 	}
 	if value, ok := _c.mutation.SLAResponseDueAt(); ok {
 		_spec.SetField(ticket.FieldSLAResponseDueAt, field.TypeTime, value)

@@ -1,0 +1,217 @@
+package kb
+
+import (
+	"context"
+	"strings"
+	"time"
+
+	"github.com/bengobox/ticketing-service/internal/ent"
+	entpkg "github.com/bengobox/ticketing-service/internal/ent/kbarticle"
+	"github.com/google/uuid"
+)
+
+type EntRepository struct {
+	client *ent.Client
+}
+
+func NewEntRepository(client *ent.Client) *EntRepository {
+	return &EntRepository{client: client}
+}
+
+func toArticle(row *ent.KBArticle) *Article {
+	a := &Article{
+		ID:              row.ID,
+		TenantID:        row.TenantID,
+		AuthorID:        row.AuthorID,
+		Title:           row.Title,
+		Slug:            row.Slug,
+		Content:         row.Content,
+		Excerpt:         row.Excerpt,
+		Category:        row.Category,
+		Tags:            row.Tags,
+		Status:          ArticleStatus(row.Status),
+		IsPublic:        row.IsPublic,
+		ViewCount:       row.ViewCount,
+		HelpfulCount:    row.HelpfulCount,
+		NotHelpfulCount: row.NotHelpfulCount,
+		Metadata:        row.Metadata,
+		PublishedAt:     row.PublishedAt,
+		CreatedAt:       row.CreatedAt,
+		UpdatedAt:       row.UpdatedAt,
+	}
+	if row.Tags == nil {
+		a.Tags = []string{}
+	}
+	return a
+}
+
+func (r *EntRepository) Create(ctx context.Context, req CreateArticleRequest) (*Article, error) {
+	q := r.client.KBArticle.Create().
+		SetTenantID(req.TenantID).
+		SetAuthorID(req.AuthorID).
+		SetTitle(req.Title).
+		SetSlug(req.Slug).
+		SetContent(req.Content).
+		SetExcerpt(req.Excerpt).
+		SetCategory(req.Category).
+		SetStatus(entpkg.Status(req.Status)).
+		SetIsPublic(req.IsPublic)
+
+	if len(req.Tags) > 0 {
+		q = q.SetTags(req.Tags)
+	}
+	if req.Metadata != nil {
+		q = q.SetMetadata(req.Metadata)
+	}
+	if req.Status == StatusPublished {
+		now := time.Now()
+		q = q.SetPublishedAt(now)
+	}
+
+	row, err := q.Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return toArticle(row), nil
+}
+
+func (r *EntRepository) GetByID(ctx context.Context, tenantID, id uuid.UUID) (*Article, error) {
+	row, err := r.client.KBArticle.Query().
+		Where(entpkg.ID(id), entpkg.TenantID(tenantID), entpkg.DeletedAtIsNil()).
+		Only(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return toArticle(row), nil
+}
+
+func (r *EntRepository) GetBySlug(ctx context.Context, tenantID uuid.UUID, slug string) (*Article, error) {
+	row, err := r.client.KBArticle.Query().
+		Where(entpkg.TenantID(tenantID), entpkg.SlugEQ(slug), entpkg.DeletedAtIsNil()).
+		Only(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return toArticle(row), nil
+}
+
+func (r *EntRepository) Update(ctx context.Context, tenantID, id uuid.UUID, req UpdateArticleRequest) (*Article, error) {
+	_, err := r.GetByID(ctx, tenantID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	u := r.client.KBArticle.UpdateOneID(id)
+	if req.Title != nil {
+		u = u.SetTitle(*req.Title)
+	}
+	if req.Slug != nil {
+		u = u.SetSlug(*req.Slug)
+	}
+	if req.Content != nil {
+		u = u.SetContent(*req.Content)
+	}
+	if req.Excerpt != nil {
+		u = u.SetExcerpt(*req.Excerpt)
+	}
+	if req.Category != nil {
+		u = u.SetCategory(*req.Category)
+	}
+	if req.Tags != nil {
+		u = u.SetTags(req.Tags)
+	}
+	if req.IsPublic != nil {
+		u = u.SetIsPublic(*req.IsPublic)
+	}
+	if req.Metadata != nil {
+		u = u.SetMetadata(req.Metadata)
+	}
+	if req.Status != nil {
+		u = u.SetStatus(entpkg.Status(*req.Status))
+		if *req.Status == StatusPublished {
+			now := time.Now()
+			u = u.SetPublishedAt(now)
+		}
+	}
+
+	row, err := u.Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return toArticle(row), nil
+}
+
+func (r *EntRepository) Delete(ctx context.Context, tenantID, id uuid.UUID) error {
+	_, err := r.GetByID(ctx, tenantID, id)
+	if err != nil {
+		return err
+	}
+	now := time.Now()
+	return r.client.KBArticle.UpdateOneID(id).SetDeletedAt(now).Exec(ctx)
+}
+
+func (r *EntRepository) List(ctx context.Context, filter ArticleFilter) (*ArticleList, error) {
+	q := r.client.KBArticle.Query().
+		Where(entpkg.TenantID(filter.TenantID), entpkg.DeletedAtIsNil())
+
+	if filter.Status != "" {
+		q = q.Where(entpkg.StatusEQ(entpkg.Status(filter.Status)))
+	}
+	if filter.Category != "" {
+		q = q.Where(entpkg.CategoryEQ(filter.Category))
+	}
+	if filter.IsPublic != nil {
+		q = q.Where(entpkg.IsPublicEQ(*filter.IsPublic))
+	}
+	if filter.Search != "" {
+		term := strings.ToLower(filter.Search)
+		q = q.Where(
+			entpkg.Or(
+				entpkg.TitleContainsFold(term),
+				entpkg.ExcerptContainsFold(term),
+				entpkg.ContentContainsFold(term),
+			),
+		)
+	}
+
+	total, err := q.Count(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 20
+	}
+
+	rows, err := q.
+		Order(ent.Desc(entpkg.FieldCreatedAt)).
+		Limit(limit).
+		Offset(filter.Offset).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	articles := make([]*Article, len(rows))
+	for i, row := range rows {
+		articles[i] = toArticle(row)
+	}
+	return &ArticleList{Articles: articles, Total: total}, nil
+}
+
+func (r *EntRepository) IncrementViewCount(ctx context.Context, id uuid.UUID) error {
+	return r.client.KBArticle.UpdateOneID(id).
+		AddViewCount(1).
+		Exec(ctx)
+}
+
+func (r *EntRepository) Vote(ctx context.Context, id uuid.UUID, helpful bool) error {
+	u := r.client.KBArticle.UpdateOneID(id)
+	if helpful {
+		u = u.AddHelpfulCount(1)
+	} else {
+		u = u.AddNotHelpfulCount(1)
+	}
+	return u.Exec(ctx)
+}

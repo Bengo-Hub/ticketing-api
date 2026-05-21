@@ -72,6 +72,15 @@ func (Ticket) Fields() []ent.Field {
 			MaxLen(255).
 			Optional().
 			Comment("External reference ID"),
+		// CRM references
+		field.UUID("crm_contact_id", uuid.UUID{}).
+			Optional().
+			Nillable().
+			Comment("MarketFlow CRM contact reference — never duplicate contact data here"),
+		field.UUID("crm_lead_id", uuid.UUID{}).
+			Optional().
+			Nillable().
+			Comment("MarketFlow CRM lead reference"),
 		// SLA tracking
 		field.Time("sla_response_due_at").
 			Optional().
@@ -168,6 +177,8 @@ func (Ticket) Indexes() []ent.Index {
 		index.Fields("category_id"),
 		index.Fields("order_id"),
 		index.Fields("external_reference"),
+		index.Fields("crm_contact_id"),
+		index.Fields("crm_lead_id"),
 		index.Fields("sla_response_due_at"),
 		index.Fields("sla_resolution_due_at"),
 		index.Fields("created_at"),

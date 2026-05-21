@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
+	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
 	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
 	"github.com/bengobox/ticketing-service/internal/ent/predicate"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
@@ -33,6 +34,7 @@ const (
 
 	// Node types.
 	TypeAgent            = "Agent"
+	TypeKBArticle        = "KBArticle"
 	TypeOutboxEvent      = "OutboxEvent"
 	TypeSLAPolicy        = "SLAPolicy"
 	TypeTeam             = "Team"
@@ -1505,6 +1507,1492 @@ func (m *AgentMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Agent edge %s", name)
+}
+
+// KBArticleMutation represents an operation that mutates the KBArticle nodes in the graph.
+type KBArticleMutation struct {
+	config
+	op                   Op
+	typ                  string
+	id                   *uuid.UUID
+	tenant_id            *uuid.UUID
+	author_id            *uuid.UUID
+	title                *string
+	slug                 *string
+	content              *string
+	excerpt              *string
+	category             *string
+	tags                 *[]string
+	appendtags           []string
+	status               *kbarticle.Status
+	is_public            *bool
+	view_count           *int
+	addview_count        *int
+	helpful_count        *int
+	addhelpful_count     *int
+	not_helpful_count    *int
+	addnot_helpful_count *int
+	metadata             *map[string]interface{}
+	published_at         *time.Time
+	created_at           *time.Time
+	updated_at           *time.Time
+	deleted_at           *time.Time
+	clearedFields        map[string]struct{}
+	done                 bool
+	oldValue             func(context.Context) (*KBArticle, error)
+	predicates           []predicate.KBArticle
+}
+
+var _ ent.Mutation = (*KBArticleMutation)(nil)
+
+// kbarticleOption allows management of the mutation configuration using functional options.
+type kbarticleOption func(*KBArticleMutation)
+
+// newKBArticleMutation creates new mutation for the KBArticle entity.
+func newKBArticleMutation(c config, op Op, opts ...kbarticleOption) *KBArticleMutation {
+	m := &KBArticleMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeKBArticle,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withKBArticleID sets the ID field of the mutation.
+func withKBArticleID(id uuid.UUID) kbarticleOption {
+	return func(m *KBArticleMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *KBArticle
+		)
+		m.oldValue = func(ctx context.Context) (*KBArticle, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().KBArticle.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withKBArticle sets the old KBArticle of the mutation.
+func withKBArticle(node *KBArticle) kbarticleOption {
+	return func(m *KBArticleMutation) {
+		m.oldValue = func(context.Context) (*KBArticle, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m KBArticleMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m KBArticleMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of KBArticle entities.
+func (m *KBArticleMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *KBArticleMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *KBArticleMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().KBArticle.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (m *KBArticleMutation) SetTenantID(u uuid.UUID) {
+	m.tenant_id = &u
+}
+
+// TenantID returns the value of the "tenant_id" field in the mutation.
+func (m *KBArticleMutation) TenantID() (r uuid.UUID, exists bool) {
+	v := m.tenant_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTenantID returns the old "tenant_id" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldTenantID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTenantID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTenantID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTenantID: %w", err)
+	}
+	return oldValue.TenantID, nil
+}
+
+// ResetTenantID resets all changes to the "tenant_id" field.
+func (m *KBArticleMutation) ResetTenantID() {
+	m.tenant_id = nil
+}
+
+// SetAuthorID sets the "author_id" field.
+func (m *KBArticleMutation) SetAuthorID(u uuid.UUID) {
+	m.author_id = &u
+}
+
+// AuthorID returns the value of the "author_id" field in the mutation.
+func (m *KBArticleMutation) AuthorID() (r uuid.UUID, exists bool) {
+	v := m.author_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAuthorID returns the old "author_id" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldAuthorID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAuthorID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAuthorID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAuthorID: %w", err)
+	}
+	return oldValue.AuthorID, nil
+}
+
+// ResetAuthorID resets all changes to the "author_id" field.
+func (m *KBArticleMutation) ResetAuthorID() {
+	m.author_id = nil
+}
+
+// SetTitle sets the "title" field.
+func (m *KBArticleMutation) SetTitle(s string) {
+	m.title = &s
+}
+
+// Title returns the value of the "title" field in the mutation.
+func (m *KBArticleMutation) Title() (r string, exists bool) {
+	v := m.title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTitle returns the old "title" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTitle: %w", err)
+	}
+	return oldValue.Title, nil
+}
+
+// ResetTitle resets all changes to the "title" field.
+func (m *KBArticleMutation) ResetTitle() {
+	m.title = nil
+}
+
+// SetSlug sets the "slug" field.
+func (m *KBArticleMutation) SetSlug(s string) {
+	m.slug = &s
+}
+
+// Slug returns the value of the "slug" field in the mutation.
+func (m *KBArticleMutation) Slug() (r string, exists bool) {
+	v := m.slug
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSlug returns the old "slug" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldSlug(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSlug is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSlug requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSlug: %w", err)
+	}
+	return oldValue.Slug, nil
+}
+
+// ResetSlug resets all changes to the "slug" field.
+func (m *KBArticleMutation) ResetSlug() {
+	m.slug = nil
+}
+
+// SetContent sets the "content" field.
+func (m *KBArticleMutation) SetContent(s string) {
+	m.content = &s
+}
+
+// Content returns the value of the "content" field in the mutation.
+func (m *KBArticleMutation) Content() (r string, exists bool) {
+	v := m.content
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContent returns the old "content" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldContent(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContent: %w", err)
+	}
+	return oldValue.Content, nil
+}
+
+// ResetContent resets all changes to the "content" field.
+func (m *KBArticleMutation) ResetContent() {
+	m.content = nil
+}
+
+// SetExcerpt sets the "excerpt" field.
+func (m *KBArticleMutation) SetExcerpt(s string) {
+	m.excerpt = &s
+}
+
+// Excerpt returns the value of the "excerpt" field in the mutation.
+func (m *KBArticleMutation) Excerpt() (r string, exists bool) {
+	v := m.excerpt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExcerpt returns the old "excerpt" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldExcerpt(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExcerpt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExcerpt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExcerpt: %w", err)
+	}
+	return oldValue.Excerpt, nil
+}
+
+// ClearExcerpt clears the value of the "excerpt" field.
+func (m *KBArticleMutation) ClearExcerpt() {
+	m.excerpt = nil
+	m.clearedFields[kbarticle.FieldExcerpt] = struct{}{}
+}
+
+// ExcerptCleared returns if the "excerpt" field was cleared in this mutation.
+func (m *KBArticleMutation) ExcerptCleared() bool {
+	_, ok := m.clearedFields[kbarticle.FieldExcerpt]
+	return ok
+}
+
+// ResetExcerpt resets all changes to the "excerpt" field.
+func (m *KBArticleMutation) ResetExcerpt() {
+	m.excerpt = nil
+	delete(m.clearedFields, kbarticle.FieldExcerpt)
+}
+
+// SetCategory sets the "category" field.
+func (m *KBArticleMutation) SetCategory(s string) {
+	m.category = &s
+}
+
+// Category returns the value of the "category" field in the mutation.
+func (m *KBArticleMutation) Category() (r string, exists bool) {
+	v := m.category
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCategory returns the old "category" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldCategory(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCategory is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCategory requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCategory: %w", err)
+	}
+	return oldValue.Category, nil
+}
+
+// ClearCategory clears the value of the "category" field.
+func (m *KBArticleMutation) ClearCategory() {
+	m.category = nil
+	m.clearedFields[kbarticle.FieldCategory] = struct{}{}
+}
+
+// CategoryCleared returns if the "category" field was cleared in this mutation.
+func (m *KBArticleMutation) CategoryCleared() bool {
+	_, ok := m.clearedFields[kbarticle.FieldCategory]
+	return ok
+}
+
+// ResetCategory resets all changes to the "category" field.
+func (m *KBArticleMutation) ResetCategory() {
+	m.category = nil
+	delete(m.clearedFields, kbarticle.FieldCategory)
+}
+
+// SetTags sets the "tags" field.
+func (m *KBArticleMutation) SetTags(s []string) {
+	m.tags = &s
+	m.appendtags = nil
+}
+
+// Tags returns the value of the "tags" field in the mutation.
+func (m *KBArticleMutation) Tags() (r []string, exists bool) {
+	v := m.tags
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTags returns the old "tags" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldTags(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTags is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTags requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTags: %w", err)
+	}
+	return oldValue.Tags, nil
+}
+
+// AppendTags adds s to the "tags" field.
+func (m *KBArticleMutation) AppendTags(s []string) {
+	m.appendtags = append(m.appendtags, s...)
+}
+
+// AppendedTags returns the list of values that were appended to the "tags" field in this mutation.
+func (m *KBArticleMutation) AppendedTags() ([]string, bool) {
+	if len(m.appendtags) == 0 {
+		return nil, false
+	}
+	return m.appendtags, true
+}
+
+// ClearTags clears the value of the "tags" field.
+func (m *KBArticleMutation) ClearTags() {
+	m.tags = nil
+	m.appendtags = nil
+	m.clearedFields[kbarticle.FieldTags] = struct{}{}
+}
+
+// TagsCleared returns if the "tags" field was cleared in this mutation.
+func (m *KBArticleMutation) TagsCleared() bool {
+	_, ok := m.clearedFields[kbarticle.FieldTags]
+	return ok
+}
+
+// ResetTags resets all changes to the "tags" field.
+func (m *KBArticleMutation) ResetTags() {
+	m.tags = nil
+	m.appendtags = nil
+	delete(m.clearedFields, kbarticle.FieldTags)
+}
+
+// SetStatus sets the "status" field.
+func (m *KBArticleMutation) SetStatus(k kbarticle.Status) {
+	m.status = &k
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *KBArticleMutation) Status() (r kbarticle.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldStatus(ctx context.Context) (v kbarticle.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *KBArticleMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetIsPublic sets the "is_public" field.
+func (m *KBArticleMutation) SetIsPublic(b bool) {
+	m.is_public = &b
+}
+
+// IsPublic returns the value of the "is_public" field in the mutation.
+func (m *KBArticleMutation) IsPublic() (r bool, exists bool) {
+	v := m.is_public
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsPublic returns the old "is_public" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldIsPublic(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsPublic is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsPublic requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsPublic: %w", err)
+	}
+	return oldValue.IsPublic, nil
+}
+
+// ResetIsPublic resets all changes to the "is_public" field.
+func (m *KBArticleMutation) ResetIsPublic() {
+	m.is_public = nil
+}
+
+// SetViewCount sets the "view_count" field.
+func (m *KBArticleMutation) SetViewCount(i int) {
+	m.view_count = &i
+	m.addview_count = nil
+}
+
+// ViewCount returns the value of the "view_count" field in the mutation.
+func (m *KBArticleMutation) ViewCount() (r int, exists bool) {
+	v := m.view_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldViewCount returns the old "view_count" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldViewCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldViewCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldViewCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldViewCount: %w", err)
+	}
+	return oldValue.ViewCount, nil
+}
+
+// AddViewCount adds i to the "view_count" field.
+func (m *KBArticleMutation) AddViewCount(i int) {
+	if m.addview_count != nil {
+		*m.addview_count += i
+	} else {
+		m.addview_count = &i
+	}
+}
+
+// AddedViewCount returns the value that was added to the "view_count" field in this mutation.
+func (m *KBArticleMutation) AddedViewCount() (r int, exists bool) {
+	v := m.addview_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetViewCount resets all changes to the "view_count" field.
+func (m *KBArticleMutation) ResetViewCount() {
+	m.view_count = nil
+	m.addview_count = nil
+}
+
+// SetHelpfulCount sets the "helpful_count" field.
+func (m *KBArticleMutation) SetHelpfulCount(i int) {
+	m.helpful_count = &i
+	m.addhelpful_count = nil
+}
+
+// HelpfulCount returns the value of the "helpful_count" field in the mutation.
+func (m *KBArticleMutation) HelpfulCount() (r int, exists bool) {
+	v := m.helpful_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHelpfulCount returns the old "helpful_count" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldHelpfulCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHelpfulCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHelpfulCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHelpfulCount: %w", err)
+	}
+	return oldValue.HelpfulCount, nil
+}
+
+// AddHelpfulCount adds i to the "helpful_count" field.
+func (m *KBArticleMutation) AddHelpfulCount(i int) {
+	if m.addhelpful_count != nil {
+		*m.addhelpful_count += i
+	} else {
+		m.addhelpful_count = &i
+	}
+}
+
+// AddedHelpfulCount returns the value that was added to the "helpful_count" field in this mutation.
+func (m *KBArticleMutation) AddedHelpfulCount() (r int, exists bool) {
+	v := m.addhelpful_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetHelpfulCount resets all changes to the "helpful_count" field.
+func (m *KBArticleMutation) ResetHelpfulCount() {
+	m.helpful_count = nil
+	m.addhelpful_count = nil
+}
+
+// SetNotHelpfulCount sets the "not_helpful_count" field.
+func (m *KBArticleMutation) SetNotHelpfulCount(i int) {
+	m.not_helpful_count = &i
+	m.addnot_helpful_count = nil
+}
+
+// NotHelpfulCount returns the value of the "not_helpful_count" field in the mutation.
+func (m *KBArticleMutation) NotHelpfulCount() (r int, exists bool) {
+	v := m.not_helpful_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNotHelpfulCount returns the old "not_helpful_count" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldNotHelpfulCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNotHelpfulCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNotHelpfulCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNotHelpfulCount: %w", err)
+	}
+	return oldValue.NotHelpfulCount, nil
+}
+
+// AddNotHelpfulCount adds i to the "not_helpful_count" field.
+func (m *KBArticleMutation) AddNotHelpfulCount(i int) {
+	if m.addnot_helpful_count != nil {
+		*m.addnot_helpful_count += i
+	} else {
+		m.addnot_helpful_count = &i
+	}
+}
+
+// AddedNotHelpfulCount returns the value that was added to the "not_helpful_count" field in this mutation.
+func (m *KBArticleMutation) AddedNotHelpfulCount() (r int, exists bool) {
+	v := m.addnot_helpful_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetNotHelpfulCount resets all changes to the "not_helpful_count" field.
+func (m *KBArticleMutation) ResetNotHelpfulCount() {
+	m.not_helpful_count = nil
+	m.addnot_helpful_count = nil
+}
+
+// SetMetadata sets the "metadata" field.
+func (m *KBArticleMutation) SetMetadata(value map[string]interface{}) {
+	m.metadata = &value
+}
+
+// Metadata returns the value of the "metadata" field in the mutation.
+func (m *KBArticleMutation) Metadata() (r map[string]interface{}, exists bool) {
+	v := m.metadata
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMetadata returns the old "metadata" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldMetadata(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMetadata is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMetadata requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMetadata: %w", err)
+	}
+	return oldValue.Metadata, nil
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (m *KBArticleMutation) ClearMetadata() {
+	m.metadata = nil
+	m.clearedFields[kbarticle.FieldMetadata] = struct{}{}
+}
+
+// MetadataCleared returns if the "metadata" field was cleared in this mutation.
+func (m *KBArticleMutation) MetadataCleared() bool {
+	_, ok := m.clearedFields[kbarticle.FieldMetadata]
+	return ok
+}
+
+// ResetMetadata resets all changes to the "metadata" field.
+func (m *KBArticleMutation) ResetMetadata() {
+	m.metadata = nil
+	delete(m.clearedFields, kbarticle.FieldMetadata)
+}
+
+// SetPublishedAt sets the "published_at" field.
+func (m *KBArticleMutation) SetPublishedAt(t time.Time) {
+	m.published_at = &t
+}
+
+// PublishedAt returns the value of the "published_at" field in the mutation.
+func (m *KBArticleMutation) PublishedAt() (r time.Time, exists bool) {
+	v := m.published_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPublishedAt returns the old "published_at" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldPublishedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPublishedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPublishedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPublishedAt: %w", err)
+	}
+	return oldValue.PublishedAt, nil
+}
+
+// ClearPublishedAt clears the value of the "published_at" field.
+func (m *KBArticleMutation) ClearPublishedAt() {
+	m.published_at = nil
+	m.clearedFields[kbarticle.FieldPublishedAt] = struct{}{}
+}
+
+// PublishedAtCleared returns if the "published_at" field was cleared in this mutation.
+func (m *KBArticleMutation) PublishedAtCleared() bool {
+	_, ok := m.clearedFields[kbarticle.FieldPublishedAt]
+	return ok
+}
+
+// ResetPublishedAt resets all changes to the "published_at" field.
+func (m *KBArticleMutation) ResetPublishedAt() {
+	m.published_at = nil
+	delete(m.clearedFields, kbarticle.FieldPublishedAt)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *KBArticleMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *KBArticleMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *KBArticleMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *KBArticleMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *KBArticleMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *KBArticleMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (m *KBArticleMutation) SetDeletedAt(t time.Time) {
+	m.deleted_at = &t
+}
+
+// DeletedAt returns the value of the "deleted_at" field in the mutation.
+func (m *KBArticleMutation) DeletedAt() (r time.Time, exists bool) {
+	v := m.deleted_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDeletedAt returns the old "deleted_at" field's value of the KBArticle entity.
+// If the KBArticle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KBArticleMutation) OldDeletedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDeletedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDeletedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDeletedAt: %w", err)
+	}
+	return oldValue.DeletedAt, nil
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (m *KBArticleMutation) ClearDeletedAt() {
+	m.deleted_at = nil
+	m.clearedFields[kbarticle.FieldDeletedAt] = struct{}{}
+}
+
+// DeletedAtCleared returns if the "deleted_at" field was cleared in this mutation.
+func (m *KBArticleMutation) DeletedAtCleared() bool {
+	_, ok := m.clearedFields[kbarticle.FieldDeletedAt]
+	return ok
+}
+
+// ResetDeletedAt resets all changes to the "deleted_at" field.
+func (m *KBArticleMutation) ResetDeletedAt() {
+	m.deleted_at = nil
+	delete(m.clearedFields, kbarticle.FieldDeletedAt)
+}
+
+// Where appends a list predicates to the KBArticleMutation builder.
+func (m *KBArticleMutation) Where(ps ...predicate.KBArticle) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the KBArticleMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *KBArticleMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.KBArticle, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *KBArticleMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *KBArticleMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (KBArticle).
+func (m *KBArticleMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *KBArticleMutation) Fields() []string {
+	fields := make([]string, 0, 18)
+	if m.tenant_id != nil {
+		fields = append(fields, kbarticle.FieldTenantID)
+	}
+	if m.author_id != nil {
+		fields = append(fields, kbarticle.FieldAuthorID)
+	}
+	if m.title != nil {
+		fields = append(fields, kbarticle.FieldTitle)
+	}
+	if m.slug != nil {
+		fields = append(fields, kbarticle.FieldSlug)
+	}
+	if m.content != nil {
+		fields = append(fields, kbarticle.FieldContent)
+	}
+	if m.excerpt != nil {
+		fields = append(fields, kbarticle.FieldExcerpt)
+	}
+	if m.category != nil {
+		fields = append(fields, kbarticle.FieldCategory)
+	}
+	if m.tags != nil {
+		fields = append(fields, kbarticle.FieldTags)
+	}
+	if m.status != nil {
+		fields = append(fields, kbarticle.FieldStatus)
+	}
+	if m.is_public != nil {
+		fields = append(fields, kbarticle.FieldIsPublic)
+	}
+	if m.view_count != nil {
+		fields = append(fields, kbarticle.FieldViewCount)
+	}
+	if m.helpful_count != nil {
+		fields = append(fields, kbarticle.FieldHelpfulCount)
+	}
+	if m.not_helpful_count != nil {
+		fields = append(fields, kbarticle.FieldNotHelpfulCount)
+	}
+	if m.metadata != nil {
+		fields = append(fields, kbarticle.FieldMetadata)
+	}
+	if m.published_at != nil {
+		fields = append(fields, kbarticle.FieldPublishedAt)
+	}
+	if m.created_at != nil {
+		fields = append(fields, kbarticle.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, kbarticle.FieldUpdatedAt)
+	}
+	if m.deleted_at != nil {
+		fields = append(fields, kbarticle.FieldDeletedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *KBArticleMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case kbarticle.FieldTenantID:
+		return m.TenantID()
+	case kbarticle.FieldAuthorID:
+		return m.AuthorID()
+	case kbarticle.FieldTitle:
+		return m.Title()
+	case kbarticle.FieldSlug:
+		return m.Slug()
+	case kbarticle.FieldContent:
+		return m.Content()
+	case kbarticle.FieldExcerpt:
+		return m.Excerpt()
+	case kbarticle.FieldCategory:
+		return m.Category()
+	case kbarticle.FieldTags:
+		return m.Tags()
+	case kbarticle.FieldStatus:
+		return m.Status()
+	case kbarticle.FieldIsPublic:
+		return m.IsPublic()
+	case kbarticle.FieldViewCount:
+		return m.ViewCount()
+	case kbarticle.FieldHelpfulCount:
+		return m.HelpfulCount()
+	case kbarticle.FieldNotHelpfulCount:
+		return m.NotHelpfulCount()
+	case kbarticle.FieldMetadata:
+		return m.Metadata()
+	case kbarticle.FieldPublishedAt:
+		return m.PublishedAt()
+	case kbarticle.FieldCreatedAt:
+		return m.CreatedAt()
+	case kbarticle.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case kbarticle.FieldDeletedAt:
+		return m.DeletedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *KBArticleMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case kbarticle.FieldTenantID:
+		return m.OldTenantID(ctx)
+	case kbarticle.FieldAuthorID:
+		return m.OldAuthorID(ctx)
+	case kbarticle.FieldTitle:
+		return m.OldTitle(ctx)
+	case kbarticle.FieldSlug:
+		return m.OldSlug(ctx)
+	case kbarticle.FieldContent:
+		return m.OldContent(ctx)
+	case kbarticle.FieldExcerpt:
+		return m.OldExcerpt(ctx)
+	case kbarticle.FieldCategory:
+		return m.OldCategory(ctx)
+	case kbarticle.FieldTags:
+		return m.OldTags(ctx)
+	case kbarticle.FieldStatus:
+		return m.OldStatus(ctx)
+	case kbarticle.FieldIsPublic:
+		return m.OldIsPublic(ctx)
+	case kbarticle.FieldViewCount:
+		return m.OldViewCount(ctx)
+	case kbarticle.FieldHelpfulCount:
+		return m.OldHelpfulCount(ctx)
+	case kbarticle.FieldNotHelpfulCount:
+		return m.OldNotHelpfulCount(ctx)
+	case kbarticle.FieldMetadata:
+		return m.OldMetadata(ctx)
+	case kbarticle.FieldPublishedAt:
+		return m.OldPublishedAt(ctx)
+	case kbarticle.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case kbarticle.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case kbarticle.FieldDeletedAt:
+		return m.OldDeletedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown KBArticle field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *KBArticleMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case kbarticle.FieldTenantID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTenantID(v)
+		return nil
+	case kbarticle.FieldAuthorID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAuthorID(v)
+		return nil
+	case kbarticle.FieldTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTitle(v)
+		return nil
+	case kbarticle.FieldSlug:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSlug(v)
+		return nil
+	case kbarticle.FieldContent:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContent(v)
+		return nil
+	case kbarticle.FieldExcerpt:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExcerpt(v)
+		return nil
+	case kbarticle.FieldCategory:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCategory(v)
+		return nil
+	case kbarticle.FieldTags:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTags(v)
+		return nil
+	case kbarticle.FieldStatus:
+		v, ok := value.(kbarticle.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case kbarticle.FieldIsPublic:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsPublic(v)
+		return nil
+	case kbarticle.FieldViewCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetViewCount(v)
+		return nil
+	case kbarticle.FieldHelpfulCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHelpfulCount(v)
+		return nil
+	case kbarticle.FieldNotHelpfulCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNotHelpfulCount(v)
+		return nil
+	case kbarticle.FieldMetadata:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMetadata(v)
+		return nil
+	case kbarticle.FieldPublishedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPublishedAt(v)
+		return nil
+	case kbarticle.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case kbarticle.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case kbarticle.FieldDeletedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDeletedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown KBArticle field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *KBArticleMutation) AddedFields() []string {
+	var fields []string
+	if m.addview_count != nil {
+		fields = append(fields, kbarticle.FieldViewCount)
+	}
+	if m.addhelpful_count != nil {
+		fields = append(fields, kbarticle.FieldHelpfulCount)
+	}
+	if m.addnot_helpful_count != nil {
+		fields = append(fields, kbarticle.FieldNotHelpfulCount)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *KBArticleMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case kbarticle.FieldViewCount:
+		return m.AddedViewCount()
+	case kbarticle.FieldHelpfulCount:
+		return m.AddedHelpfulCount()
+	case kbarticle.FieldNotHelpfulCount:
+		return m.AddedNotHelpfulCount()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *KBArticleMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case kbarticle.FieldViewCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddViewCount(v)
+		return nil
+	case kbarticle.FieldHelpfulCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddHelpfulCount(v)
+		return nil
+	case kbarticle.FieldNotHelpfulCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddNotHelpfulCount(v)
+		return nil
+	}
+	return fmt.Errorf("unknown KBArticle numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *KBArticleMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(kbarticle.FieldExcerpt) {
+		fields = append(fields, kbarticle.FieldExcerpt)
+	}
+	if m.FieldCleared(kbarticle.FieldCategory) {
+		fields = append(fields, kbarticle.FieldCategory)
+	}
+	if m.FieldCleared(kbarticle.FieldTags) {
+		fields = append(fields, kbarticle.FieldTags)
+	}
+	if m.FieldCleared(kbarticle.FieldMetadata) {
+		fields = append(fields, kbarticle.FieldMetadata)
+	}
+	if m.FieldCleared(kbarticle.FieldPublishedAt) {
+		fields = append(fields, kbarticle.FieldPublishedAt)
+	}
+	if m.FieldCleared(kbarticle.FieldDeletedAt) {
+		fields = append(fields, kbarticle.FieldDeletedAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *KBArticleMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *KBArticleMutation) ClearField(name string) error {
+	switch name {
+	case kbarticle.FieldExcerpt:
+		m.ClearExcerpt()
+		return nil
+	case kbarticle.FieldCategory:
+		m.ClearCategory()
+		return nil
+	case kbarticle.FieldTags:
+		m.ClearTags()
+		return nil
+	case kbarticle.FieldMetadata:
+		m.ClearMetadata()
+		return nil
+	case kbarticle.FieldPublishedAt:
+		m.ClearPublishedAt()
+		return nil
+	case kbarticle.FieldDeletedAt:
+		m.ClearDeletedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown KBArticle nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *KBArticleMutation) ResetField(name string) error {
+	switch name {
+	case kbarticle.FieldTenantID:
+		m.ResetTenantID()
+		return nil
+	case kbarticle.FieldAuthorID:
+		m.ResetAuthorID()
+		return nil
+	case kbarticle.FieldTitle:
+		m.ResetTitle()
+		return nil
+	case kbarticle.FieldSlug:
+		m.ResetSlug()
+		return nil
+	case kbarticle.FieldContent:
+		m.ResetContent()
+		return nil
+	case kbarticle.FieldExcerpt:
+		m.ResetExcerpt()
+		return nil
+	case kbarticle.FieldCategory:
+		m.ResetCategory()
+		return nil
+	case kbarticle.FieldTags:
+		m.ResetTags()
+		return nil
+	case kbarticle.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case kbarticle.FieldIsPublic:
+		m.ResetIsPublic()
+		return nil
+	case kbarticle.FieldViewCount:
+		m.ResetViewCount()
+		return nil
+	case kbarticle.FieldHelpfulCount:
+		m.ResetHelpfulCount()
+		return nil
+	case kbarticle.FieldNotHelpfulCount:
+		m.ResetNotHelpfulCount()
+		return nil
+	case kbarticle.FieldMetadata:
+		m.ResetMetadata()
+		return nil
+	case kbarticle.FieldPublishedAt:
+		m.ResetPublishedAt()
+		return nil
+	case kbarticle.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case kbarticle.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case kbarticle.FieldDeletedAt:
+		m.ResetDeletedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown KBArticle field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *KBArticleMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *KBArticleMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *KBArticleMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *KBArticleMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *KBArticleMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *KBArticleMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *KBArticleMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown KBArticle unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *KBArticleMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown KBArticle edge %s", name)
 }
 
 // OutboxEventMutation represents an operation that mutates the OutboxEvent nodes in the graph.
@@ -4624,6 +6112,8 @@ type TicketMutation struct {
 	channel                 *ticket.Channel
 	order_id                *uuid.UUID
 	external_reference      *string
+	crm_contact_id          *uuid.UUID
+	crm_lead_id             *uuid.UUID
 	sla_response_due_at     *time.Time
 	sla_resolution_due_at   *time.Time
 	sla_response_breached   *bool
@@ -5292,6 +6782,104 @@ func (m *TicketMutation) ExternalReferenceCleared() bool {
 func (m *TicketMutation) ResetExternalReference() {
 	m.external_reference = nil
 	delete(m.clearedFields, ticket.FieldExternalReference)
+}
+
+// SetCrmContactID sets the "crm_contact_id" field.
+func (m *TicketMutation) SetCrmContactID(u uuid.UUID) {
+	m.crm_contact_id = &u
+}
+
+// CrmContactID returns the value of the "crm_contact_id" field in the mutation.
+func (m *TicketMutation) CrmContactID() (r uuid.UUID, exists bool) {
+	v := m.crm_contact_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCrmContactID returns the old "crm_contact_id" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldCrmContactID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCrmContactID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCrmContactID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCrmContactID: %w", err)
+	}
+	return oldValue.CrmContactID, nil
+}
+
+// ClearCrmContactID clears the value of the "crm_contact_id" field.
+func (m *TicketMutation) ClearCrmContactID() {
+	m.crm_contact_id = nil
+	m.clearedFields[ticket.FieldCrmContactID] = struct{}{}
+}
+
+// CrmContactIDCleared returns if the "crm_contact_id" field was cleared in this mutation.
+func (m *TicketMutation) CrmContactIDCleared() bool {
+	_, ok := m.clearedFields[ticket.FieldCrmContactID]
+	return ok
+}
+
+// ResetCrmContactID resets all changes to the "crm_contact_id" field.
+func (m *TicketMutation) ResetCrmContactID() {
+	m.crm_contact_id = nil
+	delete(m.clearedFields, ticket.FieldCrmContactID)
+}
+
+// SetCrmLeadID sets the "crm_lead_id" field.
+func (m *TicketMutation) SetCrmLeadID(u uuid.UUID) {
+	m.crm_lead_id = &u
+}
+
+// CrmLeadID returns the value of the "crm_lead_id" field in the mutation.
+func (m *TicketMutation) CrmLeadID() (r uuid.UUID, exists bool) {
+	v := m.crm_lead_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCrmLeadID returns the old "crm_lead_id" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldCrmLeadID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCrmLeadID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCrmLeadID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCrmLeadID: %w", err)
+	}
+	return oldValue.CrmLeadID, nil
+}
+
+// ClearCrmLeadID clears the value of the "crm_lead_id" field.
+func (m *TicketMutation) ClearCrmLeadID() {
+	m.crm_lead_id = nil
+	m.clearedFields[ticket.FieldCrmLeadID] = struct{}{}
+}
+
+// CrmLeadIDCleared returns if the "crm_lead_id" field was cleared in this mutation.
+func (m *TicketMutation) CrmLeadIDCleared() bool {
+	_, ok := m.clearedFields[ticket.FieldCrmLeadID]
+	return ok
+}
+
+// ResetCrmLeadID resets all changes to the "crm_lead_id" field.
+func (m *TicketMutation) ResetCrmLeadID() {
+	m.crm_lead_id = nil
+	delete(m.clearedFields, ticket.FieldCrmLeadID)
 }
 
 // SetSLAResponseDueAt sets the "sla_response_due_at" field.
@@ -6196,7 +7784,7 @@ func (m *TicketMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TicketMutation) Fields() []string {
-	fields := make([]string, 0, 28)
+	fields := make([]string, 0, 30)
 	if m.tenant_id != nil {
 		fields = append(fields, ticket.FieldTenantID)
 	}
@@ -6235,6 +7823,12 @@ func (m *TicketMutation) Fields() []string {
 	}
 	if m.external_reference != nil {
 		fields = append(fields, ticket.FieldExternalReference)
+	}
+	if m.crm_contact_id != nil {
+		fields = append(fields, ticket.FieldCrmContactID)
+	}
+	if m.crm_lead_id != nil {
+		fields = append(fields, ticket.FieldCrmLeadID)
 	}
 	if m.sla_response_due_at != nil {
 		fields = append(fields, ticket.FieldSLAResponseDueAt)
@@ -6315,6 +7909,10 @@ func (m *TicketMutation) Field(name string) (ent.Value, bool) {
 		return m.OrderID()
 	case ticket.FieldExternalReference:
 		return m.ExternalReference()
+	case ticket.FieldCrmContactID:
+		return m.CrmContactID()
+	case ticket.FieldCrmLeadID:
+		return m.CrmLeadID()
 	case ticket.FieldSLAResponseDueAt:
 		return m.SLAResponseDueAt()
 	case ticket.FieldSLAResolutionDueAt:
@@ -6380,6 +7978,10 @@ func (m *TicketMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldOrderID(ctx)
 	case ticket.FieldExternalReference:
 		return m.OldExternalReference(ctx)
+	case ticket.FieldCrmContactID:
+		return m.OldCrmContactID(ctx)
+	case ticket.FieldCrmLeadID:
+		return m.OldCrmLeadID(ctx)
 	case ticket.FieldSLAResponseDueAt:
 		return m.OldSLAResponseDueAt(ctx)
 	case ticket.FieldSLAResolutionDueAt:
@@ -6509,6 +8111,20 @@ func (m *TicketMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetExternalReference(v)
+		return nil
+	case ticket.FieldCrmContactID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCrmContactID(v)
+		return nil
+	case ticket.FieldCrmLeadID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCrmLeadID(v)
 		return nil
 	case ticket.FieldSLAResponseDueAt:
 		v, ok := value.(time.Time)
@@ -6675,6 +8291,12 @@ func (m *TicketMutation) ClearedFields() []string {
 	if m.FieldCleared(ticket.FieldExternalReference) {
 		fields = append(fields, ticket.FieldExternalReference)
 	}
+	if m.FieldCleared(ticket.FieldCrmContactID) {
+		fields = append(fields, ticket.FieldCrmContactID)
+	}
+	if m.FieldCleared(ticket.FieldCrmLeadID) {
+		fields = append(fields, ticket.FieldCrmLeadID)
+	}
 	if m.FieldCleared(ticket.FieldSLAResponseDueAt) {
 		fields = append(fields, ticket.FieldSLAResponseDueAt)
 	}
@@ -6733,6 +8355,12 @@ func (m *TicketMutation) ClearField(name string) error {
 		return nil
 	case ticket.FieldExternalReference:
 		m.ClearExternalReference()
+		return nil
+	case ticket.FieldCrmContactID:
+		m.ClearCrmContactID()
+		return nil
+	case ticket.FieldCrmLeadID:
+		m.ClearCrmLeadID()
 		return nil
 	case ticket.FieldSLAResponseDueAt:
 		m.ClearSLAResponseDueAt()
@@ -6810,6 +8438,12 @@ func (m *TicketMutation) ResetField(name string) error {
 		return nil
 	case ticket.FieldExternalReference:
 		m.ResetExternalReference()
+		return nil
+	case ticket.FieldCrmContactID:
+		m.ResetCrmContactID()
+		return nil
+	case ticket.FieldCrmLeadID:
+		m.ResetCrmLeadID()
 		return nil
 	case ticket.FieldSLAResponseDueAt:
 		m.ResetSLAResponseDueAt()

@@ -77,6 +77,8 @@ type Ticket struct {
 	Channel              TicketChannel   `json:"channel"`
 	OrderID              *uuid.UUID      `json:"order_id,omitempty"`
 	ExternalReference    string          `json:"external_reference,omitempty"`
+	CRMContactID         *uuid.UUID      `json:"crm_contact_id,omitempty"`
+	CRMLeadID            *uuid.UUID      `json:"crm_lead_id,omitempty"`
 	SLAResponseDueAt     *time.Time      `json:"sla_response_due_at,omitempty"`
 	SLAResolutionDueAt   *time.Time      `json:"sla_resolution_due_at,omitempty"`
 	SLAResponseBreached  bool            `json:"sla_response_breached"`
@@ -149,6 +151,8 @@ type CreateTicketRequest struct {
 	Channel           TicketChannel   `json:"channel,omitempty"`
 	OrderID           *uuid.UUID      `json:"order_id,omitempty"`
 	ExternalReference string          `json:"external_reference,omitempty"`
+	CRMContactID      *uuid.UUID      `json:"crm_contact_id,omitempty"`
+	CRMLeadID         *uuid.UUID      `json:"crm_lead_id,omitempty"`
 	Tags              []string        `json:"tags,omitempty"`
 	Metadata          map[string]any  `json:"metadata,omitempty"`
 }
@@ -200,6 +204,33 @@ type UpdateCategoryRequest struct {
 	SortOrder   *int           `json:"sort_order,omitempty"`
 	IsActive    *bool          `json:"is_active,omitempty"`
 	Metadata    map[string]any `json:"metadata,omitempty"`
+}
+
+// CreatePublicTicketRequest is the payload for unauthenticated ticket creation.
+type CreatePublicTicketRequest struct {
+	TenantID    uuid.UUID      `json:"-"`
+	CustomerEmail string       `json:"email"`
+	CustomerName  string       `json:"name"`
+	Subject       string       `json:"subject"`
+	Description   string       `json:"description"`
+	CategoryID    *uuid.UUID   `json:"category_id,omitempty"`
+	Channel       TicketChannel `json:"channel,omitempty"`
+	OrderID       *uuid.UUID   `json:"order_id,omitempty"`
+}
+
+// PublicTicketResponse is the slim response returned to unauthenticated callers.
+type PublicTicketResponse struct {
+	TicketID     uuid.UUID    `json:"ticket_id"`
+	TicketNumber string       `json:"ticket_number"`
+	Status       TicketStatus `json:"status"`
+}
+
+// AddPublicCommentRequest is the payload for an unauthenticated customer reply.
+type AddPublicCommentRequest struct {
+	TenantID      uuid.UUID `json:"-"`
+	TicketID      uuid.UUID `json:"-"`
+	CustomerEmail string    `json:"-"` // verified by OTP
+	Content       string    `json:"content"`
 }
 
 // Filter types

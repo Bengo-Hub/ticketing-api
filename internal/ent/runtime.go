@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
+	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
 	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
 	"github.com/bengobox/ticketing-service/internal/ent/schema"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
@@ -75,6 +76,86 @@ func init() {
 	agentDescID := agentFields[0].Descriptor()
 	// agent.DefaultID holds the default value on creation for the id field.
 	agent.DefaultID = agentDescID.Default.(func() uuid.UUID)
+	kbarticleFields := schema.KBArticle{}.Fields()
+	_ = kbarticleFields
+	// kbarticleDescTitle is the schema descriptor for title field.
+	kbarticleDescTitle := kbarticleFields[3].Descriptor()
+	// kbarticle.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	kbarticle.TitleValidator = func() func(string) error {
+		validators := kbarticleDescTitle.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(title string) error {
+			for _, fn := range fns {
+				if err := fn(title); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// kbarticleDescSlug is the schema descriptor for slug field.
+	kbarticleDescSlug := kbarticleFields[4].Descriptor()
+	// kbarticle.SlugValidator is a validator for the "slug" field. It is called by the builders before save.
+	kbarticle.SlugValidator = func() func(string) error {
+		validators := kbarticleDescSlug.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(slug string) error {
+			for _, fn := range fns {
+				if err := fn(slug); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// kbarticleDescContent is the schema descriptor for content field.
+	kbarticleDescContent := kbarticleFields[5].Descriptor()
+	// kbarticle.ContentValidator is a validator for the "content" field. It is called by the builders before save.
+	kbarticle.ContentValidator = kbarticleDescContent.Validators[0].(func(string) error)
+	// kbarticleDescExcerpt is the schema descriptor for excerpt field.
+	kbarticleDescExcerpt := kbarticleFields[6].Descriptor()
+	// kbarticle.ExcerptValidator is a validator for the "excerpt" field. It is called by the builders before save.
+	kbarticle.ExcerptValidator = kbarticleDescExcerpt.Validators[0].(func(string) error)
+	// kbarticleDescCategory is the schema descriptor for category field.
+	kbarticleDescCategory := kbarticleFields[7].Descriptor()
+	// kbarticle.CategoryValidator is a validator for the "category" field. It is called by the builders before save.
+	kbarticle.CategoryValidator = kbarticleDescCategory.Validators[0].(func(string) error)
+	// kbarticleDescIsPublic is the schema descriptor for is_public field.
+	kbarticleDescIsPublic := kbarticleFields[10].Descriptor()
+	// kbarticle.DefaultIsPublic holds the default value on creation for the is_public field.
+	kbarticle.DefaultIsPublic = kbarticleDescIsPublic.Default.(bool)
+	// kbarticleDescViewCount is the schema descriptor for view_count field.
+	kbarticleDescViewCount := kbarticleFields[11].Descriptor()
+	// kbarticle.DefaultViewCount holds the default value on creation for the view_count field.
+	kbarticle.DefaultViewCount = kbarticleDescViewCount.Default.(int)
+	// kbarticleDescHelpfulCount is the schema descriptor for helpful_count field.
+	kbarticleDescHelpfulCount := kbarticleFields[12].Descriptor()
+	// kbarticle.DefaultHelpfulCount holds the default value on creation for the helpful_count field.
+	kbarticle.DefaultHelpfulCount = kbarticleDescHelpfulCount.Default.(int)
+	// kbarticleDescNotHelpfulCount is the schema descriptor for not_helpful_count field.
+	kbarticleDescNotHelpfulCount := kbarticleFields[13].Descriptor()
+	// kbarticle.DefaultNotHelpfulCount holds the default value on creation for the not_helpful_count field.
+	kbarticle.DefaultNotHelpfulCount = kbarticleDescNotHelpfulCount.Default.(int)
+	// kbarticleDescCreatedAt is the schema descriptor for created_at field.
+	kbarticleDescCreatedAt := kbarticleFields[16].Descriptor()
+	// kbarticle.DefaultCreatedAt holds the default value on creation for the created_at field.
+	kbarticle.DefaultCreatedAt = kbarticleDescCreatedAt.Default.(func() time.Time)
+	// kbarticleDescUpdatedAt is the schema descriptor for updated_at field.
+	kbarticleDescUpdatedAt := kbarticleFields[17].Descriptor()
+	// kbarticle.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	kbarticle.DefaultUpdatedAt = kbarticleDescUpdatedAt.Default.(func() time.Time)
+	// kbarticle.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	kbarticle.UpdateDefaultUpdatedAt = kbarticleDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// kbarticleDescID is the schema descriptor for id field.
+	kbarticleDescID := kbarticleFields[0].Descriptor()
+	// kbarticle.DefaultID holds the default value on creation for the id field.
+	kbarticle.DefaultID = kbarticleDescID.Default.(func() uuid.UUID)
 	outboxeventFields := schema.OutboxEvent{}.Fields()
 	_ = outboxeventFields
 	// outboxeventDescAggregateType is the schema descriptor for aggregate_type field.
@@ -222,23 +303,23 @@ func init() {
 	// ticket.ExternalReferenceValidator is a validator for the "external_reference" field. It is called by the builders before save.
 	ticket.ExternalReferenceValidator = ticketDescExternalReference.Validators[0].(func(string) error)
 	// ticketDescSLAResponseBreached is the schema descriptor for sla_response_breached field.
-	ticketDescSLAResponseBreached := ticketFields[16].Descriptor()
+	ticketDescSLAResponseBreached := ticketFields[18].Descriptor()
 	// ticket.DefaultSLAResponseBreached holds the default value on creation for the sla_response_breached field.
 	ticket.DefaultSLAResponseBreached = ticketDescSLAResponseBreached.Default.(bool)
 	// ticketDescSLAResolutionBreached is the schema descriptor for sla_resolution_breached field.
-	ticketDescSLAResolutionBreached := ticketFields[17].Descriptor()
+	ticketDescSLAResolutionBreached := ticketFields[19].Descriptor()
 	// ticket.DefaultSLAResolutionBreached holds the default value on creation for the sla_resolution_breached field.
 	ticket.DefaultSLAResolutionBreached = ticketDescSLAResolutionBreached.Default.(bool)
 	// ticketDescEscalationLevel is the schema descriptor for escalation_level field.
-	ticketDescEscalationLevel := ticketFields[22].Descriptor()
+	ticketDescEscalationLevel := ticketFields[24].Descriptor()
 	// ticket.DefaultEscalationLevel holds the default value on creation for the escalation_level field.
 	ticket.DefaultEscalationLevel = ticketDescEscalationLevel.Default.(int)
 	// ticketDescCreatedAt is the schema descriptor for created_at field.
-	ticketDescCreatedAt := ticketFields[26].Descriptor()
+	ticketDescCreatedAt := ticketFields[28].Descriptor()
 	// ticket.DefaultCreatedAt holds the default value on creation for the created_at field.
 	ticket.DefaultCreatedAt = ticketDescCreatedAt.Default.(func() time.Time)
 	// ticketDescUpdatedAt is the schema descriptor for updated_at field.
-	ticketDescUpdatedAt := ticketFields[27].Descriptor()
+	ticketDescUpdatedAt := ticketFields[29].Descriptor()
 	// ticket.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	ticket.DefaultUpdatedAt = ticketDescUpdatedAt.Default.(func() time.Time)
 	// ticket.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

@@ -47,6 +47,10 @@ type Ticket struct {
 	OrderID *uuid.UUID `json:"order_id,omitempty"`
 	// External reference ID
 	ExternalReference string `json:"external_reference,omitempty"`
+	// MarketFlow CRM contact reference — never duplicate contact data here
+	CrmContactID *uuid.UUID `json:"crm_contact_id,omitempty"`
+	// MarketFlow CRM lead reference
+	CrmLeadID *uuid.UUID `json:"crm_lead_id,omitempty"`
 	// SLA first response deadline
 	SLAResponseDueAt *time.Time `json:"sla_response_due_at,omitempty"`
 	// SLA resolution deadline
@@ -143,7 +147,7 @@ func (*Ticket) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case ticket.FieldCategoryID, ticket.FieldAssignedAgentID, ticket.FieldAssignedTeamID, ticket.FieldOrderID:
+		case ticket.FieldCategoryID, ticket.FieldAssignedAgentID, ticket.FieldAssignedTeamID, ticket.FieldOrderID, ticket.FieldCrmContactID, ticket.FieldCrmLeadID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case ticket.FieldTags, ticket.FieldMetadata:
 			values[i] = new([]byte)
@@ -259,6 +263,20 @@ func (_m *Ticket) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field external_reference", values[i])
 			} else if value.Valid {
 				_m.ExternalReference = value.String
+			}
+		case ticket.FieldCrmContactID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field crm_contact_id", values[i])
+			} else if value.Valid {
+				_m.CrmContactID = new(uuid.UUID)
+				*_m.CrmContactID = *value.S.(*uuid.UUID)
+			}
+		case ticket.FieldCrmLeadID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field crm_lead_id", values[i])
+			} else if value.Valid {
+				_m.CrmLeadID = new(uuid.UUID)
+				*_m.CrmLeadID = *value.S.(*uuid.UUID)
 			}
 		case ticket.FieldSLAResponseDueAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -464,6 +482,16 @@ func (_m *Ticket) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("external_reference=")
 	builder.WriteString(_m.ExternalReference)
+	builder.WriteString(", ")
+	if v := _m.CrmContactID; v != nil {
+		builder.WriteString("crm_contact_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.CrmLeadID; v != nil {
+		builder.WriteString("crm_lead_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	if v := _m.SLAResponseDueAt; v != nil {
 		builder.WriteString("sla_response_due_at=")

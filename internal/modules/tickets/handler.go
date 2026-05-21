@@ -3,6 +3,7 @@ package tickets
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	pagination "github.com/Bengo-Hub/pagination"
 	authclient "github.com/Bengo-Hub/shared-auth-client"
@@ -58,6 +59,9 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		// Attachments
 		tickets.Get("/{ticketId}/attachments", h.ListAttachments)
 	})
+
+	// AI routing helpers
+	r.Post("/tickets/classify", h.ClassifyTicket)
 
 	// Categories
 	r.Route("/categories", func(categories chi.Router) {
@@ -712,6 +716,85 @@ func (h *Handler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+}
+
+// ClassifyTicket is an AI routing helper endpoint. It accepts a subject and
+// description and returns a suggested priority and category hint based on
+// keyword heuristics. A more sophisticated AI classifier can replace this
+// logic later without changing the contract.
+func (h *Handler) ClassifyTicket(w http.ResponseWriter, r *http.Request) {
+	claims, ok := authclient.ClaimsFromContext(r.Context())
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	_, err := claims.TenantUUID()
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "tenant ID required")
+		return
+	}
+
+	var req struct {
+		Subject     string `json:"subject"`
+		Description string `json:"description"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.Subject == "" && req.Description == "" {
+		respondError(w, http.StatusBadRequest, "subject or description required")
+		return
+	}
+
+	priority, categoryHint := classifyTicketText(req.Subject + " " + req.Description)
+
+	respondJSON(w, http.StatusOK, map[string]any{
+		"suggested_priority":      priority,
+		"suggested_category_hint": categoryHint,
+	})
+}
+
+// classifyTicketText applies simple keyword heuristics to suggest a priority
+// and category hint for AI routing. Replace with an LLM call as needed.
+func classifyTicketText(text string) (TicketPriority, string) {
+	lower := strings.ToLower(text)
+
+	priority := PriorityNormal
+	switch {
+	case containsAny(lower, "urgent", "critical", "down", "outage", "breach", "emergency"):
+		priority = PriorityUrgent
+	case containsAny(lower, "high", "asap", "immediately", "blocked"):
+		priority = PriorityHigh
+	case containsAny(lower, "low", "minor", "whenever", "no rush"):
+		priority = PriorityLow
+	}
+
+	categoryHint := "general"
+	switch {
+	case containsAny(lower, "payment", "invoice", "billing", "charge", "refund"):
+		categoryHint = "billing"
+	case containsAny(lower, "login", "password", "access", "auth", "account"):
+		categoryHint = "account"
+	case containsAny(lower, "bug", "error", "crash", "broken", "not working"):
+		categoryHint = "technical"
+	case containsAny(lower, "feature", "request", "enhancement", "suggestion"):
+		categoryHint = "feature_request"
+	case containsAny(lower, "delivery", "shipping", "order", "tracking"):
+		categoryHint = "order"
+	}
+
+	return priority, categoryHint
+}
+
+func containsAny(s string, keywords ...string) bool {
+	for _, kw := range keywords {
+		if strings.Contains(s, kw) {
+			return true
+		}
+	}
+	return false
 }
 
 // Helper functions

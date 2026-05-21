@@ -17,6 +17,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
+	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
 	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
 	"github.com/bengobox/ticketing-service/internal/ent/team"
@@ -33,6 +34,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// Agent is the client for interacting with the Agent builders.
 	Agent *AgentClient
+	// KBArticle is the client for interacting with the KBArticle builders.
+	KBArticle *KBArticleClient
 	// OutboxEvent is the client for interacting with the OutboxEvent builders.
 	OutboxEvent *OutboxEventClient
 	// SLAPolicy is the client for interacting with the SLAPolicy builders.
@@ -59,6 +62,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Agent = NewAgentClient(c.config)
+	c.KBArticle = NewKBArticleClient(c.config)
 	c.OutboxEvent = NewOutboxEventClient(c.config)
 	c.SLAPolicy = NewSLAPolicyClient(c.config)
 	c.Team = NewTeamClient(c.config)
@@ -159,6 +163,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:              ctx,
 		config:           cfg,
 		Agent:            NewAgentClient(cfg),
+		KBArticle:        NewKBArticleClient(cfg),
 		OutboxEvent:      NewOutboxEventClient(cfg),
 		SLAPolicy:        NewSLAPolicyClient(cfg),
 		Team:             NewTeamClient(cfg),
@@ -186,6 +191,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ctx:              ctx,
 		config:           cfg,
 		Agent:            NewAgentClient(cfg),
+		KBArticle:        NewKBArticleClient(cfg),
 		OutboxEvent:      NewOutboxEventClient(cfg),
 		SLAPolicy:        NewSLAPolicyClient(cfg),
 		Team:             NewTeamClient(cfg),
@@ -222,8 +228,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Agent, c.OutboxEvent, c.SLAPolicy, c.Team, c.Ticket, c.TicketAttachment,
-		c.TicketCategory, c.TicketComment,
+		c.Agent, c.KBArticle, c.OutboxEvent, c.SLAPolicy, c.Team, c.Ticket,
+		c.TicketAttachment, c.TicketCategory, c.TicketComment,
 	} {
 		n.Use(hooks...)
 	}
@@ -233,8 +239,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Agent, c.OutboxEvent, c.SLAPolicy, c.Team, c.Ticket, c.TicketAttachment,
-		c.TicketCategory, c.TicketComment,
+		c.Agent, c.KBArticle, c.OutboxEvent, c.SLAPolicy, c.Team, c.Ticket,
+		c.TicketAttachment, c.TicketCategory, c.TicketComment,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -245,6 +251,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *AgentMutation:
 		return c.Agent.mutate(ctx, m)
+	case *KBArticleMutation:
+		return c.KBArticle.mutate(ctx, m)
 	case *OutboxEventMutation:
 		return c.OutboxEvent.mutate(ctx, m)
 	case *SLAPolicyMutation:
@@ -426,6 +434,139 @@ func (c *AgentClient) mutate(ctx context.Context, m *AgentMutation) (Value, erro
 		return (&AgentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Agent mutation op: %q", m.Op())
+	}
+}
+
+// KBArticleClient is a client for the KBArticle schema.
+type KBArticleClient struct {
+	config
+}
+
+// NewKBArticleClient returns a client for the KBArticle from the given config.
+func NewKBArticleClient(c config) *KBArticleClient {
+	return &KBArticleClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `kbarticle.Hooks(f(g(h())))`.
+func (c *KBArticleClient) Use(hooks ...Hook) {
+	c.hooks.KBArticle = append(c.hooks.KBArticle, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `kbarticle.Intercept(f(g(h())))`.
+func (c *KBArticleClient) Intercept(interceptors ...Interceptor) {
+	c.inters.KBArticle = append(c.inters.KBArticle, interceptors...)
+}
+
+// Create returns a builder for creating a KBArticle entity.
+func (c *KBArticleClient) Create() *KBArticleCreate {
+	mutation := newKBArticleMutation(c.config, OpCreate)
+	return &KBArticleCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of KBArticle entities.
+func (c *KBArticleClient) CreateBulk(builders ...*KBArticleCreate) *KBArticleCreateBulk {
+	return &KBArticleCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *KBArticleClient) MapCreateBulk(slice any, setFunc func(*KBArticleCreate, int)) *KBArticleCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &KBArticleCreateBulk{err: fmt.Errorf("calling to KBArticleClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*KBArticleCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &KBArticleCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for KBArticle.
+func (c *KBArticleClient) Update() *KBArticleUpdate {
+	mutation := newKBArticleMutation(c.config, OpUpdate)
+	return &KBArticleUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *KBArticleClient) UpdateOne(_m *KBArticle) *KBArticleUpdateOne {
+	mutation := newKBArticleMutation(c.config, OpUpdateOne, withKBArticle(_m))
+	return &KBArticleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *KBArticleClient) UpdateOneID(id uuid.UUID) *KBArticleUpdateOne {
+	mutation := newKBArticleMutation(c.config, OpUpdateOne, withKBArticleID(id))
+	return &KBArticleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for KBArticle.
+func (c *KBArticleClient) Delete() *KBArticleDelete {
+	mutation := newKBArticleMutation(c.config, OpDelete)
+	return &KBArticleDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *KBArticleClient) DeleteOne(_m *KBArticle) *KBArticleDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *KBArticleClient) DeleteOneID(id uuid.UUID) *KBArticleDeleteOne {
+	builder := c.Delete().Where(kbarticle.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &KBArticleDeleteOne{builder}
+}
+
+// Query returns a query builder for KBArticle.
+func (c *KBArticleClient) Query() *KBArticleQuery {
+	return &KBArticleQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeKBArticle},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a KBArticle entity by its id.
+func (c *KBArticleClient) Get(ctx context.Context, id uuid.UUID) (*KBArticle, error) {
+	return c.Query().Where(kbarticle.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *KBArticleClient) GetX(ctx context.Context, id uuid.UUID) *KBArticle {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *KBArticleClient) Hooks() []Hook {
+	return c.hooks.KBArticle
+}
+
+// Interceptors returns the client interceptors.
+func (c *KBArticleClient) Interceptors() []Interceptor {
+	return c.inters.KBArticle
+}
+
+func (c *KBArticleClient) mutate(ctx context.Context, m *KBArticleMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&KBArticleCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&KBArticleUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&KBArticleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&KBArticleDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown KBArticle mutation op: %q", m.Op())
 	}
 }
 
@@ -1523,11 +1664,11 @@ func (c *TicketCommentClient) mutate(ctx context.Context, m *TicketCommentMutati
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Agent, OutboxEvent, SLAPolicy, Team, Ticket, TicketAttachment, TicketCategory,
-		TicketComment []ent.Hook
+		Agent, KBArticle, OutboxEvent, SLAPolicy, Team, Ticket, TicketAttachment,
+		TicketCategory, TicketComment []ent.Hook
 	}
 	inters struct {
-		Agent, OutboxEvent, SLAPolicy, Team, Ticket, TicketAttachment, TicketCategory,
-		TicketComment []ent.Interceptor
+		Agent, KBArticle, OutboxEvent, SLAPolicy, Team, Ticket, TicketAttachment,
+		TicketCategory, TicketComment []ent.Interceptor
 	}
 )
