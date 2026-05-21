@@ -514,3 +514,35 @@ func (s *Service) isValidStatusTransition(from, to TicketStatus) bool {
 	}
 	return false
 }
+
+// GetAnalytics returns combined ticket analytics: by-status, by-priority, and trend.
+func (s *Service) GetAnalytics(ctx context.Context, tenantID uuid.UUID, days int) (*AnalyticsResponse, error) {
+	if days <= 0 || days > 365 {
+		days = 30
+	}
+	to := time.Now().UTC()
+	from := to.AddDate(0, 0, -days)
+	bucketDays := 1
+	if days > 90 {
+		bucketDays = 7
+	}
+
+	byStatus, err := s.repo.GetTicketCountsByStatus(ctx, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	byPriority, err := s.repo.GetTicketCountsByPriority(ctx, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	trend, err := s.repo.GetTicketTrend(ctx, tenantID, from, to, bucketDays)
+	if err != nil {
+		return nil, err
+	}
+
+	return &AnalyticsResponse{
+		ByStatus:   byStatus,
+		ByPriority: byPriority,
+		Trend:      trend,
+	}, nil
+}

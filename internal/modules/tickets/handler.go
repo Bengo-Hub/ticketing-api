@@ -3,6 +3,7 @@ package tickets
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 
 	pagination "github.com/Bengo-Hub/pagination"
@@ -43,6 +44,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		tickets.Post("/", h.CreateTicket)
 		tickets.Get("/", h.ListTickets)
 		tickets.Get("/stats", h.GetTicketStats)
+		tickets.Get("/analytics", h.GetAnalytics)
 		tickets.Get("/{ticketId}", h.GetTicket)
 		tickets.Get("/number/{ticketNumber}", h.GetTicketByNumber)
 		tickets.Put("/{ticketId}", h.UpdateTicket)
@@ -457,6 +459,46 @@ func (h *Handler) GetTicketStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, map[string]any{"stats": stats})
+}
+
+// GetAnalytics returns combined ticket analytics: counts by status/priority and daily trend.
+// @Summary      Get analytics
+// @Description  Returns ticket counts by status and priority, plus a creation/resolution trend
+// @Tags         tickets
+// @Produce      json
+// @Param        tenant path  string true "Tenant slug"
+// @Param        days   query int    false "Number of days to include in trend (default 30, max 365)"
+// @Success      200 {object} tickets.AnalyticsResponse
+// @Failure      401 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/tickets/analytics [get]
+func (h *Handler) GetAnalytics(w http.ResponseWriter, r *http.Request) {
+	claims, ok := authclient.ClaimsFromContext(r.Context())
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	tenantID, err := claims.TenantUUID()
+	if err != nil || tenantID == nil {
+		respondError(w, http.StatusBadRequest, "tenant ID required")
+		return
+	}
+
+	days := 30
+	if v := r.URL.Query().Get("days"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			days = n
+		}
+	}
+
+	analytics, err := h.service.GetAnalytics(r.Context(), *tenantID, days)
+	if err != nil {
+		h.handleError(w, err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, analytics)
 }
 
 // Comment handlers

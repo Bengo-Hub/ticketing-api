@@ -801,6 +801,73 @@ func (r *EntRepository) GetTicketCountsByStatus(ctx context.Context, tenantID uu
 	return counts, nil
 }
 
+func (r *EntRepository) GetTicketCountsByPriority(ctx context.Context, tenantID uuid.UUID) (map[TicketPriority]int, error) {
+	tickets, err := r.client.Ticket.Query().
+		Where(
+			ticket.TenantID(tenantID),
+			ticket.DeletedAtIsNil(),
+		).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	counts := make(map[TicketPriority]int)
+	for _, t := range tickets {
+		counts[TicketPriority(t.Priority)]++
+	}
+	return counts, nil
+}
+
+func (r *EntRepository) GetTicketTrend(ctx context.Context, tenantID uuid.UUID, from, to time.Time, bucketDays int) ([]TrendPoint, error) {
+	tickets, err := r.client.Ticket.Query().
+		Where(
+			ticket.TenantID(tenantID),
+			ticket.DeletedAtIsNil(),
+			ticket.CreatedAtGTE(from),
+			ticket.CreatedAtLTE(to),
+		).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	type bucket struct{ created, resolved int }
+	buckets := make(map[string]*bucket)
+
+	// Pre-fill buckets so chart shows zeros for empty days
+	for d := from; !d.After(to); d = d.AddDate(0, 0, bucketDays) {
+		key := d.Format("2006-01-02")
+		buckets[key] = &bucket{}
+	}
+
+	bucketKey := func(t time.Time) string {
+		// Round down to nearest bucket boundary from `from`
+		diff := int(t.Sub(from).Hours() / 24)
+		slot := (diff / bucketDays) * bucketDays
+		return from.AddDate(0, 0, slot).Format("2006-01-02")
+	}
+
+	for _, t := range tickets {
+		key := bucketKey(t.CreatedAt)
+		if b, ok := buckets[key]; ok {
+			b.created++
+			if t.Status == ticket.StatusResolved || t.Status == ticket.StatusClosed {
+				b.resolved++
+			}
+		}
+	}
+
+	// Return sorted slice
+	var points []TrendPoint
+	for d := from; !d.After(to); d = d.AddDate(0, 0, bucketDays) {
+		key := d.Format("2006-01-02")
+		b := buckets[key]
+		points = append(points, TrendPoint{Date: key, Created: b.created, Resolved: b.resolved})
+	}
+	return points, nil
+}
+
 func (r *EntRepository) GetAgentTicketCount(ctx context.Context, tenantID uuid.UUID, agentID uuid.UUID) (int, error) {
 	return r.client.Ticket.Query().
 		Where(
