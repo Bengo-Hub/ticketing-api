@@ -19,6 +19,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
 	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
 	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
+	"github.com/bengobox/ticketing-service/internal/ent/routingrule"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
 	"github.com/bengobox/ticketing-service/internal/ent/team"
 	"github.com/bengobox/ticketing-service/internal/ent/ticket"
@@ -38,6 +39,8 @@ type Client struct {
 	KBArticle *KBArticleClient
 	// OutboxEvent is the client for interacting with the OutboxEvent builders.
 	OutboxEvent *OutboxEventClient
+	// RoutingRule is the client for interacting with the RoutingRule builders.
+	RoutingRule *RoutingRuleClient
 	// SLAPolicy is the client for interacting with the SLAPolicy builders.
 	SLAPolicy *SLAPolicyClient
 	// Team is the client for interacting with the Team builders.
@@ -64,6 +67,7 @@ func (c *Client) init() {
 	c.Agent = NewAgentClient(c.config)
 	c.KBArticle = NewKBArticleClient(c.config)
 	c.OutboxEvent = NewOutboxEventClient(c.config)
+	c.RoutingRule = NewRoutingRuleClient(c.config)
 	c.SLAPolicy = NewSLAPolicyClient(c.config)
 	c.Team = NewTeamClient(c.config)
 	c.Ticket = NewTicketClient(c.config)
@@ -165,6 +169,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Agent:            NewAgentClient(cfg),
 		KBArticle:        NewKBArticleClient(cfg),
 		OutboxEvent:      NewOutboxEventClient(cfg),
+		RoutingRule:      NewRoutingRuleClient(cfg),
 		SLAPolicy:        NewSLAPolicyClient(cfg),
 		Team:             NewTeamClient(cfg),
 		Ticket:           NewTicketClient(cfg),
@@ -193,6 +198,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Agent:            NewAgentClient(cfg),
 		KBArticle:        NewKBArticleClient(cfg),
 		OutboxEvent:      NewOutboxEventClient(cfg),
+		RoutingRule:      NewRoutingRuleClient(cfg),
 		SLAPolicy:        NewSLAPolicyClient(cfg),
 		Team:             NewTeamClient(cfg),
 		Ticket:           NewTicketClient(cfg),
@@ -228,8 +234,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Agent, c.KBArticle, c.OutboxEvent, c.SLAPolicy, c.Team, c.Ticket,
-		c.TicketAttachment, c.TicketCategory, c.TicketComment,
+		c.Agent, c.KBArticle, c.OutboxEvent, c.RoutingRule, c.SLAPolicy, c.Team,
+		c.Ticket, c.TicketAttachment, c.TicketCategory, c.TicketComment,
 	} {
 		n.Use(hooks...)
 	}
@@ -239,8 +245,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Agent, c.KBArticle, c.OutboxEvent, c.SLAPolicy, c.Team, c.Ticket,
-		c.TicketAttachment, c.TicketCategory, c.TicketComment,
+		c.Agent, c.KBArticle, c.OutboxEvent, c.RoutingRule, c.SLAPolicy, c.Team,
+		c.Ticket, c.TicketAttachment, c.TicketCategory, c.TicketComment,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -255,6 +261,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.KBArticle.mutate(ctx, m)
 	case *OutboxEventMutation:
 		return c.OutboxEvent.mutate(ctx, m)
+	case *RoutingRuleMutation:
+		return c.RoutingRule.mutate(ctx, m)
 	case *SLAPolicyMutation:
 		return c.SLAPolicy.mutate(ctx, m)
 	case *TeamMutation:
@@ -700,6 +708,139 @@ func (c *OutboxEventClient) mutate(ctx context.Context, m *OutboxEventMutation) 
 		return (&OutboxEventDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown OutboxEvent mutation op: %q", m.Op())
+	}
+}
+
+// RoutingRuleClient is a client for the RoutingRule schema.
+type RoutingRuleClient struct {
+	config
+}
+
+// NewRoutingRuleClient returns a client for the RoutingRule from the given config.
+func NewRoutingRuleClient(c config) *RoutingRuleClient {
+	return &RoutingRuleClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `routingrule.Hooks(f(g(h())))`.
+func (c *RoutingRuleClient) Use(hooks ...Hook) {
+	c.hooks.RoutingRule = append(c.hooks.RoutingRule, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `routingrule.Intercept(f(g(h())))`.
+func (c *RoutingRuleClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RoutingRule = append(c.inters.RoutingRule, interceptors...)
+}
+
+// Create returns a builder for creating a RoutingRule entity.
+func (c *RoutingRuleClient) Create() *RoutingRuleCreate {
+	mutation := newRoutingRuleMutation(c.config, OpCreate)
+	return &RoutingRuleCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RoutingRule entities.
+func (c *RoutingRuleClient) CreateBulk(builders ...*RoutingRuleCreate) *RoutingRuleCreateBulk {
+	return &RoutingRuleCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RoutingRuleClient) MapCreateBulk(slice any, setFunc func(*RoutingRuleCreate, int)) *RoutingRuleCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RoutingRuleCreateBulk{err: fmt.Errorf("calling to RoutingRuleClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RoutingRuleCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RoutingRuleCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RoutingRule.
+func (c *RoutingRuleClient) Update() *RoutingRuleUpdate {
+	mutation := newRoutingRuleMutation(c.config, OpUpdate)
+	return &RoutingRuleUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RoutingRuleClient) UpdateOne(_m *RoutingRule) *RoutingRuleUpdateOne {
+	mutation := newRoutingRuleMutation(c.config, OpUpdateOne, withRoutingRule(_m))
+	return &RoutingRuleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RoutingRuleClient) UpdateOneID(id uuid.UUID) *RoutingRuleUpdateOne {
+	mutation := newRoutingRuleMutation(c.config, OpUpdateOne, withRoutingRuleID(id))
+	return &RoutingRuleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RoutingRule.
+func (c *RoutingRuleClient) Delete() *RoutingRuleDelete {
+	mutation := newRoutingRuleMutation(c.config, OpDelete)
+	return &RoutingRuleDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RoutingRuleClient) DeleteOne(_m *RoutingRule) *RoutingRuleDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RoutingRuleClient) DeleteOneID(id uuid.UUID) *RoutingRuleDeleteOne {
+	builder := c.Delete().Where(routingrule.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RoutingRuleDeleteOne{builder}
+}
+
+// Query returns a query builder for RoutingRule.
+func (c *RoutingRuleClient) Query() *RoutingRuleQuery {
+	return &RoutingRuleQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRoutingRule},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RoutingRule entity by its id.
+func (c *RoutingRuleClient) Get(ctx context.Context, id uuid.UUID) (*RoutingRule, error) {
+	return c.Query().Where(routingrule.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RoutingRuleClient) GetX(ctx context.Context, id uuid.UUID) *RoutingRule {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *RoutingRuleClient) Hooks() []Hook {
+	return c.hooks.RoutingRule
+}
+
+// Interceptors returns the client interceptors.
+func (c *RoutingRuleClient) Interceptors() []Interceptor {
+	return c.inters.RoutingRule
+}
+
+func (c *RoutingRuleClient) mutate(ctx context.Context, m *RoutingRuleMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RoutingRuleCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RoutingRuleUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RoutingRuleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RoutingRuleDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RoutingRule mutation op: %q", m.Op())
 	}
 }
 
@@ -1664,11 +1805,11 @@ func (c *TicketCommentClient) mutate(ctx context.Context, m *TicketCommentMutati
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Agent, KBArticle, OutboxEvent, SLAPolicy, Team, Ticket, TicketAttachment,
-		TicketCategory, TicketComment []ent.Hook
+		Agent, KBArticle, OutboxEvent, RoutingRule, SLAPolicy, Team, Ticket,
+		TicketAttachment, TicketCategory, TicketComment []ent.Hook
 	}
 	inters struct {
-		Agent, KBArticle, OutboxEvent, SLAPolicy, Team, Ticket, TicketAttachment,
-		TicketCategory, TicketComment []ent.Interceptor
+		Agent, KBArticle, OutboxEvent, RoutingRule, SLAPolicy, Team, Ticket,
+		TicketAttachment, TicketCategory, TicketComment []ent.Interceptor
 	}
 )

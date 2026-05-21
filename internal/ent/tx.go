@@ -18,6 +18,8 @@ type Tx struct {
 	KBArticle *KBArticleClient
 	// OutboxEvent is the client for interacting with the OutboxEvent builders.
 	OutboxEvent *OutboxEventClient
+	// RoutingRule is the client for interacting with the RoutingRule builders.
+	RoutingRule *RoutingRuleClient
 	// SLAPolicy is the client for interacting with the SLAPolicy builders.
 	SLAPolicy *SLAPolicyClient
 	// Team is the client for interacting with the Team builders.
@@ -164,6 +166,7 @@ func (tx *Tx) init() {
 	tx.Agent = NewAgentClient(tx.config)
 	tx.KBArticle = NewKBArticleClient(tx.config)
 	tx.OutboxEvent = NewOutboxEventClient(tx.config)
+	tx.RoutingRule = NewRoutingRuleClient(tx.config)
 	tx.SLAPolicy = NewSLAPolicyClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
 	tx.Ticket = NewTicketClient(tx.config)

@@ -202,6 +202,114 @@ definitions:
       title:
         type: string
     type: object
+  internal_modules_routing.Action:
+    properties:
+      type:
+        $ref: '#/definitions/internal_modules_routing.ActionType'
+      value:
+        description: UUID string (team/agent) or priority string
+    type: object
+  internal_modules_routing.ActionType:
+    enum:
+    - assign_team
+    - assign_agent
+    - set_priority
+    type: string
+    x-enum-varnames:
+    - ActionAssignTeam
+    - ActionAssignAgent
+    - ActionSetPriority
+  internal_modules_routing.Condition:
+    properties:
+      field:
+        $ref: '#/definitions/internal_modules_routing.ConditionField'
+      operator:
+        $ref: '#/definitions/internal_modules_routing.ConditionOperator'
+      value: {}
+    type: object
+  internal_modules_routing.ConditionField:
+    enum:
+    - priority
+    - category_id
+    - channel
+    - subject_contains
+    - description_contains
+    type: string
+    x-enum-varnames:
+    - FieldPriority
+    - FieldCategoryID
+    - FieldChannel
+    - FieldSubjectContains
+    - FieldDescriptionContains
+  internal_modules_routing.ConditionOperator:
+    enum:
+    - eq
+    - in
+    - contains
+    type: string
+    x-enum-varnames:
+    - OperatorEq
+    - OperatorIn
+    - OperatorContains
+  internal_modules_routing.CreateRuleRequest:
+    properties:
+      action:
+        $ref: '#/definitions/internal_modules_routing.Action'
+      conditions:
+        items:
+          $ref: '#/definitions/internal_modules_routing.Condition'
+        type: array
+      description:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      sort_order:
+        type: integer
+    type: object
+  internal_modules_routing.RoutingRule:
+    properties:
+      action:
+        $ref: '#/definitions/internal_modules_routing.Action'
+      conditions:
+        items:
+          $ref: '#/definitions/internal_modules_routing.Condition'
+        type: array
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      sort_order:
+        type: integer
+      tenant_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_modules_routing.UpdateRuleRequest:
+    properties:
+      action:
+        $ref: '#/definitions/internal_modules_routing.Action'
+      conditions:
+        items:
+          $ref: '#/definitions/internal_modules_routing.Condition'
+        type: array
+      description:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      sort_order:
+        type: integer
+    type: object
   internal_modules_sla.CreatePolicyRequest:
     properties:
       business_hours:
@@ -291,6 +399,21 @@ definitions:
       content:
         type: string
     type: object
+  internal_modules_tickets.AnalyticsResponse:
+    properties:
+      by_priority:
+        additionalProperties:
+          type: integer
+        type: object
+      by_status:
+        additionalProperties:
+          type: integer
+        type: object
+      trend:
+        items:
+          $ref: '#/definitions/internal_modules_tickets.TrendPoint'
+        type: array
+    type: object
   internal_modules_tickets.AssignTicketRequest:
     properties:
       agent_id:
@@ -336,6 +459,10 @@ definitions:
     type: object
   internal_modules_tickets.CreateTicketRequest:
     properties:
+      assigned_agent_id:
+        type: string
+      assigned_team_id:
+        type: string
       category_id:
         type: string
       channel:
@@ -530,6 +657,15 @@ definitions:
     - StatusResolved
     - StatusClosed
     - StatusCancelled
+  internal_modules_tickets.TrendPoint:
+    properties:
+      created:
+        type: integer
+      date:
+        type: string
+      resolved:
+        type: integer
+    type: object
 host: ticketingapi.codevertexitsolutions.com
 info:
   contact: {}
@@ -874,6 +1010,173 @@ paths:
       summary: Get public KB article by slug
       tags:
       - kb-public
+  /{tenant}/routing/rules:
+    get:
+      description: List all routing rules for the authenticated tenant
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_modules_routing.RoutingRule'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List routing rules
+      tags:
+      - routing
+    post:
+      consumes:
+      - application/json
+      description: Create a new ticket auto-routing rule for the authenticated tenant
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Rule payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_routing.CreateRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_modules_routing.RoutingRule'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create routing rule
+      tags:
+      - routing
+  /{tenant}/routing/rules/{ruleId}:
+    delete:
+      description: Delete a routing rule by ID
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Rule ID
+        in: path
+        name: ruleId
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete routing rule
+      tags:
+      - routing
+    get:
+      description: Get a routing rule by ID
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Rule ID
+        in: path
+        name: ruleId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_modules_routing.RoutingRule'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get routing rule
+      tags:
+      - routing
+    put:
+      consumes:
+      - application/json
+      description: Update a routing rule
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Rule ID
+        in: path
+        name: ruleId
+        required: true
+        type: string
+      - description: Update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_routing.UpdateRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_modules_routing.RoutingRule'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update routing rule
+      tags:
+      - routing
   /{tenant}/sla/policies:
     get:
       description: List SLA policies for the authenticated tenant
@@ -1452,6 +1755,38 @@ paths:
       security:
       - BearerAuth: []
       summary: Update ticket status
+      tags:
+      - tickets
+  /{tenant}/tickets/analytics:
+    get:
+      description: Returns ticket counts by status and priority, plus a creation/resolution
+        trend
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Number of days to include in trend (default 30, max 365)
+        in: query
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_modules_tickets.AnalyticsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get analytics
       tags:
       - tickets
 securityDefinitions:

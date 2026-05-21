@@ -531,6 +531,266 @@ const docTemplate = `{
                 }
             }
         },
+        "/{tenant}/routing/rules": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "List all routing rules for the authenticated tenant",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "routing"
+                ],
+                "summary": "List routing rules",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_modules_routing.RoutingRule"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new ticket auto-routing rule for the authenticated tenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "routing"
+                ],
+                "summary": "Create routing rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Rule payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_routing.CreateRuleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_routing.RoutingRule"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/routing/rules/{ruleId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a routing rule by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "routing"
+                ],
+                "summary": "Get routing rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Rule ID",
+                        "name": "ruleId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_routing.RoutingRule"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update a routing rule",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "routing"
+                ],
+                "summary": "Update routing rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Rule ID",
+                        "name": "ruleId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_routing.UpdateRuleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_routing.RoutingRule"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a routing rule by ID",
+                "tags": [
+                    "routing"
+                ],
+                "summary": "Delete routing rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Rule ID",
+                        "name": "ruleId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/{tenant}/sla/policies": {
             "get": {
                 "security": [
@@ -1029,6 +1289,55 @@ const docTemplate = `{
                             "additionalProperties": {
                                 "type": "string"
                             }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/tickets/analytics": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns ticket counts by status and priority, plus a creation/resolution trend",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tickets"
+                ],
+                "summary": "Get analytics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of days to include in trend (default 30, max 365)",
+                        "name": "days",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_tickets.AnalyticsResponse"
                         }
                     },
                     "401": {
@@ -1722,6 +2031,162 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_modules_routing.Action": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "$ref": "#/definitions/internal_modules_routing.ActionType"
+                },
+                "value": {
+                    "description": "UUID string (team/agent) or priority string"
+                }
+            }
+        },
+        "internal_modules_routing.ActionType": {
+            "type": "string",
+            "enum": [
+                "assign_team",
+                "assign_agent",
+                "set_priority"
+            ],
+            "x-enum-varnames": [
+                "ActionAssignTeam",
+                "ActionAssignAgent",
+                "ActionSetPriority"
+            ]
+        },
+        "internal_modules_routing.Condition": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "$ref": "#/definitions/internal_modules_routing.ConditionField"
+                },
+                "operator": {
+                    "$ref": "#/definitions/internal_modules_routing.ConditionOperator"
+                },
+                "value": {}
+            }
+        },
+        "internal_modules_routing.ConditionField": {
+            "type": "string",
+            "enum": [
+                "priority",
+                "category_id",
+                "channel",
+                "subject_contains",
+                "description_contains"
+            ],
+            "x-enum-varnames": [
+                "FieldPriority",
+                "FieldCategoryID",
+                "FieldChannel",
+                "FieldSubjectContains",
+                "FieldDescriptionContains"
+            ]
+        },
+        "internal_modules_routing.ConditionOperator": {
+            "type": "string",
+            "enum": [
+                "eq",
+                "in",
+                "contains"
+            ],
+            "x-enum-varnames": [
+                "OperatorEq",
+                "OperatorIn",
+                "OperatorContains"
+            ]
+        },
+        "internal_modules_routing.CreateRuleRequest": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "$ref": "#/definitions/internal_modules_routing.Action"
+                },
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_modules_routing.Condition"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "sort_order": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_modules_routing.RoutingRule": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "$ref": "#/definitions/internal_modules_routing.Action"
+                },
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_modules_routing.Condition"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "sort_order": {
+                    "type": "integer"
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_modules_routing.UpdateRuleRequest": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "$ref": "#/definitions/internal_modules_routing.Action"
+                },
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_modules_routing.Condition"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "sort_order": {
+                    "type": "integer"
+                }
+            }
+        },
         "internal_modules_sla.CreatePolicyRequest": {
             "type": "object",
             "properties": {
@@ -1851,6 +2316,29 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_modules_tickets.AnalyticsResponse": {
+            "type": "object",
+            "properties": {
+                "by_priority": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "by_status": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "trend": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_modules_tickets.TrendPoint"
+                    }
+                }
+            }
+        },
         "internal_modules_tickets.AssignTicketRequest": {
             "type": "object",
             "properties": {
@@ -1915,6 +2403,12 @@ const docTemplate = `{
         "internal_modules_tickets.CreateTicketRequest": {
             "type": "object",
             "properties": {
+                "assigned_agent_id": {
+                    "type": "string"
+                },
+                "assigned_team_id": {
+                    "type": "string"
+                },
                 "category_id": {
                     "type": "string"
                 },
@@ -2189,6 +2683,20 @@ const docTemplate = `{
                 "StatusClosed",
                 "StatusCancelled"
             ]
+        },
+        "internal_modules_tickets.TrendPoint": {
+            "type": "object",
+            "properties": {
+                "created": {
+                    "type": "integer"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "resolved": {
+                    "type": "integer"
+                }
+            }
         }
     },
     "securityDefinitions": {

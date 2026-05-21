@@ -15,6 +15,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
 	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
 	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
+	"github.com/bengobox/ticketing-service/internal/ent/routingrule"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
 	"github.com/bengobox/ticketing-service/internal/ent/team"
 	"github.com/bengobox/ticketing-service/internal/ent/ticket"
@@ -84,6 +85,7 @@ func checkColumn(t, c string) error {
 			agent.Table:            agent.ValidColumn,
 			kbarticle.Table:        kbarticle.ValidColumn,
 			outboxevent.Table:      outboxevent.ValidColumn,
+			routingrule.Table:      routingrule.ValidColumn,
 			slapolicy.Table:        slapolicy.ValidColumn,
 			team.Table:             team.ValidColumn,
 			ticket.Table:           ticket.ValidColumn,

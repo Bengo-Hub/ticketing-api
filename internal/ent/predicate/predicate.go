@@ -15,6 +15,9 @@ type KBArticle func(*sql.Selector)
 // OutboxEvent is the predicate function for outboxevent builders.
 type OutboxEvent func(*sql.Selector)
 
+// RoutingRule is the predicate function for routingrule builders.
+type RoutingRule func(*sql.Selector)
+
 // SLAPolicy is the predicate function for slapolicy builders.
 type SLAPolicy func(*sql.Selector)
 

@@ -24,6 +24,7 @@ import (
 	httprouter "github.com/bengobox/ticketing-service/internal/http/router"
 	"github.com/bengobox/ticketing-service/internal/modules/identity"
 	"github.com/bengobox/ticketing-service/internal/modules/kb"
+	"github.com/bengobox/ticketing-service/internal/modules/routing"
 	"github.com/bengobox/ticketing-service/internal/modules/sla"
 	"github.com/bengobox/ticketing-service/internal/modules/tickets"
 	"github.com/bengobox/ticketing-service/internal/platform/cache"
@@ -48,6 +49,28 @@ type App struct {
 
 // slaAdapter adapts sla.Service to the tickets.SLAComputer interface.
 type slaAdapter struct{ svc *sla.Service }
+
+// routingAdapter adapts routing.Service to the tickets.RulesEvaluator interface.
+type routingAdapter struct{ svc *routing.Service }
+
+func (a *routingAdapter) EvaluateRules(ctx context.Context, tenantID uuid.UUID, priority, channel, subject, description string, categoryID *uuid.UUID) *tickets.RoutingAction {
+	applied := a.svc.EvaluateRules(ctx, routing.TicketContext{
+		TenantID:    tenantID,
+		Priority:    priority,
+		CategoryID:  categoryID,
+		Channel:     channel,
+		Subject:     subject,
+		Description: description,
+	})
+	if applied == nil {
+		return nil
+	}
+	valStr, _ := applied.Action.Value.(string)
+	return &tickets.RoutingAction{
+		Type:  string(applied.Action.Type),
+		Value: valStr,
+	}
+}
 
 func (a *slaAdapter) ComputeDeadlines(ctx context.Context, tenantID uuid.UUID, priorityStr string, categoryID *uuid.UUID, createdAt time.Time) (*time.Time, *time.Time, error) {
 	result, err := a.svc.ComputeDeadlines(ctx, tenantID, sla.Priority(priorityStr), categoryID, createdAt)
@@ -183,10 +206,16 @@ func New(ctx context.Context) (*App, error) {
 	slaService := sla.NewService(slaRepo, log)
 	slaHandler := sla.NewHandler(slaService, log)
 
+	// Initialize routing module (auto-routing rules)
+	routingRepo := routing.NewEntRepository(ormClient)
+	routingService := routing.NewService(routingRepo, log)
+	routingHandler := routing.NewHandler(routingService, log)
+
 	// Initialize tickets module (tickets, comments, categories)
 	ticketsRepo := tickets.NewEntRepository(ormClient)
 	ticketsService := tickets.NewService(ticketsRepo, log)
 	ticketsService.SetSLAService(&slaAdapter{svc: slaService})
+	ticketsService.SetRoutingService(&routingAdapter{svc: routingService})
 	ticketsService.SetNotifier(notifClient)
 	ticketsService.SetSSEBroker(sseBroker)
 	ticketsHandler := tickets.NewHandler(ticketsService, log,
@@ -219,6 +248,7 @@ func New(ctx context.Context) (*App, error) {
 		PublicTicketsHandler: publicTicketsHandler,
 		SLAHandler:           slaHandler,
 		KBHandler:            kbHandler,
+		RoutingHandler:       routingHandler,
 		SSEBroker:            sseBroker,
 		TenantResolver:       tenantResolver,
 	})

@@ -8,6 +8,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
 	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
 	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
+	"github.com/bengobox/ticketing-service/internal/ent/routingrule"
 	"github.com/bengobox/ticketing-service/internal/ent/schema"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
 	"github.com/bengobox/ticketing-service/internal/ent/team"
@@ -182,6 +183,48 @@ func init() {
 	outboxeventDescID := outboxeventFields[0].Descriptor()
 	// outboxevent.DefaultID holds the default value on creation for the id field.
 	outboxevent.DefaultID = outboxeventDescID.Default.(func() uuid.UUID)
+	routingruleFields := schema.RoutingRule{}.Fields()
+	_ = routingruleFields
+	// routingruleDescName is the schema descriptor for name field.
+	routingruleDescName := routingruleFields[2].Descriptor()
+	// routingrule.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	routingrule.NameValidator = func() func(string) error {
+		validators := routingruleDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// routingruleDescIsActive is the schema descriptor for is_active field.
+	routingruleDescIsActive := routingruleFields[4].Descriptor()
+	// routingrule.DefaultIsActive holds the default value on creation for the is_active field.
+	routingrule.DefaultIsActive = routingruleDescIsActive.Default.(bool)
+	// routingruleDescSortOrder is the schema descriptor for sort_order field.
+	routingruleDescSortOrder := routingruleFields[5].Descriptor()
+	// routingrule.DefaultSortOrder holds the default value on creation for the sort_order field.
+	routingrule.DefaultSortOrder = routingruleDescSortOrder.Default.(int)
+	// routingruleDescCreatedAt is the schema descriptor for created_at field.
+	routingruleDescCreatedAt := routingruleFields[8].Descriptor()
+	// routingrule.DefaultCreatedAt holds the default value on creation for the created_at field.
+	routingrule.DefaultCreatedAt = routingruleDescCreatedAt.Default.(func() time.Time)
+	// routingruleDescUpdatedAt is the schema descriptor for updated_at field.
+	routingruleDescUpdatedAt := routingruleFields[9].Descriptor()
+	// routingrule.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	routingrule.DefaultUpdatedAt = routingruleDescUpdatedAt.Default.(func() time.Time)
+	// routingrule.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	routingrule.UpdateDefaultUpdatedAt = routingruleDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// routingruleDescID is the schema descriptor for id field.
+	routingruleDescID := routingruleFields[0].Descriptor()
+	// routingrule.DefaultID holds the default value on creation for the id field.
+	routingrule.DefaultID = routingruleDescID.Default.(func() uuid.UUID)
 	slapolicyFields := schema.SLAPolicy{}.Fields()
 	_ = slapolicyFields
 	// slapolicyDescName is the schema descriptor for name field.

@@ -145,6 +145,8 @@ type CreateTicketRequest struct {
 	TenantID          uuid.UUID       `json:"-"`
 	CustomerID        uuid.UUID       `json:"customer_id"`
 	CategoryID        *uuid.UUID      `json:"category_id,omitempty"`
+	AssignedAgentID   *uuid.UUID      `json:"assigned_agent_id,omitempty"`
+	AssignedTeamID    *uuid.UUID      `json:"assigned_team_id,omitempty"`
 	Subject           string          `json:"subject"`
 	Description       string          `json:"description"`
 	Priority          TicketPriority  `json:"priority,omitempty"`

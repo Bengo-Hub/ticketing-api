@@ -16,6 +16,17 @@ type SLAComputer interface {
 	ComputeDeadlines(ctx context.Context, tenantID uuid.UUID, priorityStr string, categoryID *uuid.UUID, createdAt time.Time) (*time.Time, *time.Time, error)
 }
 
+// RulesEvaluator evaluates auto-routing rules against a new ticket.
+type RulesEvaluator interface {
+	EvaluateRules(ctx context.Context, tenantID uuid.UUID, priority, channel, subject, description string, categoryID *uuid.UUID) *RoutingAction
+}
+
+// RoutingAction is the action to apply from a matched routing rule.
+type RoutingAction struct {
+	Type  string // "assign_team", "assign_agent", "set_priority"
+	Value string // team/agent UUID string or priority string
+}
+
 // Notifier sends lifecycle notifications fire-and-forget.
 type Notifier interface {
 	SendTicketCreated(ctx context.Context, tenantSlug string, customerEmail string, data map[string]interface{})
@@ -31,12 +42,13 @@ type SSEPublisher interface {
 
 // Service provides ticket business logic.
 type Service struct {
-	repo      Repository
-	logger    *zap.Logger
+	repo    Repository
+	logger  *zap.Logger
 	publisher *events.Publisher
-	sla       SLAComputer
-	notif     Notifier
-	sse       SSEPublisher
+	sla     SLAComputer
+	notif   Notifier
+	sse     SSEPublisher
+	routing RulesEvaluator
 }
 
 // NewService creates a new ticket service.
@@ -67,6 +79,11 @@ func (s *Service) SetSSEBroker(b SSEPublisher) {
 	s.sse = b
 }
 
+// SetRoutingService wires in the routing rules evaluator.
+func (s *Service) SetRoutingService(re RulesEvaluator) {
+	s.routing = re
+}
+
 // Ticket operations
 
 // CreateTicket creates a new ticket.
@@ -86,12 +103,32 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 		req.Channel = ChannelWeb
 	}
 
+	// Evaluate routing rules and apply the first matching action.
+	if s.routing != nil {
+		if action := s.routing.EvaluateRules(ctx, req.TenantID, string(req.Priority), string(req.Channel), req.Subject, req.Description, req.CategoryID); action != nil {
+			switch action.Type {
+			case "set_priority":
+				req.Priority = TicketPriority(action.Value)
+			case "assign_team":
+				if id, err := uuid.Parse(action.Value); err == nil {
+					req.AssignedTeamID = &id
+				}
+			case "assign_agent":
+				if id, err := uuid.Parse(action.Value); err == nil {
+					req.AssignedAgentID = &id
+				}
+			}
+		}
+	}
+
 	ticket := &Ticket{
 		ID:                uuid.New(),
 		TenantID:          req.TenantID,
 		TicketNumber:      ticketNumber,
 		CustomerID:        req.CustomerID,
 		CategoryID:        req.CategoryID,
+		AssignedAgentID:   req.AssignedAgentID,
+		AssignedTeamID:    req.AssignedTeamID,
 		Subject:           req.Subject,
 		Description:       req.Description,
 		Status:            StatusNew,
