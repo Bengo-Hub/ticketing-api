@@ -137,7 +137,7 @@ func New(ctx context.Context) (*App, error) {
 	// Initialize tickets module (tickets, comments, categories)
 	ticketsRepo := tickets.NewEntRepository(ormClient)
 	ticketsService := tickets.NewService(ticketsRepo, log)
-	ticketsHandler := tickets.NewHandler(ticketsService, log)
+	ticketsHandler := tickets.NewHandler(ticketsService, log, tickets.WithServiceKey(cfg.Auth.InternalServiceKey))
 
 	// Wire event publisher for ticket lifecycle events (shared-events outbox pattern)
 	var outboxPub *eventslib.Publisher

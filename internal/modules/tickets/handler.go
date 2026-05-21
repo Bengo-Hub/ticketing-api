@@ -13,16 +13,26 @@ import (
 
 // Handler handles HTTP requests for ticket operations.
 type Handler struct {
-	service *Service
-	logger  *zap.Logger
+	service    *Service
+	logger     *zap.Logger
+	serviceKey string // INTERNAL_SERVICE_KEY for S2S calls
 }
 
 // NewHandler creates a new ticket handler.
-func NewHandler(service *Service, logger *zap.Logger) *Handler {
-	return &Handler{
+func NewHandler(service *Service, logger *zap.Logger, opts ...func(*Handler)) *Handler {
+	h := &Handler{
 		service: service,
 		logger:  logger.Named("tickets-handler"),
 	}
+	for _, o := range opts {
+		o(h)
+	}
+	return h
+}
+
+// WithServiceKey sets the internal service key for S2S endpoint validation.
+func WithServiceKey(key string) func(*Handler) {
+	return func(h *Handler) { h.serviceKey = key }
 }
 
 // RegisterRoutes registers the ticket routes.
@@ -716,6 +726,80 @@ func (h *Handler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
 }
 
 // Helper functions
+
+// InternalCreateTicket is the S2S endpoint called by marketflow-ai agent and
+// the Vera widget public tickets relay. Gated by X-API-Key (INTERNAL_SERVICE_KEY).
+// Accepts a wider payload: title/description from the agent tool schema plus
+// requester_name, requester_email stored in metadata.
+func (h *Handler) InternalCreateTicket(w http.ResponseWriter, r *http.Request) {
+	if h.serviceKey == "" || r.Header.Get("X-API-Key") != h.serviceKey {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	var req struct {
+		TenantID       string `json:"tenant_id"`
+		Title          string `json:"title"`
+		Description    string `json:"description"`
+		Priority       string `json:"priority"`
+		Category       string `json:"category"`
+		Source         string `json:"source"`
+		RequesterName  string `json:"requester_name"`
+		RequesterEmail string `json:"requester_email"`
+		SessionID      string `json:"session_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.Title == "" || req.Description == "" {
+		respondError(w, http.StatusBadRequest, "title and description are required")
+		return
+	}
+	tenantID, err := uuid.Parse(req.TenantID)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+
+	prio := TicketPriority(req.Priority)
+	if prio == "" {
+		prio = PriorityNormal
+	}
+
+	meta := map[string]any{
+		"source":          req.Source,
+		"requester_name":  req.RequesterName,
+		"requester_email": req.RequesterEmail,
+		"session_id":      req.SessionID,
+	}
+
+	domainReq := &CreateTicketRequest{
+		TenantID:    tenantID,
+		Subject:     req.Title,
+		Description: req.Description,
+		Priority:    prio,
+		Channel:     "web",
+		Metadata:    meta,
+	}
+
+	ticket, err := h.service.CreateTicket(r.Context(), domainReq)
+	if err != nil {
+		h.handleError(w, err)
+		return
+	}
+
+	h.logger.Info("S2S ticket created",
+		zap.String("tenant_id", req.TenantID),
+		zap.String("ticket_number", ticket.TicketNumber),
+		zap.String("source", req.Source),
+	)
+	respondJSON(w, http.StatusCreated, map[string]any{
+		"id":            ticket.ID.String(),
+		"ticket_number": ticket.TicketNumber,
+		"status":        ticket.Status,
+	})
+}
 
 func (h *Handler) handleError(w http.ResponseWriter, err error) {
 	switch err {

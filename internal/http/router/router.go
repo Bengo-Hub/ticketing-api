@@ -57,6 +57,11 @@ func New(cfg Config) http.Handler {
 	// API routes
 	r.Route("/api", func(api chi.Router) {
 		api.Route("/v1", func(v1 chi.Router) {
+			// S2S internal endpoint — no JWT auth, validated by X-API-Key header
+			if cfg.TicketsHandler != nil {
+				v1.Post("/internal/tickets", cfg.TicketsHandler.InternalCreateTicket)
+			}
+
 			// Apply auth middleware to protected routes
 			if cfg.AuthMiddleware != nil {
 				v1.Use(cfg.AuthMiddleware.RequireAuth)

@@ -69,6 +69,7 @@ type AuthConfig struct {
 	JWKSCacheTTL        time.Duration `envconfig:"AUTH_JWKS_CACHE_TTL" default:"1h"`
 	JWKSRefreshInterval time.Duration `envconfig:"AUTH_JWKS_REFRESH_INTERVAL" default:"15m"`
 	EnableAPIKeyAuth    bool          `envconfig:"AUTH_ENABLE_API_KEY" default:"false"`
+	InternalServiceKey  string        `envconfig:"INTERNAL_SERVICE_KEY" default:""`
 }
 
 // Load loads configuration from environment variables.
