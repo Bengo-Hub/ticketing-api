@@ -75,7 +75,19 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 
 // Ticket handlers
 
-// CreateTicket creates a new ticket.
+// CreateTicket creates a new support ticket.
+// @Summary      Create ticket
+// @Description  Create a new support ticket for the authenticated tenant
+// @Tags         tickets
+// @Accept       json
+// @Produce      json
+// @Param        tenant path string true "Tenant slug"
+// @Param        body   body CreateTicketRequest true "Ticket payload"
+// @Success      201 {object} Ticket
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/tickets [post]
 func (h *Handler) CreateTicket(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -106,6 +118,18 @@ func (h *Handler) CreateTicket(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetTicket retrieves a ticket by ID.
+// @Summary      Get ticket
+// @Description  Retrieve a support ticket by its UUID
+// @Tags         tickets
+// @Produce      json
+// @Param        tenant   path string true "Tenant slug"
+// @Param        ticketId path string true "Ticket UUID"
+// @Success      200 {object} Ticket
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Failure      404 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/tickets/{ticketId} [get]
 func (h *Handler) GetTicket(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -164,6 +188,26 @@ func (h *Handler) GetTicketByNumber(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListTickets lists tickets with filtering and pagination.
+// @Summary      List tickets
+// @Description  List support tickets for the authenticated tenant with optional filters
+// @Tags         tickets
+// @Produce      json
+// @Param        tenant     path   string false "Tenant slug"
+// @Param        status     query  string false "Filter by status"
+// @Param        priority   query  string false "Filter by priority"
+// @Param        customerId query  string false "Filter by customer UUID"
+// @Param        agentId    query  string false "Filter by assigned agent UUID"
+// @Param        teamId     query  string false "Filter by assigned team UUID"
+// @Param        categoryId query  string false "Filter by category UUID"
+// @Param        orderId    query  string false "Filter by order UUID"
+// @Param        channel    query  string false "Filter by channel"
+// @Param        page       query  int    false "Page number"
+// @Param        limit      query  int    false "Results per page"
+// @Success      200 {object} map[string]interface{}
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/tickets [get]
 func (h *Handler) ListTickets(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -267,6 +311,20 @@ func (h *Handler) UpdateTicket(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateTicketStatus updates a ticket's status.
+// @Summary      Update ticket status
+// @Description  Update the status of a support ticket
+// @Tags         tickets
+// @Accept       json
+// @Produce      json
+// @Param        tenant   path string true "Tenant slug"
+// @Param        ticketId path string true "Ticket UUID"
+// @Param        body     body object true "Status payload" SchemaExample({"status":"open"})
+// @Success      200 {object} map[string]string
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Failure      404 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/tickets/{ticketId}/status [put]
 func (h *Handler) UpdateTicketStatus(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -302,7 +360,21 @@ func (h *Handler) UpdateTicketStatus(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]string{"status": "updated"})
 }
 
-// AssignTicket assigns a ticket to an agent/team.
+// AssignTicket assigns a ticket to an agent or team.
+// @Summary      Assign ticket
+// @Description  Assign a support ticket to an agent or team
+// @Tags         tickets
+// @Accept       json
+// @Produce      json
+// @Param        tenant   path string true "Tenant slug"
+// @Param        ticketId path string true "Ticket UUID"
+// @Param        body     body AssignTicketRequest true "Assignment payload"
+// @Success      200 {object} map[string]string
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Failure      404 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/tickets/{ticketId}/assign [put]
 func (h *Handler) AssignTicket(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -390,6 +462,20 @@ func (h *Handler) GetTicketStats(w http.ResponseWriter, r *http.Request) {
 // Comment handlers
 
 // AddComment adds a comment to a ticket.
+// @Summary      Add comment
+// @Description  Add a comment to a support ticket
+// @Tags         tickets
+// @Accept       json
+// @Produce      json
+// @Param        tenant   path string true "Tenant slug"
+// @Param        ticketId path string true "Ticket UUID"
+// @Param        body     body AddCommentRequest true "Comment payload"
+// @Success      201 {object} TicketComment
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Failure      404 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/tickets/{ticketId}/comments [post]
 func (h *Handler) AddComment(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -427,6 +513,18 @@ func (h *Handler) AddComment(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListComments lists comments for a ticket.
+// @Summary      List comments
+// @Description  List all comments for a support ticket
+// @Tags         tickets
+// @Produce      json
+// @Param        tenant   path string true "Tenant slug"
+// @Param        ticketId path string true "Ticket UUID"
+// @Success      200 {object} map[string]interface{}
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Failure      404 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/tickets/{ticketId}/comments [get]
 func (h *Handler) ListComments(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -556,7 +654,19 @@ func (h *Handler) ListAttachments(w http.ResponseWriter, r *http.Request) {
 
 // Category handlers
 
-// CreateCategory creates a new category.
+// CreateCategory creates a new ticket category.
+// @Summary      Create category
+// @Description  Create a new ticket category for the authenticated tenant
+// @Tags         categories
+// @Accept       json
+// @Produce      json
+// @Param        tenant path string true "Tenant slug"
+// @Param        body   body CreateCategoryRequest true "Category payload"
+// @Success      201 {object} TicketCategory
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/categories [post]
 func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -615,7 +725,21 @@ func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, category)
 }
 
-// ListCategories lists categories with filtering and pagination.
+// ListCategories lists ticket categories with filtering and pagination.
+// @Summary      List categories
+// @Description  List ticket categories for the authenticated tenant
+// @Tags         categories
+// @Produce      json
+// @Param        tenant   path  string false "Tenant slug"
+// @Param        parentId query string false "Filter by parent category UUID"
+// @Param        active   query bool   false "Filter by active status"
+// @Param        page     query int    false "Page number"
+// @Param        limit    query int    false "Results per page"
+// @Success      200 {object} map[string]interface{}
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/categories [get]
 func (h *Handler) ListCategories(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {

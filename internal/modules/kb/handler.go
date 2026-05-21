@@ -50,6 +50,19 @@ func (h *Handler) RegisterPublicRoutes(r chi.Router) {
 
 // ─── Admin / agent handlers ────────────────────────────────────────────────
 
+// CreateArticle creates a new KB article.
+// @Summary      Create KB article
+// @Description  Create a new knowledge base article for the authenticated tenant
+// @Tags         kb
+// @Accept       json
+// @Produce      json
+// @Param        tenant path string true "Tenant slug"
+// @Param        body   body CreateArticleRequest true "Article payload"
+// @Success      201 {object} Article
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/kb/articles [post]
 func (h *Handler) CreateArticle(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -102,6 +115,19 @@ func (h *Handler) CreateArticle(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusCreated, article)
 }
 
+// GetArticle retrieves a KB article by ID.
+// @Summary      Get KB article
+// @Description  Retrieve a knowledge base article by its UUID
+// @Tags         kb
+// @Produce      json
+// @Param        tenant    path string true "Tenant slug"
+// @Param        articleId path string true "Article UUID"
+// @Success      200 {object} Article
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Failure      404 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/kb/articles/{articleId} [get]
 func (h *Handler) GetArticle(w http.ResponseWriter, r *http.Request) {
 	tenantID := h.requireTenantID(w, r)
 	if tenantID == uuid.Nil {
@@ -120,6 +146,22 @@ func (h *Handler) GetArticle(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, article)
 }
 
+// ListArticles lists KB articles with filtering and pagination.
+// @Summary      List KB articles
+// @Description  List knowledge base articles for the authenticated tenant
+// @Tags         kb
+// @Produce      json
+// @Param        tenant   path  string false "Tenant slug"
+// @Param        search   query string false "Search text"
+// @Param        category query string false "Filter by category"
+// @Param        status   query string false "Filter by status"
+// @Param        page     query int    false "Page number"
+// @Param        limit    query int    false "Results per page"
+// @Success      200 {object} map[string]interface{}
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/kb/articles [get]
 func (h *Handler) ListArticles(w http.ResponseWriter, r *http.Request) {
 	tenantID := h.requireTenantID(w, r)
 	if tenantID == uuid.Nil {
@@ -227,6 +269,18 @@ func (h *Handler) VoteArticle(w http.ResponseWriter, r *http.Request) {
 
 // ─── Public (no-auth) handlers ─────────────────────────────────────────────
 
+// ListPublicArticles lists publicly visible KB articles (no auth).
+// @Summary      List public KB articles
+// @Description  List publicly visible knowledge base articles — no authentication required
+// @Tags         kb-public
+// @Produce      json
+// @Param        tenant   path  string false "Tenant slug"
+// @Param        search   query string false "Search text"
+// @Param        category query string false "Filter by category"
+// @Param        page     query int    false "Page number"
+// @Param        limit    query int    false "Results per page"
+// @Success      200 {object} map[string]interface{}
+// @Router       /{tenant}/kb/articles [get]
 func (h *Handler) ListPublicArticles(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "tenant")
 	tenantID := tenantIDFromSlug(slug)
@@ -249,6 +303,16 @@ func (h *Handler) ListPublicArticles(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, pagination.NewResponse(result.Articles, result.Total, p))
 }
 
+// GetPublicArticleBySlug retrieves a public KB article by its slug (no auth).
+// @Summary      Get public KB article by slug
+// @Description  Retrieve a publicly visible knowledge base article by slug
+// @Tags         kb-public
+// @Produce      json
+// @Param        tenant path string true "Tenant slug"
+// @Param        slug   path string true "Article slug"
+// @Success      200 {object} Article
+// @Failure      404 {object} map[string]string
+// @Router       /{tenant}/kb/articles/{slug} [get]
 func (h *Handler) GetPublicArticleBySlug(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "tenant")
 	tenantID := tenantIDFromSlug(slug)

@@ -8,8 +8,17 @@ import (
 	"syscall"
 
 	"github.com/bengobox/ticketing-service/internal/app"
+	_ "github.com/bengobox/ticketing-service/docs"
 )
 
+// @title           Ticketing API
+// @version         1.0
+// @description     Codevertex Ticketing Service — ticket lifecycle, SLA, KB, real-time SSE
+// @host            ticketingapi.codevertexitsolutions.com
+// @BasePath        /api/v1
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()

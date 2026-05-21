@@ -39,6 +39,19 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	})
 }
 
+// CreatePolicy creates a new SLA policy.
+// @Summary      Create SLA policy
+// @Description  Create a new SLA policy for the authenticated tenant
+// @Tags         sla
+// @Accept       json
+// @Produce      json
+// @Param        tenant path string true "Tenant slug"
+// @Param        body   body CreatePolicyRequest true "Policy payload"
+// @Success      201 {object} Policy
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/sla/policies [post]
 func (h *Handler) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -66,6 +79,19 @@ func (h *Handler) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusCreated, policy)
 }
 
+// GetPolicy retrieves an SLA policy by ID.
+// @Summary      Get SLA policy
+// @Description  Retrieve an SLA policy by its UUID
+// @Tags         sla
+// @Produce      json
+// @Param        tenant   path string true "Tenant slug"
+// @Param        policyId path string true "Policy UUID"
+// @Success      200 {object} Policy
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Failure      404 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/sla/policies/{policyId} [get]
 func (h *Handler) GetPolicy(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -92,6 +118,21 @@ func (h *Handler) GetPolicy(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, policy)
 }
 
+// ListPolicies lists SLA policies with filtering and pagination.
+// @Summary      List SLA policies
+// @Description  List SLA policies for the authenticated tenant
+// @Tags         sla
+// @Produce      json
+// @Param        tenant    path  string false "Tenant slug"
+// @Param        priority  query string false "Filter by priority"
+// @Param        is_active query bool   false "Filter by active status"
+// @Param        page      query int    false "Page number"
+// @Param        limit     query int    false "Results per page"
+// @Success      200 {object} map[string]interface{}
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/sla/policies [get]
 func (h *Handler) ListPolicies(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {

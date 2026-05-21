@@ -1,0 +1,1462 @@
+basePath: /api/v1
+definitions:
+  internal_modules_identity.Agent:
+    properties:
+      avatar_url:
+        type: string
+      created_at:
+        type: string
+      current_ticket_count:
+        type: integer
+      display_name:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      last_active_at:
+        type: string
+      max_concurrent_tickets:
+        type: integer
+      metadata:
+        additionalProperties: true
+        type: object
+      role:
+        $ref: '#/definitions/internal_modules_identity.AgentRole'
+      skills:
+        items:
+          type: string
+        type: array
+      status:
+        $ref: '#/definitions/internal_modules_identity.AgentStatus'
+      team_id:
+        type: string
+      tenant_id:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  internal_modules_identity.AgentRole:
+    enum:
+    - agent
+    - supervisor
+    - admin
+    type: string
+    x-enum-varnames:
+    - RoleAgent
+    - RoleSupervisor
+    - RoleAdmin
+  internal_modules_identity.AgentStatus:
+    enum:
+    - available
+    - busy
+    - away
+    - offline
+    type: string
+    x-enum-varnames:
+    - StatusAvailable
+    - StatusBusy
+    - StatusAway
+    - StatusOffline
+  internal_modules_identity.CreateAgentRequest:
+    properties:
+      avatar_url:
+        type: string
+      display_name:
+        type: string
+      email:
+        type: string
+      max_concurrent_tickets:
+        type: integer
+      metadata:
+        additionalProperties: true
+        type: object
+      role:
+        $ref: '#/definitions/internal_modules_identity.AgentRole'
+      skills:
+        items:
+          type: string
+        type: array
+      team_id:
+        type: string
+      tenant_id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  internal_modules_identity.CreateTeamRequest:
+    properties:
+      description:
+        type: string
+      metadata:
+        additionalProperties: true
+        type: object
+      name:
+        type: string
+      tenant_id:
+        type: string
+    type: object
+  internal_modules_identity.Team:
+    properties:
+      agent_count:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      metadata:
+        additionalProperties: true
+        type: object
+      name:
+        type: string
+      tenant_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_modules_kb.Article:
+    properties:
+      authorID:
+        type: string
+      category:
+        type: string
+      content:
+        type: string
+      createdAt:
+        type: string
+      excerpt:
+        type: string
+      helpfulCount:
+        type: integer
+      id:
+        type: string
+      isPublic:
+        type: boolean
+      metadata:
+        additionalProperties: {}
+        type: object
+      notHelpfulCount:
+        type: integer
+      publishedAt:
+        type: string
+      slug:
+        type: string
+      status:
+        $ref: '#/definitions/internal_modules_kb.ArticleStatus'
+      tags:
+        items:
+          type: string
+        type: array
+      tenantID:
+        type: string
+      title:
+        type: string
+      updatedAt:
+        type: string
+      viewCount:
+        type: integer
+    type: object
+  internal_modules_kb.ArticleStatus:
+    enum:
+    - draft
+    - published
+    - archived
+    type: string
+    x-enum-varnames:
+    - StatusDraft
+    - StatusPublished
+    - StatusArchived
+  internal_modules_kb.CreateArticleRequest:
+    properties:
+      authorID:
+        type: string
+      category:
+        type: string
+      content:
+        type: string
+      excerpt:
+        type: string
+      isPublic:
+        type: boolean
+      metadata:
+        additionalProperties: {}
+        type: object
+      slug:
+        type: string
+      status:
+        $ref: '#/definitions/internal_modules_kb.ArticleStatus'
+      tags:
+        items:
+          type: string
+        type: array
+      tenantID:
+        type: string
+      title:
+        type: string
+    type: object
+  internal_modules_sla.CreatePolicyRequest:
+    properties:
+      business_hours:
+        additionalProperties: {}
+        type: object
+      category_id:
+        type: string
+      description:
+        type: string
+      first_response_business_hours:
+        type: boolean
+      first_response_minutes:
+        type: integer
+      metadata:
+        additionalProperties: {}
+        type: object
+      name:
+        type: string
+      priority:
+        $ref: '#/definitions/internal_modules_sla.Priority'
+      resolution_business_hours:
+        type: boolean
+      resolution_minutes:
+        type: integer
+      sort_order:
+        type: integer
+    type: object
+  internal_modules_sla.Policy:
+    properties:
+      business_hours:
+        additionalProperties: {}
+        type: object
+      category_id:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      first_response_business_hours:
+        type: boolean
+      first_response_minutes:
+        type: integer
+      id:
+        type: string
+      is_active:
+        type: boolean
+      metadata:
+        additionalProperties: {}
+        type: object
+      name:
+        type: string
+      priority:
+        $ref: '#/definitions/internal_modules_sla.Priority'
+      resolution_business_hours:
+        type: boolean
+      resolution_minutes:
+        type: integer
+      sort_order:
+        type: integer
+      tenant_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_modules_sla.Priority:
+    enum:
+    - low
+    - normal
+    - high
+    - urgent
+    - critical
+    type: string
+    x-enum-varnames:
+    - PriorityLow
+    - PriorityNormal
+    - PriorityHigh
+    - PriorityUrgent
+    - PriorityCritical
+  internal_modules_tickets.AddCommentRequest:
+    properties:
+      author_id:
+        type: string
+      author_type:
+        $ref: '#/definitions/internal_modules_tickets.AuthorType'
+      comment_type:
+        $ref: '#/definitions/internal_modules_tickets.CommentType'
+      content:
+        type: string
+    type: object
+  internal_modules_tickets.AssignTicketRequest:
+    properties:
+      agent_id:
+        type: string
+      team_id:
+        type: string
+    type: object
+  internal_modules_tickets.AuthorType:
+    enum:
+    - customer
+    - agent
+    - system
+    type: string
+    x-enum-varnames:
+    - AuthorCustomer
+    - AuthorAgent
+    - AuthorSystem
+  internal_modules_tickets.CommentType:
+    enum:
+    - public
+    - internal
+    - system
+    type: string
+    x-enum-varnames:
+    - CommentPublic
+    - CommentInternal
+    - CommentSystem
+  internal_modules_tickets.CreateCategoryRequest:
+    properties:
+      description:
+        type: string
+      icon:
+        type: string
+      metadata:
+        additionalProperties: {}
+        type: object
+      name:
+        type: string
+      parent_id:
+        type: string
+      sort_order:
+        type: integer
+    type: object
+  internal_modules_tickets.CreateTicketRequest:
+    properties:
+      category_id:
+        type: string
+      channel:
+        $ref: '#/definitions/internal_modules_tickets.TicketChannel'
+      crm_contact_id:
+        type: string
+      crm_lead_id:
+        type: string
+      customer_id:
+        type: string
+      description:
+        type: string
+      external_reference:
+        type: string
+      metadata:
+        additionalProperties: {}
+        type: object
+      order_id:
+        type: string
+      priority:
+        $ref: '#/definitions/internal_modules_tickets.TicketPriority'
+      subject:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  internal_modules_tickets.Ticket:
+    properties:
+      assigned_agent_id:
+        type: string
+      assigned_team_id:
+        type: string
+      category_id:
+        type: string
+      channel:
+        $ref: '#/definitions/internal_modules_tickets.TicketChannel'
+      closed_at:
+        type: string
+      created_at:
+        type: string
+      crm_contact_id:
+        type: string
+      crm_lead_id:
+        type: string
+      customer_id:
+        type: string
+      description:
+        type: string
+      escalated_at:
+        type: string
+      escalation_level:
+        type: integer
+      external_reference:
+        type: string
+      first_response_at:
+        type: string
+      id:
+        type: string
+      metadata:
+        additionalProperties: {}
+        type: object
+      order_id:
+        type: string
+      priority:
+        $ref: '#/definitions/internal_modules_tickets.TicketPriority'
+      reopened_at:
+        type: string
+      resolved_at:
+        type: string
+      sla_resolution_breached:
+        type: boolean
+      sla_resolution_due_at:
+        type: string
+      sla_response_breached:
+        type: boolean
+      sla_response_due_at:
+        type: string
+      status:
+        $ref: '#/definitions/internal_modules_tickets.TicketStatus'
+      subject:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      tenant_id:
+        type: string
+      ticket_number:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_modules_tickets.TicketCategory:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      icon:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      metadata:
+        additionalProperties: {}
+        type: object
+      name:
+        type: string
+      parent_id:
+        type: string
+      sort_order:
+        type: integer
+      tenant_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_modules_tickets.TicketChannel:
+    enum:
+    - web
+    - email
+    - api
+    - chat
+    - phone
+    - internal
+    type: string
+    x-enum-varnames:
+    - ChannelWeb
+    - ChannelEmail
+    - ChannelAPI
+    - ChannelChat
+    - ChannelPhone
+    - ChannelInternal
+  internal_modules_tickets.TicketComment:
+    properties:
+      author_id:
+        type: string
+      author_type:
+        $ref: '#/definitions/internal_modules_tickets.AuthorType'
+      comment_type:
+        $ref: '#/definitions/internal_modules_tickets.CommentType'
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      metadata:
+        additionalProperties: {}
+        type: object
+      tenant_id:
+        type: string
+      ticket_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_modules_tickets.TicketPriority:
+    enum:
+    - low
+    - normal
+    - high
+    - urgent
+    - critical
+    type: string
+    x-enum-varnames:
+    - PriorityLow
+    - PriorityNormal
+    - PriorityHigh
+    - PriorityUrgent
+    - PriorityCritical
+  internal_modules_tickets.TicketStatus:
+    enum:
+    - new
+    - open
+    - in_progress
+    - pending_customer
+    - pending_internal
+    - resolved
+    - closed
+    - cancelled
+    type: string
+    x-enum-varnames:
+    - StatusNew
+    - StatusOpen
+    - StatusInProgress
+    - StatusPendingCustomer
+    - StatusPendingInternal
+    - StatusResolved
+    - StatusClosed
+    - StatusCancelled
+host: ticketingapi.codevertexitsolutions.com
+info:
+  contact: {}
+  description: Codevertex Ticketing Service — ticket lifecycle, SLA, KB, real-time
+    SSE
+  title: Ticketing API
+  version: "1.0"
+paths:
+  /{tenant}/agents:
+    get:
+      description: List support agents for the authenticated tenant
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        type: string
+      - description: Filter by team UUID
+        in: query
+        name: teamId
+        type: string
+      - description: Filter by agent status
+        in: query
+        name: status
+        type: string
+      - description: Filter by agent role
+        in: query
+        name: role
+        type: string
+      - description: Filter by active status
+        in: query
+        name: active
+        type: boolean
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Results per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List agents
+      tags:
+      - identity
+    post:
+      consumes:
+      - application/json
+      description: Create a new support agent for the authenticated tenant
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Agent payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_identity.CreateAgentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_modules_identity.Agent'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create agent
+      tags:
+      - identity
+  /{tenant}/categories:
+    get:
+      description: List ticket categories for the authenticated tenant
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        type: string
+      - description: Filter by parent category UUID
+        in: query
+        name: parentId
+        type: string
+      - description: Filter by active status
+        in: query
+        name: active
+        type: boolean
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Results per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List categories
+      tags:
+      - categories
+    post:
+      consumes:
+      - application/json
+      description: Create a new ticket category for the authenticated tenant
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Category payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_tickets.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_modules_tickets.TicketCategory'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create category
+      tags:
+      - categories
+  /{tenant}/kb/articles:
+    get:
+      description: List publicly visible knowledge base articles — no authentication
+        required
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        type: string
+      - description: Search text
+        in: query
+        name: search
+        type: string
+      - description: Filter by category
+        in: query
+        name: category
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Results per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: List public KB articles
+      tags:
+      - kb-public
+    post:
+      consumes:
+      - application/json
+      description: Create a new knowledge base article for the authenticated tenant
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Article payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_kb.CreateArticleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_modules_kb.Article'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create KB article
+      tags:
+      - kb
+  /{tenant}/kb/articles/{articleId}:
+    get:
+      description: Retrieve a knowledge base article by its UUID
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Article UUID
+        in: path
+        name: articleId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_modules_kb.Article'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get KB article
+      tags:
+      - kb
+  /{tenant}/kb/articles/{slug}:
+    get:
+      description: Retrieve a publicly visible knowledge base article by slug
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Article slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_modules_kb.Article'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get public KB article by slug
+      tags:
+      - kb-public
+  /{tenant}/sla/policies:
+    get:
+      description: List SLA policies for the authenticated tenant
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        type: string
+      - description: Filter by priority
+        in: query
+        name: priority
+        type: string
+      - description: Filter by active status
+        in: query
+        name: is_active
+        type: boolean
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Results per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List SLA policies
+      tags:
+      - sla
+    post:
+      consumes:
+      - application/json
+      description: Create a new SLA policy for the authenticated tenant
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Policy payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_sla.CreatePolicyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_modules_sla.Policy'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create SLA policy
+      tags:
+      - sla
+  /{tenant}/sla/policies/{policyId}:
+    get:
+      description: Retrieve an SLA policy by its UUID
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Policy UUID
+        in: path
+        name: policyId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_modules_sla.Policy'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get SLA policy
+      tags:
+      - sla
+  /{tenant}/teams:
+    get:
+      description: List support teams for the authenticated tenant
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        type: string
+      - description: Filter by active status
+        in: query
+        name: active
+        type: boolean
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Results per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List teams
+      tags:
+      - identity
+    post:
+      consumes:
+      - application/json
+      description: Create a new support team for the authenticated tenant
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Team payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_identity.CreateTeamRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_modules_identity.Team'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create team
+      tags:
+      - identity
+  /{tenant}/tickets:
+    get:
+      description: List support tickets for the authenticated tenant with optional
+        filters
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        type: string
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - description: Filter by priority
+        in: query
+        name: priority
+        type: string
+      - description: Filter by customer UUID
+        in: query
+        name: customerId
+        type: string
+      - description: Filter by assigned agent UUID
+        in: query
+        name: agentId
+        type: string
+      - description: Filter by assigned team UUID
+        in: query
+        name: teamId
+        type: string
+      - description: Filter by category UUID
+        in: query
+        name: categoryId
+        type: string
+      - description: Filter by order UUID
+        in: query
+        name: orderId
+        type: string
+      - description: Filter by channel
+        in: query
+        name: channel
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Results per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List tickets
+      tags:
+      - tickets
+    post:
+      consumes:
+      - application/json
+      description: Create a new support ticket for the authenticated tenant
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Ticket payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_tickets.CreateTicketRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_modules_tickets.Ticket'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create ticket
+      tags:
+      - tickets
+  /{tenant}/tickets/{ticketId}:
+    get:
+      description: Retrieve a support ticket by its UUID
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Ticket UUID
+        in: path
+        name: ticketId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_modules_tickets.Ticket'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get ticket
+      tags:
+      - tickets
+  /{tenant}/tickets/{ticketId}/assign:
+    put:
+      consumes:
+      - application/json
+      description: Assign a support ticket to an agent or team
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Ticket UUID
+        in: path
+        name: ticketId
+        required: true
+        type: string
+      - description: Assignment payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_tickets.AssignTicketRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Assign ticket
+      tags:
+      - tickets
+  /{tenant}/tickets/{ticketId}/comments:
+    get:
+      description: List all comments for a support ticket
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Ticket UUID
+        in: path
+        name: ticketId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List comments
+      tags:
+      - tickets
+    post:
+      consumes:
+      - application/json
+      description: Add a comment to a support ticket
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Ticket UUID
+        in: path
+        name: ticketId
+        required: true
+        type: string
+      - description: Comment payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_tickets.AddCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_modules_tickets.TicketComment'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add comment
+      tags:
+      - tickets
+  /{tenant}/tickets/{ticketId}/status:
+    put:
+      consumes:
+      - application/json
+      description: Update the status of a support ticket
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Ticket UUID
+        in: path
+        name: ticketId
+        required: true
+        type: string
+      - description: Status payload
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update ticket status
+      tags:
+      - tickets
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

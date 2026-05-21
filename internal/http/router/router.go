@@ -8,10 +8,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 
 	authclient "github.com/Bengo-Hub/shared-auth-client"
 	sharedcache "github.com/Bengo-Hub/cache"
+	_ "github.com/bengobox/ticketing-service/docs"
 	"github.com/bengobox/ticketing-service/internal/http/handlers"
 	"github.com/bengobox/ticketing-service/internal/modules/identity"
 	"github.com/bengobox/ticketing-service/internal/modules/kb"
@@ -65,6 +67,9 @@ func New(cfg Config) http.Handler {
 	// Health endpoints (no auth required)
 	r.Get("/healthz", cfg.HealthHandler.Liveness)
 	r.Get("/metrics", cfg.HealthHandler.Metrics)
+
+	// Swagger UI
+	r.Get("/v1/docs/*", httpSwagger.WrapHandler)
 
 	// Redirect root path to Swagger documentation
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {

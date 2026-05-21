@@ -49,7 +49,19 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 
 // Team handlers
 
-// CreateTeam creates a new team.
+// CreateTeam creates a new support team.
+// @Summary      Create team
+// @Description  Create a new support team for the authenticated tenant
+// @Tags         identity
+// @Accept       json
+// @Produce      json
+// @Param        tenant path string true "Tenant slug"
+// @Param        body   body CreateTeamRequest true "Team payload"
+// @Success      201 {object} Team
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/teams [post]
 func (h *Handler) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -109,6 +121,19 @@ func (h *Handler) GetTeam(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListTeams lists teams with pagination.
+// @Summary      List teams
+// @Description  List support teams for the authenticated tenant
+// @Tags         identity
+// @Produce      json
+// @Param        tenant path  string false "Tenant slug"
+// @Param        active query bool   false "Filter by active status"
+// @Param        page   query int    false "Page number"
+// @Param        limit  query int    false "Results per page"
+// @Success      200 {object} map[string]interface{}
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/teams [get]
 func (h *Handler) ListTeams(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -203,7 +228,19 @@ func (h *Handler) DeleteTeam(w http.ResponseWriter, r *http.Request) {
 
 // Agent handlers
 
-// CreateAgent creates a new agent.
+// CreateAgent creates a new support agent.
+// @Summary      Create agent
+// @Description  Create a new support agent for the authenticated tenant
+// @Tags         identity
+// @Accept       json
+// @Produce      json
+// @Param        tenant path string true "Tenant slug"
+// @Param        body   body CreateAgentRequest true "Agent payload"
+// @Success      201 {object} Agent
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/agents [post]
 func (h *Handler) CreateAgent(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -292,6 +329,22 @@ func (h *Handler) GetAgentByUserID(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListAgents lists agents with pagination.
+// @Summary      List agents
+// @Description  List support agents for the authenticated tenant
+// @Tags         identity
+// @Produce      json
+// @Param        tenant path  string false "Tenant slug"
+// @Param        teamId query string false "Filter by team UUID"
+// @Param        status query string false "Filter by agent status"
+// @Param        role   query string false "Filter by agent role"
+// @Param        active query bool   false "Filter by active status"
+// @Param        page   query int    false "Page number"
+// @Param        limit  query int    false "Results per page"
+// @Success      200 {object} map[string]interface{}
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Security     BearerAuth
+// @Router       /{tenant}/agents [get]
 func (h *Handler) ListAgents(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
