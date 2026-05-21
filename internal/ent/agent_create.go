@@ -24,229 +24,229 @@ type AgentCreate struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (ac *AgentCreate) SetTenantID(u uuid.UUID) *AgentCreate {
-	ac.mutation.SetTenantID(u)
-	return ac
+func (_c *AgentCreate) SetTenantID(v uuid.UUID) *AgentCreate {
+	_c.mutation.SetTenantID(v)
+	return _c
 }
 
 // SetUserID sets the "user_id" field.
-func (ac *AgentCreate) SetUserID(u uuid.UUID) *AgentCreate {
-	ac.mutation.SetUserID(u)
-	return ac
+func (_c *AgentCreate) SetUserID(v uuid.UUID) *AgentCreate {
+	_c.mutation.SetUserID(v)
+	return _c
 }
 
 // SetTeamID sets the "team_id" field.
-func (ac *AgentCreate) SetTeamID(u uuid.UUID) *AgentCreate {
-	ac.mutation.SetTeamID(u)
-	return ac
+func (_c *AgentCreate) SetTeamID(v uuid.UUID) *AgentCreate {
+	_c.mutation.SetTeamID(v)
+	return _c
 }
 
 // SetNillableTeamID sets the "team_id" field if the given value is not nil.
-func (ac *AgentCreate) SetNillableTeamID(u *uuid.UUID) *AgentCreate {
-	if u != nil {
-		ac.SetTeamID(*u)
+func (_c *AgentCreate) SetNillableTeamID(v *uuid.UUID) *AgentCreate {
+	if v != nil {
+		_c.SetTeamID(*v)
 	}
-	return ac
+	return _c
 }
 
 // SetDisplayName sets the "display_name" field.
-func (ac *AgentCreate) SetDisplayName(s string) *AgentCreate {
-	ac.mutation.SetDisplayName(s)
-	return ac
+func (_c *AgentCreate) SetDisplayName(v string) *AgentCreate {
+	_c.mutation.SetDisplayName(v)
+	return _c
 }
 
 // SetEmail sets the "email" field.
-func (ac *AgentCreate) SetEmail(s string) *AgentCreate {
-	ac.mutation.SetEmail(s)
-	return ac
+func (_c *AgentCreate) SetEmail(v string) *AgentCreate {
+	_c.mutation.SetEmail(v)
+	return _c
 }
 
 // SetAvatarURL sets the "avatar_url" field.
-func (ac *AgentCreate) SetAvatarURL(s string) *AgentCreate {
-	ac.mutation.SetAvatarURL(s)
-	return ac
+func (_c *AgentCreate) SetAvatarURL(v string) *AgentCreate {
+	_c.mutation.SetAvatarURL(v)
+	return _c
 }
 
 // SetNillableAvatarURL sets the "avatar_url" field if the given value is not nil.
-func (ac *AgentCreate) SetNillableAvatarURL(s *string) *AgentCreate {
-	if s != nil {
-		ac.SetAvatarURL(*s)
+func (_c *AgentCreate) SetNillableAvatarURL(v *string) *AgentCreate {
+	if v != nil {
+		_c.SetAvatarURL(*v)
 	}
-	return ac
+	return _c
 }
 
 // SetRole sets the "role" field.
-func (ac *AgentCreate) SetRole(a agent.Role) *AgentCreate {
-	ac.mutation.SetRole(a)
-	return ac
+func (_c *AgentCreate) SetRole(v agent.Role) *AgentCreate {
+	_c.mutation.SetRole(v)
+	return _c
 }
 
 // SetNillableRole sets the "role" field if the given value is not nil.
-func (ac *AgentCreate) SetNillableRole(a *agent.Role) *AgentCreate {
-	if a != nil {
-		ac.SetRole(*a)
+func (_c *AgentCreate) SetNillableRole(v *agent.Role) *AgentCreate {
+	if v != nil {
+		_c.SetRole(*v)
 	}
-	return ac
+	return _c
 }
 
 // SetStatus sets the "status" field.
-func (ac *AgentCreate) SetStatus(a agent.Status) *AgentCreate {
-	ac.mutation.SetStatus(a)
-	return ac
+func (_c *AgentCreate) SetStatus(v agent.Status) *AgentCreate {
+	_c.mutation.SetStatus(v)
+	return _c
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (ac *AgentCreate) SetNillableStatus(a *agent.Status) *AgentCreate {
-	if a != nil {
-		ac.SetStatus(*a)
+func (_c *AgentCreate) SetNillableStatus(v *agent.Status) *AgentCreate {
+	if v != nil {
+		_c.SetStatus(*v)
 	}
-	return ac
+	return _c
 }
 
 // SetMaxConcurrentTickets sets the "max_concurrent_tickets" field.
-func (ac *AgentCreate) SetMaxConcurrentTickets(i int) *AgentCreate {
-	ac.mutation.SetMaxConcurrentTickets(i)
-	return ac
+func (_c *AgentCreate) SetMaxConcurrentTickets(v int) *AgentCreate {
+	_c.mutation.SetMaxConcurrentTickets(v)
+	return _c
 }
 
 // SetNillableMaxConcurrentTickets sets the "max_concurrent_tickets" field if the given value is not nil.
-func (ac *AgentCreate) SetNillableMaxConcurrentTickets(i *int) *AgentCreate {
-	if i != nil {
-		ac.SetMaxConcurrentTickets(*i)
+func (_c *AgentCreate) SetNillableMaxConcurrentTickets(v *int) *AgentCreate {
+	if v != nil {
+		_c.SetMaxConcurrentTickets(*v)
 	}
-	return ac
+	return _c
 }
 
 // SetCurrentTicketCount sets the "current_ticket_count" field.
-func (ac *AgentCreate) SetCurrentTicketCount(i int) *AgentCreate {
-	ac.mutation.SetCurrentTicketCount(i)
-	return ac
+func (_c *AgentCreate) SetCurrentTicketCount(v int) *AgentCreate {
+	_c.mutation.SetCurrentTicketCount(v)
+	return _c
 }
 
 // SetNillableCurrentTicketCount sets the "current_ticket_count" field if the given value is not nil.
-func (ac *AgentCreate) SetNillableCurrentTicketCount(i *int) *AgentCreate {
-	if i != nil {
-		ac.SetCurrentTicketCount(*i)
+func (_c *AgentCreate) SetNillableCurrentTicketCount(v *int) *AgentCreate {
+	if v != nil {
+		_c.SetCurrentTicketCount(*v)
 	}
-	return ac
+	return _c
 }
 
 // SetSkills sets the "skills" field.
-func (ac *AgentCreate) SetSkills(s []string) *AgentCreate {
-	ac.mutation.SetSkills(s)
-	return ac
+func (_c *AgentCreate) SetSkills(v []string) *AgentCreate {
+	_c.mutation.SetSkills(v)
+	return _c
 }
 
 // SetMetadata sets the "metadata" field.
-func (ac *AgentCreate) SetMetadata(m map[string]interface{}) *AgentCreate {
-	ac.mutation.SetMetadata(m)
-	return ac
+func (_c *AgentCreate) SetMetadata(v map[string]interface{}) *AgentCreate {
+	_c.mutation.SetMetadata(v)
+	return _c
 }
 
 // SetIsActive sets the "is_active" field.
-func (ac *AgentCreate) SetIsActive(b bool) *AgentCreate {
-	ac.mutation.SetIsActive(b)
-	return ac
+func (_c *AgentCreate) SetIsActive(v bool) *AgentCreate {
+	_c.mutation.SetIsActive(v)
+	return _c
 }
 
 // SetNillableIsActive sets the "is_active" field if the given value is not nil.
-func (ac *AgentCreate) SetNillableIsActive(b *bool) *AgentCreate {
-	if b != nil {
-		ac.SetIsActive(*b)
+func (_c *AgentCreate) SetNillableIsActive(v *bool) *AgentCreate {
+	if v != nil {
+		_c.SetIsActive(*v)
 	}
-	return ac
+	return _c
 }
 
 // SetLastActiveAt sets the "last_active_at" field.
-func (ac *AgentCreate) SetLastActiveAt(t time.Time) *AgentCreate {
-	ac.mutation.SetLastActiveAt(t)
-	return ac
+func (_c *AgentCreate) SetLastActiveAt(v time.Time) *AgentCreate {
+	_c.mutation.SetLastActiveAt(v)
+	return _c
 }
 
 // SetNillableLastActiveAt sets the "last_active_at" field if the given value is not nil.
-func (ac *AgentCreate) SetNillableLastActiveAt(t *time.Time) *AgentCreate {
-	if t != nil {
-		ac.SetLastActiveAt(*t)
+func (_c *AgentCreate) SetNillableLastActiveAt(v *time.Time) *AgentCreate {
+	if v != nil {
+		_c.SetLastActiveAt(*v)
 	}
-	return ac
+	return _c
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (ac *AgentCreate) SetCreatedAt(t time.Time) *AgentCreate {
-	ac.mutation.SetCreatedAt(t)
-	return ac
+func (_c *AgentCreate) SetCreatedAt(v time.Time) *AgentCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
 }
 
 // SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (ac *AgentCreate) SetNillableCreatedAt(t *time.Time) *AgentCreate {
-	if t != nil {
-		ac.SetCreatedAt(*t)
+func (_c *AgentCreate) SetNillableCreatedAt(v *time.Time) *AgentCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
 	}
-	return ac
+	return _c
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (ac *AgentCreate) SetUpdatedAt(t time.Time) *AgentCreate {
-	ac.mutation.SetUpdatedAt(t)
-	return ac
+func (_c *AgentCreate) SetUpdatedAt(v time.Time) *AgentCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
 }
 
 // SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (ac *AgentCreate) SetNillableUpdatedAt(t *time.Time) *AgentCreate {
-	if t != nil {
-		ac.SetUpdatedAt(*t)
+func (_c *AgentCreate) SetNillableUpdatedAt(v *time.Time) *AgentCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
 	}
-	return ac
+	return _c
 }
 
 // SetID sets the "id" field.
-func (ac *AgentCreate) SetID(u uuid.UUID) *AgentCreate {
-	ac.mutation.SetID(u)
-	return ac
+func (_c *AgentCreate) SetID(v uuid.UUID) *AgentCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (ac *AgentCreate) SetNillableID(u *uuid.UUID) *AgentCreate {
-	if u != nil {
-		ac.SetID(*u)
+func (_c *AgentCreate) SetNillableID(v *uuid.UUID) *AgentCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return ac
+	return _c
 }
 
 // SetTeam sets the "team" edge to the Team entity.
-func (ac *AgentCreate) SetTeam(t *Team) *AgentCreate {
-	return ac.SetTeamID(t.ID)
+func (_c *AgentCreate) SetTeam(v *Team) *AgentCreate {
+	return _c.SetTeamID(v.ID)
 }
 
 // AddAssignedTicketIDs adds the "assigned_tickets" edge to the Ticket entity by IDs.
-func (ac *AgentCreate) AddAssignedTicketIDs(ids ...uuid.UUID) *AgentCreate {
-	ac.mutation.AddAssignedTicketIDs(ids...)
-	return ac
+func (_c *AgentCreate) AddAssignedTicketIDs(ids ...uuid.UUID) *AgentCreate {
+	_c.mutation.AddAssignedTicketIDs(ids...)
+	return _c
 }
 
 // AddAssignedTickets adds the "assigned_tickets" edges to the Ticket entity.
-func (ac *AgentCreate) AddAssignedTickets(t ...*Ticket) *AgentCreate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_c *AgentCreate) AddAssignedTickets(v ...*Ticket) *AgentCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return ac.AddAssignedTicketIDs(ids...)
+	return _c.AddAssignedTicketIDs(ids...)
 }
 
 // Mutation returns the AgentMutation object of the builder.
-func (ac *AgentCreate) Mutation() *AgentMutation {
-	return ac.mutation
+func (_c *AgentCreate) Mutation() *AgentMutation {
+	return _c.mutation
 }
 
 // Save creates the Agent in the database.
-func (ac *AgentCreate) Save(ctx context.Context) (*Agent, error) {
-	ac.defaults()
-	return withHooks(ctx, ac.sqlSave, ac.mutation, ac.hooks)
+func (_c *AgentCreate) Save(ctx context.Context) (*Agent, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (ac *AgentCreate) SaveX(ctx context.Context) *Agent {
-	v, err := ac.Save(ctx)
+func (_c *AgentCreate) SaveX(ctx context.Context) *Agent {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -254,123 +254,123 @@ func (ac *AgentCreate) SaveX(ctx context.Context) *Agent {
 }
 
 // Exec executes the query.
-func (ac *AgentCreate) Exec(ctx context.Context) error {
-	_, err := ac.Save(ctx)
+func (_c *AgentCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (ac *AgentCreate) ExecX(ctx context.Context) {
-	if err := ac.Exec(ctx); err != nil {
+func (_c *AgentCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (ac *AgentCreate) defaults() {
-	if _, ok := ac.mutation.Role(); !ok {
+func (_c *AgentCreate) defaults() {
+	if _, ok := _c.mutation.Role(); !ok {
 		v := agent.DefaultRole
-		ac.mutation.SetRole(v)
+		_c.mutation.SetRole(v)
 	}
-	if _, ok := ac.mutation.Status(); !ok {
+	if _, ok := _c.mutation.Status(); !ok {
 		v := agent.DefaultStatus
-		ac.mutation.SetStatus(v)
+		_c.mutation.SetStatus(v)
 	}
-	if _, ok := ac.mutation.MaxConcurrentTickets(); !ok {
+	if _, ok := _c.mutation.MaxConcurrentTickets(); !ok {
 		v := agent.DefaultMaxConcurrentTickets
-		ac.mutation.SetMaxConcurrentTickets(v)
+		_c.mutation.SetMaxConcurrentTickets(v)
 	}
-	if _, ok := ac.mutation.CurrentTicketCount(); !ok {
+	if _, ok := _c.mutation.CurrentTicketCount(); !ok {
 		v := agent.DefaultCurrentTicketCount
-		ac.mutation.SetCurrentTicketCount(v)
+		_c.mutation.SetCurrentTicketCount(v)
 	}
-	if _, ok := ac.mutation.IsActive(); !ok {
+	if _, ok := _c.mutation.IsActive(); !ok {
 		v := agent.DefaultIsActive
-		ac.mutation.SetIsActive(v)
+		_c.mutation.SetIsActive(v)
 	}
-	if _, ok := ac.mutation.CreatedAt(); !ok {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := agent.DefaultCreatedAt()
-		ac.mutation.SetCreatedAt(v)
+		_c.mutation.SetCreatedAt(v)
 	}
-	if _, ok := ac.mutation.UpdatedAt(); !ok {
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		v := agent.DefaultUpdatedAt()
-		ac.mutation.SetUpdatedAt(v)
+		_c.mutation.SetUpdatedAt(v)
 	}
-	if _, ok := ac.mutation.ID(); !ok {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := agent.DefaultID()
-		ac.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (ac *AgentCreate) check() error {
-	if _, ok := ac.mutation.TenantID(); !ok {
+func (_c *AgentCreate) check() error {
+	if _, ok := _c.mutation.TenantID(); !ok {
 		return &ValidationError{Name: "tenant_id", err: errors.New(`ent: missing required field "Agent.tenant_id"`)}
 	}
-	if _, ok := ac.mutation.UserID(); !ok {
+	if _, ok := _c.mutation.UserID(); !ok {
 		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "Agent.user_id"`)}
 	}
-	if _, ok := ac.mutation.DisplayName(); !ok {
+	if _, ok := _c.mutation.DisplayName(); !ok {
 		return &ValidationError{Name: "display_name", err: errors.New(`ent: missing required field "Agent.display_name"`)}
 	}
-	if v, ok := ac.mutation.DisplayName(); ok {
+	if v, ok := _c.mutation.DisplayName(); ok {
 		if err := agent.DisplayNameValidator(v); err != nil {
 			return &ValidationError{Name: "display_name", err: fmt.Errorf(`ent: validator failed for field "Agent.display_name": %w`, err)}
 		}
 	}
-	if _, ok := ac.mutation.Email(); !ok {
+	if _, ok := _c.mutation.Email(); !ok {
 		return &ValidationError{Name: "email", err: errors.New(`ent: missing required field "Agent.email"`)}
 	}
-	if v, ok := ac.mutation.Email(); ok {
+	if v, ok := _c.mutation.Email(); ok {
 		if err := agent.EmailValidator(v); err != nil {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "Agent.email": %w`, err)}
 		}
 	}
-	if v, ok := ac.mutation.AvatarURL(); ok {
+	if v, ok := _c.mutation.AvatarURL(); ok {
 		if err := agent.AvatarURLValidator(v); err != nil {
 			return &ValidationError{Name: "avatar_url", err: fmt.Errorf(`ent: validator failed for field "Agent.avatar_url": %w`, err)}
 		}
 	}
-	if _, ok := ac.mutation.Role(); !ok {
+	if _, ok := _c.mutation.Role(); !ok {
 		return &ValidationError{Name: "role", err: errors.New(`ent: missing required field "Agent.role"`)}
 	}
-	if v, ok := ac.mutation.Role(); ok {
+	if v, ok := _c.mutation.Role(); ok {
 		if err := agent.RoleValidator(v); err != nil {
 			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "Agent.role": %w`, err)}
 		}
 	}
-	if _, ok := ac.mutation.Status(); !ok {
+	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Agent.status"`)}
 	}
-	if v, ok := ac.mutation.Status(); ok {
+	if v, ok := _c.mutation.Status(); ok {
 		if err := agent.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Agent.status": %w`, err)}
 		}
 	}
-	if _, ok := ac.mutation.MaxConcurrentTickets(); !ok {
+	if _, ok := _c.mutation.MaxConcurrentTickets(); !ok {
 		return &ValidationError{Name: "max_concurrent_tickets", err: errors.New(`ent: missing required field "Agent.max_concurrent_tickets"`)}
 	}
-	if _, ok := ac.mutation.CurrentTicketCount(); !ok {
+	if _, ok := _c.mutation.CurrentTicketCount(); !ok {
 		return &ValidationError{Name: "current_ticket_count", err: errors.New(`ent: missing required field "Agent.current_ticket_count"`)}
 	}
-	if _, ok := ac.mutation.IsActive(); !ok {
+	if _, ok := _c.mutation.IsActive(); !ok {
 		return &ValidationError{Name: "is_active", err: errors.New(`ent: missing required field "Agent.is_active"`)}
 	}
-	if _, ok := ac.mutation.CreatedAt(); !ok {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Agent.created_at"`)}
 	}
-	if _, ok := ac.mutation.UpdatedAt(); !ok {
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Agent.updated_at"`)}
 	}
 	return nil
 }
 
-func (ac *AgentCreate) sqlSave(ctx context.Context) (*Agent, error) {
-	if err := ac.check(); err != nil {
+func (_c *AgentCreate) sqlSave(ctx context.Context) (*Agent, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := ac.createSpec()
-	if err := sqlgraph.CreateNode(ctx, ac.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -383,81 +383,81 @@ func (ac *AgentCreate) sqlSave(ctx context.Context) (*Agent, error) {
 			return nil, err
 		}
 	}
-	ac.mutation.id = &_node.ID
-	ac.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (ac *AgentCreate) createSpec() (*Agent, *sqlgraph.CreateSpec) {
+func (_c *AgentCreate) createSpec() (*Agent, *sqlgraph.CreateSpec) {
 	var (
-		_node = &Agent{config: ac.config}
+		_node = &Agent{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(agent.Table, sqlgraph.NewFieldSpec(agent.FieldID, field.TypeUUID))
 	)
-	if id, ok := ac.mutation.ID(); ok {
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := ac.mutation.TenantID(); ok {
+	if value, ok := _c.mutation.TenantID(); ok {
 		_spec.SetField(agent.FieldTenantID, field.TypeUUID, value)
 		_node.TenantID = value
 	}
-	if value, ok := ac.mutation.UserID(); ok {
+	if value, ok := _c.mutation.UserID(); ok {
 		_spec.SetField(agent.FieldUserID, field.TypeUUID, value)
 		_node.UserID = value
 	}
-	if value, ok := ac.mutation.DisplayName(); ok {
+	if value, ok := _c.mutation.DisplayName(); ok {
 		_spec.SetField(agent.FieldDisplayName, field.TypeString, value)
 		_node.DisplayName = value
 	}
-	if value, ok := ac.mutation.Email(); ok {
+	if value, ok := _c.mutation.Email(); ok {
 		_spec.SetField(agent.FieldEmail, field.TypeString, value)
 		_node.Email = value
 	}
-	if value, ok := ac.mutation.AvatarURL(); ok {
+	if value, ok := _c.mutation.AvatarURL(); ok {
 		_spec.SetField(agent.FieldAvatarURL, field.TypeString, value)
 		_node.AvatarURL = value
 	}
-	if value, ok := ac.mutation.Role(); ok {
+	if value, ok := _c.mutation.Role(); ok {
 		_spec.SetField(agent.FieldRole, field.TypeEnum, value)
 		_node.Role = value
 	}
-	if value, ok := ac.mutation.Status(); ok {
+	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(agent.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
 	}
-	if value, ok := ac.mutation.MaxConcurrentTickets(); ok {
+	if value, ok := _c.mutation.MaxConcurrentTickets(); ok {
 		_spec.SetField(agent.FieldMaxConcurrentTickets, field.TypeInt, value)
 		_node.MaxConcurrentTickets = value
 	}
-	if value, ok := ac.mutation.CurrentTicketCount(); ok {
+	if value, ok := _c.mutation.CurrentTicketCount(); ok {
 		_spec.SetField(agent.FieldCurrentTicketCount, field.TypeInt, value)
 		_node.CurrentTicketCount = value
 	}
-	if value, ok := ac.mutation.Skills(); ok {
+	if value, ok := _c.mutation.Skills(); ok {
 		_spec.SetField(agent.FieldSkills, field.TypeJSON, value)
 		_node.Skills = value
 	}
-	if value, ok := ac.mutation.Metadata(); ok {
+	if value, ok := _c.mutation.Metadata(); ok {
 		_spec.SetField(agent.FieldMetadata, field.TypeJSON, value)
 		_node.Metadata = value
 	}
-	if value, ok := ac.mutation.IsActive(); ok {
+	if value, ok := _c.mutation.IsActive(); ok {
 		_spec.SetField(agent.FieldIsActive, field.TypeBool, value)
 		_node.IsActive = value
 	}
-	if value, ok := ac.mutation.LastActiveAt(); ok {
+	if value, ok := _c.mutation.LastActiveAt(); ok {
 		_spec.SetField(agent.FieldLastActiveAt, field.TypeTime, value)
 		_node.LastActiveAt = &value
 	}
-	if value, ok := ac.mutation.CreatedAt(); ok {
+	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(agent.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
-	if value, ok := ac.mutation.UpdatedAt(); ok {
+	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(agent.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
-	if nodes := ac.mutation.TeamIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.TeamIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -474,7 +474,7 @@ func (ac *AgentCreate) createSpec() (*Agent, *sqlgraph.CreateSpec) {
 		_node.TeamID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := ac.mutation.AssignedTicketsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.AssignedTicketsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -501,16 +501,16 @@ type AgentCreateBulk struct {
 }
 
 // Save creates the Agent entities in the database.
-func (acb *AgentCreateBulk) Save(ctx context.Context) ([]*Agent, error) {
-	if acb.err != nil {
-		return nil, acb.err
+func (_c *AgentCreateBulk) Save(ctx context.Context) ([]*Agent, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(acb.builders))
-	nodes := make([]*Agent, len(acb.builders))
-	mutators := make([]Mutator, len(acb.builders))
-	for i := range acb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*Agent, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := acb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*AgentMutation)
@@ -524,11 +524,11 @@ func (acb *AgentCreateBulk) Save(ctx context.Context) ([]*Agent, error) {
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, acb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, acb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -548,7 +548,7 @@ func (acb *AgentCreateBulk) Save(ctx context.Context) ([]*Agent, error) {
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, acb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -556,8 +556,8 @@ func (acb *AgentCreateBulk) Save(ctx context.Context) ([]*Agent, error) {
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (acb *AgentCreateBulk) SaveX(ctx context.Context) []*Agent {
-	v, err := acb.Save(ctx)
+func (_c *AgentCreateBulk) SaveX(ctx context.Context) []*Agent {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -565,14 +565,14 @@ func (acb *AgentCreateBulk) SaveX(ctx context.Context) []*Agent {
 }
 
 // Exec executes the query.
-func (acb *AgentCreateBulk) Exec(ctx context.Context) error {
-	_, err := acb.Save(ctx)
+func (_c *AgentCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (acb *AgentCreateBulk) ExecX(ctx context.Context) {
-	if err := acb.Exec(ctx); err != nil {
+func (_c *AgentCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

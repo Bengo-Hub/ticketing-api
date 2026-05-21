@@ -23,150 +23,150 @@ type TicketAttachmentCreate struct {
 }
 
 // SetTicketID sets the "ticket_id" field.
-func (tac *TicketAttachmentCreate) SetTicketID(u uuid.UUID) *TicketAttachmentCreate {
-	tac.mutation.SetTicketID(u)
-	return tac
+func (_c *TicketAttachmentCreate) SetTicketID(v uuid.UUID) *TicketAttachmentCreate {
+	_c.mutation.SetTicketID(v)
+	return _c
 }
 
 // SetCommentID sets the "comment_id" field.
-func (tac *TicketAttachmentCreate) SetCommentID(u uuid.UUID) *TicketAttachmentCreate {
-	tac.mutation.SetCommentID(u)
-	return tac
+func (_c *TicketAttachmentCreate) SetCommentID(v uuid.UUID) *TicketAttachmentCreate {
+	_c.mutation.SetCommentID(v)
+	return _c
 }
 
 // SetNillableCommentID sets the "comment_id" field if the given value is not nil.
-func (tac *TicketAttachmentCreate) SetNillableCommentID(u *uuid.UUID) *TicketAttachmentCreate {
-	if u != nil {
-		tac.SetCommentID(*u)
+func (_c *TicketAttachmentCreate) SetNillableCommentID(v *uuid.UUID) *TicketAttachmentCreate {
+	if v != nil {
+		_c.SetCommentID(*v)
 	}
-	return tac
+	return _c
 }
 
 // SetUploadedBy sets the "uploaded_by" field.
-func (tac *TicketAttachmentCreate) SetUploadedBy(u uuid.UUID) *TicketAttachmentCreate {
-	tac.mutation.SetUploadedBy(u)
-	return tac
+func (_c *TicketAttachmentCreate) SetUploadedBy(v uuid.UUID) *TicketAttachmentCreate {
+	_c.mutation.SetUploadedBy(v)
+	return _c
 }
 
 // SetFilename sets the "filename" field.
-func (tac *TicketAttachmentCreate) SetFilename(s string) *TicketAttachmentCreate {
-	tac.mutation.SetFilename(s)
-	return tac
+func (_c *TicketAttachmentCreate) SetFilename(v string) *TicketAttachmentCreate {
+	_c.mutation.SetFilename(v)
+	return _c
 }
 
 // SetStorageKey sets the "storage_key" field.
-func (tac *TicketAttachmentCreate) SetStorageKey(s string) *TicketAttachmentCreate {
-	tac.mutation.SetStorageKey(s)
-	return tac
+func (_c *TicketAttachmentCreate) SetStorageKey(v string) *TicketAttachmentCreate {
+	_c.mutation.SetStorageKey(v)
+	return _c
 }
 
 // SetContentType sets the "content_type" field.
-func (tac *TicketAttachmentCreate) SetContentType(s string) *TicketAttachmentCreate {
-	tac.mutation.SetContentType(s)
-	return tac
+func (_c *TicketAttachmentCreate) SetContentType(v string) *TicketAttachmentCreate {
+	_c.mutation.SetContentType(v)
+	return _c
 }
 
 // SetFileSize sets the "file_size" field.
-func (tac *TicketAttachmentCreate) SetFileSize(i int64) *TicketAttachmentCreate {
-	tac.mutation.SetFileSize(i)
-	return tac
+func (_c *TicketAttachmentCreate) SetFileSize(v int64) *TicketAttachmentCreate {
+	_c.mutation.SetFileSize(v)
+	return _c
 }
 
 // SetURL sets the "url" field.
-func (tac *TicketAttachmentCreate) SetURL(s string) *TicketAttachmentCreate {
-	tac.mutation.SetURL(s)
-	return tac
+func (_c *TicketAttachmentCreate) SetURL(v string) *TicketAttachmentCreate {
+	_c.mutation.SetURL(v)
+	return _c
 }
 
 // SetNillableURL sets the "url" field if the given value is not nil.
-func (tac *TicketAttachmentCreate) SetNillableURL(s *string) *TicketAttachmentCreate {
-	if s != nil {
-		tac.SetURL(*s)
+func (_c *TicketAttachmentCreate) SetNillableURL(v *string) *TicketAttachmentCreate {
+	if v != nil {
+		_c.SetURL(*v)
 	}
-	return tac
+	return _c
 }
 
 // SetURLExpiresAt sets the "url_expires_at" field.
-func (tac *TicketAttachmentCreate) SetURLExpiresAt(t time.Time) *TicketAttachmentCreate {
-	tac.mutation.SetURLExpiresAt(t)
-	return tac
+func (_c *TicketAttachmentCreate) SetURLExpiresAt(v time.Time) *TicketAttachmentCreate {
+	_c.mutation.SetURLExpiresAt(v)
+	return _c
 }
 
 // SetNillableURLExpiresAt sets the "url_expires_at" field if the given value is not nil.
-func (tac *TicketAttachmentCreate) SetNillableURLExpiresAt(t *time.Time) *TicketAttachmentCreate {
-	if t != nil {
-		tac.SetURLExpiresAt(*t)
+func (_c *TicketAttachmentCreate) SetNillableURLExpiresAt(v *time.Time) *TicketAttachmentCreate {
+	if v != nil {
+		_c.SetURLExpiresAt(*v)
 	}
-	return tac
+	return _c
 }
 
 // SetMetadata sets the "metadata" field.
-func (tac *TicketAttachmentCreate) SetMetadata(m map[string]interface{}) *TicketAttachmentCreate {
-	tac.mutation.SetMetadata(m)
-	return tac
+func (_c *TicketAttachmentCreate) SetMetadata(v map[string]interface{}) *TicketAttachmentCreate {
+	_c.mutation.SetMetadata(v)
+	return _c
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (tac *TicketAttachmentCreate) SetCreatedAt(t time.Time) *TicketAttachmentCreate {
-	tac.mutation.SetCreatedAt(t)
-	return tac
+func (_c *TicketAttachmentCreate) SetCreatedAt(v time.Time) *TicketAttachmentCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
 }
 
 // SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (tac *TicketAttachmentCreate) SetNillableCreatedAt(t *time.Time) *TicketAttachmentCreate {
-	if t != nil {
-		tac.SetCreatedAt(*t)
+func (_c *TicketAttachmentCreate) SetNillableCreatedAt(v *time.Time) *TicketAttachmentCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
 	}
-	return tac
+	return _c
 }
 
 // SetDeletedAt sets the "deleted_at" field.
-func (tac *TicketAttachmentCreate) SetDeletedAt(t time.Time) *TicketAttachmentCreate {
-	tac.mutation.SetDeletedAt(t)
-	return tac
+func (_c *TicketAttachmentCreate) SetDeletedAt(v time.Time) *TicketAttachmentCreate {
+	_c.mutation.SetDeletedAt(v)
+	return _c
 }
 
 // SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
-func (tac *TicketAttachmentCreate) SetNillableDeletedAt(t *time.Time) *TicketAttachmentCreate {
-	if t != nil {
-		tac.SetDeletedAt(*t)
+func (_c *TicketAttachmentCreate) SetNillableDeletedAt(v *time.Time) *TicketAttachmentCreate {
+	if v != nil {
+		_c.SetDeletedAt(*v)
 	}
-	return tac
+	return _c
 }
 
 // SetID sets the "id" field.
-func (tac *TicketAttachmentCreate) SetID(u uuid.UUID) *TicketAttachmentCreate {
-	tac.mutation.SetID(u)
-	return tac
+func (_c *TicketAttachmentCreate) SetID(v uuid.UUID) *TicketAttachmentCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (tac *TicketAttachmentCreate) SetNillableID(u *uuid.UUID) *TicketAttachmentCreate {
-	if u != nil {
-		tac.SetID(*u)
+func (_c *TicketAttachmentCreate) SetNillableID(v *uuid.UUID) *TicketAttachmentCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return tac
+	return _c
 }
 
 // SetTicket sets the "ticket" edge to the Ticket entity.
-func (tac *TicketAttachmentCreate) SetTicket(t *Ticket) *TicketAttachmentCreate {
-	return tac.SetTicketID(t.ID)
+func (_c *TicketAttachmentCreate) SetTicket(v *Ticket) *TicketAttachmentCreate {
+	return _c.SetTicketID(v.ID)
 }
 
 // Mutation returns the TicketAttachmentMutation object of the builder.
-func (tac *TicketAttachmentCreate) Mutation() *TicketAttachmentMutation {
-	return tac.mutation
+func (_c *TicketAttachmentCreate) Mutation() *TicketAttachmentMutation {
+	return _c.mutation
 }
 
 // Save creates the TicketAttachment in the database.
-func (tac *TicketAttachmentCreate) Save(ctx context.Context) (*TicketAttachment, error) {
-	tac.defaults()
-	return withHooks(ctx, tac.sqlSave, tac.mutation, tac.hooks)
+func (_c *TicketAttachmentCreate) Save(ctx context.Context) (*TicketAttachment, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (tac *TicketAttachmentCreate) SaveX(ctx context.Context) *TicketAttachment {
-	v, err := tac.Save(ctx)
+func (_c *TicketAttachmentCreate) SaveX(ctx context.Context) *TicketAttachment {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -174,85 +174,85 @@ func (tac *TicketAttachmentCreate) SaveX(ctx context.Context) *TicketAttachment 
 }
 
 // Exec executes the query.
-func (tac *TicketAttachmentCreate) Exec(ctx context.Context) error {
-	_, err := tac.Save(ctx)
+func (_c *TicketAttachmentCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tac *TicketAttachmentCreate) ExecX(ctx context.Context) {
-	if err := tac.Exec(ctx); err != nil {
+func (_c *TicketAttachmentCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (tac *TicketAttachmentCreate) defaults() {
-	if _, ok := tac.mutation.CreatedAt(); !ok {
+func (_c *TicketAttachmentCreate) defaults() {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := ticketattachment.DefaultCreatedAt()
-		tac.mutation.SetCreatedAt(v)
+		_c.mutation.SetCreatedAt(v)
 	}
-	if _, ok := tac.mutation.ID(); !ok {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := ticketattachment.DefaultID()
-		tac.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (tac *TicketAttachmentCreate) check() error {
-	if _, ok := tac.mutation.TicketID(); !ok {
+func (_c *TicketAttachmentCreate) check() error {
+	if _, ok := _c.mutation.TicketID(); !ok {
 		return &ValidationError{Name: "ticket_id", err: errors.New(`ent: missing required field "TicketAttachment.ticket_id"`)}
 	}
-	if _, ok := tac.mutation.UploadedBy(); !ok {
+	if _, ok := _c.mutation.UploadedBy(); !ok {
 		return &ValidationError{Name: "uploaded_by", err: errors.New(`ent: missing required field "TicketAttachment.uploaded_by"`)}
 	}
-	if _, ok := tac.mutation.Filename(); !ok {
+	if _, ok := _c.mutation.Filename(); !ok {
 		return &ValidationError{Name: "filename", err: errors.New(`ent: missing required field "TicketAttachment.filename"`)}
 	}
-	if v, ok := tac.mutation.Filename(); ok {
+	if v, ok := _c.mutation.Filename(); ok {
 		if err := ticketattachment.FilenameValidator(v); err != nil {
 			return &ValidationError{Name: "filename", err: fmt.Errorf(`ent: validator failed for field "TicketAttachment.filename": %w`, err)}
 		}
 	}
-	if _, ok := tac.mutation.StorageKey(); !ok {
+	if _, ok := _c.mutation.StorageKey(); !ok {
 		return &ValidationError{Name: "storage_key", err: errors.New(`ent: missing required field "TicketAttachment.storage_key"`)}
 	}
-	if v, ok := tac.mutation.StorageKey(); ok {
+	if v, ok := _c.mutation.StorageKey(); ok {
 		if err := ticketattachment.StorageKeyValidator(v); err != nil {
 			return &ValidationError{Name: "storage_key", err: fmt.Errorf(`ent: validator failed for field "TicketAttachment.storage_key": %w`, err)}
 		}
 	}
-	if _, ok := tac.mutation.ContentType(); !ok {
+	if _, ok := _c.mutation.ContentType(); !ok {
 		return &ValidationError{Name: "content_type", err: errors.New(`ent: missing required field "TicketAttachment.content_type"`)}
 	}
-	if v, ok := tac.mutation.ContentType(); ok {
+	if v, ok := _c.mutation.ContentType(); ok {
 		if err := ticketattachment.ContentTypeValidator(v); err != nil {
 			return &ValidationError{Name: "content_type", err: fmt.Errorf(`ent: validator failed for field "TicketAttachment.content_type": %w`, err)}
 		}
 	}
-	if _, ok := tac.mutation.FileSize(); !ok {
+	if _, ok := _c.mutation.FileSize(); !ok {
 		return &ValidationError{Name: "file_size", err: errors.New(`ent: missing required field "TicketAttachment.file_size"`)}
 	}
-	if v, ok := tac.mutation.URL(); ok {
+	if v, ok := _c.mutation.URL(); ok {
 		if err := ticketattachment.URLValidator(v); err != nil {
 			return &ValidationError{Name: "url", err: fmt.Errorf(`ent: validator failed for field "TicketAttachment.url": %w`, err)}
 		}
 	}
-	if _, ok := tac.mutation.CreatedAt(); !ok {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "TicketAttachment.created_at"`)}
 	}
-	if _, ok := tac.mutation.TicketID(); !ok {
+	if len(_c.mutation.TicketIDs()) == 0 {
 		return &ValidationError{Name: "ticket", err: errors.New(`ent: missing required edge "TicketAttachment.ticket"`)}
 	}
 	return nil
 }
 
-func (tac *TicketAttachmentCreate) sqlSave(ctx context.Context) (*TicketAttachment, error) {
-	if err := tac.check(); err != nil {
+func (_c *TicketAttachmentCreate) sqlSave(ctx context.Context) (*TicketAttachment, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := tac.createSpec()
-	if err := sqlgraph.CreateNode(ctx, tac.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -265,65 +265,65 @@ func (tac *TicketAttachmentCreate) sqlSave(ctx context.Context) (*TicketAttachme
 			return nil, err
 		}
 	}
-	tac.mutation.id = &_node.ID
-	tac.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (tac *TicketAttachmentCreate) createSpec() (*TicketAttachment, *sqlgraph.CreateSpec) {
+func (_c *TicketAttachmentCreate) createSpec() (*TicketAttachment, *sqlgraph.CreateSpec) {
 	var (
-		_node = &TicketAttachment{config: tac.config}
+		_node = &TicketAttachment{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(ticketattachment.Table, sqlgraph.NewFieldSpec(ticketattachment.FieldID, field.TypeUUID))
 	)
-	if id, ok := tac.mutation.ID(); ok {
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := tac.mutation.CommentID(); ok {
+	if value, ok := _c.mutation.CommentID(); ok {
 		_spec.SetField(ticketattachment.FieldCommentID, field.TypeUUID, value)
 		_node.CommentID = &value
 	}
-	if value, ok := tac.mutation.UploadedBy(); ok {
+	if value, ok := _c.mutation.UploadedBy(); ok {
 		_spec.SetField(ticketattachment.FieldUploadedBy, field.TypeUUID, value)
 		_node.UploadedBy = value
 	}
-	if value, ok := tac.mutation.Filename(); ok {
+	if value, ok := _c.mutation.Filename(); ok {
 		_spec.SetField(ticketattachment.FieldFilename, field.TypeString, value)
 		_node.Filename = value
 	}
-	if value, ok := tac.mutation.StorageKey(); ok {
+	if value, ok := _c.mutation.StorageKey(); ok {
 		_spec.SetField(ticketattachment.FieldStorageKey, field.TypeString, value)
 		_node.StorageKey = value
 	}
-	if value, ok := tac.mutation.ContentType(); ok {
+	if value, ok := _c.mutation.ContentType(); ok {
 		_spec.SetField(ticketattachment.FieldContentType, field.TypeString, value)
 		_node.ContentType = value
 	}
-	if value, ok := tac.mutation.FileSize(); ok {
+	if value, ok := _c.mutation.FileSize(); ok {
 		_spec.SetField(ticketattachment.FieldFileSize, field.TypeInt64, value)
 		_node.FileSize = value
 	}
-	if value, ok := tac.mutation.URL(); ok {
+	if value, ok := _c.mutation.URL(); ok {
 		_spec.SetField(ticketattachment.FieldURL, field.TypeString, value)
 		_node.URL = value
 	}
-	if value, ok := tac.mutation.URLExpiresAt(); ok {
+	if value, ok := _c.mutation.URLExpiresAt(); ok {
 		_spec.SetField(ticketattachment.FieldURLExpiresAt, field.TypeTime, value)
 		_node.URLExpiresAt = &value
 	}
-	if value, ok := tac.mutation.Metadata(); ok {
+	if value, ok := _c.mutation.Metadata(); ok {
 		_spec.SetField(ticketattachment.FieldMetadata, field.TypeJSON, value)
 		_node.Metadata = value
 	}
-	if value, ok := tac.mutation.CreatedAt(); ok {
+	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(ticketattachment.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
-	if value, ok := tac.mutation.DeletedAt(); ok {
+	if value, ok := _c.mutation.DeletedAt(); ok {
 		_spec.SetField(ticketattachment.FieldDeletedAt, field.TypeTime, value)
 		_node.DeletedAt = &value
 	}
-	if nodes := tac.mutation.TicketIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.TicketIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -351,16 +351,16 @@ type TicketAttachmentCreateBulk struct {
 }
 
 // Save creates the TicketAttachment entities in the database.
-func (tacb *TicketAttachmentCreateBulk) Save(ctx context.Context) ([]*TicketAttachment, error) {
-	if tacb.err != nil {
-		return nil, tacb.err
+func (_c *TicketAttachmentCreateBulk) Save(ctx context.Context) ([]*TicketAttachment, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(tacb.builders))
-	nodes := make([]*TicketAttachment, len(tacb.builders))
-	mutators := make([]Mutator, len(tacb.builders))
-	for i := range tacb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*TicketAttachment, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := tacb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*TicketAttachmentMutation)
@@ -374,11 +374,11 @@ func (tacb *TicketAttachmentCreateBulk) Save(ctx context.Context) ([]*TicketAtta
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, tacb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, tacb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -398,7 +398,7 @@ func (tacb *TicketAttachmentCreateBulk) Save(ctx context.Context) ([]*TicketAtta
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, tacb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -406,8 +406,8 @@ func (tacb *TicketAttachmentCreateBulk) Save(ctx context.Context) ([]*TicketAtta
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (tacb *TicketAttachmentCreateBulk) SaveX(ctx context.Context) []*TicketAttachment {
-	v, err := tacb.Save(ctx)
+func (_c *TicketAttachmentCreateBulk) SaveX(ctx context.Context) []*TicketAttachment {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -415,14 +415,14 @@ func (tacb *TicketAttachmentCreateBulk) SaveX(ctx context.Context) []*TicketAtta
 }
 
 // Exec executes the query.
-func (tacb *TicketAttachmentCreateBulk) Exec(ctx context.Context) error {
-	_, err := tacb.Save(ctx)
+func (_c *TicketAttachmentCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tacb *TicketAttachmentCreateBulk) ExecX(ctx context.Context) {
-	if err := tacb.Exec(ctx); err != nil {
+func (_c *TicketAttachmentCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

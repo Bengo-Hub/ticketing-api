@@ -25,271 +25,271 @@ type TicketCategoryUpdate struct {
 }
 
 // Where appends a list predicates to the TicketCategoryUpdate builder.
-func (tcu *TicketCategoryUpdate) Where(ps ...predicate.TicketCategory) *TicketCategoryUpdate {
-	tcu.mutation.Where(ps...)
-	return tcu
+func (_u *TicketCategoryUpdate) Where(ps ...predicate.TicketCategory) *TicketCategoryUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (tcu *TicketCategoryUpdate) SetTenantID(u uuid.UUID) *TicketCategoryUpdate {
-	tcu.mutation.SetTenantID(u)
-	return tcu
+func (_u *TicketCategoryUpdate) SetTenantID(v uuid.UUID) *TicketCategoryUpdate {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (tcu *TicketCategoryUpdate) SetNillableTenantID(u *uuid.UUID) *TicketCategoryUpdate {
-	if u != nil {
-		tcu.SetTenantID(*u)
+func (_u *TicketCategoryUpdate) SetNillableTenantID(v *uuid.UUID) *TicketCategoryUpdate {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return tcu
+	return _u
 }
 
 // SetParentID sets the "parent_id" field.
-func (tcu *TicketCategoryUpdate) SetParentID(u uuid.UUID) *TicketCategoryUpdate {
-	tcu.mutation.SetParentID(u)
-	return tcu
+func (_u *TicketCategoryUpdate) SetParentID(v uuid.UUID) *TicketCategoryUpdate {
+	_u.mutation.SetParentID(v)
+	return _u
 }
 
 // SetNillableParentID sets the "parent_id" field if the given value is not nil.
-func (tcu *TicketCategoryUpdate) SetNillableParentID(u *uuid.UUID) *TicketCategoryUpdate {
-	if u != nil {
-		tcu.SetParentID(*u)
+func (_u *TicketCategoryUpdate) SetNillableParentID(v *uuid.UUID) *TicketCategoryUpdate {
+	if v != nil {
+		_u.SetParentID(*v)
 	}
-	return tcu
+	return _u
 }
 
 // ClearParentID clears the value of the "parent_id" field.
-func (tcu *TicketCategoryUpdate) ClearParentID() *TicketCategoryUpdate {
-	tcu.mutation.ClearParentID()
-	return tcu
+func (_u *TicketCategoryUpdate) ClearParentID() *TicketCategoryUpdate {
+	_u.mutation.ClearParentID()
+	return _u
 }
 
 // SetName sets the "name" field.
-func (tcu *TicketCategoryUpdate) SetName(s string) *TicketCategoryUpdate {
-	tcu.mutation.SetName(s)
-	return tcu
+func (_u *TicketCategoryUpdate) SetName(v string) *TicketCategoryUpdate {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (tcu *TicketCategoryUpdate) SetNillableName(s *string) *TicketCategoryUpdate {
-	if s != nil {
-		tcu.SetName(*s)
+func (_u *TicketCategoryUpdate) SetNillableName(v *string) *TicketCategoryUpdate {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return tcu
+	return _u
 }
 
 // SetSlug sets the "slug" field.
-func (tcu *TicketCategoryUpdate) SetSlug(s string) *TicketCategoryUpdate {
-	tcu.mutation.SetSlug(s)
-	return tcu
+func (_u *TicketCategoryUpdate) SetSlug(v string) *TicketCategoryUpdate {
+	_u.mutation.SetSlug(v)
+	return _u
 }
 
 // SetNillableSlug sets the "slug" field if the given value is not nil.
-func (tcu *TicketCategoryUpdate) SetNillableSlug(s *string) *TicketCategoryUpdate {
-	if s != nil {
-		tcu.SetSlug(*s)
+func (_u *TicketCategoryUpdate) SetNillableSlug(v *string) *TicketCategoryUpdate {
+	if v != nil {
+		_u.SetSlug(*v)
 	}
-	return tcu
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (tcu *TicketCategoryUpdate) SetDescription(s string) *TicketCategoryUpdate {
-	tcu.mutation.SetDescription(s)
-	return tcu
+func (_u *TicketCategoryUpdate) SetDescription(v string) *TicketCategoryUpdate {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (tcu *TicketCategoryUpdate) SetNillableDescription(s *string) *TicketCategoryUpdate {
-	if s != nil {
-		tcu.SetDescription(*s)
+func (_u *TicketCategoryUpdate) SetNillableDescription(v *string) *TicketCategoryUpdate {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return tcu
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (tcu *TicketCategoryUpdate) ClearDescription() *TicketCategoryUpdate {
-	tcu.mutation.ClearDescription()
-	return tcu
+func (_u *TicketCategoryUpdate) ClearDescription() *TicketCategoryUpdate {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetIcon sets the "icon" field.
-func (tcu *TicketCategoryUpdate) SetIcon(s string) *TicketCategoryUpdate {
-	tcu.mutation.SetIcon(s)
-	return tcu
+func (_u *TicketCategoryUpdate) SetIcon(v string) *TicketCategoryUpdate {
+	_u.mutation.SetIcon(v)
+	return _u
 }
 
 // SetNillableIcon sets the "icon" field if the given value is not nil.
-func (tcu *TicketCategoryUpdate) SetNillableIcon(s *string) *TicketCategoryUpdate {
-	if s != nil {
-		tcu.SetIcon(*s)
+func (_u *TicketCategoryUpdate) SetNillableIcon(v *string) *TicketCategoryUpdate {
+	if v != nil {
+		_u.SetIcon(*v)
 	}
-	return tcu
+	return _u
 }
 
 // ClearIcon clears the value of the "icon" field.
-func (tcu *TicketCategoryUpdate) ClearIcon() *TicketCategoryUpdate {
-	tcu.mutation.ClearIcon()
-	return tcu
+func (_u *TicketCategoryUpdate) ClearIcon() *TicketCategoryUpdate {
+	_u.mutation.ClearIcon()
+	return _u
 }
 
 // SetSortOrder sets the "sort_order" field.
-func (tcu *TicketCategoryUpdate) SetSortOrder(i int) *TicketCategoryUpdate {
-	tcu.mutation.ResetSortOrder()
-	tcu.mutation.SetSortOrder(i)
-	return tcu
+func (_u *TicketCategoryUpdate) SetSortOrder(v int) *TicketCategoryUpdate {
+	_u.mutation.ResetSortOrder()
+	_u.mutation.SetSortOrder(v)
+	return _u
 }
 
 // SetNillableSortOrder sets the "sort_order" field if the given value is not nil.
-func (tcu *TicketCategoryUpdate) SetNillableSortOrder(i *int) *TicketCategoryUpdate {
-	if i != nil {
-		tcu.SetSortOrder(*i)
+func (_u *TicketCategoryUpdate) SetNillableSortOrder(v *int) *TicketCategoryUpdate {
+	if v != nil {
+		_u.SetSortOrder(*v)
 	}
-	return tcu
+	return _u
 }
 
-// AddSortOrder adds i to the "sort_order" field.
-func (tcu *TicketCategoryUpdate) AddSortOrder(i int) *TicketCategoryUpdate {
-	tcu.mutation.AddSortOrder(i)
-	return tcu
+// AddSortOrder adds value to the "sort_order" field.
+func (_u *TicketCategoryUpdate) AddSortOrder(v int) *TicketCategoryUpdate {
+	_u.mutation.AddSortOrder(v)
+	return _u
 }
 
 // SetIsActive sets the "is_active" field.
-func (tcu *TicketCategoryUpdate) SetIsActive(b bool) *TicketCategoryUpdate {
-	tcu.mutation.SetIsActive(b)
-	return tcu
+func (_u *TicketCategoryUpdate) SetIsActive(v bool) *TicketCategoryUpdate {
+	_u.mutation.SetIsActive(v)
+	return _u
 }
 
 // SetNillableIsActive sets the "is_active" field if the given value is not nil.
-func (tcu *TicketCategoryUpdate) SetNillableIsActive(b *bool) *TicketCategoryUpdate {
-	if b != nil {
-		tcu.SetIsActive(*b)
+func (_u *TicketCategoryUpdate) SetNillableIsActive(v *bool) *TicketCategoryUpdate {
+	if v != nil {
+		_u.SetIsActive(*v)
 	}
-	return tcu
+	return _u
 }
 
 // SetDefaultAssigneeID sets the "default_assignee_id" field.
-func (tcu *TicketCategoryUpdate) SetDefaultAssigneeID(u uuid.UUID) *TicketCategoryUpdate {
-	tcu.mutation.SetDefaultAssigneeID(u)
-	return tcu
+func (_u *TicketCategoryUpdate) SetDefaultAssigneeID(v uuid.UUID) *TicketCategoryUpdate {
+	_u.mutation.SetDefaultAssigneeID(v)
+	return _u
 }
 
 // SetNillableDefaultAssigneeID sets the "default_assignee_id" field if the given value is not nil.
-func (tcu *TicketCategoryUpdate) SetNillableDefaultAssigneeID(u *uuid.UUID) *TicketCategoryUpdate {
-	if u != nil {
-		tcu.SetDefaultAssigneeID(*u)
+func (_u *TicketCategoryUpdate) SetNillableDefaultAssigneeID(v *uuid.UUID) *TicketCategoryUpdate {
+	if v != nil {
+		_u.SetDefaultAssigneeID(*v)
 	}
-	return tcu
+	return _u
 }
 
 // ClearDefaultAssigneeID clears the value of the "default_assignee_id" field.
-func (tcu *TicketCategoryUpdate) ClearDefaultAssigneeID() *TicketCategoryUpdate {
-	tcu.mutation.ClearDefaultAssigneeID()
-	return tcu
+func (_u *TicketCategoryUpdate) ClearDefaultAssigneeID() *TicketCategoryUpdate {
+	_u.mutation.ClearDefaultAssigneeID()
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (tcu *TicketCategoryUpdate) SetUpdatedAt(t time.Time) *TicketCategoryUpdate {
-	tcu.mutation.SetUpdatedAt(t)
-	return tcu
+func (_u *TicketCategoryUpdate) SetUpdatedAt(v time.Time) *TicketCategoryUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // AddTicketIDs adds the "tickets" edge to the Ticket entity by IDs.
-func (tcu *TicketCategoryUpdate) AddTicketIDs(ids ...uuid.UUID) *TicketCategoryUpdate {
-	tcu.mutation.AddTicketIDs(ids...)
-	return tcu
+func (_u *TicketCategoryUpdate) AddTicketIDs(ids ...uuid.UUID) *TicketCategoryUpdate {
+	_u.mutation.AddTicketIDs(ids...)
+	return _u
 }
 
 // AddTickets adds the "tickets" edges to the Ticket entity.
-func (tcu *TicketCategoryUpdate) AddTickets(t ...*Ticket) *TicketCategoryUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *TicketCategoryUpdate) AddTickets(v ...*Ticket) *TicketCategoryUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tcu.AddTicketIDs(ids...)
+	return _u.AddTicketIDs(ids...)
 }
 
 // SetParent sets the "parent" edge to the TicketCategory entity.
-func (tcu *TicketCategoryUpdate) SetParent(t *TicketCategory) *TicketCategoryUpdate {
-	return tcu.SetParentID(t.ID)
+func (_u *TicketCategoryUpdate) SetParent(v *TicketCategory) *TicketCategoryUpdate {
+	return _u.SetParentID(v.ID)
 }
 
 // AddChildIDs adds the "children" edge to the TicketCategory entity by IDs.
-func (tcu *TicketCategoryUpdate) AddChildIDs(ids ...uuid.UUID) *TicketCategoryUpdate {
-	tcu.mutation.AddChildIDs(ids...)
-	return tcu
+func (_u *TicketCategoryUpdate) AddChildIDs(ids ...uuid.UUID) *TicketCategoryUpdate {
+	_u.mutation.AddChildIDs(ids...)
+	return _u
 }
 
 // AddChildren adds the "children" edges to the TicketCategory entity.
-func (tcu *TicketCategoryUpdate) AddChildren(t ...*TicketCategory) *TicketCategoryUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *TicketCategoryUpdate) AddChildren(v ...*TicketCategory) *TicketCategoryUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tcu.AddChildIDs(ids...)
+	return _u.AddChildIDs(ids...)
 }
 
 // Mutation returns the TicketCategoryMutation object of the builder.
-func (tcu *TicketCategoryUpdate) Mutation() *TicketCategoryMutation {
-	return tcu.mutation
+func (_u *TicketCategoryUpdate) Mutation() *TicketCategoryMutation {
+	return _u.mutation
 }
 
 // ClearTickets clears all "tickets" edges to the Ticket entity.
-func (tcu *TicketCategoryUpdate) ClearTickets() *TicketCategoryUpdate {
-	tcu.mutation.ClearTickets()
-	return tcu
+func (_u *TicketCategoryUpdate) ClearTickets() *TicketCategoryUpdate {
+	_u.mutation.ClearTickets()
+	return _u
 }
 
 // RemoveTicketIDs removes the "tickets" edge to Ticket entities by IDs.
-func (tcu *TicketCategoryUpdate) RemoveTicketIDs(ids ...uuid.UUID) *TicketCategoryUpdate {
-	tcu.mutation.RemoveTicketIDs(ids...)
-	return tcu
+func (_u *TicketCategoryUpdate) RemoveTicketIDs(ids ...uuid.UUID) *TicketCategoryUpdate {
+	_u.mutation.RemoveTicketIDs(ids...)
+	return _u
 }
 
 // RemoveTickets removes "tickets" edges to Ticket entities.
-func (tcu *TicketCategoryUpdate) RemoveTickets(t ...*Ticket) *TicketCategoryUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *TicketCategoryUpdate) RemoveTickets(v ...*Ticket) *TicketCategoryUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tcu.RemoveTicketIDs(ids...)
+	return _u.RemoveTicketIDs(ids...)
 }
 
 // ClearParent clears the "parent" edge to the TicketCategory entity.
-func (tcu *TicketCategoryUpdate) ClearParent() *TicketCategoryUpdate {
-	tcu.mutation.ClearParent()
-	return tcu
+func (_u *TicketCategoryUpdate) ClearParent() *TicketCategoryUpdate {
+	_u.mutation.ClearParent()
+	return _u
 }
 
 // ClearChildren clears all "children" edges to the TicketCategory entity.
-func (tcu *TicketCategoryUpdate) ClearChildren() *TicketCategoryUpdate {
-	tcu.mutation.ClearChildren()
-	return tcu
+func (_u *TicketCategoryUpdate) ClearChildren() *TicketCategoryUpdate {
+	_u.mutation.ClearChildren()
+	return _u
 }
 
 // RemoveChildIDs removes the "children" edge to TicketCategory entities by IDs.
-func (tcu *TicketCategoryUpdate) RemoveChildIDs(ids ...uuid.UUID) *TicketCategoryUpdate {
-	tcu.mutation.RemoveChildIDs(ids...)
-	return tcu
+func (_u *TicketCategoryUpdate) RemoveChildIDs(ids ...uuid.UUID) *TicketCategoryUpdate {
+	_u.mutation.RemoveChildIDs(ids...)
+	return _u
 }
 
 // RemoveChildren removes "children" edges to TicketCategory entities.
-func (tcu *TicketCategoryUpdate) RemoveChildren(t ...*TicketCategory) *TicketCategoryUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *TicketCategoryUpdate) RemoveChildren(v ...*TicketCategory) *TicketCategoryUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tcu.RemoveChildIDs(ids...)
+	return _u.RemoveChildIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (tcu *TicketCategoryUpdate) Save(ctx context.Context) (int, error) {
-	tcu.defaults()
-	return withHooks(ctx, tcu.sqlSave, tcu.mutation, tcu.hooks)
+func (_u *TicketCategoryUpdate) Save(ctx context.Context) (int, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (tcu *TicketCategoryUpdate) SaveX(ctx context.Context) int {
-	affected, err := tcu.Save(ctx)
+func (_u *TicketCategoryUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -297,39 +297,39 @@ func (tcu *TicketCategoryUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (tcu *TicketCategoryUpdate) Exec(ctx context.Context) error {
-	_, err := tcu.Save(ctx)
+func (_u *TicketCategoryUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tcu *TicketCategoryUpdate) ExecX(ctx context.Context) {
-	if err := tcu.Exec(ctx); err != nil {
+func (_u *TicketCategoryUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (tcu *TicketCategoryUpdate) defaults() {
-	if _, ok := tcu.mutation.UpdatedAt(); !ok {
+func (_u *TicketCategoryUpdate) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := ticketcategory.UpdateDefaultUpdatedAt()
-		tcu.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (tcu *TicketCategoryUpdate) check() error {
-	if v, ok := tcu.mutation.Name(); ok {
+func (_u *TicketCategoryUpdate) check() error {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := ticketcategory.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "TicketCategory.name": %w`, err)}
 		}
 	}
-	if v, ok := tcu.mutation.Slug(); ok {
+	if v, ok := _u.mutation.Slug(); ok {
 		if err := ticketcategory.SlugValidator(v); err != nil {
 			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "TicketCategory.slug": %w`, err)}
 		}
 	}
-	if v, ok := tcu.mutation.Icon(); ok {
+	if v, ok := _u.mutation.Icon(); ok {
 		if err := ticketcategory.IconValidator(v); err != nil {
 			return &ValidationError{Name: "icon", err: fmt.Errorf(`ent: validator failed for field "TicketCategory.icon": %w`, err)}
 		}
@@ -337,58 +337,58 @@ func (tcu *TicketCategoryUpdate) check() error {
 	return nil
 }
 
-func (tcu *TicketCategoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := tcu.check(); err != nil {
-		return n, err
+func (_u *TicketCategoryUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(ticketcategory.Table, ticketcategory.Columns, sqlgraph.NewFieldSpec(ticketcategory.FieldID, field.TypeUUID))
-	if ps := tcu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := tcu.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(ticketcategory.FieldTenantID, field.TypeUUID, value)
 	}
-	if value, ok := tcu.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(ticketcategory.FieldName, field.TypeString, value)
 	}
-	if value, ok := tcu.mutation.Slug(); ok {
+	if value, ok := _u.mutation.Slug(); ok {
 		_spec.SetField(ticketcategory.FieldSlug, field.TypeString, value)
 	}
-	if value, ok := tcu.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(ticketcategory.FieldDescription, field.TypeString, value)
 	}
-	if tcu.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(ticketcategory.FieldDescription, field.TypeString)
 	}
-	if value, ok := tcu.mutation.Icon(); ok {
+	if value, ok := _u.mutation.Icon(); ok {
 		_spec.SetField(ticketcategory.FieldIcon, field.TypeString, value)
 	}
-	if tcu.mutation.IconCleared() {
+	if _u.mutation.IconCleared() {
 		_spec.ClearField(ticketcategory.FieldIcon, field.TypeString)
 	}
-	if value, ok := tcu.mutation.SortOrder(); ok {
+	if value, ok := _u.mutation.SortOrder(); ok {
 		_spec.SetField(ticketcategory.FieldSortOrder, field.TypeInt, value)
 	}
-	if value, ok := tcu.mutation.AddedSortOrder(); ok {
+	if value, ok := _u.mutation.AddedSortOrder(); ok {
 		_spec.AddField(ticketcategory.FieldSortOrder, field.TypeInt, value)
 	}
-	if value, ok := tcu.mutation.IsActive(); ok {
+	if value, ok := _u.mutation.IsActive(); ok {
 		_spec.SetField(ticketcategory.FieldIsActive, field.TypeBool, value)
 	}
-	if value, ok := tcu.mutation.DefaultAssigneeID(); ok {
+	if value, ok := _u.mutation.DefaultAssigneeID(); ok {
 		_spec.SetField(ticketcategory.FieldDefaultAssigneeID, field.TypeUUID, value)
 	}
-	if tcu.mutation.DefaultAssigneeIDCleared() {
+	if _u.mutation.DefaultAssigneeIDCleared() {
 		_spec.ClearField(ticketcategory.FieldDefaultAssigneeID, field.TypeUUID)
 	}
-	if value, ok := tcu.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(ticketcategory.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if tcu.mutation.TicketsCleared() {
+	if _u.mutation.TicketsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -401,7 +401,7 @@ func (tcu *TicketCategoryUpdate) sqlSave(ctx context.Context) (n int, err error)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tcu.mutation.RemovedTicketsIDs(); len(nodes) > 0 && !tcu.mutation.TicketsCleared() {
+	if nodes := _u.mutation.RemovedTicketsIDs(); len(nodes) > 0 && !_u.mutation.TicketsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -417,7 +417,7 @@ func (tcu *TicketCategoryUpdate) sqlSave(ctx context.Context) (n int, err error)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tcu.mutation.TicketsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.TicketsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -433,7 +433,7 @@ func (tcu *TicketCategoryUpdate) sqlSave(ctx context.Context) (n int, err error)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tcu.mutation.ParentCleared() {
+	if _u.mutation.ParentCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -446,7 +446,7 @@ func (tcu *TicketCategoryUpdate) sqlSave(ctx context.Context) (n int, err error)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tcu.mutation.ParentIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ParentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -462,7 +462,7 @@ func (tcu *TicketCategoryUpdate) sqlSave(ctx context.Context) (n int, err error)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tcu.mutation.ChildrenCleared() {
+	if _u.mutation.ChildrenCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -475,7 +475,7 @@ func (tcu *TicketCategoryUpdate) sqlSave(ctx context.Context) (n int, err error)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tcu.mutation.RemovedChildrenIDs(); len(nodes) > 0 && !tcu.mutation.ChildrenCleared() {
+	if nodes := _u.mutation.RemovedChildrenIDs(); len(nodes) > 0 && !_u.mutation.ChildrenCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -491,7 +491,7 @@ func (tcu *TicketCategoryUpdate) sqlSave(ctx context.Context) (n int, err error)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tcu.mutation.ChildrenIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ChildrenIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -507,7 +507,7 @@ func (tcu *TicketCategoryUpdate) sqlSave(ctx context.Context) (n int, err error)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, tcu.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{ticketcategory.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -515,8 +515,8 @@ func (tcu *TicketCategoryUpdate) sqlSave(ctx context.Context) (n int, err error)
 		}
 		return 0, err
 	}
-	tcu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // TicketCategoryUpdateOne is the builder for updating a single TicketCategory entity.
@@ -528,278 +528,278 @@ type TicketCategoryUpdateOne struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (tcuo *TicketCategoryUpdateOne) SetTenantID(u uuid.UUID) *TicketCategoryUpdateOne {
-	tcuo.mutation.SetTenantID(u)
-	return tcuo
+func (_u *TicketCategoryUpdateOne) SetTenantID(v uuid.UUID) *TicketCategoryUpdateOne {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (tcuo *TicketCategoryUpdateOne) SetNillableTenantID(u *uuid.UUID) *TicketCategoryUpdateOne {
-	if u != nil {
-		tcuo.SetTenantID(*u)
+func (_u *TicketCategoryUpdateOne) SetNillableTenantID(v *uuid.UUID) *TicketCategoryUpdateOne {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return tcuo
+	return _u
 }
 
 // SetParentID sets the "parent_id" field.
-func (tcuo *TicketCategoryUpdateOne) SetParentID(u uuid.UUID) *TicketCategoryUpdateOne {
-	tcuo.mutation.SetParentID(u)
-	return tcuo
+func (_u *TicketCategoryUpdateOne) SetParentID(v uuid.UUID) *TicketCategoryUpdateOne {
+	_u.mutation.SetParentID(v)
+	return _u
 }
 
 // SetNillableParentID sets the "parent_id" field if the given value is not nil.
-func (tcuo *TicketCategoryUpdateOne) SetNillableParentID(u *uuid.UUID) *TicketCategoryUpdateOne {
-	if u != nil {
-		tcuo.SetParentID(*u)
+func (_u *TicketCategoryUpdateOne) SetNillableParentID(v *uuid.UUID) *TicketCategoryUpdateOne {
+	if v != nil {
+		_u.SetParentID(*v)
 	}
-	return tcuo
+	return _u
 }
 
 // ClearParentID clears the value of the "parent_id" field.
-func (tcuo *TicketCategoryUpdateOne) ClearParentID() *TicketCategoryUpdateOne {
-	tcuo.mutation.ClearParentID()
-	return tcuo
+func (_u *TicketCategoryUpdateOne) ClearParentID() *TicketCategoryUpdateOne {
+	_u.mutation.ClearParentID()
+	return _u
 }
 
 // SetName sets the "name" field.
-func (tcuo *TicketCategoryUpdateOne) SetName(s string) *TicketCategoryUpdateOne {
-	tcuo.mutation.SetName(s)
-	return tcuo
+func (_u *TicketCategoryUpdateOne) SetName(v string) *TicketCategoryUpdateOne {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (tcuo *TicketCategoryUpdateOne) SetNillableName(s *string) *TicketCategoryUpdateOne {
-	if s != nil {
-		tcuo.SetName(*s)
+func (_u *TicketCategoryUpdateOne) SetNillableName(v *string) *TicketCategoryUpdateOne {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return tcuo
+	return _u
 }
 
 // SetSlug sets the "slug" field.
-func (tcuo *TicketCategoryUpdateOne) SetSlug(s string) *TicketCategoryUpdateOne {
-	tcuo.mutation.SetSlug(s)
-	return tcuo
+func (_u *TicketCategoryUpdateOne) SetSlug(v string) *TicketCategoryUpdateOne {
+	_u.mutation.SetSlug(v)
+	return _u
 }
 
 // SetNillableSlug sets the "slug" field if the given value is not nil.
-func (tcuo *TicketCategoryUpdateOne) SetNillableSlug(s *string) *TicketCategoryUpdateOne {
-	if s != nil {
-		tcuo.SetSlug(*s)
+func (_u *TicketCategoryUpdateOne) SetNillableSlug(v *string) *TicketCategoryUpdateOne {
+	if v != nil {
+		_u.SetSlug(*v)
 	}
-	return tcuo
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (tcuo *TicketCategoryUpdateOne) SetDescription(s string) *TicketCategoryUpdateOne {
-	tcuo.mutation.SetDescription(s)
-	return tcuo
+func (_u *TicketCategoryUpdateOne) SetDescription(v string) *TicketCategoryUpdateOne {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (tcuo *TicketCategoryUpdateOne) SetNillableDescription(s *string) *TicketCategoryUpdateOne {
-	if s != nil {
-		tcuo.SetDescription(*s)
+func (_u *TicketCategoryUpdateOne) SetNillableDescription(v *string) *TicketCategoryUpdateOne {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return tcuo
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (tcuo *TicketCategoryUpdateOne) ClearDescription() *TicketCategoryUpdateOne {
-	tcuo.mutation.ClearDescription()
-	return tcuo
+func (_u *TicketCategoryUpdateOne) ClearDescription() *TicketCategoryUpdateOne {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetIcon sets the "icon" field.
-func (tcuo *TicketCategoryUpdateOne) SetIcon(s string) *TicketCategoryUpdateOne {
-	tcuo.mutation.SetIcon(s)
-	return tcuo
+func (_u *TicketCategoryUpdateOne) SetIcon(v string) *TicketCategoryUpdateOne {
+	_u.mutation.SetIcon(v)
+	return _u
 }
 
 // SetNillableIcon sets the "icon" field if the given value is not nil.
-func (tcuo *TicketCategoryUpdateOne) SetNillableIcon(s *string) *TicketCategoryUpdateOne {
-	if s != nil {
-		tcuo.SetIcon(*s)
+func (_u *TicketCategoryUpdateOne) SetNillableIcon(v *string) *TicketCategoryUpdateOne {
+	if v != nil {
+		_u.SetIcon(*v)
 	}
-	return tcuo
+	return _u
 }
 
 // ClearIcon clears the value of the "icon" field.
-func (tcuo *TicketCategoryUpdateOne) ClearIcon() *TicketCategoryUpdateOne {
-	tcuo.mutation.ClearIcon()
-	return tcuo
+func (_u *TicketCategoryUpdateOne) ClearIcon() *TicketCategoryUpdateOne {
+	_u.mutation.ClearIcon()
+	return _u
 }
 
 // SetSortOrder sets the "sort_order" field.
-func (tcuo *TicketCategoryUpdateOne) SetSortOrder(i int) *TicketCategoryUpdateOne {
-	tcuo.mutation.ResetSortOrder()
-	tcuo.mutation.SetSortOrder(i)
-	return tcuo
+func (_u *TicketCategoryUpdateOne) SetSortOrder(v int) *TicketCategoryUpdateOne {
+	_u.mutation.ResetSortOrder()
+	_u.mutation.SetSortOrder(v)
+	return _u
 }
 
 // SetNillableSortOrder sets the "sort_order" field if the given value is not nil.
-func (tcuo *TicketCategoryUpdateOne) SetNillableSortOrder(i *int) *TicketCategoryUpdateOne {
-	if i != nil {
-		tcuo.SetSortOrder(*i)
+func (_u *TicketCategoryUpdateOne) SetNillableSortOrder(v *int) *TicketCategoryUpdateOne {
+	if v != nil {
+		_u.SetSortOrder(*v)
 	}
-	return tcuo
+	return _u
 }
 
-// AddSortOrder adds i to the "sort_order" field.
-func (tcuo *TicketCategoryUpdateOne) AddSortOrder(i int) *TicketCategoryUpdateOne {
-	tcuo.mutation.AddSortOrder(i)
-	return tcuo
+// AddSortOrder adds value to the "sort_order" field.
+func (_u *TicketCategoryUpdateOne) AddSortOrder(v int) *TicketCategoryUpdateOne {
+	_u.mutation.AddSortOrder(v)
+	return _u
 }
 
 // SetIsActive sets the "is_active" field.
-func (tcuo *TicketCategoryUpdateOne) SetIsActive(b bool) *TicketCategoryUpdateOne {
-	tcuo.mutation.SetIsActive(b)
-	return tcuo
+func (_u *TicketCategoryUpdateOne) SetIsActive(v bool) *TicketCategoryUpdateOne {
+	_u.mutation.SetIsActive(v)
+	return _u
 }
 
 // SetNillableIsActive sets the "is_active" field if the given value is not nil.
-func (tcuo *TicketCategoryUpdateOne) SetNillableIsActive(b *bool) *TicketCategoryUpdateOne {
-	if b != nil {
-		tcuo.SetIsActive(*b)
+func (_u *TicketCategoryUpdateOne) SetNillableIsActive(v *bool) *TicketCategoryUpdateOne {
+	if v != nil {
+		_u.SetIsActive(*v)
 	}
-	return tcuo
+	return _u
 }
 
 // SetDefaultAssigneeID sets the "default_assignee_id" field.
-func (tcuo *TicketCategoryUpdateOne) SetDefaultAssigneeID(u uuid.UUID) *TicketCategoryUpdateOne {
-	tcuo.mutation.SetDefaultAssigneeID(u)
-	return tcuo
+func (_u *TicketCategoryUpdateOne) SetDefaultAssigneeID(v uuid.UUID) *TicketCategoryUpdateOne {
+	_u.mutation.SetDefaultAssigneeID(v)
+	return _u
 }
 
 // SetNillableDefaultAssigneeID sets the "default_assignee_id" field if the given value is not nil.
-func (tcuo *TicketCategoryUpdateOne) SetNillableDefaultAssigneeID(u *uuid.UUID) *TicketCategoryUpdateOne {
-	if u != nil {
-		tcuo.SetDefaultAssigneeID(*u)
+func (_u *TicketCategoryUpdateOne) SetNillableDefaultAssigneeID(v *uuid.UUID) *TicketCategoryUpdateOne {
+	if v != nil {
+		_u.SetDefaultAssigneeID(*v)
 	}
-	return tcuo
+	return _u
 }
 
 // ClearDefaultAssigneeID clears the value of the "default_assignee_id" field.
-func (tcuo *TicketCategoryUpdateOne) ClearDefaultAssigneeID() *TicketCategoryUpdateOne {
-	tcuo.mutation.ClearDefaultAssigneeID()
-	return tcuo
+func (_u *TicketCategoryUpdateOne) ClearDefaultAssigneeID() *TicketCategoryUpdateOne {
+	_u.mutation.ClearDefaultAssigneeID()
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (tcuo *TicketCategoryUpdateOne) SetUpdatedAt(t time.Time) *TicketCategoryUpdateOne {
-	tcuo.mutation.SetUpdatedAt(t)
-	return tcuo
+func (_u *TicketCategoryUpdateOne) SetUpdatedAt(v time.Time) *TicketCategoryUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // AddTicketIDs adds the "tickets" edge to the Ticket entity by IDs.
-func (tcuo *TicketCategoryUpdateOne) AddTicketIDs(ids ...uuid.UUID) *TicketCategoryUpdateOne {
-	tcuo.mutation.AddTicketIDs(ids...)
-	return tcuo
+func (_u *TicketCategoryUpdateOne) AddTicketIDs(ids ...uuid.UUID) *TicketCategoryUpdateOne {
+	_u.mutation.AddTicketIDs(ids...)
+	return _u
 }
 
 // AddTickets adds the "tickets" edges to the Ticket entity.
-func (tcuo *TicketCategoryUpdateOne) AddTickets(t ...*Ticket) *TicketCategoryUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *TicketCategoryUpdateOne) AddTickets(v ...*Ticket) *TicketCategoryUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tcuo.AddTicketIDs(ids...)
+	return _u.AddTicketIDs(ids...)
 }
 
 // SetParent sets the "parent" edge to the TicketCategory entity.
-func (tcuo *TicketCategoryUpdateOne) SetParent(t *TicketCategory) *TicketCategoryUpdateOne {
-	return tcuo.SetParentID(t.ID)
+func (_u *TicketCategoryUpdateOne) SetParent(v *TicketCategory) *TicketCategoryUpdateOne {
+	return _u.SetParentID(v.ID)
 }
 
 // AddChildIDs adds the "children" edge to the TicketCategory entity by IDs.
-func (tcuo *TicketCategoryUpdateOne) AddChildIDs(ids ...uuid.UUID) *TicketCategoryUpdateOne {
-	tcuo.mutation.AddChildIDs(ids...)
-	return tcuo
+func (_u *TicketCategoryUpdateOne) AddChildIDs(ids ...uuid.UUID) *TicketCategoryUpdateOne {
+	_u.mutation.AddChildIDs(ids...)
+	return _u
 }
 
 // AddChildren adds the "children" edges to the TicketCategory entity.
-func (tcuo *TicketCategoryUpdateOne) AddChildren(t ...*TicketCategory) *TicketCategoryUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *TicketCategoryUpdateOne) AddChildren(v ...*TicketCategory) *TicketCategoryUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tcuo.AddChildIDs(ids...)
+	return _u.AddChildIDs(ids...)
 }
 
 // Mutation returns the TicketCategoryMutation object of the builder.
-func (tcuo *TicketCategoryUpdateOne) Mutation() *TicketCategoryMutation {
-	return tcuo.mutation
+func (_u *TicketCategoryUpdateOne) Mutation() *TicketCategoryMutation {
+	return _u.mutation
 }
 
 // ClearTickets clears all "tickets" edges to the Ticket entity.
-func (tcuo *TicketCategoryUpdateOne) ClearTickets() *TicketCategoryUpdateOne {
-	tcuo.mutation.ClearTickets()
-	return tcuo
+func (_u *TicketCategoryUpdateOne) ClearTickets() *TicketCategoryUpdateOne {
+	_u.mutation.ClearTickets()
+	return _u
 }
 
 // RemoveTicketIDs removes the "tickets" edge to Ticket entities by IDs.
-func (tcuo *TicketCategoryUpdateOne) RemoveTicketIDs(ids ...uuid.UUID) *TicketCategoryUpdateOne {
-	tcuo.mutation.RemoveTicketIDs(ids...)
-	return tcuo
+func (_u *TicketCategoryUpdateOne) RemoveTicketIDs(ids ...uuid.UUID) *TicketCategoryUpdateOne {
+	_u.mutation.RemoveTicketIDs(ids...)
+	return _u
 }
 
 // RemoveTickets removes "tickets" edges to Ticket entities.
-func (tcuo *TicketCategoryUpdateOne) RemoveTickets(t ...*Ticket) *TicketCategoryUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *TicketCategoryUpdateOne) RemoveTickets(v ...*Ticket) *TicketCategoryUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tcuo.RemoveTicketIDs(ids...)
+	return _u.RemoveTicketIDs(ids...)
 }
 
 // ClearParent clears the "parent" edge to the TicketCategory entity.
-func (tcuo *TicketCategoryUpdateOne) ClearParent() *TicketCategoryUpdateOne {
-	tcuo.mutation.ClearParent()
-	return tcuo
+func (_u *TicketCategoryUpdateOne) ClearParent() *TicketCategoryUpdateOne {
+	_u.mutation.ClearParent()
+	return _u
 }
 
 // ClearChildren clears all "children" edges to the TicketCategory entity.
-func (tcuo *TicketCategoryUpdateOne) ClearChildren() *TicketCategoryUpdateOne {
-	tcuo.mutation.ClearChildren()
-	return tcuo
+func (_u *TicketCategoryUpdateOne) ClearChildren() *TicketCategoryUpdateOne {
+	_u.mutation.ClearChildren()
+	return _u
 }
 
 // RemoveChildIDs removes the "children" edge to TicketCategory entities by IDs.
-func (tcuo *TicketCategoryUpdateOne) RemoveChildIDs(ids ...uuid.UUID) *TicketCategoryUpdateOne {
-	tcuo.mutation.RemoveChildIDs(ids...)
-	return tcuo
+func (_u *TicketCategoryUpdateOne) RemoveChildIDs(ids ...uuid.UUID) *TicketCategoryUpdateOne {
+	_u.mutation.RemoveChildIDs(ids...)
+	return _u
 }
 
 // RemoveChildren removes "children" edges to TicketCategory entities.
-func (tcuo *TicketCategoryUpdateOne) RemoveChildren(t ...*TicketCategory) *TicketCategoryUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *TicketCategoryUpdateOne) RemoveChildren(v ...*TicketCategory) *TicketCategoryUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tcuo.RemoveChildIDs(ids...)
+	return _u.RemoveChildIDs(ids...)
 }
 
 // Where appends a list predicates to the TicketCategoryUpdate builder.
-func (tcuo *TicketCategoryUpdateOne) Where(ps ...predicate.TicketCategory) *TicketCategoryUpdateOne {
-	tcuo.mutation.Where(ps...)
-	return tcuo
+func (_u *TicketCategoryUpdateOne) Where(ps ...predicate.TicketCategory) *TicketCategoryUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (tcuo *TicketCategoryUpdateOne) Select(field string, fields ...string) *TicketCategoryUpdateOne {
-	tcuo.fields = append([]string{field}, fields...)
-	return tcuo
+func (_u *TicketCategoryUpdateOne) Select(field string, fields ...string) *TicketCategoryUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated TicketCategory entity.
-func (tcuo *TicketCategoryUpdateOne) Save(ctx context.Context) (*TicketCategory, error) {
-	tcuo.defaults()
-	return withHooks(ctx, tcuo.sqlSave, tcuo.mutation, tcuo.hooks)
+func (_u *TicketCategoryUpdateOne) Save(ctx context.Context) (*TicketCategory, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (tcuo *TicketCategoryUpdateOne) SaveX(ctx context.Context) *TicketCategory {
-	node, err := tcuo.Save(ctx)
+func (_u *TicketCategoryUpdateOne) SaveX(ctx context.Context) *TicketCategory {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -807,39 +807,39 @@ func (tcuo *TicketCategoryUpdateOne) SaveX(ctx context.Context) *TicketCategory 
 }
 
 // Exec executes the query on the entity.
-func (tcuo *TicketCategoryUpdateOne) Exec(ctx context.Context) error {
-	_, err := tcuo.Save(ctx)
+func (_u *TicketCategoryUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tcuo *TicketCategoryUpdateOne) ExecX(ctx context.Context) {
-	if err := tcuo.Exec(ctx); err != nil {
+func (_u *TicketCategoryUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (tcuo *TicketCategoryUpdateOne) defaults() {
-	if _, ok := tcuo.mutation.UpdatedAt(); !ok {
+func (_u *TicketCategoryUpdateOne) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := ticketcategory.UpdateDefaultUpdatedAt()
-		tcuo.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (tcuo *TicketCategoryUpdateOne) check() error {
-	if v, ok := tcuo.mutation.Name(); ok {
+func (_u *TicketCategoryUpdateOne) check() error {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := ticketcategory.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "TicketCategory.name": %w`, err)}
 		}
 	}
-	if v, ok := tcuo.mutation.Slug(); ok {
+	if v, ok := _u.mutation.Slug(); ok {
 		if err := ticketcategory.SlugValidator(v); err != nil {
 			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "TicketCategory.slug": %w`, err)}
 		}
 	}
-	if v, ok := tcuo.mutation.Icon(); ok {
+	if v, ok := _u.mutation.Icon(); ok {
 		if err := ticketcategory.IconValidator(v); err != nil {
 			return &ValidationError{Name: "icon", err: fmt.Errorf(`ent: validator failed for field "TicketCategory.icon": %w`, err)}
 		}
@@ -847,17 +847,17 @@ func (tcuo *TicketCategoryUpdateOne) check() error {
 	return nil
 }
 
-func (tcuo *TicketCategoryUpdateOne) sqlSave(ctx context.Context) (_node *TicketCategory, err error) {
-	if err := tcuo.check(); err != nil {
+func (_u *TicketCategoryUpdateOne) sqlSave(ctx context.Context) (_node *TicketCategory, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(ticketcategory.Table, ticketcategory.Columns, sqlgraph.NewFieldSpec(ticketcategory.FieldID, field.TypeUUID))
-	id, ok := tcuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "TicketCategory.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := tcuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, ticketcategory.FieldID)
 		for _, f := range fields {
@@ -869,53 +869,53 @@ func (tcuo *TicketCategoryUpdateOne) sqlSave(ctx context.Context) (_node *Ticket
 			}
 		}
 	}
-	if ps := tcuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := tcuo.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(ticketcategory.FieldTenantID, field.TypeUUID, value)
 	}
-	if value, ok := tcuo.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(ticketcategory.FieldName, field.TypeString, value)
 	}
-	if value, ok := tcuo.mutation.Slug(); ok {
+	if value, ok := _u.mutation.Slug(); ok {
 		_spec.SetField(ticketcategory.FieldSlug, field.TypeString, value)
 	}
-	if value, ok := tcuo.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(ticketcategory.FieldDescription, field.TypeString, value)
 	}
-	if tcuo.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(ticketcategory.FieldDescription, field.TypeString)
 	}
-	if value, ok := tcuo.mutation.Icon(); ok {
+	if value, ok := _u.mutation.Icon(); ok {
 		_spec.SetField(ticketcategory.FieldIcon, field.TypeString, value)
 	}
-	if tcuo.mutation.IconCleared() {
+	if _u.mutation.IconCleared() {
 		_spec.ClearField(ticketcategory.FieldIcon, field.TypeString)
 	}
-	if value, ok := tcuo.mutation.SortOrder(); ok {
+	if value, ok := _u.mutation.SortOrder(); ok {
 		_spec.SetField(ticketcategory.FieldSortOrder, field.TypeInt, value)
 	}
-	if value, ok := tcuo.mutation.AddedSortOrder(); ok {
+	if value, ok := _u.mutation.AddedSortOrder(); ok {
 		_spec.AddField(ticketcategory.FieldSortOrder, field.TypeInt, value)
 	}
-	if value, ok := tcuo.mutation.IsActive(); ok {
+	if value, ok := _u.mutation.IsActive(); ok {
 		_spec.SetField(ticketcategory.FieldIsActive, field.TypeBool, value)
 	}
-	if value, ok := tcuo.mutation.DefaultAssigneeID(); ok {
+	if value, ok := _u.mutation.DefaultAssigneeID(); ok {
 		_spec.SetField(ticketcategory.FieldDefaultAssigneeID, field.TypeUUID, value)
 	}
-	if tcuo.mutation.DefaultAssigneeIDCleared() {
+	if _u.mutation.DefaultAssigneeIDCleared() {
 		_spec.ClearField(ticketcategory.FieldDefaultAssigneeID, field.TypeUUID)
 	}
-	if value, ok := tcuo.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(ticketcategory.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if tcuo.mutation.TicketsCleared() {
+	if _u.mutation.TicketsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -928,7 +928,7 @@ func (tcuo *TicketCategoryUpdateOne) sqlSave(ctx context.Context) (_node *Ticket
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tcuo.mutation.RemovedTicketsIDs(); len(nodes) > 0 && !tcuo.mutation.TicketsCleared() {
+	if nodes := _u.mutation.RemovedTicketsIDs(); len(nodes) > 0 && !_u.mutation.TicketsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -944,7 +944,7 @@ func (tcuo *TicketCategoryUpdateOne) sqlSave(ctx context.Context) (_node *Ticket
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tcuo.mutation.TicketsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.TicketsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -960,7 +960,7 @@ func (tcuo *TicketCategoryUpdateOne) sqlSave(ctx context.Context) (_node *Ticket
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tcuo.mutation.ParentCleared() {
+	if _u.mutation.ParentCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -973,7 +973,7 @@ func (tcuo *TicketCategoryUpdateOne) sqlSave(ctx context.Context) (_node *Ticket
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tcuo.mutation.ParentIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ParentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -989,7 +989,7 @@ func (tcuo *TicketCategoryUpdateOne) sqlSave(ctx context.Context) (_node *Ticket
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tcuo.mutation.ChildrenCleared() {
+	if _u.mutation.ChildrenCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1002,7 +1002,7 @@ func (tcuo *TicketCategoryUpdateOne) sqlSave(ctx context.Context) (_node *Ticket
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tcuo.mutation.RemovedChildrenIDs(); len(nodes) > 0 && !tcuo.mutation.ChildrenCleared() {
+	if nodes := _u.mutation.RemovedChildrenIDs(); len(nodes) > 0 && !_u.mutation.ChildrenCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1018,7 +1018,7 @@ func (tcuo *TicketCategoryUpdateOne) sqlSave(ctx context.Context) (_node *Ticket
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tcuo.mutation.ChildrenIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ChildrenIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1034,10 +1034,10 @@ func (tcuo *TicketCategoryUpdateOne) sqlSave(ctx context.Context) (_node *Ticket
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &TicketCategory{config: tcuo.config}
+	_node = &TicketCategory{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, tcuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{ticketcategory.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -1045,6 +1045,6 @@ func (tcuo *TicketCategoryUpdateOne) sqlSave(ctx context.Context) (_node *Ticket
 		}
 		return nil, err
 	}
-	tcuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

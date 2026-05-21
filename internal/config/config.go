@@ -10,12 +10,14 @@ import (
 
 // Config holds all application configuration.
 type Config struct {
-	App      AppConfig
-	HTTP     HTTPConfig
-	Postgres PostgresConfig
-	Redis    RedisConfig
-	Events   EventsConfig
-	Auth     AuthConfig
+	App           AppConfig
+	HTTP          HTTPConfig
+	Postgres      PostgresConfig
+	Redis         RedisConfig
+	Events        EventsConfig
+	Auth          AuthConfig
+	Notifications NotificationsConfig
+	Tenant        TenantConfig
 }
 
 // AppConfig holds application-level configuration.
@@ -59,6 +61,18 @@ type EventsConfig struct {
 	NATSURL    string `envconfig:"EVENTS_NATS_URL" default:"nats://localhost:4222"`
 	StreamName string `envconfig:"NATS_STREAM" default:"ticketing"`
 	Cluster    string `envconfig:"NATS_CLUSTER" default:codevertex`
+}
+
+// NotificationsConfig holds notifications service client configuration.
+type NotificationsConfig struct {
+	ServiceURL     string        `envconfig:"NOTIFICATIONS_SERVICE_URL" default:"http://localhost:4003"`
+	APIKey         string        `envconfig:"INTERNAL_SERVICE_KEY" default:""`
+	RequestTimeout time.Duration `envconfig:"NOTIFICATIONS_REQUEST_TIMEOUT" default:"10s"`
+}
+
+// TenantConfig holds tenant sync configuration.
+type TenantConfig struct {
+	CacheTTL time.Duration `envconfig:"TENANT_CACHE_TTL" default:"5m"`
 }
 
 // AuthConfig holds authentication/authorization configuration.

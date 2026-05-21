@@ -166,7 +166,7 @@ func (*Ticket) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Ticket fields.
-func (t *Ticket) assignValues(columns []string, values []any) error {
+func (_m *Ticket) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -176,162 +176,162 @@ func (t *Ticket) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				t.ID = *value
+				_m.ID = *value
 			}
 		case ticket.FieldTenantID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field tenant_id", values[i])
 			} else if value != nil {
-				t.TenantID = *value
+				_m.TenantID = *value
 			}
 		case ticket.FieldTicketNumber:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field ticket_number", values[i])
 			} else if value.Valid {
-				t.TicketNumber = value.String
+				_m.TicketNumber = value.String
 			}
 		case ticket.FieldCustomerID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field customer_id", values[i])
 			} else if value != nil {
-				t.CustomerID = *value
+				_m.CustomerID = *value
 			}
 		case ticket.FieldCategoryID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field category_id", values[i])
 			} else if value.Valid {
-				t.CategoryID = new(uuid.UUID)
-				*t.CategoryID = *value.S.(*uuid.UUID)
+				_m.CategoryID = new(uuid.UUID)
+				*_m.CategoryID = *value.S.(*uuid.UUID)
 			}
 		case ticket.FieldAssignedAgentID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field assigned_agent_id", values[i])
 			} else if value.Valid {
-				t.AssignedAgentID = new(uuid.UUID)
-				*t.AssignedAgentID = *value.S.(*uuid.UUID)
+				_m.AssignedAgentID = new(uuid.UUID)
+				*_m.AssignedAgentID = *value.S.(*uuid.UUID)
 			}
 		case ticket.FieldAssignedTeamID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field assigned_team_id", values[i])
 			} else if value.Valid {
-				t.AssignedTeamID = new(uuid.UUID)
-				*t.AssignedTeamID = *value.S.(*uuid.UUID)
+				_m.AssignedTeamID = new(uuid.UUID)
+				*_m.AssignedTeamID = *value.S.(*uuid.UUID)
 			}
 		case ticket.FieldSubject:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field subject", values[i])
 			} else if value.Valid {
-				t.Subject = value.String
+				_m.Subject = value.String
 			}
 		case ticket.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				t.Description = value.String
+				_m.Description = value.String
 			}
 		case ticket.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
-				t.Status = ticket.Status(value.String)
+				_m.Status = ticket.Status(value.String)
 			}
 		case ticket.FieldPriority:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field priority", values[i])
 			} else if value.Valid {
-				t.Priority = ticket.Priority(value.String)
+				_m.Priority = ticket.Priority(value.String)
 			}
 		case ticket.FieldChannel:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field channel", values[i])
 			} else if value.Valid {
-				t.Channel = ticket.Channel(value.String)
+				_m.Channel = ticket.Channel(value.String)
 			}
 		case ticket.FieldOrderID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field order_id", values[i])
 			} else if value.Valid {
-				t.OrderID = new(uuid.UUID)
-				*t.OrderID = *value.S.(*uuid.UUID)
+				_m.OrderID = new(uuid.UUID)
+				*_m.OrderID = *value.S.(*uuid.UUID)
 			}
 		case ticket.FieldExternalReference:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field external_reference", values[i])
 			} else if value.Valid {
-				t.ExternalReference = value.String
+				_m.ExternalReference = value.String
 			}
 		case ticket.FieldSLAResponseDueAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field sla_response_due_at", values[i])
 			} else if value.Valid {
-				t.SLAResponseDueAt = new(time.Time)
-				*t.SLAResponseDueAt = value.Time
+				_m.SLAResponseDueAt = new(time.Time)
+				*_m.SLAResponseDueAt = value.Time
 			}
 		case ticket.FieldSLAResolutionDueAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field sla_resolution_due_at", values[i])
 			} else if value.Valid {
-				t.SLAResolutionDueAt = new(time.Time)
-				*t.SLAResolutionDueAt = value.Time
+				_m.SLAResolutionDueAt = new(time.Time)
+				*_m.SLAResolutionDueAt = value.Time
 			}
 		case ticket.FieldSLAResponseBreached:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field sla_response_breached", values[i])
 			} else if value.Valid {
-				t.SLAResponseBreached = value.Bool
+				_m.SLAResponseBreached = value.Bool
 			}
 		case ticket.FieldSLAResolutionBreached:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field sla_resolution_breached", values[i])
 			} else if value.Valid {
-				t.SLAResolutionBreached = value.Bool
+				_m.SLAResolutionBreached = value.Bool
 			}
 		case ticket.FieldFirstResponseAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field first_response_at", values[i])
 			} else if value.Valid {
-				t.FirstResponseAt = new(time.Time)
-				*t.FirstResponseAt = value.Time
+				_m.FirstResponseAt = new(time.Time)
+				*_m.FirstResponseAt = value.Time
 			}
 		case ticket.FieldResolvedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field resolved_at", values[i])
 			} else if value.Valid {
-				t.ResolvedAt = new(time.Time)
-				*t.ResolvedAt = value.Time
+				_m.ResolvedAt = new(time.Time)
+				*_m.ResolvedAt = value.Time
 			}
 		case ticket.FieldClosedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field closed_at", values[i])
 			} else if value.Valid {
-				t.ClosedAt = new(time.Time)
-				*t.ClosedAt = value.Time
+				_m.ClosedAt = new(time.Time)
+				*_m.ClosedAt = value.Time
 			}
 		case ticket.FieldReopenedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field reopened_at", values[i])
 			} else if value.Valid {
-				t.ReopenedAt = new(time.Time)
-				*t.ReopenedAt = value.Time
+				_m.ReopenedAt = new(time.Time)
+				*_m.ReopenedAt = value.Time
 			}
 		case ticket.FieldEscalationLevel:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field escalation_level", values[i])
 			} else if value.Valid {
-				t.EscalationLevel = int(value.Int64)
+				_m.EscalationLevel = int(value.Int64)
 			}
 		case ticket.FieldEscalatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field escalated_at", values[i])
 			} else if value.Valid {
-				t.EscalatedAt = new(time.Time)
-				*t.EscalatedAt = value.Time
+				_m.EscalatedAt = new(time.Time)
+				*_m.EscalatedAt = value.Time
 			}
 		case ticket.FieldTags:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field tags", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &t.Tags); err != nil {
+				if err := json.Unmarshal(*value, &_m.Tags); err != nil {
 					return fmt.Errorf("unmarshal field tags: %w", err)
 				}
 			}
@@ -339,7 +339,7 @@ func (t *Ticket) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field metadata", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &t.Metadata); err != nil {
+				if err := json.Unmarshal(*value, &_m.Metadata); err != nil {
 					return fmt.Errorf("unmarshal field metadata: %w", err)
 				}
 			}
@@ -347,23 +347,23 @@ func (t *Ticket) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
-				t.CreatedAt = value.Time
+				_m.CreatedAt = value.Time
 			}
 		case ticket.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
-				t.UpdatedAt = value.Time
+				_m.UpdatedAt = value.Time
 			}
 		case ticket.FieldDeletedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
 			} else if value.Valid {
-				t.DeletedAt = new(time.Time)
-				*t.DeletedAt = value.Time
+				_m.DeletedAt = new(time.Time)
+				*_m.DeletedAt = value.Time
 			}
 		default:
-			t.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -371,157 +371,157 @@ func (t *Ticket) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the Ticket.
 // This includes values selected through modifiers, order, etc.
-func (t *Ticket) Value(name string) (ent.Value, error) {
-	return t.selectValues.Get(name)
+func (_m *Ticket) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryCategory queries the "category" edge of the Ticket entity.
-func (t *Ticket) QueryCategory() *TicketCategoryQuery {
-	return NewTicketClient(t.config).QueryCategory(t)
+func (_m *Ticket) QueryCategory() *TicketCategoryQuery {
+	return NewTicketClient(_m.config).QueryCategory(_m)
 }
 
 // QueryAssignedAgent queries the "assigned_agent" edge of the Ticket entity.
-func (t *Ticket) QueryAssignedAgent() *AgentQuery {
-	return NewTicketClient(t.config).QueryAssignedAgent(t)
+func (_m *Ticket) QueryAssignedAgent() *AgentQuery {
+	return NewTicketClient(_m.config).QueryAssignedAgent(_m)
 }
 
 // QueryComments queries the "comments" edge of the Ticket entity.
-func (t *Ticket) QueryComments() *TicketCommentQuery {
-	return NewTicketClient(t.config).QueryComments(t)
+func (_m *Ticket) QueryComments() *TicketCommentQuery {
+	return NewTicketClient(_m.config).QueryComments(_m)
 }
 
 // QueryAttachments queries the "attachments" edge of the Ticket entity.
-func (t *Ticket) QueryAttachments() *TicketAttachmentQuery {
-	return NewTicketClient(t.config).QueryAttachments(t)
+func (_m *Ticket) QueryAttachments() *TicketAttachmentQuery {
+	return NewTicketClient(_m.config).QueryAttachments(_m)
 }
 
 // Update returns a builder for updating this Ticket.
 // Note that you need to call Ticket.Unwrap() before calling this method if this Ticket
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (t *Ticket) Update() *TicketUpdateOne {
-	return NewTicketClient(t.config).UpdateOne(t)
+func (_m *Ticket) Update() *TicketUpdateOne {
+	return NewTicketClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the Ticket entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (t *Ticket) Unwrap() *Ticket {
-	_tx, ok := t.config.driver.(*txDriver)
+func (_m *Ticket) Unwrap() *Ticket {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: Ticket is not a transactional entity")
 	}
-	t.config.driver = _tx.drv
-	return t
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (t *Ticket) String() string {
+func (_m *Ticket) String() string {
 	var builder strings.Builder
 	builder.WriteString("Ticket(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", t.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("tenant_id=")
-	builder.WriteString(fmt.Sprintf("%v", t.TenantID))
+	builder.WriteString(fmt.Sprintf("%v", _m.TenantID))
 	builder.WriteString(", ")
 	builder.WriteString("ticket_number=")
-	builder.WriteString(t.TicketNumber)
+	builder.WriteString(_m.TicketNumber)
 	builder.WriteString(", ")
 	builder.WriteString("customer_id=")
-	builder.WriteString(fmt.Sprintf("%v", t.CustomerID))
+	builder.WriteString(fmt.Sprintf("%v", _m.CustomerID))
 	builder.WriteString(", ")
-	if v := t.CategoryID; v != nil {
+	if v := _m.CategoryID; v != nil {
 		builder.WriteString("category_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
-	if v := t.AssignedAgentID; v != nil {
+	if v := _m.AssignedAgentID; v != nil {
 		builder.WriteString("assigned_agent_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
-	if v := t.AssignedTeamID; v != nil {
+	if v := _m.AssignedTeamID; v != nil {
 		builder.WriteString("assigned_team_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("subject=")
-	builder.WriteString(t.Subject)
+	builder.WriteString(_m.Subject)
 	builder.WriteString(", ")
 	builder.WriteString("description=")
-	builder.WriteString(t.Description)
+	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
 	builder.WriteString("status=")
-	builder.WriteString(fmt.Sprintf("%v", t.Status))
+	builder.WriteString(fmt.Sprintf("%v", _m.Status))
 	builder.WriteString(", ")
 	builder.WriteString("priority=")
-	builder.WriteString(fmt.Sprintf("%v", t.Priority))
+	builder.WriteString(fmt.Sprintf("%v", _m.Priority))
 	builder.WriteString(", ")
 	builder.WriteString("channel=")
-	builder.WriteString(fmt.Sprintf("%v", t.Channel))
+	builder.WriteString(fmt.Sprintf("%v", _m.Channel))
 	builder.WriteString(", ")
-	if v := t.OrderID; v != nil {
+	if v := _m.OrderID; v != nil {
 		builder.WriteString("order_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("external_reference=")
-	builder.WriteString(t.ExternalReference)
+	builder.WriteString(_m.ExternalReference)
 	builder.WriteString(", ")
-	if v := t.SLAResponseDueAt; v != nil {
+	if v := _m.SLAResponseDueAt; v != nil {
 		builder.WriteString("sla_response_due_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")
-	if v := t.SLAResolutionDueAt; v != nil {
+	if v := _m.SLAResolutionDueAt; v != nil {
 		builder.WriteString("sla_resolution_due_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("sla_response_breached=")
-	builder.WriteString(fmt.Sprintf("%v", t.SLAResponseBreached))
+	builder.WriteString(fmt.Sprintf("%v", _m.SLAResponseBreached))
 	builder.WriteString(", ")
 	builder.WriteString("sla_resolution_breached=")
-	builder.WriteString(fmt.Sprintf("%v", t.SLAResolutionBreached))
+	builder.WriteString(fmt.Sprintf("%v", _m.SLAResolutionBreached))
 	builder.WriteString(", ")
-	if v := t.FirstResponseAt; v != nil {
+	if v := _m.FirstResponseAt; v != nil {
 		builder.WriteString("first_response_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")
-	if v := t.ResolvedAt; v != nil {
+	if v := _m.ResolvedAt; v != nil {
 		builder.WriteString("resolved_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")
-	if v := t.ClosedAt; v != nil {
+	if v := _m.ClosedAt; v != nil {
 		builder.WriteString("closed_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")
-	if v := t.ReopenedAt; v != nil {
+	if v := _m.ReopenedAt; v != nil {
 		builder.WriteString("reopened_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("escalation_level=")
-	builder.WriteString(fmt.Sprintf("%v", t.EscalationLevel))
+	builder.WriteString(fmt.Sprintf("%v", _m.EscalationLevel))
 	builder.WriteString(", ")
-	if v := t.EscalatedAt; v != nil {
+	if v := _m.EscalatedAt; v != nil {
 		builder.WriteString("escalated_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("tags=")
-	builder.WriteString(fmt.Sprintf("%v", t.Tags))
+	builder.WriteString(fmt.Sprintf("%v", _m.Tags))
 	builder.WriteString(", ")
 	builder.WriteString("metadata=")
-	builder.WriteString(fmt.Sprintf("%v", t.Metadata))
+	builder.WriteString(fmt.Sprintf("%v", _m.Metadata))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
-	builder.WriteString(t.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
-	builder.WriteString(t.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	if v := t.DeletedAt; v != nil {
+	if v := _m.DeletedAt; v != nil {
 		builder.WriteString("deleted_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}

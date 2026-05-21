@@ -22,187 +22,187 @@ type SLAPolicyCreate struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (spc *SLAPolicyCreate) SetTenantID(u uuid.UUID) *SLAPolicyCreate {
-	spc.mutation.SetTenantID(u)
-	return spc
+func (_c *SLAPolicyCreate) SetTenantID(v uuid.UUID) *SLAPolicyCreate {
+	_c.mutation.SetTenantID(v)
+	return _c
 }
 
 // SetName sets the "name" field.
-func (spc *SLAPolicyCreate) SetName(s string) *SLAPolicyCreate {
-	spc.mutation.SetName(s)
-	return spc
+func (_c *SLAPolicyCreate) SetName(v string) *SLAPolicyCreate {
+	_c.mutation.SetName(v)
+	return _c
 }
 
 // SetDescription sets the "description" field.
-func (spc *SLAPolicyCreate) SetDescription(s string) *SLAPolicyCreate {
-	spc.mutation.SetDescription(s)
-	return spc
+func (_c *SLAPolicyCreate) SetDescription(v string) *SLAPolicyCreate {
+	_c.mutation.SetDescription(v)
+	return _c
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (spc *SLAPolicyCreate) SetNillableDescription(s *string) *SLAPolicyCreate {
-	if s != nil {
-		spc.SetDescription(*s)
+func (_c *SLAPolicyCreate) SetNillableDescription(v *string) *SLAPolicyCreate {
+	if v != nil {
+		_c.SetDescription(*v)
 	}
-	return spc
+	return _c
 }
 
 // SetPriority sets the "priority" field.
-func (spc *SLAPolicyCreate) SetPriority(s slapolicy.Priority) *SLAPolicyCreate {
-	spc.mutation.SetPriority(s)
-	return spc
+func (_c *SLAPolicyCreate) SetPriority(v slapolicy.Priority) *SLAPolicyCreate {
+	_c.mutation.SetPriority(v)
+	return _c
 }
 
 // SetCategoryID sets the "category_id" field.
-func (spc *SLAPolicyCreate) SetCategoryID(u uuid.UUID) *SLAPolicyCreate {
-	spc.mutation.SetCategoryID(u)
-	return spc
+func (_c *SLAPolicyCreate) SetCategoryID(v uuid.UUID) *SLAPolicyCreate {
+	_c.mutation.SetCategoryID(v)
+	return _c
 }
 
 // SetNillableCategoryID sets the "category_id" field if the given value is not nil.
-func (spc *SLAPolicyCreate) SetNillableCategoryID(u *uuid.UUID) *SLAPolicyCreate {
-	if u != nil {
-		spc.SetCategoryID(*u)
+func (_c *SLAPolicyCreate) SetNillableCategoryID(v *uuid.UUID) *SLAPolicyCreate {
+	if v != nil {
+		_c.SetCategoryID(*v)
 	}
-	return spc
+	return _c
 }
 
 // SetFirstResponseMinutes sets the "first_response_minutes" field.
-func (spc *SLAPolicyCreate) SetFirstResponseMinutes(i int) *SLAPolicyCreate {
-	spc.mutation.SetFirstResponseMinutes(i)
-	return spc
+func (_c *SLAPolicyCreate) SetFirstResponseMinutes(v int) *SLAPolicyCreate {
+	_c.mutation.SetFirstResponseMinutes(v)
+	return _c
 }
 
 // SetFirstResponseBusinessHours sets the "first_response_business_hours" field.
-func (spc *SLAPolicyCreate) SetFirstResponseBusinessHours(b bool) *SLAPolicyCreate {
-	spc.mutation.SetFirstResponseBusinessHours(b)
-	return spc
+func (_c *SLAPolicyCreate) SetFirstResponseBusinessHours(v bool) *SLAPolicyCreate {
+	_c.mutation.SetFirstResponseBusinessHours(v)
+	return _c
 }
 
 // SetNillableFirstResponseBusinessHours sets the "first_response_business_hours" field if the given value is not nil.
-func (spc *SLAPolicyCreate) SetNillableFirstResponseBusinessHours(b *bool) *SLAPolicyCreate {
-	if b != nil {
-		spc.SetFirstResponseBusinessHours(*b)
+func (_c *SLAPolicyCreate) SetNillableFirstResponseBusinessHours(v *bool) *SLAPolicyCreate {
+	if v != nil {
+		_c.SetFirstResponseBusinessHours(*v)
 	}
-	return spc
+	return _c
 }
 
 // SetResolutionMinutes sets the "resolution_minutes" field.
-func (spc *SLAPolicyCreate) SetResolutionMinutes(i int) *SLAPolicyCreate {
-	spc.mutation.SetResolutionMinutes(i)
-	return spc
+func (_c *SLAPolicyCreate) SetResolutionMinutes(v int) *SLAPolicyCreate {
+	_c.mutation.SetResolutionMinutes(v)
+	return _c
 }
 
 // SetResolutionBusinessHours sets the "resolution_business_hours" field.
-func (spc *SLAPolicyCreate) SetResolutionBusinessHours(b bool) *SLAPolicyCreate {
-	spc.mutation.SetResolutionBusinessHours(b)
-	return spc
+func (_c *SLAPolicyCreate) SetResolutionBusinessHours(v bool) *SLAPolicyCreate {
+	_c.mutation.SetResolutionBusinessHours(v)
+	return _c
 }
 
 // SetNillableResolutionBusinessHours sets the "resolution_business_hours" field if the given value is not nil.
-func (spc *SLAPolicyCreate) SetNillableResolutionBusinessHours(b *bool) *SLAPolicyCreate {
-	if b != nil {
-		spc.SetResolutionBusinessHours(*b)
+func (_c *SLAPolicyCreate) SetNillableResolutionBusinessHours(v *bool) *SLAPolicyCreate {
+	if v != nil {
+		_c.SetResolutionBusinessHours(*v)
 	}
-	return spc
+	return _c
 }
 
 // SetIsActive sets the "is_active" field.
-func (spc *SLAPolicyCreate) SetIsActive(b bool) *SLAPolicyCreate {
-	spc.mutation.SetIsActive(b)
-	return spc
+func (_c *SLAPolicyCreate) SetIsActive(v bool) *SLAPolicyCreate {
+	_c.mutation.SetIsActive(v)
+	return _c
 }
 
 // SetNillableIsActive sets the "is_active" field if the given value is not nil.
-func (spc *SLAPolicyCreate) SetNillableIsActive(b *bool) *SLAPolicyCreate {
-	if b != nil {
-		spc.SetIsActive(*b)
+func (_c *SLAPolicyCreate) SetNillableIsActive(v *bool) *SLAPolicyCreate {
+	if v != nil {
+		_c.SetIsActive(*v)
 	}
-	return spc
+	return _c
 }
 
 // SetSortOrder sets the "sort_order" field.
-func (spc *SLAPolicyCreate) SetSortOrder(i int) *SLAPolicyCreate {
-	spc.mutation.SetSortOrder(i)
-	return spc
+func (_c *SLAPolicyCreate) SetSortOrder(v int) *SLAPolicyCreate {
+	_c.mutation.SetSortOrder(v)
+	return _c
 }
 
 // SetNillableSortOrder sets the "sort_order" field if the given value is not nil.
-func (spc *SLAPolicyCreate) SetNillableSortOrder(i *int) *SLAPolicyCreate {
-	if i != nil {
-		spc.SetSortOrder(*i)
+func (_c *SLAPolicyCreate) SetNillableSortOrder(v *int) *SLAPolicyCreate {
+	if v != nil {
+		_c.SetSortOrder(*v)
 	}
-	return spc
+	return _c
 }
 
 // SetBusinessHours sets the "business_hours" field.
-func (spc *SLAPolicyCreate) SetBusinessHours(m map[string]interface{}) *SLAPolicyCreate {
-	spc.mutation.SetBusinessHours(m)
-	return spc
+func (_c *SLAPolicyCreate) SetBusinessHours(v map[string]interface{}) *SLAPolicyCreate {
+	_c.mutation.SetBusinessHours(v)
+	return _c
 }
 
 // SetMetadata sets the "metadata" field.
-func (spc *SLAPolicyCreate) SetMetadata(m map[string]interface{}) *SLAPolicyCreate {
-	spc.mutation.SetMetadata(m)
-	return spc
+func (_c *SLAPolicyCreate) SetMetadata(v map[string]interface{}) *SLAPolicyCreate {
+	_c.mutation.SetMetadata(v)
+	return _c
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (spc *SLAPolicyCreate) SetCreatedAt(t time.Time) *SLAPolicyCreate {
-	spc.mutation.SetCreatedAt(t)
-	return spc
+func (_c *SLAPolicyCreate) SetCreatedAt(v time.Time) *SLAPolicyCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
 }
 
 // SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (spc *SLAPolicyCreate) SetNillableCreatedAt(t *time.Time) *SLAPolicyCreate {
-	if t != nil {
-		spc.SetCreatedAt(*t)
+func (_c *SLAPolicyCreate) SetNillableCreatedAt(v *time.Time) *SLAPolicyCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
 	}
-	return spc
+	return _c
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (spc *SLAPolicyCreate) SetUpdatedAt(t time.Time) *SLAPolicyCreate {
-	spc.mutation.SetUpdatedAt(t)
-	return spc
+func (_c *SLAPolicyCreate) SetUpdatedAt(v time.Time) *SLAPolicyCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
 }
 
 // SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (spc *SLAPolicyCreate) SetNillableUpdatedAt(t *time.Time) *SLAPolicyCreate {
-	if t != nil {
-		spc.SetUpdatedAt(*t)
+func (_c *SLAPolicyCreate) SetNillableUpdatedAt(v *time.Time) *SLAPolicyCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
 	}
-	return spc
+	return _c
 }
 
 // SetID sets the "id" field.
-func (spc *SLAPolicyCreate) SetID(u uuid.UUID) *SLAPolicyCreate {
-	spc.mutation.SetID(u)
-	return spc
+func (_c *SLAPolicyCreate) SetID(v uuid.UUID) *SLAPolicyCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (spc *SLAPolicyCreate) SetNillableID(u *uuid.UUID) *SLAPolicyCreate {
-	if u != nil {
-		spc.SetID(*u)
+func (_c *SLAPolicyCreate) SetNillableID(v *uuid.UUID) *SLAPolicyCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return spc
+	return _c
 }
 
 // Mutation returns the SLAPolicyMutation object of the builder.
-func (spc *SLAPolicyCreate) Mutation() *SLAPolicyMutation {
-	return spc.mutation
+func (_c *SLAPolicyCreate) Mutation() *SLAPolicyMutation {
+	return _c.mutation
 }
 
 // Save creates the SLAPolicy in the database.
-func (spc *SLAPolicyCreate) Save(ctx context.Context) (*SLAPolicy, error) {
-	spc.defaults()
-	return withHooks(ctx, spc.sqlSave, spc.mutation, spc.hooks)
+func (_c *SLAPolicyCreate) Save(ctx context.Context) (*SLAPolicy, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (spc *SLAPolicyCreate) SaveX(ctx context.Context) *SLAPolicy {
-	v, err := spc.Save(ctx)
+func (_c *SLAPolicyCreate) SaveX(ctx context.Context) *SLAPolicy {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -210,104 +210,104 @@ func (spc *SLAPolicyCreate) SaveX(ctx context.Context) *SLAPolicy {
 }
 
 // Exec executes the query.
-func (spc *SLAPolicyCreate) Exec(ctx context.Context) error {
-	_, err := spc.Save(ctx)
+func (_c *SLAPolicyCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (spc *SLAPolicyCreate) ExecX(ctx context.Context) {
-	if err := spc.Exec(ctx); err != nil {
+func (_c *SLAPolicyCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (spc *SLAPolicyCreate) defaults() {
-	if _, ok := spc.mutation.FirstResponseBusinessHours(); !ok {
+func (_c *SLAPolicyCreate) defaults() {
+	if _, ok := _c.mutation.FirstResponseBusinessHours(); !ok {
 		v := slapolicy.DefaultFirstResponseBusinessHours
-		spc.mutation.SetFirstResponseBusinessHours(v)
+		_c.mutation.SetFirstResponseBusinessHours(v)
 	}
-	if _, ok := spc.mutation.ResolutionBusinessHours(); !ok {
+	if _, ok := _c.mutation.ResolutionBusinessHours(); !ok {
 		v := slapolicy.DefaultResolutionBusinessHours
-		spc.mutation.SetResolutionBusinessHours(v)
+		_c.mutation.SetResolutionBusinessHours(v)
 	}
-	if _, ok := spc.mutation.IsActive(); !ok {
+	if _, ok := _c.mutation.IsActive(); !ok {
 		v := slapolicy.DefaultIsActive
-		spc.mutation.SetIsActive(v)
+		_c.mutation.SetIsActive(v)
 	}
-	if _, ok := spc.mutation.SortOrder(); !ok {
+	if _, ok := _c.mutation.SortOrder(); !ok {
 		v := slapolicy.DefaultSortOrder
-		spc.mutation.SetSortOrder(v)
+		_c.mutation.SetSortOrder(v)
 	}
-	if _, ok := spc.mutation.CreatedAt(); !ok {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := slapolicy.DefaultCreatedAt()
-		spc.mutation.SetCreatedAt(v)
+		_c.mutation.SetCreatedAt(v)
 	}
-	if _, ok := spc.mutation.UpdatedAt(); !ok {
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		v := slapolicy.DefaultUpdatedAt()
-		spc.mutation.SetUpdatedAt(v)
+		_c.mutation.SetUpdatedAt(v)
 	}
-	if _, ok := spc.mutation.ID(); !ok {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := slapolicy.DefaultID()
-		spc.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (spc *SLAPolicyCreate) check() error {
-	if _, ok := spc.mutation.TenantID(); !ok {
+func (_c *SLAPolicyCreate) check() error {
+	if _, ok := _c.mutation.TenantID(); !ok {
 		return &ValidationError{Name: "tenant_id", err: errors.New(`ent: missing required field "SLAPolicy.tenant_id"`)}
 	}
-	if _, ok := spc.mutation.Name(); !ok {
+	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "SLAPolicy.name"`)}
 	}
-	if v, ok := spc.mutation.Name(); ok {
+	if v, ok := _c.mutation.Name(); ok {
 		if err := slapolicy.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "SLAPolicy.name": %w`, err)}
 		}
 	}
-	if _, ok := spc.mutation.Priority(); !ok {
+	if _, ok := _c.mutation.Priority(); !ok {
 		return &ValidationError{Name: "priority", err: errors.New(`ent: missing required field "SLAPolicy.priority"`)}
 	}
-	if v, ok := spc.mutation.Priority(); ok {
+	if v, ok := _c.mutation.Priority(); ok {
 		if err := slapolicy.PriorityValidator(v); err != nil {
 			return &ValidationError{Name: "priority", err: fmt.Errorf(`ent: validator failed for field "SLAPolicy.priority": %w`, err)}
 		}
 	}
-	if _, ok := spc.mutation.FirstResponseMinutes(); !ok {
+	if _, ok := _c.mutation.FirstResponseMinutes(); !ok {
 		return &ValidationError{Name: "first_response_minutes", err: errors.New(`ent: missing required field "SLAPolicy.first_response_minutes"`)}
 	}
-	if _, ok := spc.mutation.FirstResponseBusinessHours(); !ok {
+	if _, ok := _c.mutation.FirstResponseBusinessHours(); !ok {
 		return &ValidationError{Name: "first_response_business_hours", err: errors.New(`ent: missing required field "SLAPolicy.first_response_business_hours"`)}
 	}
-	if _, ok := spc.mutation.ResolutionMinutes(); !ok {
+	if _, ok := _c.mutation.ResolutionMinutes(); !ok {
 		return &ValidationError{Name: "resolution_minutes", err: errors.New(`ent: missing required field "SLAPolicy.resolution_minutes"`)}
 	}
-	if _, ok := spc.mutation.ResolutionBusinessHours(); !ok {
+	if _, ok := _c.mutation.ResolutionBusinessHours(); !ok {
 		return &ValidationError{Name: "resolution_business_hours", err: errors.New(`ent: missing required field "SLAPolicy.resolution_business_hours"`)}
 	}
-	if _, ok := spc.mutation.IsActive(); !ok {
+	if _, ok := _c.mutation.IsActive(); !ok {
 		return &ValidationError{Name: "is_active", err: errors.New(`ent: missing required field "SLAPolicy.is_active"`)}
 	}
-	if _, ok := spc.mutation.SortOrder(); !ok {
+	if _, ok := _c.mutation.SortOrder(); !ok {
 		return &ValidationError{Name: "sort_order", err: errors.New(`ent: missing required field "SLAPolicy.sort_order"`)}
 	}
-	if _, ok := spc.mutation.CreatedAt(); !ok {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "SLAPolicy.created_at"`)}
 	}
-	if _, ok := spc.mutation.UpdatedAt(); !ok {
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "SLAPolicy.updated_at"`)}
 	}
 	return nil
 }
 
-func (spc *SLAPolicyCreate) sqlSave(ctx context.Context) (*SLAPolicy, error) {
-	if err := spc.check(); err != nil {
+func (_c *SLAPolicyCreate) sqlSave(ctx context.Context) (*SLAPolicy, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := spc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, spc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -320,77 +320,77 @@ func (spc *SLAPolicyCreate) sqlSave(ctx context.Context) (*SLAPolicy, error) {
 			return nil, err
 		}
 	}
-	spc.mutation.id = &_node.ID
-	spc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (spc *SLAPolicyCreate) createSpec() (*SLAPolicy, *sqlgraph.CreateSpec) {
+func (_c *SLAPolicyCreate) createSpec() (*SLAPolicy, *sqlgraph.CreateSpec) {
 	var (
-		_node = &SLAPolicy{config: spc.config}
+		_node = &SLAPolicy{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(slapolicy.Table, sqlgraph.NewFieldSpec(slapolicy.FieldID, field.TypeUUID))
 	)
-	if id, ok := spc.mutation.ID(); ok {
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := spc.mutation.TenantID(); ok {
+	if value, ok := _c.mutation.TenantID(); ok {
 		_spec.SetField(slapolicy.FieldTenantID, field.TypeUUID, value)
 		_node.TenantID = value
 	}
-	if value, ok := spc.mutation.Name(); ok {
+	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(slapolicy.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
-	if value, ok := spc.mutation.Description(); ok {
+	if value, ok := _c.mutation.Description(); ok {
 		_spec.SetField(slapolicy.FieldDescription, field.TypeString, value)
 		_node.Description = value
 	}
-	if value, ok := spc.mutation.Priority(); ok {
+	if value, ok := _c.mutation.Priority(); ok {
 		_spec.SetField(slapolicy.FieldPriority, field.TypeEnum, value)
 		_node.Priority = value
 	}
-	if value, ok := spc.mutation.CategoryID(); ok {
+	if value, ok := _c.mutation.CategoryID(); ok {
 		_spec.SetField(slapolicy.FieldCategoryID, field.TypeUUID, value)
 		_node.CategoryID = &value
 	}
-	if value, ok := spc.mutation.FirstResponseMinutes(); ok {
+	if value, ok := _c.mutation.FirstResponseMinutes(); ok {
 		_spec.SetField(slapolicy.FieldFirstResponseMinutes, field.TypeInt, value)
 		_node.FirstResponseMinutes = value
 	}
-	if value, ok := spc.mutation.FirstResponseBusinessHours(); ok {
+	if value, ok := _c.mutation.FirstResponseBusinessHours(); ok {
 		_spec.SetField(slapolicy.FieldFirstResponseBusinessHours, field.TypeBool, value)
 		_node.FirstResponseBusinessHours = value
 	}
-	if value, ok := spc.mutation.ResolutionMinutes(); ok {
+	if value, ok := _c.mutation.ResolutionMinutes(); ok {
 		_spec.SetField(slapolicy.FieldResolutionMinutes, field.TypeInt, value)
 		_node.ResolutionMinutes = value
 	}
-	if value, ok := spc.mutation.ResolutionBusinessHours(); ok {
+	if value, ok := _c.mutation.ResolutionBusinessHours(); ok {
 		_spec.SetField(slapolicy.FieldResolutionBusinessHours, field.TypeBool, value)
 		_node.ResolutionBusinessHours = value
 	}
-	if value, ok := spc.mutation.IsActive(); ok {
+	if value, ok := _c.mutation.IsActive(); ok {
 		_spec.SetField(slapolicy.FieldIsActive, field.TypeBool, value)
 		_node.IsActive = value
 	}
-	if value, ok := spc.mutation.SortOrder(); ok {
+	if value, ok := _c.mutation.SortOrder(); ok {
 		_spec.SetField(slapolicy.FieldSortOrder, field.TypeInt, value)
 		_node.SortOrder = value
 	}
-	if value, ok := spc.mutation.BusinessHours(); ok {
+	if value, ok := _c.mutation.BusinessHours(); ok {
 		_spec.SetField(slapolicy.FieldBusinessHours, field.TypeJSON, value)
 		_node.BusinessHours = value
 	}
-	if value, ok := spc.mutation.Metadata(); ok {
+	if value, ok := _c.mutation.Metadata(); ok {
 		_spec.SetField(slapolicy.FieldMetadata, field.TypeJSON, value)
 		_node.Metadata = value
 	}
-	if value, ok := spc.mutation.CreatedAt(); ok {
+	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(slapolicy.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
-	if value, ok := spc.mutation.UpdatedAt(); ok {
+	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(slapolicy.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
@@ -405,16 +405,16 @@ type SLAPolicyCreateBulk struct {
 }
 
 // Save creates the SLAPolicy entities in the database.
-func (spcb *SLAPolicyCreateBulk) Save(ctx context.Context) ([]*SLAPolicy, error) {
-	if spcb.err != nil {
-		return nil, spcb.err
+func (_c *SLAPolicyCreateBulk) Save(ctx context.Context) ([]*SLAPolicy, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(spcb.builders))
-	nodes := make([]*SLAPolicy, len(spcb.builders))
-	mutators := make([]Mutator, len(spcb.builders))
-	for i := range spcb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*SLAPolicy, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := spcb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*SLAPolicyMutation)
@@ -428,11 +428,11 @@ func (spcb *SLAPolicyCreateBulk) Save(ctx context.Context) ([]*SLAPolicy, error)
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, spcb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, spcb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -452,7 +452,7 @@ func (spcb *SLAPolicyCreateBulk) Save(ctx context.Context) ([]*SLAPolicy, error)
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, spcb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -460,8 +460,8 @@ func (spcb *SLAPolicyCreateBulk) Save(ctx context.Context) ([]*SLAPolicy, error)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (spcb *SLAPolicyCreateBulk) SaveX(ctx context.Context) []*SLAPolicy {
-	v, err := spcb.Save(ctx)
+func (_c *SLAPolicyCreateBulk) SaveX(ctx context.Context) []*SLAPolicy {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -469,14 +469,14 @@ func (spcb *SLAPolicyCreateBulk) SaveX(ctx context.Context) []*SLAPolicy {
 }
 
 // Exec executes the query.
-func (spcb *SLAPolicyCreateBulk) Exec(ctx context.Context) error {
-	_, err := spcb.Save(ctx)
+func (_c *SLAPolicyCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (spcb *SLAPolicyCreateBulk) ExecX(ctx context.Context) {
-	if err := spcb.Exec(ctx); err != nil {
+func (_c *SLAPolicyCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

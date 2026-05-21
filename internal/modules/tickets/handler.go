@@ -1,21 +1,31 @@
 package tickets
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 
+	pagination "github.com/Bengo-Hub/pagination"
 	authclient "github.com/Bengo-Hub/shared-auth-client"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
+// notifier is the minimal interface the handler needs from the notifications client.
+type notifier interface {
+	SendTicketCreated(ctx context.Context, tenantSlug, customerEmail string, data map[string]interface{})
+	SendTicketAssigned(ctx context.Context, tenantSlug, agentEmail string, data map[string]interface{})
+	SendTicketResolved(ctx context.Context, tenantSlug, customerEmail string, data map[string]interface{})
+	SendAgentComment(ctx context.Context, tenantSlug, customerEmail string, data map[string]interface{})
+}
+
 // Handler handles HTTP requests for ticket operations.
 type Handler struct {
 	service    *Service
 	logger     *zap.Logger
-	serviceKey string // INTERNAL_SERVICE_KEY for S2S calls
+	serviceKey string   // INTERNAL_SERVICE_KEY for S2S calls
+	notif      notifier // optional notifications client
 }
 
 // NewHandler creates a new ticket handler.
@@ -33,6 +43,11 @@ func NewHandler(service *Service, logger *zap.Logger, opts ...func(*Handler)) *H
 // WithServiceKey sets the internal service key for S2S endpoint validation.
 func WithServiceKey(key string) func(*Handler) {
 	return func(h *Handler) { h.serviceKey = key }
+}
+
+// WithNotificationsClient sets the notifications client for ticket event emails.
+func WithNotificationsClient(n notifier) func(*Handler) {
+	return func(h *Handler) { h.notif = n }
 }
 
 // RegisterRoutes registers the ticket routes.
@@ -159,7 +174,7 @@ func (h *Handler) GetTicketByNumber(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, ticket)
 }
 
-// ListTickets lists tickets with filtering.
+// ListTickets lists tickets with filtering and pagination.
 func (h *Handler) ListTickets(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -173,58 +188,50 @@ func (h *Handler) ListTickets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	p := pagination.Parse(r)
 	filter := TicketFilter{
 		TenantID: *tenantID,
-		Limit:    50,
+		Limit:    p.Limit,
+		Offset:   p.Offset,
 	}
 
-	// Parse query parameters
-	if v := r.URL.Query().Get("status"); v != "" {
-		status := TicketStatus(v)
-		filter.Status = &status
+	q := r.URL.Query()
+	if v := q.Get("status"); v != "" {
+		s := TicketStatus(v)
+		filter.Status = &s
 	}
-	if v := r.URL.Query().Get("priority"); v != "" {
-		priority := TicketPriority(v)
-		filter.Priority = &priority
+	if v := q.Get("priority"); v != "" {
+		pr := TicketPriority(v)
+		filter.Priority = &pr
 	}
-	if v := r.URL.Query().Get("customerId"); v != "" {
+	if v := q.Get("customerId"); v != "" {
 		if id, err := uuid.Parse(v); err == nil {
 			filter.CustomerID = &id
 		}
 	}
-	if v := r.URL.Query().Get("agentId"); v != "" {
+	if v := q.Get("agentId"); v != "" {
 		if id, err := uuid.Parse(v); err == nil {
 			filter.AssignedAgentID = &id
 		}
 	}
-	if v := r.URL.Query().Get("teamId"); v != "" {
+	if v := q.Get("teamId"); v != "" {
 		if id, err := uuid.Parse(v); err == nil {
 			filter.AssignedTeamID = &id
 		}
 	}
-	if v := r.URL.Query().Get("categoryId"); v != "" {
+	if v := q.Get("categoryId"); v != "" {
 		if id, err := uuid.Parse(v); err == nil {
 			filter.CategoryID = &id
 		}
 	}
-	if v := r.URL.Query().Get("orderId"); v != "" {
+	if v := q.Get("orderId"); v != "" {
 		if id, err := uuid.Parse(v); err == nil {
 			filter.OrderID = &id
 		}
 	}
-	if v := r.URL.Query().Get("channel"); v != "" {
-		channel := TicketChannel(v)
-		filter.Channel = &channel
-	}
-	if v := r.URL.Query().Get("offset"); v != "" {
-		if offset, err := strconv.Atoi(v); err == nil {
-			filter.Offset = offset
-		}
-	}
-	if v := r.URL.Query().Get("limit"); v != "" {
-		if limit, err := strconv.Atoi(v); err == nil && limit > 0 && limit <= 100 {
-			filter.Limit = limit
-		}
+	if v := q.Get("channel"); v != "" {
+		ch := TicketChannel(v)
+		filter.Channel = &ch
 	}
 
 	tickets, total, err := h.service.ListTickets(r.Context(), *tenantID, filter)
@@ -233,10 +240,7 @@ func (h *Handler) ListTickets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusOK, map[string]any{
-		"tickets": tickets,
-		"total":   total,
-	})
+	respondJSON(w, http.StatusOK, pagination.NewResponse(tickets, total, p))
 }
 
 // UpdateTicket updates a ticket.
@@ -622,7 +626,7 @@ func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, category)
 }
 
-// ListCategories lists categories with filtering.
+// ListCategories lists categories with filtering and pagination.
 func (h *Handler) ListCategories(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -636,17 +640,20 @@ func (h *Handler) ListCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	p := pagination.Parse(r)
 	filter := CategoryFilter{
 		TenantID: *tenantID,
-		Limit:    100,
+		Limit:    p.Limit,
+		Offset:   p.Offset,
 	}
 
-	if v := r.URL.Query().Get("parentId"); v != "" {
+	q := r.URL.Query()
+	if v := q.Get("parentId"); v != "" {
 		if id, err := uuid.Parse(v); err == nil {
 			filter.ParentID = &id
 		}
 	}
-	if v := r.URL.Query().Get("active"); v != "" {
+	if v := q.Get("active"); v != "" {
 		isActive := v == "true"
 		filter.IsActive = &isActive
 	}
@@ -657,10 +664,7 @@ func (h *Handler) ListCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusOK, map[string]any{
-		"categories": categories,
-		"total":      total,
-	})
+	respondJSON(w, http.StatusOK, pagination.NewResponse(categories, total, p))
 }
 
 // UpdateCategory updates a category.

@@ -96,7 +96,7 @@ func (*TicketAttachment) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the TicketAttachment fields.
-func (ta *TicketAttachment) assignValues(columns []string, values []any) error {
+func (_m *TicketAttachment) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -106,69 +106,69 @@ func (ta *TicketAttachment) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				ta.ID = *value
+				_m.ID = *value
 			}
 		case ticketattachment.FieldTicketID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field ticket_id", values[i])
 			} else if value != nil {
-				ta.TicketID = *value
+				_m.TicketID = *value
 			}
 		case ticketattachment.FieldCommentID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field comment_id", values[i])
 			} else if value.Valid {
-				ta.CommentID = new(uuid.UUID)
-				*ta.CommentID = *value.S.(*uuid.UUID)
+				_m.CommentID = new(uuid.UUID)
+				*_m.CommentID = *value.S.(*uuid.UUID)
 			}
 		case ticketattachment.FieldUploadedBy:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field uploaded_by", values[i])
 			} else if value != nil {
-				ta.UploadedBy = *value
+				_m.UploadedBy = *value
 			}
 		case ticketattachment.FieldFilename:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field filename", values[i])
 			} else if value.Valid {
-				ta.Filename = value.String
+				_m.Filename = value.String
 			}
 		case ticketattachment.FieldStorageKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field storage_key", values[i])
 			} else if value.Valid {
-				ta.StorageKey = value.String
+				_m.StorageKey = value.String
 			}
 		case ticketattachment.FieldContentType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field content_type", values[i])
 			} else if value.Valid {
-				ta.ContentType = value.String
+				_m.ContentType = value.String
 			}
 		case ticketattachment.FieldFileSize:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field file_size", values[i])
 			} else if value.Valid {
-				ta.FileSize = value.Int64
+				_m.FileSize = value.Int64
 			}
 		case ticketattachment.FieldURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field url", values[i])
 			} else if value.Valid {
-				ta.URL = value.String
+				_m.URL = value.String
 			}
 		case ticketattachment.FieldURLExpiresAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field url_expires_at", values[i])
 			} else if value.Valid {
-				ta.URLExpiresAt = new(time.Time)
-				*ta.URLExpiresAt = value.Time
+				_m.URLExpiresAt = new(time.Time)
+				*_m.URLExpiresAt = value.Time
 			}
 		case ticketattachment.FieldMetadata:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field metadata", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &ta.Metadata); err != nil {
+				if err := json.Unmarshal(*value, &_m.Metadata); err != nil {
 					return fmt.Errorf("unmarshal field metadata: %w", err)
 				}
 			}
@@ -176,17 +176,17 @@ func (ta *TicketAttachment) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
-				ta.CreatedAt = value.Time
+				_m.CreatedAt = value.Time
 			}
 		case ticketattachment.FieldDeletedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
 			} else if value.Valid {
-				ta.DeletedAt = new(time.Time)
-				*ta.DeletedAt = value.Time
+				_m.DeletedAt = new(time.Time)
+				*_m.DeletedAt = value.Time
 			}
 		default:
-			ta.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -194,76 +194,76 @@ func (ta *TicketAttachment) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the TicketAttachment.
 // This includes values selected through modifiers, order, etc.
-func (ta *TicketAttachment) Value(name string) (ent.Value, error) {
-	return ta.selectValues.Get(name)
+func (_m *TicketAttachment) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryTicket queries the "ticket" edge of the TicketAttachment entity.
-func (ta *TicketAttachment) QueryTicket() *TicketQuery {
-	return NewTicketAttachmentClient(ta.config).QueryTicket(ta)
+func (_m *TicketAttachment) QueryTicket() *TicketQuery {
+	return NewTicketAttachmentClient(_m.config).QueryTicket(_m)
 }
 
 // Update returns a builder for updating this TicketAttachment.
 // Note that you need to call TicketAttachment.Unwrap() before calling this method if this TicketAttachment
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (ta *TicketAttachment) Update() *TicketAttachmentUpdateOne {
-	return NewTicketAttachmentClient(ta.config).UpdateOne(ta)
+func (_m *TicketAttachment) Update() *TicketAttachmentUpdateOne {
+	return NewTicketAttachmentClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the TicketAttachment entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (ta *TicketAttachment) Unwrap() *TicketAttachment {
-	_tx, ok := ta.config.driver.(*txDriver)
+func (_m *TicketAttachment) Unwrap() *TicketAttachment {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: TicketAttachment is not a transactional entity")
 	}
-	ta.config.driver = _tx.drv
-	return ta
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (ta *TicketAttachment) String() string {
+func (_m *TicketAttachment) String() string {
 	var builder strings.Builder
 	builder.WriteString("TicketAttachment(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", ta.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("ticket_id=")
-	builder.WriteString(fmt.Sprintf("%v", ta.TicketID))
+	builder.WriteString(fmt.Sprintf("%v", _m.TicketID))
 	builder.WriteString(", ")
-	if v := ta.CommentID; v != nil {
+	if v := _m.CommentID; v != nil {
 		builder.WriteString("comment_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("uploaded_by=")
-	builder.WriteString(fmt.Sprintf("%v", ta.UploadedBy))
+	builder.WriteString(fmt.Sprintf("%v", _m.UploadedBy))
 	builder.WriteString(", ")
 	builder.WriteString("filename=")
-	builder.WriteString(ta.Filename)
+	builder.WriteString(_m.Filename)
 	builder.WriteString(", ")
 	builder.WriteString("storage_key=")
-	builder.WriteString(ta.StorageKey)
+	builder.WriteString(_m.StorageKey)
 	builder.WriteString(", ")
 	builder.WriteString("content_type=")
-	builder.WriteString(ta.ContentType)
+	builder.WriteString(_m.ContentType)
 	builder.WriteString(", ")
 	builder.WriteString("file_size=")
-	builder.WriteString(fmt.Sprintf("%v", ta.FileSize))
+	builder.WriteString(fmt.Sprintf("%v", _m.FileSize))
 	builder.WriteString(", ")
 	builder.WriteString("url=")
-	builder.WriteString(ta.URL)
+	builder.WriteString(_m.URL)
 	builder.WriteString(", ")
-	if v := ta.URLExpiresAt; v != nil {
+	if v := _m.URLExpiresAt; v != nil {
 		builder.WriteString("url_expires_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("metadata=")
-	builder.WriteString(fmt.Sprintf("%v", ta.Metadata))
+	builder.WriteString(fmt.Sprintf("%v", _m.Metadata))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
-	builder.WriteString(ta.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	if v := ta.DeletedAt; v != nil {
+	if v := _m.DeletedAt; v != nil {
 		builder.WriteString("deleted_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}

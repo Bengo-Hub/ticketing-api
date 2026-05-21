@@ -25,218 +25,218 @@ type TicketAttachmentUpdate struct {
 }
 
 // Where appends a list predicates to the TicketAttachmentUpdate builder.
-func (tau *TicketAttachmentUpdate) Where(ps ...predicate.TicketAttachment) *TicketAttachmentUpdate {
-	tau.mutation.Where(ps...)
-	return tau
+func (_u *TicketAttachmentUpdate) Where(ps ...predicate.TicketAttachment) *TicketAttachmentUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetTicketID sets the "ticket_id" field.
-func (tau *TicketAttachmentUpdate) SetTicketID(u uuid.UUID) *TicketAttachmentUpdate {
-	tau.mutation.SetTicketID(u)
-	return tau
+func (_u *TicketAttachmentUpdate) SetTicketID(v uuid.UUID) *TicketAttachmentUpdate {
+	_u.mutation.SetTicketID(v)
+	return _u
 }
 
 // SetNillableTicketID sets the "ticket_id" field if the given value is not nil.
-func (tau *TicketAttachmentUpdate) SetNillableTicketID(u *uuid.UUID) *TicketAttachmentUpdate {
-	if u != nil {
-		tau.SetTicketID(*u)
+func (_u *TicketAttachmentUpdate) SetNillableTicketID(v *uuid.UUID) *TicketAttachmentUpdate {
+	if v != nil {
+		_u.SetTicketID(*v)
 	}
-	return tau
+	return _u
 }
 
 // SetCommentID sets the "comment_id" field.
-func (tau *TicketAttachmentUpdate) SetCommentID(u uuid.UUID) *TicketAttachmentUpdate {
-	tau.mutation.SetCommentID(u)
-	return tau
+func (_u *TicketAttachmentUpdate) SetCommentID(v uuid.UUID) *TicketAttachmentUpdate {
+	_u.mutation.SetCommentID(v)
+	return _u
 }
 
 // SetNillableCommentID sets the "comment_id" field if the given value is not nil.
-func (tau *TicketAttachmentUpdate) SetNillableCommentID(u *uuid.UUID) *TicketAttachmentUpdate {
-	if u != nil {
-		tau.SetCommentID(*u)
+func (_u *TicketAttachmentUpdate) SetNillableCommentID(v *uuid.UUID) *TicketAttachmentUpdate {
+	if v != nil {
+		_u.SetCommentID(*v)
 	}
-	return tau
+	return _u
 }
 
 // ClearCommentID clears the value of the "comment_id" field.
-func (tau *TicketAttachmentUpdate) ClearCommentID() *TicketAttachmentUpdate {
-	tau.mutation.ClearCommentID()
-	return tau
+func (_u *TicketAttachmentUpdate) ClearCommentID() *TicketAttachmentUpdate {
+	_u.mutation.ClearCommentID()
+	return _u
 }
 
 // SetUploadedBy sets the "uploaded_by" field.
-func (tau *TicketAttachmentUpdate) SetUploadedBy(u uuid.UUID) *TicketAttachmentUpdate {
-	tau.mutation.SetUploadedBy(u)
-	return tau
+func (_u *TicketAttachmentUpdate) SetUploadedBy(v uuid.UUID) *TicketAttachmentUpdate {
+	_u.mutation.SetUploadedBy(v)
+	return _u
 }
 
 // SetNillableUploadedBy sets the "uploaded_by" field if the given value is not nil.
-func (tau *TicketAttachmentUpdate) SetNillableUploadedBy(u *uuid.UUID) *TicketAttachmentUpdate {
-	if u != nil {
-		tau.SetUploadedBy(*u)
+func (_u *TicketAttachmentUpdate) SetNillableUploadedBy(v *uuid.UUID) *TicketAttachmentUpdate {
+	if v != nil {
+		_u.SetUploadedBy(*v)
 	}
-	return tau
+	return _u
 }
 
 // SetFilename sets the "filename" field.
-func (tau *TicketAttachmentUpdate) SetFilename(s string) *TicketAttachmentUpdate {
-	tau.mutation.SetFilename(s)
-	return tau
+func (_u *TicketAttachmentUpdate) SetFilename(v string) *TicketAttachmentUpdate {
+	_u.mutation.SetFilename(v)
+	return _u
 }
 
 // SetNillableFilename sets the "filename" field if the given value is not nil.
-func (tau *TicketAttachmentUpdate) SetNillableFilename(s *string) *TicketAttachmentUpdate {
-	if s != nil {
-		tau.SetFilename(*s)
+func (_u *TicketAttachmentUpdate) SetNillableFilename(v *string) *TicketAttachmentUpdate {
+	if v != nil {
+		_u.SetFilename(*v)
 	}
-	return tau
+	return _u
 }
 
 // SetStorageKey sets the "storage_key" field.
-func (tau *TicketAttachmentUpdate) SetStorageKey(s string) *TicketAttachmentUpdate {
-	tau.mutation.SetStorageKey(s)
-	return tau
+func (_u *TicketAttachmentUpdate) SetStorageKey(v string) *TicketAttachmentUpdate {
+	_u.mutation.SetStorageKey(v)
+	return _u
 }
 
 // SetNillableStorageKey sets the "storage_key" field if the given value is not nil.
-func (tau *TicketAttachmentUpdate) SetNillableStorageKey(s *string) *TicketAttachmentUpdate {
-	if s != nil {
-		tau.SetStorageKey(*s)
+func (_u *TicketAttachmentUpdate) SetNillableStorageKey(v *string) *TicketAttachmentUpdate {
+	if v != nil {
+		_u.SetStorageKey(*v)
 	}
-	return tau
+	return _u
 }
 
 // SetContentType sets the "content_type" field.
-func (tau *TicketAttachmentUpdate) SetContentType(s string) *TicketAttachmentUpdate {
-	tau.mutation.SetContentType(s)
-	return tau
+func (_u *TicketAttachmentUpdate) SetContentType(v string) *TicketAttachmentUpdate {
+	_u.mutation.SetContentType(v)
+	return _u
 }
 
 // SetNillableContentType sets the "content_type" field if the given value is not nil.
-func (tau *TicketAttachmentUpdate) SetNillableContentType(s *string) *TicketAttachmentUpdate {
-	if s != nil {
-		tau.SetContentType(*s)
+func (_u *TicketAttachmentUpdate) SetNillableContentType(v *string) *TicketAttachmentUpdate {
+	if v != nil {
+		_u.SetContentType(*v)
 	}
-	return tau
+	return _u
 }
 
 // SetFileSize sets the "file_size" field.
-func (tau *TicketAttachmentUpdate) SetFileSize(i int64) *TicketAttachmentUpdate {
-	tau.mutation.ResetFileSize()
-	tau.mutation.SetFileSize(i)
-	return tau
+func (_u *TicketAttachmentUpdate) SetFileSize(v int64) *TicketAttachmentUpdate {
+	_u.mutation.ResetFileSize()
+	_u.mutation.SetFileSize(v)
+	return _u
 }
 
 // SetNillableFileSize sets the "file_size" field if the given value is not nil.
-func (tau *TicketAttachmentUpdate) SetNillableFileSize(i *int64) *TicketAttachmentUpdate {
-	if i != nil {
-		tau.SetFileSize(*i)
+func (_u *TicketAttachmentUpdate) SetNillableFileSize(v *int64) *TicketAttachmentUpdate {
+	if v != nil {
+		_u.SetFileSize(*v)
 	}
-	return tau
+	return _u
 }
 
-// AddFileSize adds i to the "file_size" field.
-func (tau *TicketAttachmentUpdate) AddFileSize(i int64) *TicketAttachmentUpdate {
-	tau.mutation.AddFileSize(i)
-	return tau
+// AddFileSize adds value to the "file_size" field.
+func (_u *TicketAttachmentUpdate) AddFileSize(v int64) *TicketAttachmentUpdate {
+	_u.mutation.AddFileSize(v)
+	return _u
 }
 
 // SetURL sets the "url" field.
-func (tau *TicketAttachmentUpdate) SetURL(s string) *TicketAttachmentUpdate {
-	tau.mutation.SetURL(s)
-	return tau
+func (_u *TicketAttachmentUpdate) SetURL(v string) *TicketAttachmentUpdate {
+	_u.mutation.SetURL(v)
+	return _u
 }
 
 // SetNillableURL sets the "url" field if the given value is not nil.
-func (tau *TicketAttachmentUpdate) SetNillableURL(s *string) *TicketAttachmentUpdate {
-	if s != nil {
-		tau.SetURL(*s)
+func (_u *TicketAttachmentUpdate) SetNillableURL(v *string) *TicketAttachmentUpdate {
+	if v != nil {
+		_u.SetURL(*v)
 	}
-	return tau
+	return _u
 }
 
 // ClearURL clears the value of the "url" field.
-func (tau *TicketAttachmentUpdate) ClearURL() *TicketAttachmentUpdate {
-	tau.mutation.ClearURL()
-	return tau
+func (_u *TicketAttachmentUpdate) ClearURL() *TicketAttachmentUpdate {
+	_u.mutation.ClearURL()
+	return _u
 }
 
 // SetURLExpiresAt sets the "url_expires_at" field.
-func (tau *TicketAttachmentUpdate) SetURLExpiresAt(t time.Time) *TicketAttachmentUpdate {
-	tau.mutation.SetURLExpiresAt(t)
-	return tau
+func (_u *TicketAttachmentUpdate) SetURLExpiresAt(v time.Time) *TicketAttachmentUpdate {
+	_u.mutation.SetURLExpiresAt(v)
+	return _u
 }
 
 // SetNillableURLExpiresAt sets the "url_expires_at" field if the given value is not nil.
-func (tau *TicketAttachmentUpdate) SetNillableURLExpiresAt(t *time.Time) *TicketAttachmentUpdate {
-	if t != nil {
-		tau.SetURLExpiresAt(*t)
+func (_u *TicketAttachmentUpdate) SetNillableURLExpiresAt(v *time.Time) *TicketAttachmentUpdate {
+	if v != nil {
+		_u.SetURLExpiresAt(*v)
 	}
-	return tau
+	return _u
 }
 
 // ClearURLExpiresAt clears the value of the "url_expires_at" field.
-func (tau *TicketAttachmentUpdate) ClearURLExpiresAt() *TicketAttachmentUpdate {
-	tau.mutation.ClearURLExpiresAt()
-	return tau
+func (_u *TicketAttachmentUpdate) ClearURLExpiresAt() *TicketAttachmentUpdate {
+	_u.mutation.ClearURLExpiresAt()
+	return _u
 }
 
 // SetMetadata sets the "metadata" field.
-func (tau *TicketAttachmentUpdate) SetMetadata(m map[string]interface{}) *TicketAttachmentUpdate {
-	tau.mutation.SetMetadata(m)
-	return tau
+func (_u *TicketAttachmentUpdate) SetMetadata(v map[string]interface{}) *TicketAttachmentUpdate {
+	_u.mutation.SetMetadata(v)
+	return _u
 }
 
 // ClearMetadata clears the value of the "metadata" field.
-func (tau *TicketAttachmentUpdate) ClearMetadata() *TicketAttachmentUpdate {
-	tau.mutation.ClearMetadata()
-	return tau
+func (_u *TicketAttachmentUpdate) ClearMetadata() *TicketAttachmentUpdate {
+	_u.mutation.ClearMetadata()
+	return _u
 }
 
 // SetDeletedAt sets the "deleted_at" field.
-func (tau *TicketAttachmentUpdate) SetDeletedAt(t time.Time) *TicketAttachmentUpdate {
-	tau.mutation.SetDeletedAt(t)
-	return tau
+func (_u *TicketAttachmentUpdate) SetDeletedAt(v time.Time) *TicketAttachmentUpdate {
+	_u.mutation.SetDeletedAt(v)
+	return _u
 }
 
 // SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
-func (tau *TicketAttachmentUpdate) SetNillableDeletedAt(t *time.Time) *TicketAttachmentUpdate {
-	if t != nil {
-		tau.SetDeletedAt(*t)
+func (_u *TicketAttachmentUpdate) SetNillableDeletedAt(v *time.Time) *TicketAttachmentUpdate {
+	if v != nil {
+		_u.SetDeletedAt(*v)
 	}
-	return tau
+	return _u
 }
 
 // ClearDeletedAt clears the value of the "deleted_at" field.
-func (tau *TicketAttachmentUpdate) ClearDeletedAt() *TicketAttachmentUpdate {
-	tau.mutation.ClearDeletedAt()
-	return tau
+func (_u *TicketAttachmentUpdate) ClearDeletedAt() *TicketAttachmentUpdate {
+	_u.mutation.ClearDeletedAt()
+	return _u
 }
 
 // SetTicket sets the "ticket" edge to the Ticket entity.
-func (tau *TicketAttachmentUpdate) SetTicket(t *Ticket) *TicketAttachmentUpdate {
-	return tau.SetTicketID(t.ID)
+func (_u *TicketAttachmentUpdate) SetTicket(v *Ticket) *TicketAttachmentUpdate {
+	return _u.SetTicketID(v.ID)
 }
 
 // Mutation returns the TicketAttachmentMutation object of the builder.
-func (tau *TicketAttachmentUpdate) Mutation() *TicketAttachmentMutation {
-	return tau.mutation
+func (_u *TicketAttachmentUpdate) Mutation() *TicketAttachmentMutation {
+	return _u.mutation
 }
 
 // ClearTicket clears the "ticket" edge to the Ticket entity.
-func (tau *TicketAttachmentUpdate) ClearTicket() *TicketAttachmentUpdate {
-	tau.mutation.ClearTicket()
-	return tau
+func (_u *TicketAttachmentUpdate) ClearTicket() *TicketAttachmentUpdate {
+	_u.mutation.ClearTicket()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (tau *TicketAttachmentUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, tau.sqlSave, tau.mutation, tau.hooks)
+func (_u *TicketAttachmentUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (tau *TicketAttachmentUpdate) SaveX(ctx context.Context) int {
-	affected, err := tau.Save(ctx)
+func (_u *TicketAttachmentUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -244,107 +244,107 @@ func (tau *TicketAttachmentUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (tau *TicketAttachmentUpdate) Exec(ctx context.Context) error {
-	_, err := tau.Save(ctx)
+func (_u *TicketAttachmentUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tau *TicketAttachmentUpdate) ExecX(ctx context.Context) {
-	if err := tau.Exec(ctx); err != nil {
+func (_u *TicketAttachmentUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (tau *TicketAttachmentUpdate) check() error {
-	if v, ok := tau.mutation.Filename(); ok {
+func (_u *TicketAttachmentUpdate) check() error {
+	if v, ok := _u.mutation.Filename(); ok {
 		if err := ticketattachment.FilenameValidator(v); err != nil {
 			return &ValidationError{Name: "filename", err: fmt.Errorf(`ent: validator failed for field "TicketAttachment.filename": %w`, err)}
 		}
 	}
-	if v, ok := tau.mutation.StorageKey(); ok {
+	if v, ok := _u.mutation.StorageKey(); ok {
 		if err := ticketattachment.StorageKeyValidator(v); err != nil {
 			return &ValidationError{Name: "storage_key", err: fmt.Errorf(`ent: validator failed for field "TicketAttachment.storage_key": %w`, err)}
 		}
 	}
-	if v, ok := tau.mutation.ContentType(); ok {
+	if v, ok := _u.mutation.ContentType(); ok {
 		if err := ticketattachment.ContentTypeValidator(v); err != nil {
 			return &ValidationError{Name: "content_type", err: fmt.Errorf(`ent: validator failed for field "TicketAttachment.content_type": %w`, err)}
 		}
 	}
-	if v, ok := tau.mutation.URL(); ok {
+	if v, ok := _u.mutation.URL(); ok {
 		if err := ticketattachment.URLValidator(v); err != nil {
 			return &ValidationError{Name: "url", err: fmt.Errorf(`ent: validator failed for field "TicketAttachment.url": %w`, err)}
 		}
 	}
-	if _, ok := tau.mutation.TicketID(); tau.mutation.TicketCleared() && !ok {
+	if _u.mutation.TicketCleared() && len(_u.mutation.TicketIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "TicketAttachment.ticket"`)
 	}
 	return nil
 }
 
-func (tau *TicketAttachmentUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := tau.check(); err != nil {
-		return n, err
+func (_u *TicketAttachmentUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(ticketattachment.Table, ticketattachment.Columns, sqlgraph.NewFieldSpec(ticketattachment.FieldID, field.TypeUUID))
-	if ps := tau.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := tau.mutation.CommentID(); ok {
+	if value, ok := _u.mutation.CommentID(); ok {
 		_spec.SetField(ticketattachment.FieldCommentID, field.TypeUUID, value)
 	}
-	if tau.mutation.CommentIDCleared() {
+	if _u.mutation.CommentIDCleared() {
 		_spec.ClearField(ticketattachment.FieldCommentID, field.TypeUUID)
 	}
-	if value, ok := tau.mutation.UploadedBy(); ok {
+	if value, ok := _u.mutation.UploadedBy(); ok {
 		_spec.SetField(ticketattachment.FieldUploadedBy, field.TypeUUID, value)
 	}
-	if value, ok := tau.mutation.Filename(); ok {
+	if value, ok := _u.mutation.Filename(); ok {
 		_spec.SetField(ticketattachment.FieldFilename, field.TypeString, value)
 	}
-	if value, ok := tau.mutation.StorageKey(); ok {
+	if value, ok := _u.mutation.StorageKey(); ok {
 		_spec.SetField(ticketattachment.FieldStorageKey, field.TypeString, value)
 	}
-	if value, ok := tau.mutation.ContentType(); ok {
+	if value, ok := _u.mutation.ContentType(); ok {
 		_spec.SetField(ticketattachment.FieldContentType, field.TypeString, value)
 	}
-	if value, ok := tau.mutation.FileSize(); ok {
+	if value, ok := _u.mutation.FileSize(); ok {
 		_spec.SetField(ticketattachment.FieldFileSize, field.TypeInt64, value)
 	}
-	if value, ok := tau.mutation.AddedFileSize(); ok {
+	if value, ok := _u.mutation.AddedFileSize(); ok {
 		_spec.AddField(ticketattachment.FieldFileSize, field.TypeInt64, value)
 	}
-	if value, ok := tau.mutation.URL(); ok {
+	if value, ok := _u.mutation.URL(); ok {
 		_spec.SetField(ticketattachment.FieldURL, field.TypeString, value)
 	}
-	if tau.mutation.URLCleared() {
+	if _u.mutation.URLCleared() {
 		_spec.ClearField(ticketattachment.FieldURL, field.TypeString)
 	}
-	if value, ok := tau.mutation.URLExpiresAt(); ok {
+	if value, ok := _u.mutation.URLExpiresAt(); ok {
 		_spec.SetField(ticketattachment.FieldURLExpiresAt, field.TypeTime, value)
 	}
-	if tau.mutation.URLExpiresAtCleared() {
+	if _u.mutation.URLExpiresAtCleared() {
 		_spec.ClearField(ticketattachment.FieldURLExpiresAt, field.TypeTime)
 	}
-	if value, ok := tau.mutation.Metadata(); ok {
+	if value, ok := _u.mutation.Metadata(); ok {
 		_spec.SetField(ticketattachment.FieldMetadata, field.TypeJSON, value)
 	}
-	if tau.mutation.MetadataCleared() {
+	if _u.mutation.MetadataCleared() {
 		_spec.ClearField(ticketattachment.FieldMetadata, field.TypeJSON)
 	}
-	if value, ok := tau.mutation.DeletedAt(); ok {
+	if value, ok := _u.mutation.DeletedAt(); ok {
 		_spec.SetField(ticketattachment.FieldDeletedAt, field.TypeTime, value)
 	}
-	if tau.mutation.DeletedAtCleared() {
+	if _u.mutation.DeletedAtCleared() {
 		_spec.ClearField(ticketattachment.FieldDeletedAt, field.TypeTime)
 	}
-	if tau.mutation.TicketCleared() {
+	if _u.mutation.TicketCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -357,7 +357,7 @@ func (tau *TicketAttachmentUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tau.mutation.TicketIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.TicketIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -373,7 +373,7 @@ func (tau *TicketAttachmentUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, tau.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{ticketattachment.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -381,8 +381,8 @@ func (tau *TicketAttachmentUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		return 0, err
 	}
-	tau.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // TicketAttachmentUpdateOne is the builder for updating a single TicketAttachment entity.
@@ -394,225 +394,225 @@ type TicketAttachmentUpdateOne struct {
 }
 
 // SetTicketID sets the "ticket_id" field.
-func (tauo *TicketAttachmentUpdateOne) SetTicketID(u uuid.UUID) *TicketAttachmentUpdateOne {
-	tauo.mutation.SetTicketID(u)
-	return tauo
+func (_u *TicketAttachmentUpdateOne) SetTicketID(v uuid.UUID) *TicketAttachmentUpdateOne {
+	_u.mutation.SetTicketID(v)
+	return _u
 }
 
 // SetNillableTicketID sets the "ticket_id" field if the given value is not nil.
-func (tauo *TicketAttachmentUpdateOne) SetNillableTicketID(u *uuid.UUID) *TicketAttachmentUpdateOne {
-	if u != nil {
-		tauo.SetTicketID(*u)
+func (_u *TicketAttachmentUpdateOne) SetNillableTicketID(v *uuid.UUID) *TicketAttachmentUpdateOne {
+	if v != nil {
+		_u.SetTicketID(*v)
 	}
-	return tauo
+	return _u
 }
 
 // SetCommentID sets the "comment_id" field.
-func (tauo *TicketAttachmentUpdateOne) SetCommentID(u uuid.UUID) *TicketAttachmentUpdateOne {
-	tauo.mutation.SetCommentID(u)
-	return tauo
+func (_u *TicketAttachmentUpdateOne) SetCommentID(v uuid.UUID) *TicketAttachmentUpdateOne {
+	_u.mutation.SetCommentID(v)
+	return _u
 }
 
 // SetNillableCommentID sets the "comment_id" field if the given value is not nil.
-func (tauo *TicketAttachmentUpdateOne) SetNillableCommentID(u *uuid.UUID) *TicketAttachmentUpdateOne {
-	if u != nil {
-		tauo.SetCommentID(*u)
+func (_u *TicketAttachmentUpdateOne) SetNillableCommentID(v *uuid.UUID) *TicketAttachmentUpdateOne {
+	if v != nil {
+		_u.SetCommentID(*v)
 	}
-	return tauo
+	return _u
 }
 
 // ClearCommentID clears the value of the "comment_id" field.
-func (tauo *TicketAttachmentUpdateOne) ClearCommentID() *TicketAttachmentUpdateOne {
-	tauo.mutation.ClearCommentID()
-	return tauo
+func (_u *TicketAttachmentUpdateOne) ClearCommentID() *TicketAttachmentUpdateOne {
+	_u.mutation.ClearCommentID()
+	return _u
 }
 
 // SetUploadedBy sets the "uploaded_by" field.
-func (tauo *TicketAttachmentUpdateOne) SetUploadedBy(u uuid.UUID) *TicketAttachmentUpdateOne {
-	tauo.mutation.SetUploadedBy(u)
-	return tauo
+func (_u *TicketAttachmentUpdateOne) SetUploadedBy(v uuid.UUID) *TicketAttachmentUpdateOne {
+	_u.mutation.SetUploadedBy(v)
+	return _u
 }
 
 // SetNillableUploadedBy sets the "uploaded_by" field if the given value is not nil.
-func (tauo *TicketAttachmentUpdateOne) SetNillableUploadedBy(u *uuid.UUID) *TicketAttachmentUpdateOne {
-	if u != nil {
-		tauo.SetUploadedBy(*u)
+func (_u *TicketAttachmentUpdateOne) SetNillableUploadedBy(v *uuid.UUID) *TicketAttachmentUpdateOne {
+	if v != nil {
+		_u.SetUploadedBy(*v)
 	}
-	return tauo
+	return _u
 }
 
 // SetFilename sets the "filename" field.
-func (tauo *TicketAttachmentUpdateOne) SetFilename(s string) *TicketAttachmentUpdateOne {
-	tauo.mutation.SetFilename(s)
-	return tauo
+func (_u *TicketAttachmentUpdateOne) SetFilename(v string) *TicketAttachmentUpdateOne {
+	_u.mutation.SetFilename(v)
+	return _u
 }
 
 // SetNillableFilename sets the "filename" field if the given value is not nil.
-func (tauo *TicketAttachmentUpdateOne) SetNillableFilename(s *string) *TicketAttachmentUpdateOne {
-	if s != nil {
-		tauo.SetFilename(*s)
+func (_u *TicketAttachmentUpdateOne) SetNillableFilename(v *string) *TicketAttachmentUpdateOne {
+	if v != nil {
+		_u.SetFilename(*v)
 	}
-	return tauo
+	return _u
 }
 
 // SetStorageKey sets the "storage_key" field.
-func (tauo *TicketAttachmentUpdateOne) SetStorageKey(s string) *TicketAttachmentUpdateOne {
-	tauo.mutation.SetStorageKey(s)
-	return tauo
+func (_u *TicketAttachmentUpdateOne) SetStorageKey(v string) *TicketAttachmentUpdateOne {
+	_u.mutation.SetStorageKey(v)
+	return _u
 }
 
 // SetNillableStorageKey sets the "storage_key" field if the given value is not nil.
-func (tauo *TicketAttachmentUpdateOne) SetNillableStorageKey(s *string) *TicketAttachmentUpdateOne {
-	if s != nil {
-		tauo.SetStorageKey(*s)
+func (_u *TicketAttachmentUpdateOne) SetNillableStorageKey(v *string) *TicketAttachmentUpdateOne {
+	if v != nil {
+		_u.SetStorageKey(*v)
 	}
-	return tauo
+	return _u
 }
 
 // SetContentType sets the "content_type" field.
-func (tauo *TicketAttachmentUpdateOne) SetContentType(s string) *TicketAttachmentUpdateOne {
-	tauo.mutation.SetContentType(s)
-	return tauo
+func (_u *TicketAttachmentUpdateOne) SetContentType(v string) *TicketAttachmentUpdateOne {
+	_u.mutation.SetContentType(v)
+	return _u
 }
 
 // SetNillableContentType sets the "content_type" field if the given value is not nil.
-func (tauo *TicketAttachmentUpdateOne) SetNillableContentType(s *string) *TicketAttachmentUpdateOne {
-	if s != nil {
-		tauo.SetContentType(*s)
+func (_u *TicketAttachmentUpdateOne) SetNillableContentType(v *string) *TicketAttachmentUpdateOne {
+	if v != nil {
+		_u.SetContentType(*v)
 	}
-	return tauo
+	return _u
 }
 
 // SetFileSize sets the "file_size" field.
-func (tauo *TicketAttachmentUpdateOne) SetFileSize(i int64) *TicketAttachmentUpdateOne {
-	tauo.mutation.ResetFileSize()
-	tauo.mutation.SetFileSize(i)
-	return tauo
+func (_u *TicketAttachmentUpdateOne) SetFileSize(v int64) *TicketAttachmentUpdateOne {
+	_u.mutation.ResetFileSize()
+	_u.mutation.SetFileSize(v)
+	return _u
 }
 
 // SetNillableFileSize sets the "file_size" field if the given value is not nil.
-func (tauo *TicketAttachmentUpdateOne) SetNillableFileSize(i *int64) *TicketAttachmentUpdateOne {
-	if i != nil {
-		tauo.SetFileSize(*i)
+func (_u *TicketAttachmentUpdateOne) SetNillableFileSize(v *int64) *TicketAttachmentUpdateOne {
+	if v != nil {
+		_u.SetFileSize(*v)
 	}
-	return tauo
+	return _u
 }
 
-// AddFileSize adds i to the "file_size" field.
-func (tauo *TicketAttachmentUpdateOne) AddFileSize(i int64) *TicketAttachmentUpdateOne {
-	tauo.mutation.AddFileSize(i)
-	return tauo
+// AddFileSize adds value to the "file_size" field.
+func (_u *TicketAttachmentUpdateOne) AddFileSize(v int64) *TicketAttachmentUpdateOne {
+	_u.mutation.AddFileSize(v)
+	return _u
 }
 
 // SetURL sets the "url" field.
-func (tauo *TicketAttachmentUpdateOne) SetURL(s string) *TicketAttachmentUpdateOne {
-	tauo.mutation.SetURL(s)
-	return tauo
+func (_u *TicketAttachmentUpdateOne) SetURL(v string) *TicketAttachmentUpdateOne {
+	_u.mutation.SetURL(v)
+	return _u
 }
 
 // SetNillableURL sets the "url" field if the given value is not nil.
-func (tauo *TicketAttachmentUpdateOne) SetNillableURL(s *string) *TicketAttachmentUpdateOne {
-	if s != nil {
-		tauo.SetURL(*s)
+func (_u *TicketAttachmentUpdateOne) SetNillableURL(v *string) *TicketAttachmentUpdateOne {
+	if v != nil {
+		_u.SetURL(*v)
 	}
-	return tauo
+	return _u
 }
 
 // ClearURL clears the value of the "url" field.
-func (tauo *TicketAttachmentUpdateOne) ClearURL() *TicketAttachmentUpdateOne {
-	tauo.mutation.ClearURL()
-	return tauo
+func (_u *TicketAttachmentUpdateOne) ClearURL() *TicketAttachmentUpdateOne {
+	_u.mutation.ClearURL()
+	return _u
 }
 
 // SetURLExpiresAt sets the "url_expires_at" field.
-func (tauo *TicketAttachmentUpdateOne) SetURLExpiresAt(t time.Time) *TicketAttachmentUpdateOne {
-	tauo.mutation.SetURLExpiresAt(t)
-	return tauo
+func (_u *TicketAttachmentUpdateOne) SetURLExpiresAt(v time.Time) *TicketAttachmentUpdateOne {
+	_u.mutation.SetURLExpiresAt(v)
+	return _u
 }
 
 // SetNillableURLExpiresAt sets the "url_expires_at" field if the given value is not nil.
-func (tauo *TicketAttachmentUpdateOne) SetNillableURLExpiresAt(t *time.Time) *TicketAttachmentUpdateOne {
-	if t != nil {
-		tauo.SetURLExpiresAt(*t)
+func (_u *TicketAttachmentUpdateOne) SetNillableURLExpiresAt(v *time.Time) *TicketAttachmentUpdateOne {
+	if v != nil {
+		_u.SetURLExpiresAt(*v)
 	}
-	return tauo
+	return _u
 }
 
 // ClearURLExpiresAt clears the value of the "url_expires_at" field.
-func (tauo *TicketAttachmentUpdateOne) ClearURLExpiresAt() *TicketAttachmentUpdateOne {
-	tauo.mutation.ClearURLExpiresAt()
-	return tauo
+func (_u *TicketAttachmentUpdateOne) ClearURLExpiresAt() *TicketAttachmentUpdateOne {
+	_u.mutation.ClearURLExpiresAt()
+	return _u
 }
 
 // SetMetadata sets the "metadata" field.
-func (tauo *TicketAttachmentUpdateOne) SetMetadata(m map[string]interface{}) *TicketAttachmentUpdateOne {
-	tauo.mutation.SetMetadata(m)
-	return tauo
+func (_u *TicketAttachmentUpdateOne) SetMetadata(v map[string]interface{}) *TicketAttachmentUpdateOne {
+	_u.mutation.SetMetadata(v)
+	return _u
 }
 
 // ClearMetadata clears the value of the "metadata" field.
-func (tauo *TicketAttachmentUpdateOne) ClearMetadata() *TicketAttachmentUpdateOne {
-	tauo.mutation.ClearMetadata()
-	return tauo
+func (_u *TicketAttachmentUpdateOne) ClearMetadata() *TicketAttachmentUpdateOne {
+	_u.mutation.ClearMetadata()
+	return _u
 }
 
 // SetDeletedAt sets the "deleted_at" field.
-func (tauo *TicketAttachmentUpdateOne) SetDeletedAt(t time.Time) *TicketAttachmentUpdateOne {
-	tauo.mutation.SetDeletedAt(t)
-	return tauo
+func (_u *TicketAttachmentUpdateOne) SetDeletedAt(v time.Time) *TicketAttachmentUpdateOne {
+	_u.mutation.SetDeletedAt(v)
+	return _u
 }
 
 // SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
-func (tauo *TicketAttachmentUpdateOne) SetNillableDeletedAt(t *time.Time) *TicketAttachmentUpdateOne {
-	if t != nil {
-		tauo.SetDeletedAt(*t)
+func (_u *TicketAttachmentUpdateOne) SetNillableDeletedAt(v *time.Time) *TicketAttachmentUpdateOne {
+	if v != nil {
+		_u.SetDeletedAt(*v)
 	}
-	return tauo
+	return _u
 }
 
 // ClearDeletedAt clears the value of the "deleted_at" field.
-func (tauo *TicketAttachmentUpdateOne) ClearDeletedAt() *TicketAttachmentUpdateOne {
-	tauo.mutation.ClearDeletedAt()
-	return tauo
+func (_u *TicketAttachmentUpdateOne) ClearDeletedAt() *TicketAttachmentUpdateOne {
+	_u.mutation.ClearDeletedAt()
+	return _u
 }
 
 // SetTicket sets the "ticket" edge to the Ticket entity.
-func (tauo *TicketAttachmentUpdateOne) SetTicket(t *Ticket) *TicketAttachmentUpdateOne {
-	return tauo.SetTicketID(t.ID)
+func (_u *TicketAttachmentUpdateOne) SetTicket(v *Ticket) *TicketAttachmentUpdateOne {
+	return _u.SetTicketID(v.ID)
 }
 
 // Mutation returns the TicketAttachmentMutation object of the builder.
-func (tauo *TicketAttachmentUpdateOne) Mutation() *TicketAttachmentMutation {
-	return tauo.mutation
+func (_u *TicketAttachmentUpdateOne) Mutation() *TicketAttachmentMutation {
+	return _u.mutation
 }
 
 // ClearTicket clears the "ticket" edge to the Ticket entity.
-func (tauo *TicketAttachmentUpdateOne) ClearTicket() *TicketAttachmentUpdateOne {
-	tauo.mutation.ClearTicket()
-	return tauo
+func (_u *TicketAttachmentUpdateOne) ClearTicket() *TicketAttachmentUpdateOne {
+	_u.mutation.ClearTicket()
+	return _u
 }
 
 // Where appends a list predicates to the TicketAttachmentUpdate builder.
-func (tauo *TicketAttachmentUpdateOne) Where(ps ...predicate.TicketAttachment) *TicketAttachmentUpdateOne {
-	tauo.mutation.Where(ps...)
-	return tauo
+func (_u *TicketAttachmentUpdateOne) Where(ps ...predicate.TicketAttachment) *TicketAttachmentUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (tauo *TicketAttachmentUpdateOne) Select(field string, fields ...string) *TicketAttachmentUpdateOne {
-	tauo.fields = append([]string{field}, fields...)
-	return tauo
+func (_u *TicketAttachmentUpdateOne) Select(field string, fields ...string) *TicketAttachmentUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated TicketAttachment entity.
-func (tauo *TicketAttachmentUpdateOne) Save(ctx context.Context) (*TicketAttachment, error) {
-	return withHooks(ctx, tauo.sqlSave, tauo.mutation, tauo.hooks)
+func (_u *TicketAttachmentUpdateOne) Save(ctx context.Context) (*TicketAttachment, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (tauo *TicketAttachmentUpdateOne) SaveX(ctx context.Context) *TicketAttachment {
-	node, err := tauo.Save(ctx)
+func (_u *TicketAttachmentUpdateOne) SaveX(ctx context.Context) *TicketAttachment {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -620,57 +620,57 @@ func (tauo *TicketAttachmentUpdateOne) SaveX(ctx context.Context) *TicketAttachm
 }
 
 // Exec executes the query on the entity.
-func (tauo *TicketAttachmentUpdateOne) Exec(ctx context.Context) error {
-	_, err := tauo.Save(ctx)
+func (_u *TicketAttachmentUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tauo *TicketAttachmentUpdateOne) ExecX(ctx context.Context) {
-	if err := tauo.Exec(ctx); err != nil {
+func (_u *TicketAttachmentUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (tauo *TicketAttachmentUpdateOne) check() error {
-	if v, ok := tauo.mutation.Filename(); ok {
+func (_u *TicketAttachmentUpdateOne) check() error {
+	if v, ok := _u.mutation.Filename(); ok {
 		if err := ticketattachment.FilenameValidator(v); err != nil {
 			return &ValidationError{Name: "filename", err: fmt.Errorf(`ent: validator failed for field "TicketAttachment.filename": %w`, err)}
 		}
 	}
-	if v, ok := tauo.mutation.StorageKey(); ok {
+	if v, ok := _u.mutation.StorageKey(); ok {
 		if err := ticketattachment.StorageKeyValidator(v); err != nil {
 			return &ValidationError{Name: "storage_key", err: fmt.Errorf(`ent: validator failed for field "TicketAttachment.storage_key": %w`, err)}
 		}
 	}
-	if v, ok := tauo.mutation.ContentType(); ok {
+	if v, ok := _u.mutation.ContentType(); ok {
 		if err := ticketattachment.ContentTypeValidator(v); err != nil {
 			return &ValidationError{Name: "content_type", err: fmt.Errorf(`ent: validator failed for field "TicketAttachment.content_type": %w`, err)}
 		}
 	}
-	if v, ok := tauo.mutation.URL(); ok {
+	if v, ok := _u.mutation.URL(); ok {
 		if err := ticketattachment.URLValidator(v); err != nil {
 			return &ValidationError{Name: "url", err: fmt.Errorf(`ent: validator failed for field "TicketAttachment.url": %w`, err)}
 		}
 	}
-	if _, ok := tauo.mutation.TicketID(); tauo.mutation.TicketCleared() && !ok {
+	if _u.mutation.TicketCleared() && len(_u.mutation.TicketIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "TicketAttachment.ticket"`)
 	}
 	return nil
 }
 
-func (tauo *TicketAttachmentUpdateOne) sqlSave(ctx context.Context) (_node *TicketAttachment, err error) {
-	if err := tauo.check(); err != nil {
+func (_u *TicketAttachmentUpdateOne) sqlSave(ctx context.Context) (_node *TicketAttachment, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(ticketattachment.Table, ticketattachment.Columns, sqlgraph.NewFieldSpec(ticketattachment.FieldID, field.TypeUUID))
-	id, ok := tauo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "TicketAttachment.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := tauo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, ticketattachment.FieldID)
 		for _, f := range fields {
@@ -682,62 +682,62 @@ func (tauo *TicketAttachmentUpdateOne) sqlSave(ctx context.Context) (_node *Tick
 			}
 		}
 	}
-	if ps := tauo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := tauo.mutation.CommentID(); ok {
+	if value, ok := _u.mutation.CommentID(); ok {
 		_spec.SetField(ticketattachment.FieldCommentID, field.TypeUUID, value)
 	}
-	if tauo.mutation.CommentIDCleared() {
+	if _u.mutation.CommentIDCleared() {
 		_spec.ClearField(ticketattachment.FieldCommentID, field.TypeUUID)
 	}
-	if value, ok := tauo.mutation.UploadedBy(); ok {
+	if value, ok := _u.mutation.UploadedBy(); ok {
 		_spec.SetField(ticketattachment.FieldUploadedBy, field.TypeUUID, value)
 	}
-	if value, ok := tauo.mutation.Filename(); ok {
+	if value, ok := _u.mutation.Filename(); ok {
 		_spec.SetField(ticketattachment.FieldFilename, field.TypeString, value)
 	}
-	if value, ok := tauo.mutation.StorageKey(); ok {
+	if value, ok := _u.mutation.StorageKey(); ok {
 		_spec.SetField(ticketattachment.FieldStorageKey, field.TypeString, value)
 	}
-	if value, ok := tauo.mutation.ContentType(); ok {
+	if value, ok := _u.mutation.ContentType(); ok {
 		_spec.SetField(ticketattachment.FieldContentType, field.TypeString, value)
 	}
-	if value, ok := tauo.mutation.FileSize(); ok {
+	if value, ok := _u.mutation.FileSize(); ok {
 		_spec.SetField(ticketattachment.FieldFileSize, field.TypeInt64, value)
 	}
-	if value, ok := tauo.mutation.AddedFileSize(); ok {
+	if value, ok := _u.mutation.AddedFileSize(); ok {
 		_spec.AddField(ticketattachment.FieldFileSize, field.TypeInt64, value)
 	}
-	if value, ok := tauo.mutation.URL(); ok {
+	if value, ok := _u.mutation.URL(); ok {
 		_spec.SetField(ticketattachment.FieldURL, field.TypeString, value)
 	}
-	if tauo.mutation.URLCleared() {
+	if _u.mutation.URLCleared() {
 		_spec.ClearField(ticketattachment.FieldURL, field.TypeString)
 	}
-	if value, ok := tauo.mutation.URLExpiresAt(); ok {
+	if value, ok := _u.mutation.URLExpiresAt(); ok {
 		_spec.SetField(ticketattachment.FieldURLExpiresAt, field.TypeTime, value)
 	}
-	if tauo.mutation.URLExpiresAtCleared() {
+	if _u.mutation.URLExpiresAtCleared() {
 		_spec.ClearField(ticketattachment.FieldURLExpiresAt, field.TypeTime)
 	}
-	if value, ok := tauo.mutation.Metadata(); ok {
+	if value, ok := _u.mutation.Metadata(); ok {
 		_spec.SetField(ticketattachment.FieldMetadata, field.TypeJSON, value)
 	}
-	if tauo.mutation.MetadataCleared() {
+	if _u.mutation.MetadataCleared() {
 		_spec.ClearField(ticketattachment.FieldMetadata, field.TypeJSON)
 	}
-	if value, ok := tauo.mutation.DeletedAt(); ok {
+	if value, ok := _u.mutation.DeletedAt(); ok {
 		_spec.SetField(ticketattachment.FieldDeletedAt, field.TypeTime, value)
 	}
-	if tauo.mutation.DeletedAtCleared() {
+	if _u.mutation.DeletedAtCleared() {
 		_spec.ClearField(ticketattachment.FieldDeletedAt, field.TypeTime)
 	}
-	if tauo.mutation.TicketCleared() {
+	if _u.mutation.TicketCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -750,7 +750,7 @@ func (tauo *TicketAttachmentUpdateOne) sqlSave(ctx context.Context) (_node *Tick
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tauo.mutation.TicketIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.TicketIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -766,10 +766,10 @@ func (tauo *TicketAttachmentUpdateOne) sqlSave(ctx context.Context) (_node *Tick
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &TicketAttachment{config: tauo.config}
+	_node = &TicketAttachment{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, tauo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{ticketattachment.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -777,6 +777,6 @@ func (tauo *TicketAttachmentUpdateOne) sqlSave(ctx context.Context) (_node *Tick
 		}
 		return nil, err
 	}
-	tauo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

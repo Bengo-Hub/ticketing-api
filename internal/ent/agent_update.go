@@ -27,308 +27,308 @@ type AgentUpdate struct {
 }
 
 // Where appends a list predicates to the AgentUpdate builder.
-func (au *AgentUpdate) Where(ps ...predicate.Agent) *AgentUpdate {
-	au.mutation.Where(ps...)
-	return au
+func (_u *AgentUpdate) Where(ps ...predicate.Agent) *AgentUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (au *AgentUpdate) SetTenantID(u uuid.UUID) *AgentUpdate {
-	au.mutation.SetTenantID(u)
-	return au
+func (_u *AgentUpdate) SetTenantID(v uuid.UUID) *AgentUpdate {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (au *AgentUpdate) SetNillableTenantID(u *uuid.UUID) *AgentUpdate {
-	if u != nil {
-		au.SetTenantID(*u)
+func (_u *AgentUpdate) SetNillableTenantID(v *uuid.UUID) *AgentUpdate {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return au
+	return _u
 }
 
 // SetUserID sets the "user_id" field.
-func (au *AgentUpdate) SetUserID(u uuid.UUID) *AgentUpdate {
-	au.mutation.SetUserID(u)
-	return au
+func (_u *AgentUpdate) SetUserID(v uuid.UUID) *AgentUpdate {
+	_u.mutation.SetUserID(v)
+	return _u
 }
 
 // SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (au *AgentUpdate) SetNillableUserID(u *uuid.UUID) *AgentUpdate {
-	if u != nil {
-		au.SetUserID(*u)
+func (_u *AgentUpdate) SetNillableUserID(v *uuid.UUID) *AgentUpdate {
+	if v != nil {
+		_u.SetUserID(*v)
 	}
-	return au
+	return _u
 }
 
 // SetTeamID sets the "team_id" field.
-func (au *AgentUpdate) SetTeamID(u uuid.UUID) *AgentUpdate {
-	au.mutation.SetTeamID(u)
-	return au
+func (_u *AgentUpdate) SetTeamID(v uuid.UUID) *AgentUpdate {
+	_u.mutation.SetTeamID(v)
+	return _u
 }
 
 // SetNillableTeamID sets the "team_id" field if the given value is not nil.
-func (au *AgentUpdate) SetNillableTeamID(u *uuid.UUID) *AgentUpdate {
-	if u != nil {
-		au.SetTeamID(*u)
+func (_u *AgentUpdate) SetNillableTeamID(v *uuid.UUID) *AgentUpdate {
+	if v != nil {
+		_u.SetTeamID(*v)
 	}
-	return au
+	return _u
 }
 
 // ClearTeamID clears the value of the "team_id" field.
-func (au *AgentUpdate) ClearTeamID() *AgentUpdate {
-	au.mutation.ClearTeamID()
-	return au
+func (_u *AgentUpdate) ClearTeamID() *AgentUpdate {
+	_u.mutation.ClearTeamID()
+	return _u
 }
 
 // SetDisplayName sets the "display_name" field.
-func (au *AgentUpdate) SetDisplayName(s string) *AgentUpdate {
-	au.mutation.SetDisplayName(s)
-	return au
+func (_u *AgentUpdate) SetDisplayName(v string) *AgentUpdate {
+	_u.mutation.SetDisplayName(v)
+	return _u
 }
 
 // SetNillableDisplayName sets the "display_name" field if the given value is not nil.
-func (au *AgentUpdate) SetNillableDisplayName(s *string) *AgentUpdate {
-	if s != nil {
-		au.SetDisplayName(*s)
+func (_u *AgentUpdate) SetNillableDisplayName(v *string) *AgentUpdate {
+	if v != nil {
+		_u.SetDisplayName(*v)
 	}
-	return au
+	return _u
 }
 
 // SetEmail sets the "email" field.
-func (au *AgentUpdate) SetEmail(s string) *AgentUpdate {
-	au.mutation.SetEmail(s)
-	return au
+func (_u *AgentUpdate) SetEmail(v string) *AgentUpdate {
+	_u.mutation.SetEmail(v)
+	return _u
 }
 
 // SetNillableEmail sets the "email" field if the given value is not nil.
-func (au *AgentUpdate) SetNillableEmail(s *string) *AgentUpdate {
-	if s != nil {
-		au.SetEmail(*s)
+func (_u *AgentUpdate) SetNillableEmail(v *string) *AgentUpdate {
+	if v != nil {
+		_u.SetEmail(*v)
 	}
-	return au
+	return _u
 }
 
 // SetAvatarURL sets the "avatar_url" field.
-func (au *AgentUpdate) SetAvatarURL(s string) *AgentUpdate {
-	au.mutation.SetAvatarURL(s)
-	return au
+func (_u *AgentUpdate) SetAvatarURL(v string) *AgentUpdate {
+	_u.mutation.SetAvatarURL(v)
+	return _u
 }
 
 // SetNillableAvatarURL sets the "avatar_url" field if the given value is not nil.
-func (au *AgentUpdate) SetNillableAvatarURL(s *string) *AgentUpdate {
-	if s != nil {
-		au.SetAvatarURL(*s)
+func (_u *AgentUpdate) SetNillableAvatarURL(v *string) *AgentUpdate {
+	if v != nil {
+		_u.SetAvatarURL(*v)
 	}
-	return au
+	return _u
 }
 
 // ClearAvatarURL clears the value of the "avatar_url" field.
-func (au *AgentUpdate) ClearAvatarURL() *AgentUpdate {
-	au.mutation.ClearAvatarURL()
-	return au
+func (_u *AgentUpdate) ClearAvatarURL() *AgentUpdate {
+	_u.mutation.ClearAvatarURL()
+	return _u
 }
 
 // SetRole sets the "role" field.
-func (au *AgentUpdate) SetRole(a agent.Role) *AgentUpdate {
-	au.mutation.SetRole(a)
-	return au
+func (_u *AgentUpdate) SetRole(v agent.Role) *AgentUpdate {
+	_u.mutation.SetRole(v)
+	return _u
 }
 
 // SetNillableRole sets the "role" field if the given value is not nil.
-func (au *AgentUpdate) SetNillableRole(a *agent.Role) *AgentUpdate {
-	if a != nil {
-		au.SetRole(*a)
+func (_u *AgentUpdate) SetNillableRole(v *agent.Role) *AgentUpdate {
+	if v != nil {
+		_u.SetRole(*v)
 	}
-	return au
+	return _u
 }
 
 // SetStatus sets the "status" field.
-func (au *AgentUpdate) SetStatus(a agent.Status) *AgentUpdate {
-	au.mutation.SetStatus(a)
-	return au
+func (_u *AgentUpdate) SetStatus(v agent.Status) *AgentUpdate {
+	_u.mutation.SetStatus(v)
+	return _u
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (au *AgentUpdate) SetNillableStatus(a *agent.Status) *AgentUpdate {
-	if a != nil {
-		au.SetStatus(*a)
+func (_u *AgentUpdate) SetNillableStatus(v *agent.Status) *AgentUpdate {
+	if v != nil {
+		_u.SetStatus(*v)
 	}
-	return au
+	return _u
 }
 
 // SetMaxConcurrentTickets sets the "max_concurrent_tickets" field.
-func (au *AgentUpdate) SetMaxConcurrentTickets(i int) *AgentUpdate {
-	au.mutation.ResetMaxConcurrentTickets()
-	au.mutation.SetMaxConcurrentTickets(i)
-	return au
+func (_u *AgentUpdate) SetMaxConcurrentTickets(v int) *AgentUpdate {
+	_u.mutation.ResetMaxConcurrentTickets()
+	_u.mutation.SetMaxConcurrentTickets(v)
+	return _u
 }
 
 // SetNillableMaxConcurrentTickets sets the "max_concurrent_tickets" field if the given value is not nil.
-func (au *AgentUpdate) SetNillableMaxConcurrentTickets(i *int) *AgentUpdate {
-	if i != nil {
-		au.SetMaxConcurrentTickets(*i)
+func (_u *AgentUpdate) SetNillableMaxConcurrentTickets(v *int) *AgentUpdate {
+	if v != nil {
+		_u.SetMaxConcurrentTickets(*v)
 	}
-	return au
+	return _u
 }
 
-// AddMaxConcurrentTickets adds i to the "max_concurrent_tickets" field.
-func (au *AgentUpdate) AddMaxConcurrentTickets(i int) *AgentUpdate {
-	au.mutation.AddMaxConcurrentTickets(i)
-	return au
+// AddMaxConcurrentTickets adds value to the "max_concurrent_tickets" field.
+func (_u *AgentUpdate) AddMaxConcurrentTickets(v int) *AgentUpdate {
+	_u.mutation.AddMaxConcurrentTickets(v)
+	return _u
 }
 
 // SetCurrentTicketCount sets the "current_ticket_count" field.
-func (au *AgentUpdate) SetCurrentTicketCount(i int) *AgentUpdate {
-	au.mutation.ResetCurrentTicketCount()
-	au.mutation.SetCurrentTicketCount(i)
-	return au
+func (_u *AgentUpdate) SetCurrentTicketCount(v int) *AgentUpdate {
+	_u.mutation.ResetCurrentTicketCount()
+	_u.mutation.SetCurrentTicketCount(v)
+	return _u
 }
 
 // SetNillableCurrentTicketCount sets the "current_ticket_count" field if the given value is not nil.
-func (au *AgentUpdate) SetNillableCurrentTicketCount(i *int) *AgentUpdate {
-	if i != nil {
-		au.SetCurrentTicketCount(*i)
+func (_u *AgentUpdate) SetNillableCurrentTicketCount(v *int) *AgentUpdate {
+	if v != nil {
+		_u.SetCurrentTicketCount(*v)
 	}
-	return au
+	return _u
 }
 
-// AddCurrentTicketCount adds i to the "current_ticket_count" field.
-func (au *AgentUpdate) AddCurrentTicketCount(i int) *AgentUpdate {
-	au.mutation.AddCurrentTicketCount(i)
-	return au
+// AddCurrentTicketCount adds value to the "current_ticket_count" field.
+func (_u *AgentUpdate) AddCurrentTicketCount(v int) *AgentUpdate {
+	_u.mutation.AddCurrentTicketCount(v)
+	return _u
 }
 
 // SetSkills sets the "skills" field.
-func (au *AgentUpdate) SetSkills(s []string) *AgentUpdate {
-	au.mutation.SetSkills(s)
-	return au
+func (_u *AgentUpdate) SetSkills(v []string) *AgentUpdate {
+	_u.mutation.SetSkills(v)
+	return _u
 }
 
-// AppendSkills appends s to the "skills" field.
-func (au *AgentUpdate) AppendSkills(s []string) *AgentUpdate {
-	au.mutation.AppendSkills(s)
-	return au
+// AppendSkills appends value to the "skills" field.
+func (_u *AgentUpdate) AppendSkills(v []string) *AgentUpdate {
+	_u.mutation.AppendSkills(v)
+	return _u
 }
 
 // ClearSkills clears the value of the "skills" field.
-func (au *AgentUpdate) ClearSkills() *AgentUpdate {
-	au.mutation.ClearSkills()
-	return au
+func (_u *AgentUpdate) ClearSkills() *AgentUpdate {
+	_u.mutation.ClearSkills()
+	return _u
 }
 
 // SetMetadata sets the "metadata" field.
-func (au *AgentUpdate) SetMetadata(m map[string]interface{}) *AgentUpdate {
-	au.mutation.SetMetadata(m)
-	return au
+func (_u *AgentUpdate) SetMetadata(v map[string]interface{}) *AgentUpdate {
+	_u.mutation.SetMetadata(v)
+	return _u
 }
 
 // ClearMetadata clears the value of the "metadata" field.
-func (au *AgentUpdate) ClearMetadata() *AgentUpdate {
-	au.mutation.ClearMetadata()
-	return au
+func (_u *AgentUpdate) ClearMetadata() *AgentUpdate {
+	_u.mutation.ClearMetadata()
+	return _u
 }
 
 // SetIsActive sets the "is_active" field.
-func (au *AgentUpdate) SetIsActive(b bool) *AgentUpdate {
-	au.mutation.SetIsActive(b)
-	return au
+func (_u *AgentUpdate) SetIsActive(v bool) *AgentUpdate {
+	_u.mutation.SetIsActive(v)
+	return _u
 }
 
 // SetNillableIsActive sets the "is_active" field if the given value is not nil.
-func (au *AgentUpdate) SetNillableIsActive(b *bool) *AgentUpdate {
-	if b != nil {
-		au.SetIsActive(*b)
+func (_u *AgentUpdate) SetNillableIsActive(v *bool) *AgentUpdate {
+	if v != nil {
+		_u.SetIsActive(*v)
 	}
-	return au
+	return _u
 }
 
 // SetLastActiveAt sets the "last_active_at" field.
-func (au *AgentUpdate) SetLastActiveAt(t time.Time) *AgentUpdate {
-	au.mutation.SetLastActiveAt(t)
-	return au
+func (_u *AgentUpdate) SetLastActiveAt(v time.Time) *AgentUpdate {
+	_u.mutation.SetLastActiveAt(v)
+	return _u
 }
 
 // SetNillableLastActiveAt sets the "last_active_at" field if the given value is not nil.
-func (au *AgentUpdate) SetNillableLastActiveAt(t *time.Time) *AgentUpdate {
-	if t != nil {
-		au.SetLastActiveAt(*t)
+func (_u *AgentUpdate) SetNillableLastActiveAt(v *time.Time) *AgentUpdate {
+	if v != nil {
+		_u.SetLastActiveAt(*v)
 	}
-	return au
+	return _u
 }
 
 // ClearLastActiveAt clears the value of the "last_active_at" field.
-func (au *AgentUpdate) ClearLastActiveAt() *AgentUpdate {
-	au.mutation.ClearLastActiveAt()
-	return au
+func (_u *AgentUpdate) ClearLastActiveAt() *AgentUpdate {
+	_u.mutation.ClearLastActiveAt()
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (au *AgentUpdate) SetUpdatedAt(t time.Time) *AgentUpdate {
-	au.mutation.SetUpdatedAt(t)
-	return au
+func (_u *AgentUpdate) SetUpdatedAt(v time.Time) *AgentUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetTeam sets the "team" edge to the Team entity.
-func (au *AgentUpdate) SetTeam(t *Team) *AgentUpdate {
-	return au.SetTeamID(t.ID)
+func (_u *AgentUpdate) SetTeam(v *Team) *AgentUpdate {
+	return _u.SetTeamID(v.ID)
 }
 
 // AddAssignedTicketIDs adds the "assigned_tickets" edge to the Ticket entity by IDs.
-func (au *AgentUpdate) AddAssignedTicketIDs(ids ...uuid.UUID) *AgentUpdate {
-	au.mutation.AddAssignedTicketIDs(ids...)
-	return au
+func (_u *AgentUpdate) AddAssignedTicketIDs(ids ...uuid.UUID) *AgentUpdate {
+	_u.mutation.AddAssignedTicketIDs(ids...)
+	return _u
 }
 
 // AddAssignedTickets adds the "assigned_tickets" edges to the Ticket entity.
-func (au *AgentUpdate) AddAssignedTickets(t ...*Ticket) *AgentUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *AgentUpdate) AddAssignedTickets(v ...*Ticket) *AgentUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return au.AddAssignedTicketIDs(ids...)
+	return _u.AddAssignedTicketIDs(ids...)
 }
 
 // Mutation returns the AgentMutation object of the builder.
-func (au *AgentUpdate) Mutation() *AgentMutation {
-	return au.mutation
+func (_u *AgentUpdate) Mutation() *AgentMutation {
+	return _u.mutation
 }
 
 // ClearTeam clears the "team" edge to the Team entity.
-func (au *AgentUpdate) ClearTeam() *AgentUpdate {
-	au.mutation.ClearTeam()
-	return au
+func (_u *AgentUpdate) ClearTeam() *AgentUpdate {
+	_u.mutation.ClearTeam()
+	return _u
 }
 
 // ClearAssignedTickets clears all "assigned_tickets" edges to the Ticket entity.
-func (au *AgentUpdate) ClearAssignedTickets() *AgentUpdate {
-	au.mutation.ClearAssignedTickets()
-	return au
+func (_u *AgentUpdate) ClearAssignedTickets() *AgentUpdate {
+	_u.mutation.ClearAssignedTickets()
+	return _u
 }
 
 // RemoveAssignedTicketIDs removes the "assigned_tickets" edge to Ticket entities by IDs.
-func (au *AgentUpdate) RemoveAssignedTicketIDs(ids ...uuid.UUID) *AgentUpdate {
-	au.mutation.RemoveAssignedTicketIDs(ids...)
-	return au
+func (_u *AgentUpdate) RemoveAssignedTicketIDs(ids ...uuid.UUID) *AgentUpdate {
+	_u.mutation.RemoveAssignedTicketIDs(ids...)
+	return _u
 }
 
 // RemoveAssignedTickets removes "assigned_tickets" edges to Ticket entities.
-func (au *AgentUpdate) RemoveAssignedTickets(t ...*Ticket) *AgentUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *AgentUpdate) RemoveAssignedTickets(v ...*Ticket) *AgentUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return au.RemoveAssignedTicketIDs(ids...)
+	return _u.RemoveAssignedTicketIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (au *AgentUpdate) Save(ctx context.Context) (int, error) {
-	au.defaults()
-	return withHooks(ctx, au.sqlSave, au.mutation, au.hooks)
+func (_u *AgentUpdate) Save(ctx context.Context) (int, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (au *AgentUpdate) SaveX(ctx context.Context) int {
-	affected, err := au.Save(ctx)
+func (_u *AgentUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -336,49 +336,49 @@ func (au *AgentUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (au *AgentUpdate) Exec(ctx context.Context) error {
-	_, err := au.Save(ctx)
+func (_u *AgentUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (au *AgentUpdate) ExecX(ctx context.Context) {
-	if err := au.Exec(ctx); err != nil {
+func (_u *AgentUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (au *AgentUpdate) defaults() {
-	if _, ok := au.mutation.UpdatedAt(); !ok {
+func (_u *AgentUpdate) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := agent.UpdateDefaultUpdatedAt()
-		au.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (au *AgentUpdate) check() error {
-	if v, ok := au.mutation.DisplayName(); ok {
+func (_u *AgentUpdate) check() error {
+	if v, ok := _u.mutation.DisplayName(); ok {
 		if err := agent.DisplayNameValidator(v); err != nil {
 			return &ValidationError{Name: "display_name", err: fmt.Errorf(`ent: validator failed for field "Agent.display_name": %w`, err)}
 		}
 	}
-	if v, ok := au.mutation.Email(); ok {
+	if v, ok := _u.mutation.Email(); ok {
 		if err := agent.EmailValidator(v); err != nil {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "Agent.email": %w`, err)}
 		}
 	}
-	if v, ok := au.mutation.AvatarURL(); ok {
+	if v, ok := _u.mutation.AvatarURL(); ok {
 		if err := agent.AvatarURLValidator(v); err != nil {
 			return &ValidationError{Name: "avatar_url", err: fmt.Errorf(`ent: validator failed for field "Agent.avatar_url": %w`, err)}
 		}
 	}
-	if v, ok := au.mutation.Role(); ok {
+	if v, ok := _u.mutation.Role(); ok {
 		if err := agent.RoleValidator(v); err != nil {
 			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "Agent.role": %w`, err)}
 		}
 	}
-	if v, ok := au.mutation.Status(); ok {
+	if v, ok := _u.mutation.Status(); ok {
 		if err := agent.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Agent.status": %w`, err)}
 		}
@@ -386,84 +386,84 @@ func (au *AgentUpdate) check() error {
 	return nil
 }
 
-func (au *AgentUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := au.check(); err != nil {
-		return n, err
+func (_u *AgentUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(agent.Table, agent.Columns, sqlgraph.NewFieldSpec(agent.FieldID, field.TypeUUID))
-	if ps := au.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := au.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(agent.FieldTenantID, field.TypeUUID, value)
 	}
-	if value, ok := au.mutation.UserID(); ok {
+	if value, ok := _u.mutation.UserID(); ok {
 		_spec.SetField(agent.FieldUserID, field.TypeUUID, value)
 	}
-	if value, ok := au.mutation.DisplayName(); ok {
+	if value, ok := _u.mutation.DisplayName(); ok {
 		_spec.SetField(agent.FieldDisplayName, field.TypeString, value)
 	}
-	if value, ok := au.mutation.Email(); ok {
+	if value, ok := _u.mutation.Email(); ok {
 		_spec.SetField(agent.FieldEmail, field.TypeString, value)
 	}
-	if value, ok := au.mutation.AvatarURL(); ok {
+	if value, ok := _u.mutation.AvatarURL(); ok {
 		_spec.SetField(agent.FieldAvatarURL, field.TypeString, value)
 	}
-	if au.mutation.AvatarURLCleared() {
+	if _u.mutation.AvatarURLCleared() {
 		_spec.ClearField(agent.FieldAvatarURL, field.TypeString)
 	}
-	if value, ok := au.mutation.Role(); ok {
+	if value, ok := _u.mutation.Role(); ok {
 		_spec.SetField(agent.FieldRole, field.TypeEnum, value)
 	}
-	if value, ok := au.mutation.Status(); ok {
+	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(agent.FieldStatus, field.TypeEnum, value)
 	}
-	if value, ok := au.mutation.MaxConcurrentTickets(); ok {
+	if value, ok := _u.mutation.MaxConcurrentTickets(); ok {
 		_spec.SetField(agent.FieldMaxConcurrentTickets, field.TypeInt, value)
 	}
-	if value, ok := au.mutation.AddedMaxConcurrentTickets(); ok {
+	if value, ok := _u.mutation.AddedMaxConcurrentTickets(); ok {
 		_spec.AddField(agent.FieldMaxConcurrentTickets, field.TypeInt, value)
 	}
-	if value, ok := au.mutation.CurrentTicketCount(); ok {
+	if value, ok := _u.mutation.CurrentTicketCount(); ok {
 		_spec.SetField(agent.FieldCurrentTicketCount, field.TypeInt, value)
 	}
-	if value, ok := au.mutation.AddedCurrentTicketCount(); ok {
+	if value, ok := _u.mutation.AddedCurrentTicketCount(); ok {
 		_spec.AddField(agent.FieldCurrentTicketCount, field.TypeInt, value)
 	}
-	if value, ok := au.mutation.Skills(); ok {
+	if value, ok := _u.mutation.Skills(); ok {
 		_spec.SetField(agent.FieldSkills, field.TypeJSON, value)
 	}
-	if value, ok := au.mutation.AppendedSkills(); ok {
+	if value, ok := _u.mutation.AppendedSkills(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, agent.FieldSkills, value)
 		})
 	}
-	if au.mutation.SkillsCleared() {
+	if _u.mutation.SkillsCleared() {
 		_spec.ClearField(agent.FieldSkills, field.TypeJSON)
 	}
-	if value, ok := au.mutation.Metadata(); ok {
+	if value, ok := _u.mutation.Metadata(); ok {
 		_spec.SetField(agent.FieldMetadata, field.TypeJSON, value)
 	}
-	if au.mutation.MetadataCleared() {
+	if _u.mutation.MetadataCleared() {
 		_spec.ClearField(agent.FieldMetadata, field.TypeJSON)
 	}
-	if value, ok := au.mutation.IsActive(); ok {
+	if value, ok := _u.mutation.IsActive(); ok {
 		_spec.SetField(agent.FieldIsActive, field.TypeBool, value)
 	}
-	if value, ok := au.mutation.LastActiveAt(); ok {
+	if value, ok := _u.mutation.LastActiveAt(); ok {
 		_spec.SetField(agent.FieldLastActiveAt, field.TypeTime, value)
 	}
-	if au.mutation.LastActiveAtCleared() {
+	if _u.mutation.LastActiveAtCleared() {
 		_spec.ClearField(agent.FieldLastActiveAt, field.TypeTime)
 	}
-	if value, ok := au.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(agent.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if au.mutation.TeamCleared() {
+	if _u.mutation.TeamCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -476,7 +476,7 @@ func (au *AgentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := au.mutation.TeamIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.TeamIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -492,7 +492,7 @@ func (au *AgentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if au.mutation.AssignedTicketsCleared() {
+	if _u.mutation.AssignedTicketsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -505,7 +505,7 @@ func (au *AgentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := au.mutation.RemovedAssignedTicketsIDs(); len(nodes) > 0 && !au.mutation.AssignedTicketsCleared() {
+	if nodes := _u.mutation.RemovedAssignedTicketsIDs(); len(nodes) > 0 && !_u.mutation.AssignedTicketsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -521,7 +521,7 @@ func (au *AgentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := au.mutation.AssignedTicketsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.AssignedTicketsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -537,7 +537,7 @@ func (au *AgentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, au.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{agent.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -545,8 +545,8 @@ func (au *AgentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
-	au.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // AgentUpdateOne is the builder for updating a single Agent entity.
@@ -558,315 +558,315 @@ type AgentUpdateOne struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (auo *AgentUpdateOne) SetTenantID(u uuid.UUID) *AgentUpdateOne {
-	auo.mutation.SetTenantID(u)
-	return auo
+func (_u *AgentUpdateOne) SetTenantID(v uuid.UUID) *AgentUpdateOne {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (auo *AgentUpdateOne) SetNillableTenantID(u *uuid.UUID) *AgentUpdateOne {
-	if u != nil {
-		auo.SetTenantID(*u)
+func (_u *AgentUpdateOne) SetNillableTenantID(v *uuid.UUID) *AgentUpdateOne {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return auo
+	return _u
 }
 
 // SetUserID sets the "user_id" field.
-func (auo *AgentUpdateOne) SetUserID(u uuid.UUID) *AgentUpdateOne {
-	auo.mutation.SetUserID(u)
-	return auo
+func (_u *AgentUpdateOne) SetUserID(v uuid.UUID) *AgentUpdateOne {
+	_u.mutation.SetUserID(v)
+	return _u
 }
 
 // SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (auo *AgentUpdateOne) SetNillableUserID(u *uuid.UUID) *AgentUpdateOne {
-	if u != nil {
-		auo.SetUserID(*u)
+func (_u *AgentUpdateOne) SetNillableUserID(v *uuid.UUID) *AgentUpdateOne {
+	if v != nil {
+		_u.SetUserID(*v)
 	}
-	return auo
+	return _u
 }
 
 // SetTeamID sets the "team_id" field.
-func (auo *AgentUpdateOne) SetTeamID(u uuid.UUID) *AgentUpdateOne {
-	auo.mutation.SetTeamID(u)
-	return auo
+func (_u *AgentUpdateOne) SetTeamID(v uuid.UUID) *AgentUpdateOne {
+	_u.mutation.SetTeamID(v)
+	return _u
 }
 
 // SetNillableTeamID sets the "team_id" field if the given value is not nil.
-func (auo *AgentUpdateOne) SetNillableTeamID(u *uuid.UUID) *AgentUpdateOne {
-	if u != nil {
-		auo.SetTeamID(*u)
+func (_u *AgentUpdateOne) SetNillableTeamID(v *uuid.UUID) *AgentUpdateOne {
+	if v != nil {
+		_u.SetTeamID(*v)
 	}
-	return auo
+	return _u
 }
 
 // ClearTeamID clears the value of the "team_id" field.
-func (auo *AgentUpdateOne) ClearTeamID() *AgentUpdateOne {
-	auo.mutation.ClearTeamID()
-	return auo
+func (_u *AgentUpdateOne) ClearTeamID() *AgentUpdateOne {
+	_u.mutation.ClearTeamID()
+	return _u
 }
 
 // SetDisplayName sets the "display_name" field.
-func (auo *AgentUpdateOne) SetDisplayName(s string) *AgentUpdateOne {
-	auo.mutation.SetDisplayName(s)
-	return auo
+func (_u *AgentUpdateOne) SetDisplayName(v string) *AgentUpdateOne {
+	_u.mutation.SetDisplayName(v)
+	return _u
 }
 
 // SetNillableDisplayName sets the "display_name" field if the given value is not nil.
-func (auo *AgentUpdateOne) SetNillableDisplayName(s *string) *AgentUpdateOne {
-	if s != nil {
-		auo.SetDisplayName(*s)
+func (_u *AgentUpdateOne) SetNillableDisplayName(v *string) *AgentUpdateOne {
+	if v != nil {
+		_u.SetDisplayName(*v)
 	}
-	return auo
+	return _u
 }
 
 // SetEmail sets the "email" field.
-func (auo *AgentUpdateOne) SetEmail(s string) *AgentUpdateOne {
-	auo.mutation.SetEmail(s)
-	return auo
+func (_u *AgentUpdateOne) SetEmail(v string) *AgentUpdateOne {
+	_u.mutation.SetEmail(v)
+	return _u
 }
 
 // SetNillableEmail sets the "email" field if the given value is not nil.
-func (auo *AgentUpdateOne) SetNillableEmail(s *string) *AgentUpdateOne {
-	if s != nil {
-		auo.SetEmail(*s)
+func (_u *AgentUpdateOne) SetNillableEmail(v *string) *AgentUpdateOne {
+	if v != nil {
+		_u.SetEmail(*v)
 	}
-	return auo
+	return _u
 }
 
 // SetAvatarURL sets the "avatar_url" field.
-func (auo *AgentUpdateOne) SetAvatarURL(s string) *AgentUpdateOne {
-	auo.mutation.SetAvatarURL(s)
-	return auo
+func (_u *AgentUpdateOne) SetAvatarURL(v string) *AgentUpdateOne {
+	_u.mutation.SetAvatarURL(v)
+	return _u
 }
 
 // SetNillableAvatarURL sets the "avatar_url" field if the given value is not nil.
-func (auo *AgentUpdateOne) SetNillableAvatarURL(s *string) *AgentUpdateOne {
-	if s != nil {
-		auo.SetAvatarURL(*s)
+func (_u *AgentUpdateOne) SetNillableAvatarURL(v *string) *AgentUpdateOne {
+	if v != nil {
+		_u.SetAvatarURL(*v)
 	}
-	return auo
+	return _u
 }
 
 // ClearAvatarURL clears the value of the "avatar_url" field.
-func (auo *AgentUpdateOne) ClearAvatarURL() *AgentUpdateOne {
-	auo.mutation.ClearAvatarURL()
-	return auo
+func (_u *AgentUpdateOne) ClearAvatarURL() *AgentUpdateOne {
+	_u.mutation.ClearAvatarURL()
+	return _u
 }
 
 // SetRole sets the "role" field.
-func (auo *AgentUpdateOne) SetRole(a agent.Role) *AgentUpdateOne {
-	auo.mutation.SetRole(a)
-	return auo
+func (_u *AgentUpdateOne) SetRole(v agent.Role) *AgentUpdateOne {
+	_u.mutation.SetRole(v)
+	return _u
 }
 
 // SetNillableRole sets the "role" field if the given value is not nil.
-func (auo *AgentUpdateOne) SetNillableRole(a *agent.Role) *AgentUpdateOne {
-	if a != nil {
-		auo.SetRole(*a)
+func (_u *AgentUpdateOne) SetNillableRole(v *agent.Role) *AgentUpdateOne {
+	if v != nil {
+		_u.SetRole(*v)
 	}
-	return auo
+	return _u
 }
 
 // SetStatus sets the "status" field.
-func (auo *AgentUpdateOne) SetStatus(a agent.Status) *AgentUpdateOne {
-	auo.mutation.SetStatus(a)
-	return auo
+func (_u *AgentUpdateOne) SetStatus(v agent.Status) *AgentUpdateOne {
+	_u.mutation.SetStatus(v)
+	return _u
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (auo *AgentUpdateOne) SetNillableStatus(a *agent.Status) *AgentUpdateOne {
-	if a != nil {
-		auo.SetStatus(*a)
+func (_u *AgentUpdateOne) SetNillableStatus(v *agent.Status) *AgentUpdateOne {
+	if v != nil {
+		_u.SetStatus(*v)
 	}
-	return auo
+	return _u
 }
 
 // SetMaxConcurrentTickets sets the "max_concurrent_tickets" field.
-func (auo *AgentUpdateOne) SetMaxConcurrentTickets(i int) *AgentUpdateOne {
-	auo.mutation.ResetMaxConcurrentTickets()
-	auo.mutation.SetMaxConcurrentTickets(i)
-	return auo
+func (_u *AgentUpdateOne) SetMaxConcurrentTickets(v int) *AgentUpdateOne {
+	_u.mutation.ResetMaxConcurrentTickets()
+	_u.mutation.SetMaxConcurrentTickets(v)
+	return _u
 }
 
 // SetNillableMaxConcurrentTickets sets the "max_concurrent_tickets" field if the given value is not nil.
-func (auo *AgentUpdateOne) SetNillableMaxConcurrentTickets(i *int) *AgentUpdateOne {
-	if i != nil {
-		auo.SetMaxConcurrentTickets(*i)
+func (_u *AgentUpdateOne) SetNillableMaxConcurrentTickets(v *int) *AgentUpdateOne {
+	if v != nil {
+		_u.SetMaxConcurrentTickets(*v)
 	}
-	return auo
+	return _u
 }
 
-// AddMaxConcurrentTickets adds i to the "max_concurrent_tickets" field.
-func (auo *AgentUpdateOne) AddMaxConcurrentTickets(i int) *AgentUpdateOne {
-	auo.mutation.AddMaxConcurrentTickets(i)
-	return auo
+// AddMaxConcurrentTickets adds value to the "max_concurrent_tickets" field.
+func (_u *AgentUpdateOne) AddMaxConcurrentTickets(v int) *AgentUpdateOne {
+	_u.mutation.AddMaxConcurrentTickets(v)
+	return _u
 }
 
 // SetCurrentTicketCount sets the "current_ticket_count" field.
-func (auo *AgentUpdateOne) SetCurrentTicketCount(i int) *AgentUpdateOne {
-	auo.mutation.ResetCurrentTicketCount()
-	auo.mutation.SetCurrentTicketCount(i)
-	return auo
+func (_u *AgentUpdateOne) SetCurrentTicketCount(v int) *AgentUpdateOne {
+	_u.mutation.ResetCurrentTicketCount()
+	_u.mutation.SetCurrentTicketCount(v)
+	return _u
 }
 
 // SetNillableCurrentTicketCount sets the "current_ticket_count" field if the given value is not nil.
-func (auo *AgentUpdateOne) SetNillableCurrentTicketCount(i *int) *AgentUpdateOne {
-	if i != nil {
-		auo.SetCurrentTicketCount(*i)
+func (_u *AgentUpdateOne) SetNillableCurrentTicketCount(v *int) *AgentUpdateOne {
+	if v != nil {
+		_u.SetCurrentTicketCount(*v)
 	}
-	return auo
+	return _u
 }
 
-// AddCurrentTicketCount adds i to the "current_ticket_count" field.
-func (auo *AgentUpdateOne) AddCurrentTicketCount(i int) *AgentUpdateOne {
-	auo.mutation.AddCurrentTicketCount(i)
-	return auo
+// AddCurrentTicketCount adds value to the "current_ticket_count" field.
+func (_u *AgentUpdateOne) AddCurrentTicketCount(v int) *AgentUpdateOne {
+	_u.mutation.AddCurrentTicketCount(v)
+	return _u
 }
 
 // SetSkills sets the "skills" field.
-func (auo *AgentUpdateOne) SetSkills(s []string) *AgentUpdateOne {
-	auo.mutation.SetSkills(s)
-	return auo
+func (_u *AgentUpdateOne) SetSkills(v []string) *AgentUpdateOne {
+	_u.mutation.SetSkills(v)
+	return _u
 }
 
-// AppendSkills appends s to the "skills" field.
-func (auo *AgentUpdateOne) AppendSkills(s []string) *AgentUpdateOne {
-	auo.mutation.AppendSkills(s)
-	return auo
+// AppendSkills appends value to the "skills" field.
+func (_u *AgentUpdateOne) AppendSkills(v []string) *AgentUpdateOne {
+	_u.mutation.AppendSkills(v)
+	return _u
 }
 
 // ClearSkills clears the value of the "skills" field.
-func (auo *AgentUpdateOne) ClearSkills() *AgentUpdateOne {
-	auo.mutation.ClearSkills()
-	return auo
+func (_u *AgentUpdateOne) ClearSkills() *AgentUpdateOne {
+	_u.mutation.ClearSkills()
+	return _u
 }
 
 // SetMetadata sets the "metadata" field.
-func (auo *AgentUpdateOne) SetMetadata(m map[string]interface{}) *AgentUpdateOne {
-	auo.mutation.SetMetadata(m)
-	return auo
+func (_u *AgentUpdateOne) SetMetadata(v map[string]interface{}) *AgentUpdateOne {
+	_u.mutation.SetMetadata(v)
+	return _u
 }
 
 // ClearMetadata clears the value of the "metadata" field.
-func (auo *AgentUpdateOne) ClearMetadata() *AgentUpdateOne {
-	auo.mutation.ClearMetadata()
-	return auo
+func (_u *AgentUpdateOne) ClearMetadata() *AgentUpdateOne {
+	_u.mutation.ClearMetadata()
+	return _u
 }
 
 // SetIsActive sets the "is_active" field.
-func (auo *AgentUpdateOne) SetIsActive(b bool) *AgentUpdateOne {
-	auo.mutation.SetIsActive(b)
-	return auo
+func (_u *AgentUpdateOne) SetIsActive(v bool) *AgentUpdateOne {
+	_u.mutation.SetIsActive(v)
+	return _u
 }
 
 // SetNillableIsActive sets the "is_active" field if the given value is not nil.
-func (auo *AgentUpdateOne) SetNillableIsActive(b *bool) *AgentUpdateOne {
-	if b != nil {
-		auo.SetIsActive(*b)
+func (_u *AgentUpdateOne) SetNillableIsActive(v *bool) *AgentUpdateOne {
+	if v != nil {
+		_u.SetIsActive(*v)
 	}
-	return auo
+	return _u
 }
 
 // SetLastActiveAt sets the "last_active_at" field.
-func (auo *AgentUpdateOne) SetLastActiveAt(t time.Time) *AgentUpdateOne {
-	auo.mutation.SetLastActiveAt(t)
-	return auo
+func (_u *AgentUpdateOne) SetLastActiveAt(v time.Time) *AgentUpdateOne {
+	_u.mutation.SetLastActiveAt(v)
+	return _u
 }
 
 // SetNillableLastActiveAt sets the "last_active_at" field if the given value is not nil.
-func (auo *AgentUpdateOne) SetNillableLastActiveAt(t *time.Time) *AgentUpdateOne {
-	if t != nil {
-		auo.SetLastActiveAt(*t)
+func (_u *AgentUpdateOne) SetNillableLastActiveAt(v *time.Time) *AgentUpdateOne {
+	if v != nil {
+		_u.SetLastActiveAt(*v)
 	}
-	return auo
+	return _u
 }
 
 // ClearLastActiveAt clears the value of the "last_active_at" field.
-func (auo *AgentUpdateOne) ClearLastActiveAt() *AgentUpdateOne {
-	auo.mutation.ClearLastActiveAt()
-	return auo
+func (_u *AgentUpdateOne) ClearLastActiveAt() *AgentUpdateOne {
+	_u.mutation.ClearLastActiveAt()
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (auo *AgentUpdateOne) SetUpdatedAt(t time.Time) *AgentUpdateOne {
-	auo.mutation.SetUpdatedAt(t)
-	return auo
+func (_u *AgentUpdateOne) SetUpdatedAt(v time.Time) *AgentUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetTeam sets the "team" edge to the Team entity.
-func (auo *AgentUpdateOne) SetTeam(t *Team) *AgentUpdateOne {
-	return auo.SetTeamID(t.ID)
+func (_u *AgentUpdateOne) SetTeam(v *Team) *AgentUpdateOne {
+	return _u.SetTeamID(v.ID)
 }
 
 // AddAssignedTicketIDs adds the "assigned_tickets" edge to the Ticket entity by IDs.
-func (auo *AgentUpdateOne) AddAssignedTicketIDs(ids ...uuid.UUID) *AgentUpdateOne {
-	auo.mutation.AddAssignedTicketIDs(ids...)
-	return auo
+func (_u *AgentUpdateOne) AddAssignedTicketIDs(ids ...uuid.UUID) *AgentUpdateOne {
+	_u.mutation.AddAssignedTicketIDs(ids...)
+	return _u
 }
 
 // AddAssignedTickets adds the "assigned_tickets" edges to the Ticket entity.
-func (auo *AgentUpdateOne) AddAssignedTickets(t ...*Ticket) *AgentUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *AgentUpdateOne) AddAssignedTickets(v ...*Ticket) *AgentUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return auo.AddAssignedTicketIDs(ids...)
+	return _u.AddAssignedTicketIDs(ids...)
 }
 
 // Mutation returns the AgentMutation object of the builder.
-func (auo *AgentUpdateOne) Mutation() *AgentMutation {
-	return auo.mutation
+func (_u *AgentUpdateOne) Mutation() *AgentMutation {
+	return _u.mutation
 }
 
 // ClearTeam clears the "team" edge to the Team entity.
-func (auo *AgentUpdateOne) ClearTeam() *AgentUpdateOne {
-	auo.mutation.ClearTeam()
-	return auo
+func (_u *AgentUpdateOne) ClearTeam() *AgentUpdateOne {
+	_u.mutation.ClearTeam()
+	return _u
 }
 
 // ClearAssignedTickets clears all "assigned_tickets" edges to the Ticket entity.
-func (auo *AgentUpdateOne) ClearAssignedTickets() *AgentUpdateOne {
-	auo.mutation.ClearAssignedTickets()
-	return auo
+func (_u *AgentUpdateOne) ClearAssignedTickets() *AgentUpdateOne {
+	_u.mutation.ClearAssignedTickets()
+	return _u
 }
 
 // RemoveAssignedTicketIDs removes the "assigned_tickets" edge to Ticket entities by IDs.
-func (auo *AgentUpdateOne) RemoveAssignedTicketIDs(ids ...uuid.UUID) *AgentUpdateOne {
-	auo.mutation.RemoveAssignedTicketIDs(ids...)
-	return auo
+func (_u *AgentUpdateOne) RemoveAssignedTicketIDs(ids ...uuid.UUID) *AgentUpdateOne {
+	_u.mutation.RemoveAssignedTicketIDs(ids...)
+	return _u
 }
 
 // RemoveAssignedTickets removes "assigned_tickets" edges to Ticket entities.
-func (auo *AgentUpdateOne) RemoveAssignedTickets(t ...*Ticket) *AgentUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *AgentUpdateOne) RemoveAssignedTickets(v ...*Ticket) *AgentUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return auo.RemoveAssignedTicketIDs(ids...)
+	return _u.RemoveAssignedTicketIDs(ids...)
 }
 
 // Where appends a list predicates to the AgentUpdate builder.
-func (auo *AgentUpdateOne) Where(ps ...predicate.Agent) *AgentUpdateOne {
-	auo.mutation.Where(ps...)
-	return auo
+func (_u *AgentUpdateOne) Where(ps ...predicate.Agent) *AgentUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (auo *AgentUpdateOne) Select(field string, fields ...string) *AgentUpdateOne {
-	auo.fields = append([]string{field}, fields...)
-	return auo
+func (_u *AgentUpdateOne) Select(field string, fields ...string) *AgentUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated Agent entity.
-func (auo *AgentUpdateOne) Save(ctx context.Context) (*Agent, error) {
-	auo.defaults()
-	return withHooks(ctx, auo.sqlSave, auo.mutation, auo.hooks)
+func (_u *AgentUpdateOne) Save(ctx context.Context) (*Agent, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (auo *AgentUpdateOne) SaveX(ctx context.Context) *Agent {
-	node, err := auo.Save(ctx)
+func (_u *AgentUpdateOne) SaveX(ctx context.Context) *Agent {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -874,49 +874,49 @@ func (auo *AgentUpdateOne) SaveX(ctx context.Context) *Agent {
 }
 
 // Exec executes the query on the entity.
-func (auo *AgentUpdateOne) Exec(ctx context.Context) error {
-	_, err := auo.Save(ctx)
+func (_u *AgentUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (auo *AgentUpdateOne) ExecX(ctx context.Context) {
-	if err := auo.Exec(ctx); err != nil {
+func (_u *AgentUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (auo *AgentUpdateOne) defaults() {
-	if _, ok := auo.mutation.UpdatedAt(); !ok {
+func (_u *AgentUpdateOne) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := agent.UpdateDefaultUpdatedAt()
-		auo.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (auo *AgentUpdateOne) check() error {
-	if v, ok := auo.mutation.DisplayName(); ok {
+func (_u *AgentUpdateOne) check() error {
+	if v, ok := _u.mutation.DisplayName(); ok {
 		if err := agent.DisplayNameValidator(v); err != nil {
 			return &ValidationError{Name: "display_name", err: fmt.Errorf(`ent: validator failed for field "Agent.display_name": %w`, err)}
 		}
 	}
-	if v, ok := auo.mutation.Email(); ok {
+	if v, ok := _u.mutation.Email(); ok {
 		if err := agent.EmailValidator(v); err != nil {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "Agent.email": %w`, err)}
 		}
 	}
-	if v, ok := auo.mutation.AvatarURL(); ok {
+	if v, ok := _u.mutation.AvatarURL(); ok {
 		if err := agent.AvatarURLValidator(v); err != nil {
 			return &ValidationError{Name: "avatar_url", err: fmt.Errorf(`ent: validator failed for field "Agent.avatar_url": %w`, err)}
 		}
 	}
-	if v, ok := auo.mutation.Role(); ok {
+	if v, ok := _u.mutation.Role(); ok {
 		if err := agent.RoleValidator(v); err != nil {
 			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "Agent.role": %w`, err)}
 		}
 	}
-	if v, ok := auo.mutation.Status(); ok {
+	if v, ok := _u.mutation.Status(); ok {
 		if err := agent.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Agent.status": %w`, err)}
 		}
@@ -924,17 +924,17 @@ func (auo *AgentUpdateOne) check() error {
 	return nil
 }
 
-func (auo *AgentUpdateOne) sqlSave(ctx context.Context) (_node *Agent, err error) {
-	if err := auo.check(); err != nil {
+func (_u *AgentUpdateOne) sqlSave(ctx context.Context) (_node *Agent, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(agent.Table, agent.Columns, sqlgraph.NewFieldSpec(agent.FieldID, field.TypeUUID))
-	id, ok := auo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Agent.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := auo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, agent.FieldID)
 		for _, f := range fields {
@@ -946,79 +946,79 @@ func (auo *AgentUpdateOne) sqlSave(ctx context.Context) (_node *Agent, err error
 			}
 		}
 	}
-	if ps := auo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := auo.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(agent.FieldTenantID, field.TypeUUID, value)
 	}
-	if value, ok := auo.mutation.UserID(); ok {
+	if value, ok := _u.mutation.UserID(); ok {
 		_spec.SetField(agent.FieldUserID, field.TypeUUID, value)
 	}
-	if value, ok := auo.mutation.DisplayName(); ok {
+	if value, ok := _u.mutation.DisplayName(); ok {
 		_spec.SetField(agent.FieldDisplayName, field.TypeString, value)
 	}
-	if value, ok := auo.mutation.Email(); ok {
+	if value, ok := _u.mutation.Email(); ok {
 		_spec.SetField(agent.FieldEmail, field.TypeString, value)
 	}
-	if value, ok := auo.mutation.AvatarURL(); ok {
+	if value, ok := _u.mutation.AvatarURL(); ok {
 		_spec.SetField(agent.FieldAvatarURL, field.TypeString, value)
 	}
-	if auo.mutation.AvatarURLCleared() {
+	if _u.mutation.AvatarURLCleared() {
 		_spec.ClearField(agent.FieldAvatarURL, field.TypeString)
 	}
-	if value, ok := auo.mutation.Role(); ok {
+	if value, ok := _u.mutation.Role(); ok {
 		_spec.SetField(agent.FieldRole, field.TypeEnum, value)
 	}
-	if value, ok := auo.mutation.Status(); ok {
+	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(agent.FieldStatus, field.TypeEnum, value)
 	}
-	if value, ok := auo.mutation.MaxConcurrentTickets(); ok {
+	if value, ok := _u.mutation.MaxConcurrentTickets(); ok {
 		_spec.SetField(agent.FieldMaxConcurrentTickets, field.TypeInt, value)
 	}
-	if value, ok := auo.mutation.AddedMaxConcurrentTickets(); ok {
+	if value, ok := _u.mutation.AddedMaxConcurrentTickets(); ok {
 		_spec.AddField(agent.FieldMaxConcurrentTickets, field.TypeInt, value)
 	}
-	if value, ok := auo.mutation.CurrentTicketCount(); ok {
+	if value, ok := _u.mutation.CurrentTicketCount(); ok {
 		_spec.SetField(agent.FieldCurrentTicketCount, field.TypeInt, value)
 	}
-	if value, ok := auo.mutation.AddedCurrentTicketCount(); ok {
+	if value, ok := _u.mutation.AddedCurrentTicketCount(); ok {
 		_spec.AddField(agent.FieldCurrentTicketCount, field.TypeInt, value)
 	}
-	if value, ok := auo.mutation.Skills(); ok {
+	if value, ok := _u.mutation.Skills(); ok {
 		_spec.SetField(agent.FieldSkills, field.TypeJSON, value)
 	}
-	if value, ok := auo.mutation.AppendedSkills(); ok {
+	if value, ok := _u.mutation.AppendedSkills(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, agent.FieldSkills, value)
 		})
 	}
-	if auo.mutation.SkillsCleared() {
+	if _u.mutation.SkillsCleared() {
 		_spec.ClearField(agent.FieldSkills, field.TypeJSON)
 	}
-	if value, ok := auo.mutation.Metadata(); ok {
+	if value, ok := _u.mutation.Metadata(); ok {
 		_spec.SetField(agent.FieldMetadata, field.TypeJSON, value)
 	}
-	if auo.mutation.MetadataCleared() {
+	if _u.mutation.MetadataCleared() {
 		_spec.ClearField(agent.FieldMetadata, field.TypeJSON)
 	}
-	if value, ok := auo.mutation.IsActive(); ok {
+	if value, ok := _u.mutation.IsActive(); ok {
 		_spec.SetField(agent.FieldIsActive, field.TypeBool, value)
 	}
-	if value, ok := auo.mutation.LastActiveAt(); ok {
+	if value, ok := _u.mutation.LastActiveAt(); ok {
 		_spec.SetField(agent.FieldLastActiveAt, field.TypeTime, value)
 	}
-	if auo.mutation.LastActiveAtCleared() {
+	if _u.mutation.LastActiveAtCleared() {
 		_spec.ClearField(agent.FieldLastActiveAt, field.TypeTime)
 	}
-	if value, ok := auo.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(agent.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if auo.mutation.TeamCleared() {
+	if _u.mutation.TeamCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -1031,7 +1031,7 @@ func (auo *AgentUpdateOne) sqlSave(ctx context.Context) (_node *Agent, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := auo.mutation.TeamIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.TeamIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -1047,7 +1047,7 @@ func (auo *AgentUpdateOne) sqlSave(ctx context.Context) (_node *Agent, err error
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if auo.mutation.AssignedTicketsCleared() {
+	if _u.mutation.AssignedTicketsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1060,7 +1060,7 @@ func (auo *AgentUpdateOne) sqlSave(ctx context.Context) (_node *Agent, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := auo.mutation.RemovedAssignedTicketsIDs(); len(nodes) > 0 && !auo.mutation.AssignedTicketsCleared() {
+	if nodes := _u.mutation.RemovedAssignedTicketsIDs(); len(nodes) > 0 && !_u.mutation.AssignedTicketsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1076,7 +1076,7 @@ func (auo *AgentUpdateOne) sqlSave(ctx context.Context) (_node *Agent, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := auo.mutation.AssignedTicketsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.AssignedTicketsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1092,10 +1092,10 @@ func (auo *AgentUpdateOne) sqlSave(ctx context.Context) (_node *Agent, err error
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &Agent{config: auo.config}
+	_node = &Agent{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, auo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{agent.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -1103,6 +1103,6 @@ func (auo *AgentUpdateOne) sqlSave(ctx context.Context) (_node *Agent, err error
 		}
 		return nil, err
 	}
-	auo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

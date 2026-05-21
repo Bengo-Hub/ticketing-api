@@ -15,6 +15,7 @@ import (
 
 	authclient "github.com/Bengo-Hub/shared-auth-client"
 	eventslib "github.com/Bengo-Hub/shared-events"
+	"github.com/bengobox/ticketing-service/internal/clients"
 	"github.com/bengobox/ticketing-service/internal/config"
 	"github.com/bengobox/ticketing-service/internal/ent"
 	"github.com/bengobox/ticketing-service/internal/http/handlers"
@@ -24,6 +25,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/platform/cache"
 	"github.com/bengobox/ticketing-service/internal/platform/database"
 	"github.com/bengobox/ticketing-service/internal/platform/events"
+	"github.com/bengobox/ticketing-service/internal/platform/tenantcache"
 	"github.com/bengobox/ticketing-service/internal/shared/logger"
 )
 
@@ -71,6 +73,7 @@ func New(ctx context.Context) (*App, error) {
 	}
 
 	redisClient := cache.NewClient(cfg.Redis)
+	tenantResolver := tenantcache.New(redisClient, cfg.Auth.ServiceURL, cfg.Tenant.CacheTTL, log)
 
 	natsConn, err := events.Connect(cfg.Events)
 	if err != nil {
@@ -129,15 +132,29 @@ func New(ctx context.Context) (*App, error) {
 		}
 	}
 
+	// Initialize notifications S2S client
+	notifClient := clients.NewNotificationsClient(cfg.Notifications, log)
+
 	// Initialize identity module (teams, agents)
 	identityRepo := identity.NewEntRepository(ormClient)
 	identityService := identity.NewService(identityRepo, log)
 	identityHandler := identity.NewHandler(identityService, log)
 
+	// Wire JIT agent provisioning from auth.user.created events
+	authEventHandler := identity.NewAuthEventHandler(ormClient, log)
+	if natsConn != nil {
+		if err := authEventHandler.SubscribeToAuthEvents(natsConn); err != nil {
+			log.Warn("failed to subscribe to auth events", zap.Error(err))
+		}
+	}
+
 	// Initialize tickets module (tickets, comments, categories)
 	ticketsRepo := tickets.NewEntRepository(ormClient)
 	ticketsService := tickets.NewService(ticketsRepo, log)
-	ticketsHandler := tickets.NewHandler(ticketsService, log, tickets.WithServiceKey(cfg.Auth.InternalServiceKey))
+	ticketsHandler := tickets.NewHandler(ticketsService, log,
+		tickets.WithServiceKey(cfg.Auth.InternalServiceKey),
+		tickets.WithNotificationsClient(notifClient),
+	)
 
 	// Wire event publisher for ticket lifecycle events (shared-events outbox pattern)
 	var outboxPub *eventslib.Publisher
@@ -155,12 +172,13 @@ func New(ctx context.Context) (*App, error) {
 	}
 
 	router := httprouter.New(httprouter.Config{
-		Log:             log,
-		HealthHandler:   healthHandler,
-		AuthMiddleware:  authMiddleware,
-		AllowedOrigins:  cfg.HTTP.AllowedOrigins,
+		Log:            log,
+		HealthHandler:  healthHandler,
+		AuthMiddleware: authMiddleware,
+		AllowedOrigins: cfg.HTTP.AllowedOrigins,
 		IdentityHandler: identityHandler,
 		TicketsHandler:  ticketsHandler,
+		TenantResolver:  tenantResolver,
 	})
 
 	httpServer := &http.Server{

@@ -117,7 +117,7 @@ func (*Agent) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Agent fields.
-func (a *Agent) assignValues(columns []string, values []any) error {
+func (_m *Agent) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -127,74 +127,74 @@ func (a *Agent) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				a.ID = *value
+				_m.ID = *value
 			}
 		case agent.FieldTenantID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field tenant_id", values[i])
 			} else if value != nil {
-				a.TenantID = *value
+				_m.TenantID = *value
 			}
 		case agent.FieldUserID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field user_id", values[i])
 			} else if value != nil {
-				a.UserID = *value
+				_m.UserID = *value
 			}
 		case agent.FieldTeamID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field team_id", values[i])
 			} else if value.Valid {
-				a.TeamID = new(uuid.UUID)
-				*a.TeamID = *value.S.(*uuid.UUID)
+				_m.TeamID = new(uuid.UUID)
+				*_m.TeamID = *value.S.(*uuid.UUID)
 			}
 		case agent.FieldDisplayName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field display_name", values[i])
 			} else if value.Valid {
-				a.DisplayName = value.String
+				_m.DisplayName = value.String
 			}
 		case agent.FieldEmail:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field email", values[i])
 			} else if value.Valid {
-				a.Email = value.String
+				_m.Email = value.String
 			}
 		case agent.FieldAvatarURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field avatar_url", values[i])
 			} else if value.Valid {
-				a.AvatarURL = value.String
+				_m.AvatarURL = value.String
 			}
 		case agent.FieldRole:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field role", values[i])
 			} else if value.Valid {
-				a.Role = agent.Role(value.String)
+				_m.Role = agent.Role(value.String)
 			}
 		case agent.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
-				a.Status = agent.Status(value.String)
+				_m.Status = agent.Status(value.String)
 			}
 		case agent.FieldMaxConcurrentTickets:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field max_concurrent_tickets", values[i])
 			} else if value.Valid {
-				a.MaxConcurrentTickets = int(value.Int64)
+				_m.MaxConcurrentTickets = int(value.Int64)
 			}
 		case agent.FieldCurrentTicketCount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field current_ticket_count", values[i])
 			} else if value.Valid {
-				a.CurrentTicketCount = int(value.Int64)
+				_m.CurrentTicketCount = int(value.Int64)
 			}
 		case agent.FieldSkills:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field skills", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &a.Skills); err != nil {
+				if err := json.Unmarshal(*value, &_m.Skills); err != nil {
 					return fmt.Errorf("unmarshal field skills: %w", err)
 				}
 			}
@@ -202,7 +202,7 @@ func (a *Agent) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field metadata", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &a.Metadata); err != nil {
+				if err := json.Unmarshal(*value, &_m.Metadata); err != nil {
 					return fmt.Errorf("unmarshal field metadata: %w", err)
 				}
 			}
@@ -210,29 +210,29 @@ func (a *Agent) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field is_active", values[i])
 			} else if value.Valid {
-				a.IsActive = value.Bool
+				_m.IsActive = value.Bool
 			}
 		case agent.FieldLastActiveAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field last_active_at", values[i])
 			} else if value.Valid {
-				a.LastActiveAt = new(time.Time)
-				*a.LastActiveAt = value.Time
+				_m.LastActiveAt = new(time.Time)
+				*_m.LastActiveAt = value.Time
 			}
 		case agent.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
-				a.CreatedAt = value.Time
+				_m.CreatedAt = value.Time
 			}
 		case agent.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
-				a.UpdatedAt = value.Time
+				_m.UpdatedAt = value.Time
 			}
 		default:
-			a.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -240,94 +240,94 @@ func (a *Agent) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the Agent.
 // This includes values selected through modifiers, order, etc.
-func (a *Agent) Value(name string) (ent.Value, error) {
-	return a.selectValues.Get(name)
+func (_m *Agent) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryTeam queries the "team" edge of the Agent entity.
-func (a *Agent) QueryTeam() *TeamQuery {
-	return NewAgentClient(a.config).QueryTeam(a)
+func (_m *Agent) QueryTeam() *TeamQuery {
+	return NewAgentClient(_m.config).QueryTeam(_m)
 }
 
 // QueryAssignedTickets queries the "assigned_tickets" edge of the Agent entity.
-func (a *Agent) QueryAssignedTickets() *TicketQuery {
-	return NewAgentClient(a.config).QueryAssignedTickets(a)
+func (_m *Agent) QueryAssignedTickets() *TicketQuery {
+	return NewAgentClient(_m.config).QueryAssignedTickets(_m)
 }
 
 // Update returns a builder for updating this Agent.
 // Note that you need to call Agent.Unwrap() before calling this method if this Agent
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (a *Agent) Update() *AgentUpdateOne {
-	return NewAgentClient(a.config).UpdateOne(a)
+func (_m *Agent) Update() *AgentUpdateOne {
+	return NewAgentClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the Agent entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (a *Agent) Unwrap() *Agent {
-	_tx, ok := a.config.driver.(*txDriver)
+func (_m *Agent) Unwrap() *Agent {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: Agent is not a transactional entity")
 	}
-	a.config.driver = _tx.drv
-	return a
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (a *Agent) String() string {
+func (_m *Agent) String() string {
 	var builder strings.Builder
 	builder.WriteString("Agent(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", a.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("tenant_id=")
-	builder.WriteString(fmt.Sprintf("%v", a.TenantID))
+	builder.WriteString(fmt.Sprintf("%v", _m.TenantID))
 	builder.WriteString(", ")
 	builder.WriteString("user_id=")
-	builder.WriteString(fmt.Sprintf("%v", a.UserID))
+	builder.WriteString(fmt.Sprintf("%v", _m.UserID))
 	builder.WriteString(", ")
-	if v := a.TeamID; v != nil {
+	if v := _m.TeamID; v != nil {
 		builder.WriteString("team_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("display_name=")
-	builder.WriteString(a.DisplayName)
+	builder.WriteString(_m.DisplayName)
 	builder.WriteString(", ")
 	builder.WriteString("email=")
-	builder.WriteString(a.Email)
+	builder.WriteString(_m.Email)
 	builder.WriteString(", ")
 	builder.WriteString("avatar_url=")
-	builder.WriteString(a.AvatarURL)
+	builder.WriteString(_m.AvatarURL)
 	builder.WriteString(", ")
 	builder.WriteString("role=")
-	builder.WriteString(fmt.Sprintf("%v", a.Role))
+	builder.WriteString(fmt.Sprintf("%v", _m.Role))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
-	builder.WriteString(fmt.Sprintf("%v", a.Status))
+	builder.WriteString(fmt.Sprintf("%v", _m.Status))
 	builder.WriteString(", ")
 	builder.WriteString("max_concurrent_tickets=")
-	builder.WriteString(fmt.Sprintf("%v", a.MaxConcurrentTickets))
+	builder.WriteString(fmt.Sprintf("%v", _m.MaxConcurrentTickets))
 	builder.WriteString(", ")
 	builder.WriteString("current_ticket_count=")
-	builder.WriteString(fmt.Sprintf("%v", a.CurrentTicketCount))
+	builder.WriteString(fmt.Sprintf("%v", _m.CurrentTicketCount))
 	builder.WriteString(", ")
 	builder.WriteString("skills=")
-	builder.WriteString(fmt.Sprintf("%v", a.Skills))
+	builder.WriteString(fmt.Sprintf("%v", _m.Skills))
 	builder.WriteString(", ")
 	builder.WriteString("metadata=")
-	builder.WriteString(fmt.Sprintf("%v", a.Metadata))
+	builder.WriteString(fmt.Sprintf("%v", _m.Metadata))
 	builder.WriteString(", ")
 	builder.WriteString("is_active=")
-	builder.WriteString(fmt.Sprintf("%v", a.IsActive))
+	builder.WriteString(fmt.Sprintf("%v", _m.IsActive))
 	builder.WriteString(", ")
-	if v := a.LastActiveAt; v != nil {
+	if v := _m.LastActiveAt; v != nil {
 		builder.WriteString("last_active_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
-	builder.WriteString(a.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
-	builder.WriteString(a.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

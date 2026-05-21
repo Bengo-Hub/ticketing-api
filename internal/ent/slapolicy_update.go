@@ -24,242 +24,242 @@ type SLAPolicyUpdate struct {
 }
 
 // Where appends a list predicates to the SLAPolicyUpdate builder.
-func (spu *SLAPolicyUpdate) Where(ps ...predicate.SLAPolicy) *SLAPolicyUpdate {
-	spu.mutation.Where(ps...)
-	return spu
+func (_u *SLAPolicyUpdate) Where(ps ...predicate.SLAPolicy) *SLAPolicyUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (spu *SLAPolicyUpdate) SetTenantID(u uuid.UUID) *SLAPolicyUpdate {
-	spu.mutation.SetTenantID(u)
-	return spu
+func (_u *SLAPolicyUpdate) SetTenantID(v uuid.UUID) *SLAPolicyUpdate {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (spu *SLAPolicyUpdate) SetNillableTenantID(u *uuid.UUID) *SLAPolicyUpdate {
-	if u != nil {
-		spu.SetTenantID(*u)
+func (_u *SLAPolicyUpdate) SetNillableTenantID(v *uuid.UUID) *SLAPolicyUpdate {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return spu
+	return _u
 }
 
 // SetName sets the "name" field.
-func (spu *SLAPolicyUpdate) SetName(s string) *SLAPolicyUpdate {
-	spu.mutation.SetName(s)
-	return spu
+func (_u *SLAPolicyUpdate) SetName(v string) *SLAPolicyUpdate {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (spu *SLAPolicyUpdate) SetNillableName(s *string) *SLAPolicyUpdate {
-	if s != nil {
-		spu.SetName(*s)
+func (_u *SLAPolicyUpdate) SetNillableName(v *string) *SLAPolicyUpdate {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return spu
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (spu *SLAPolicyUpdate) SetDescription(s string) *SLAPolicyUpdate {
-	spu.mutation.SetDescription(s)
-	return spu
+func (_u *SLAPolicyUpdate) SetDescription(v string) *SLAPolicyUpdate {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (spu *SLAPolicyUpdate) SetNillableDescription(s *string) *SLAPolicyUpdate {
-	if s != nil {
-		spu.SetDescription(*s)
+func (_u *SLAPolicyUpdate) SetNillableDescription(v *string) *SLAPolicyUpdate {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return spu
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (spu *SLAPolicyUpdate) ClearDescription() *SLAPolicyUpdate {
-	spu.mutation.ClearDescription()
-	return spu
+func (_u *SLAPolicyUpdate) ClearDescription() *SLAPolicyUpdate {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetPriority sets the "priority" field.
-func (spu *SLAPolicyUpdate) SetPriority(s slapolicy.Priority) *SLAPolicyUpdate {
-	spu.mutation.SetPriority(s)
-	return spu
+func (_u *SLAPolicyUpdate) SetPriority(v slapolicy.Priority) *SLAPolicyUpdate {
+	_u.mutation.SetPriority(v)
+	return _u
 }
 
 // SetNillablePriority sets the "priority" field if the given value is not nil.
-func (spu *SLAPolicyUpdate) SetNillablePriority(s *slapolicy.Priority) *SLAPolicyUpdate {
-	if s != nil {
-		spu.SetPriority(*s)
+func (_u *SLAPolicyUpdate) SetNillablePriority(v *slapolicy.Priority) *SLAPolicyUpdate {
+	if v != nil {
+		_u.SetPriority(*v)
 	}
-	return spu
+	return _u
 }
 
 // SetCategoryID sets the "category_id" field.
-func (spu *SLAPolicyUpdate) SetCategoryID(u uuid.UUID) *SLAPolicyUpdate {
-	spu.mutation.SetCategoryID(u)
-	return spu
+func (_u *SLAPolicyUpdate) SetCategoryID(v uuid.UUID) *SLAPolicyUpdate {
+	_u.mutation.SetCategoryID(v)
+	return _u
 }
 
 // SetNillableCategoryID sets the "category_id" field if the given value is not nil.
-func (spu *SLAPolicyUpdate) SetNillableCategoryID(u *uuid.UUID) *SLAPolicyUpdate {
-	if u != nil {
-		spu.SetCategoryID(*u)
+func (_u *SLAPolicyUpdate) SetNillableCategoryID(v *uuid.UUID) *SLAPolicyUpdate {
+	if v != nil {
+		_u.SetCategoryID(*v)
 	}
-	return spu
+	return _u
 }
 
 // ClearCategoryID clears the value of the "category_id" field.
-func (spu *SLAPolicyUpdate) ClearCategoryID() *SLAPolicyUpdate {
-	spu.mutation.ClearCategoryID()
-	return spu
+func (_u *SLAPolicyUpdate) ClearCategoryID() *SLAPolicyUpdate {
+	_u.mutation.ClearCategoryID()
+	return _u
 }
 
 // SetFirstResponseMinutes sets the "first_response_minutes" field.
-func (spu *SLAPolicyUpdate) SetFirstResponseMinutes(i int) *SLAPolicyUpdate {
-	spu.mutation.ResetFirstResponseMinutes()
-	spu.mutation.SetFirstResponseMinutes(i)
-	return spu
+func (_u *SLAPolicyUpdate) SetFirstResponseMinutes(v int) *SLAPolicyUpdate {
+	_u.mutation.ResetFirstResponseMinutes()
+	_u.mutation.SetFirstResponseMinutes(v)
+	return _u
 }
 
 // SetNillableFirstResponseMinutes sets the "first_response_minutes" field if the given value is not nil.
-func (spu *SLAPolicyUpdate) SetNillableFirstResponseMinutes(i *int) *SLAPolicyUpdate {
-	if i != nil {
-		spu.SetFirstResponseMinutes(*i)
+func (_u *SLAPolicyUpdate) SetNillableFirstResponseMinutes(v *int) *SLAPolicyUpdate {
+	if v != nil {
+		_u.SetFirstResponseMinutes(*v)
 	}
-	return spu
+	return _u
 }
 
-// AddFirstResponseMinutes adds i to the "first_response_minutes" field.
-func (spu *SLAPolicyUpdate) AddFirstResponseMinutes(i int) *SLAPolicyUpdate {
-	spu.mutation.AddFirstResponseMinutes(i)
-	return spu
+// AddFirstResponseMinutes adds value to the "first_response_minutes" field.
+func (_u *SLAPolicyUpdate) AddFirstResponseMinutes(v int) *SLAPolicyUpdate {
+	_u.mutation.AddFirstResponseMinutes(v)
+	return _u
 }
 
 // SetFirstResponseBusinessHours sets the "first_response_business_hours" field.
-func (spu *SLAPolicyUpdate) SetFirstResponseBusinessHours(b bool) *SLAPolicyUpdate {
-	spu.mutation.SetFirstResponseBusinessHours(b)
-	return spu
+func (_u *SLAPolicyUpdate) SetFirstResponseBusinessHours(v bool) *SLAPolicyUpdate {
+	_u.mutation.SetFirstResponseBusinessHours(v)
+	return _u
 }
 
 // SetNillableFirstResponseBusinessHours sets the "first_response_business_hours" field if the given value is not nil.
-func (spu *SLAPolicyUpdate) SetNillableFirstResponseBusinessHours(b *bool) *SLAPolicyUpdate {
-	if b != nil {
-		spu.SetFirstResponseBusinessHours(*b)
+func (_u *SLAPolicyUpdate) SetNillableFirstResponseBusinessHours(v *bool) *SLAPolicyUpdate {
+	if v != nil {
+		_u.SetFirstResponseBusinessHours(*v)
 	}
-	return spu
+	return _u
 }
 
 // SetResolutionMinutes sets the "resolution_minutes" field.
-func (spu *SLAPolicyUpdate) SetResolutionMinutes(i int) *SLAPolicyUpdate {
-	spu.mutation.ResetResolutionMinutes()
-	spu.mutation.SetResolutionMinutes(i)
-	return spu
+func (_u *SLAPolicyUpdate) SetResolutionMinutes(v int) *SLAPolicyUpdate {
+	_u.mutation.ResetResolutionMinutes()
+	_u.mutation.SetResolutionMinutes(v)
+	return _u
 }
 
 // SetNillableResolutionMinutes sets the "resolution_minutes" field if the given value is not nil.
-func (spu *SLAPolicyUpdate) SetNillableResolutionMinutes(i *int) *SLAPolicyUpdate {
-	if i != nil {
-		spu.SetResolutionMinutes(*i)
+func (_u *SLAPolicyUpdate) SetNillableResolutionMinutes(v *int) *SLAPolicyUpdate {
+	if v != nil {
+		_u.SetResolutionMinutes(*v)
 	}
-	return spu
+	return _u
 }
 
-// AddResolutionMinutes adds i to the "resolution_minutes" field.
-func (spu *SLAPolicyUpdate) AddResolutionMinutes(i int) *SLAPolicyUpdate {
-	spu.mutation.AddResolutionMinutes(i)
-	return spu
+// AddResolutionMinutes adds value to the "resolution_minutes" field.
+func (_u *SLAPolicyUpdate) AddResolutionMinutes(v int) *SLAPolicyUpdate {
+	_u.mutation.AddResolutionMinutes(v)
+	return _u
 }
 
 // SetResolutionBusinessHours sets the "resolution_business_hours" field.
-func (spu *SLAPolicyUpdate) SetResolutionBusinessHours(b bool) *SLAPolicyUpdate {
-	spu.mutation.SetResolutionBusinessHours(b)
-	return spu
+func (_u *SLAPolicyUpdate) SetResolutionBusinessHours(v bool) *SLAPolicyUpdate {
+	_u.mutation.SetResolutionBusinessHours(v)
+	return _u
 }
 
 // SetNillableResolutionBusinessHours sets the "resolution_business_hours" field if the given value is not nil.
-func (spu *SLAPolicyUpdate) SetNillableResolutionBusinessHours(b *bool) *SLAPolicyUpdate {
-	if b != nil {
-		spu.SetResolutionBusinessHours(*b)
+func (_u *SLAPolicyUpdate) SetNillableResolutionBusinessHours(v *bool) *SLAPolicyUpdate {
+	if v != nil {
+		_u.SetResolutionBusinessHours(*v)
 	}
-	return spu
+	return _u
 }
 
 // SetIsActive sets the "is_active" field.
-func (spu *SLAPolicyUpdate) SetIsActive(b bool) *SLAPolicyUpdate {
-	spu.mutation.SetIsActive(b)
-	return spu
+func (_u *SLAPolicyUpdate) SetIsActive(v bool) *SLAPolicyUpdate {
+	_u.mutation.SetIsActive(v)
+	return _u
 }
 
 // SetNillableIsActive sets the "is_active" field if the given value is not nil.
-func (spu *SLAPolicyUpdate) SetNillableIsActive(b *bool) *SLAPolicyUpdate {
-	if b != nil {
-		spu.SetIsActive(*b)
+func (_u *SLAPolicyUpdate) SetNillableIsActive(v *bool) *SLAPolicyUpdate {
+	if v != nil {
+		_u.SetIsActive(*v)
 	}
-	return spu
+	return _u
 }
 
 // SetSortOrder sets the "sort_order" field.
-func (spu *SLAPolicyUpdate) SetSortOrder(i int) *SLAPolicyUpdate {
-	spu.mutation.ResetSortOrder()
-	spu.mutation.SetSortOrder(i)
-	return spu
+func (_u *SLAPolicyUpdate) SetSortOrder(v int) *SLAPolicyUpdate {
+	_u.mutation.ResetSortOrder()
+	_u.mutation.SetSortOrder(v)
+	return _u
 }
 
 // SetNillableSortOrder sets the "sort_order" field if the given value is not nil.
-func (spu *SLAPolicyUpdate) SetNillableSortOrder(i *int) *SLAPolicyUpdate {
-	if i != nil {
-		spu.SetSortOrder(*i)
+func (_u *SLAPolicyUpdate) SetNillableSortOrder(v *int) *SLAPolicyUpdate {
+	if v != nil {
+		_u.SetSortOrder(*v)
 	}
-	return spu
+	return _u
 }
 
-// AddSortOrder adds i to the "sort_order" field.
-func (spu *SLAPolicyUpdate) AddSortOrder(i int) *SLAPolicyUpdate {
-	spu.mutation.AddSortOrder(i)
-	return spu
+// AddSortOrder adds value to the "sort_order" field.
+func (_u *SLAPolicyUpdate) AddSortOrder(v int) *SLAPolicyUpdate {
+	_u.mutation.AddSortOrder(v)
+	return _u
 }
 
 // SetBusinessHours sets the "business_hours" field.
-func (spu *SLAPolicyUpdate) SetBusinessHours(m map[string]interface{}) *SLAPolicyUpdate {
-	spu.mutation.SetBusinessHours(m)
-	return spu
+func (_u *SLAPolicyUpdate) SetBusinessHours(v map[string]interface{}) *SLAPolicyUpdate {
+	_u.mutation.SetBusinessHours(v)
+	return _u
 }
 
 // ClearBusinessHours clears the value of the "business_hours" field.
-func (spu *SLAPolicyUpdate) ClearBusinessHours() *SLAPolicyUpdate {
-	spu.mutation.ClearBusinessHours()
-	return spu
+func (_u *SLAPolicyUpdate) ClearBusinessHours() *SLAPolicyUpdate {
+	_u.mutation.ClearBusinessHours()
+	return _u
 }
 
 // SetMetadata sets the "metadata" field.
-func (spu *SLAPolicyUpdate) SetMetadata(m map[string]interface{}) *SLAPolicyUpdate {
-	spu.mutation.SetMetadata(m)
-	return spu
+func (_u *SLAPolicyUpdate) SetMetadata(v map[string]interface{}) *SLAPolicyUpdate {
+	_u.mutation.SetMetadata(v)
+	return _u
 }
 
 // ClearMetadata clears the value of the "metadata" field.
-func (spu *SLAPolicyUpdate) ClearMetadata() *SLAPolicyUpdate {
-	spu.mutation.ClearMetadata()
-	return spu
+func (_u *SLAPolicyUpdate) ClearMetadata() *SLAPolicyUpdate {
+	_u.mutation.ClearMetadata()
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (spu *SLAPolicyUpdate) SetUpdatedAt(t time.Time) *SLAPolicyUpdate {
-	spu.mutation.SetUpdatedAt(t)
-	return spu
+func (_u *SLAPolicyUpdate) SetUpdatedAt(v time.Time) *SLAPolicyUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // Mutation returns the SLAPolicyMutation object of the builder.
-func (spu *SLAPolicyUpdate) Mutation() *SLAPolicyMutation {
-	return spu.mutation
+func (_u *SLAPolicyUpdate) Mutation() *SLAPolicyMutation {
+	return _u.mutation
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (spu *SLAPolicyUpdate) Save(ctx context.Context) (int, error) {
-	spu.defaults()
-	return withHooks(ctx, spu.sqlSave, spu.mutation, spu.hooks)
+func (_u *SLAPolicyUpdate) Save(ctx context.Context) (int, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (spu *SLAPolicyUpdate) SaveX(ctx context.Context) int {
-	affected, err := spu.Save(ctx)
+func (_u *SLAPolicyUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -267,34 +267,34 @@ func (spu *SLAPolicyUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (spu *SLAPolicyUpdate) Exec(ctx context.Context) error {
-	_, err := spu.Save(ctx)
+func (_u *SLAPolicyUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (spu *SLAPolicyUpdate) ExecX(ctx context.Context) {
-	if err := spu.Exec(ctx); err != nil {
+func (_u *SLAPolicyUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (spu *SLAPolicyUpdate) defaults() {
-	if _, ok := spu.mutation.UpdatedAt(); !ok {
+func (_u *SLAPolicyUpdate) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := slapolicy.UpdateDefaultUpdatedAt()
-		spu.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (spu *SLAPolicyUpdate) check() error {
-	if v, ok := spu.mutation.Name(); ok {
+func (_u *SLAPolicyUpdate) check() error {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := slapolicy.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "SLAPolicy.name": %w`, err)}
 		}
 	}
-	if v, ok := spu.mutation.Priority(); ok {
+	if v, ok := _u.mutation.Priority(); ok {
 		if err := slapolicy.PriorityValidator(v); err != nil {
 			return &ValidationError{Name: "priority", err: fmt.Errorf(`ent: validator failed for field "SLAPolicy.priority": %w`, err)}
 		}
@@ -302,82 +302,82 @@ func (spu *SLAPolicyUpdate) check() error {
 	return nil
 }
 
-func (spu *SLAPolicyUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := spu.check(); err != nil {
-		return n, err
+func (_u *SLAPolicyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(slapolicy.Table, slapolicy.Columns, sqlgraph.NewFieldSpec(slapolicy.FieldID, field.TypeUUID))
-	if ps := spu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := spu.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(slapolicy.FieldTenantID, field.TypeUUID, value)
 	}
-	if value, ok := spu.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(slapolicy.FieldName, field.TypeString, value)
 	}
-	if value, ok := spu.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(slapolicy.FieldDescription, field.TypeString, value)
 	}
-	if spu.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(slapolicy.FieldDescription, field.TypeString)
 	}
-	if value, ok := spu.mutation.Priority(); ok {
+	if value, ok := _u.mutation.Priority(); ok {
 		_spec.SetField(slapolicy.FieldPriority, field.TypeEnum, value)
 	}
-	if value, ok := spu.mutation.CategoryID(); ok {
+	if value, ok := _u.mutation.CategoryID(); ok {
 		_spec.SetField(slapolicy.FieldCategoryID, field.TypeUUID, value)
 	}
-	if spu.mutation.CategoryIDCleared() {
+	if _u.mutation.CategoryIDCleared() {
 		_spec.ClearField(slapolicy.FieldCategoryID, field.TypeUUID)
 	}
-	if value, ok := spu.mutation.FirstResponseMinutes(); ok {
+	if value, ok := _u.mutation.FirstResponseMinutes(); ok {
 		_spec.SetField(slapolicy.FieldFirstResponseMinutes, field.TypeInt, value)
 	}
-	if value, ok := spu.mutation.AddedFirstResponseMinutes(); ok {
+	if value, ok := _u.mutation.AddedFirstResponseMinutes(); ok {
 		_spec.AddField(slapolicy.FieldFirstResponseMinutes, field.TypeInt, value)
 	}
-	if value, ok := spu.mutation.FirstResponseBusinessHours(); ok {
+	if value, ok := _u.mutation.FirstResponseBusinessHours(); ok {
 		_spec.SetField(slapolicy.FieldFirstResponseBusinessHours, field.TypeBool, value)
 	}
-	if value, ok := spu.mutation.ResolutionMinutes(); ok {
+	if value, ok := _u.mutation.ResolutionMinutes(); ok {
 		_spec.SetField(slapolicy.FieldResolutionMinutes, field.TypeInt, value)
 	}
-	if value, ok := spu.mutation.AddedResolutionMinutes(); ok {
+	if value, ok := _u.mutation.AddedResolutionMinutes(); ok {
 		_spec.AddField(slapolicy.FieldResolutionMinutes, field.TypeInt, value)
 	}
-	if value, ok := spu.mutation.ResolutionBusinessHours(); ok {
+	if value, ok := _u.mutation.ResolutionBusinessHours(); ok {
 		_spec.SetField(slapolicy.FieldResolutionBusinessHours, field.TypeBool, value)
 	}
-	if value, ok := spu.mutation.IsActive(); ok {
+	if value, ok := _u.mutation.IsActive(); ok {
 		_spec.SetField(slapolicy.FieldIsActive, field.TypeBool, value)
 	}
-	if value, ok := spu.mutation.SortOrder(); ok {
+	if value, ok := _u.mutation.SortOrder(); ok {
 		_spec.SetField(slapolicy.FieldSortOrder, field.TypeInt, value)
 	}
-	if value, ok := spu.mutation.AddedSortOrder(); ok {
+	if value, ok := _u.mutation.AddedSortOrder(); ok {
 		_spec.AddField(slapolicy.FieldSortOrder, field.TypeInt, value)
 	}
-	if value, ok := spu.mutation.BusinessHours(); ok {
+	if value, ok := _u.mutation.BusinessHours(); ok {
 		_spec.SetField(slapolicy.FieldBusinessHours, field.TypeJSON, value)
 	}
-	if spu.mutation.BusinessHoursCleared() {
+	if _u.mutation.BusinessHoursCleared() {
 		_spec.ClearField(slapolicy.FieldBusinessHours, field.TypeJSON)
 	}
-	if value, ok := spu.mutation.Metadata(); ok {
+	if value, ok := _u.mutation.Metadata(); ok {
 		_spec.SetField(slapolicy.FieldMetadata, field.TypeJSON, value)
 	}
-	if spu.mutation.MetadataCleared() {
+	if _u.mutation.MetadataCleared() {
 		_spec.ClearField(slapolicy.FieldMetadata, field.TypeJSON)
 	}
-	if value, ok := spu.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(slapolicy.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, spu.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{slapolicy.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -385,8 +385,8 @@ func (spu *SLAPolicyUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
-	spu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // SLAPolicyUpdateOne is the builder for updating a single SLAPolicy entity.
@@ -398,249 +398,249 @@ type SLAPolicyUpdateOne struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (spuo *SLAPolicyUpdateOne) SetTenantID(u uuid.UUID) *SLAPolicyUpdateOne {
-	spuo.mutation.SetTenantID(u)
-	return spuo
+func (_u *SLAPolicyUpdateOne) SetTenantID(v uuid.UUID) *SLAPolicyUpdateOne {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (spuo *SLAPolicyUpdateOne) SetNillableTenantID(u *uuid.UUID) *SLAPolicyUpdateOne {
-	if u != nil {
-		spuo.SetTenantID(*u)
+func (_u *SLAPolicyUpdateOne) SetNillableTenantID(v *uuid.UUID) *SLAPolicyUpdateOne {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return spuo
+	return _u
 }
 
 // SetName sets the "name" field.
-func (spuo *SLAPolicyUpdateOne) SetName(s string) *SLAPolicyUpdateOne {
-	spuo.mutation.SetName(s)
-	return spuo
+func (_u *SLAPolicyUpdateOne) SetName(v string) *SLAPolicyUpdateOne {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (spuo *SLAPolicyUpdateOne) SetNillableName(s *string) *SLAPolicyUpdateOne {
-	if s != nil {
-		spuo.SetName(*s)
+func (_u *SLAPolicyUpdateOne) SetNillableName(v *string) *SLAPolicyUpdateOne {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return spuo
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (spuo *SLAPolicyUpdateOne) SetDescription(s string) *SLAPolicyUpdateOne {
-	spuo.mutation.SetDescription(s)
-	return spuo
+func (_u *SLAPolicyUpdateOne) SetDescription(v string) *SLAPolicyUpdateOne {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (spuo *SLAPolicyUpdateOne) SetNillableDescription(s *string) *SLAPolicyUpdateOne {
-	if s != nil {
-		spuo.SetDescription(*s)
+func (_u *SLAPolicyUpdateOne) SetNillableDescription(v *string) *SLAPolicyUpdateOne {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return spuo
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (spuo *SLAPolicyUpdateOne) ClearDescription() *SLAPolicyUpdateOne {
-	spuo.mutation.ClearDescription()
-	return spuo
+func (_u *SLAPolicyUpdateOne) ClearDescription() *SLAPolicyUpdateOne {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetPriority sets the "priority" field.
-func (spuo *SLAPolicyUpdateOne) SetPriority(s slapolicy.Priority) *SLAPolicyUpdateOne {
-	spuo.mutation.SetPriority(s)
-	return spuo
+func (_u *SLAPolicyUpdateOne) SetPriority(v slapolicy.Priority) *SLAPolicyUpdateOne {
+	_u.mutation.SetPriority(v)
+	return _u
 }
 
 // SetNillablePriority sets the "priority" field if the given value is not nil.
-func (spuo *SLAPolicyUpdateOne) SetNillablePriority(s *slapolicy.Priority) *SLAPolicyUpdateOne {
-	if s != nil {
-		spuo.SetPriority(*s)
+func (_u *SLAPolicyUpdateOne) SetNillablePriority(v *slapolicy.Priority) *SLAPolicyUpdateOne {
+	if v != nil {
+		_u.SetPriority(*v)
 	}
-	return spuo
+	return _u
 }
 
 // SetCategoryID sets the "category_id" field.
-func (spuo *SLAPolicyUpdateOne) SetCategoryID(u uuid.UUID) *SLAPolicyUpdateOne {
-	spuo.mutation.SetCategoryID(u)
-	return spuo
+func (_u *SLAPolicyUpdateOne) SetCategoryID(v uuid.UUID) *SLAPolicyUpdateOne {
+	_u.mutation.SetCategoryID(v)
+	return _u
 }
 
 // SetNillableCategoryID sets the "category_id" field if the given value is not nil.
-func (spuo *SLAPolicyUpdateOne) SetNillableCategoryID(u *uuid.UUID) *SLAPolicyUpdateOne {
-	if u != nil {
-		spuo.SetCategoryID(*u)
+func (_u *SLAPolicyUpdateOne) SetNillableCategoryID(v *uuid.UUID) *SLAPolicyUpdateOne {
+	if v != nil {
+		_u.SetCategoryID(*v)
 	}
-	return spuo
+	return _u
 }
 
 // ClearCategoryID clears the value of the "category_id" field.
-func (spuo *SLAPolicyUpdateOne) ClearCategoryID() *SLAPolicyUpdateOne {
-	spuo.mutation.ClearCategoryID()
-	return spuo
+func (_u *SLAPolicyUpdateOne) ClearCategoryID() *SLAPolicyUpdateOne {
+	_u.mutation.ClearCategoryID()
+	return _u
 }
 
 // SetFirstResponseMinutes sets the "first_response_minutes" field.
-func (spuo *SLAPolicyUpdateOne) SetFirstResponseMinutes(i int) *SLAPolicyUpdateOne {
-	spuo.mutation.ResetFirstResponseMinutes()
-	spuo.mutation.SetFirstResponseMinutes(i)
-	return spuo
+func (_u *SLAPolicyUpdateOne) SetFirstResponseMinutes(v int) *SLAPolicyUpdateOne {
+	_u.mutation.ResetFirstResponseMinutes()
+	_u.mutation.SetFirstResponseMinutes(v)
+	return _u
 }
 
 // SetNillableFirstResponseMinutes sets the "first_response_minutes" field if the given value is not nil.
-func (spuo *SLAPolicyUpdateOne) SetNillableFirstResponseMinutes(i *int) *SLAPolicyUpdateOne {
-	if i != nil {
-		spuo.SetFirstResponseMinutes(*i)
+func (_u *SLAPolicyUpdateOne) SetNillableFirstResponseMinutes(v *int) *SLAPolicyUpdateOne {
+	if v != nil {
+		_u.SetFirstResponseMinutes(*v)
 	}
-	return spuo
+	return _u
 }
 
-// AddFirstResponseMinutes adds i to the "first_response_minutes" field.
-func (spuo *SLAPolicyUpdateOne) AddFirstResponseMinutes(i int) *SLAPolicyUpdateOne {
-	spuo.mutation.AddFirstResponseMinutes(i)
-	return spuo
+// AddFirstResponseMinutes adds value to the "first_response_minutes" field.
+func (_u *SLAPolicyUpdateOne) AddFirstResponseMinutes(v int) *SLAPolicyUpdateOne {
+	_u.mutation.AddFirstResponseMinutes(v)
+	return _u
 }
 
 // SetFirstResponseBusinessHours sets the "first_response_business_hours" field.
-func (spuo *SLAPolicyUpdateOne) SetFirstResponseBusinessHours(b bool) *SLAPolicyUpdateOne {
-	spuo.mutation.SetFirstResponseBusinessHours(b)
-	return spuo
+func (_u *SLAPolicyUpdateOne) SetFirstResponseBusinessHours(v bool) *SLAPolicyUpdateOne {
+	_u.mutation.SetFirstResponseBusinessHours(v)
+	return _u
 }
 
 // SetNillableFirstResponseBusinessHours sets the "first_response_business_hours" field if the given value is not nil.
-func (spuo *SLAPolicyUpdateOne) SetNillableFirstResponseBusinessHours(b *bool) *SLAPolicyUpdateOne {
-	if b != nil {
-		spuo.SetFirstResponseBusinessHours(*b)
+func (_u *SLAPolicyUpdateOne) SetNillableFirstResponseBusinessHours(v *bool) *SLAPolicyUpdateOne {
+	if v != nil {
+		_u.SetFirstResponseBusinessHours(*v)
 	}
-	return spuo
+	return _u
 }
 
 // SetResolutionMinutes sets the "resolution_minutes" field.
-func (spuo *SLAPolicyUpdateOne) SetResolutionMinutes(i int) *SLAPolicyUpdateOne {
-	spuo.mutation.ResetResolutionMinutes()
-	spuo.mutation.SetResolutionMinutes(i)
-	return spuo
+func (_u *SLAPolicyUpdateOne) SetResolutionMinutes(v int) *SLAPolicyUpdateOne {
+	_u.mutation.ResetResolutionMinutes()
+	_u.mutation.SetResolutionMinutes(v)
+	return _u
 }
 
 // SetNillableResolutionMinutes sets the "resolution_minutes" field if the given value is not nil.
-func (spuo *SLAPolicyUpdateOne) SetNillableResolutionMinutes(i *int) *SLAPolicyUpdateOne {
-	if i != nil {
-		spuo.SetResolutionMinutes(*i)
+func (_u *SLAPolicyUpdateOne) SetNillableResolutionMinutes(v *int) *SLAPolicyUpdateOne {
+	if v != nil {
+		_u.SetResolutionMinutes(*v)
 	}
-	return spuo
+	return _u
 }
 
-// AddResolutionMinutes adds i to the "resolution_minutes" field.
-func (spuo *SLAPolicyUpdateOne) AddResolutionMinutes(i int) *SLAPolicyUpdateOne {
-	spuo.mutation.AddResolutionMinutes(i)
-	return spuo
+// AddResolutionMinutes adds value to the "resolution_minutes" field.
+func (_u *SLAPolicyUpdateOne) AddResolutionMinutes(v int) *SLAPolicyUpdateOne {
+	_u.mutation.AddResolutionMinutes(v)
+	return _u
 }
 
 // SetResolutionBusinessHours sets the "resolution_business_hours" field.
-func (spuo *SLAPolicyUpdateOne) SetResolutionBusinessHours(b bool) *SLAPolicyUpdateOne {
-	spuo.mutation.SetResolutionBusinessHours(b)
-	return spuo
+func (_u *SLAPolicyUpdateOne) SetResolutionBusinessHours(v bool) *SLAPolicyUpdateOne {
+	_u.mutation.SetResolutionBusinessHours(v)
+	return _u
 }
 
 // SetNillableResolutionBusinessHours sets the "resolution_business_hours" field if the given value is not nil.
-func (spuo *SLAPolicyUpdateOne) SetNillableResolutionBusinessHours(b *bool) *SLAPolicyUpdateOne {
-	if b != nil {
-		spuo.SetResolutionBusinessHours(*b)
+func (_u *SLAPolicyUpdateOne) SetNillableResolutionBusinessHours(v *bool) *SLAPolicyUpdateOne {
+	if v != nil {
+		_u.SetResolutionBusinessHours(*v)
 	}
-	return spuo
+	return _u
 }
 
 // SetIsActive sets the "is_active" field.
-func (spuo *SLAPolicyUpdateOne) SetIsActive(b bool) *SLAPolicyUpdateOne {
-	spuo.mutation.SetIsActive(b)
-	return spuo
+func (_u *SLAPolicyUpdateOne) SetIsActive(v bool) *SLAPolicyUpdateOne {
+	_u.mutation.SetIsActive(v)
+	return _u
 }
 
 // SetNillableIsActive sets the "is_active" field if the given value is not nil.
-func (spuo *SLAPolicyUpdateOne) SetNillableIsActive(b *bool) *SLAPolicyUpdateOne {
-	if b != nil {
-		spuo.SetIsActive(*b)
+func (_u *SLAPolicyUpdateOne) SetNillableIsActive(v *bool) *SLAPolicyUpdateOne {
+	if v != nil {
+		_u.SetIsActive(*v)
 	}
-	return spuo
+	return _u
 }
 
 // SetSortOrder sets the "sort_order" field.
-func (spuo *SLAPolicyUpdateOne) SetSortOrder(i int) *SLAPolicyUpdateOne {
-	spuo.mutation.ResetSortOrder()
-	spuo.mutation.SetSortOrder(i)
-	return spuo
+func (_u *SLAPolicyUpdateOne) SetSortOrder(v int) *SLAPolicyUpdateOne {
+	_u.mutation.ResetSortOrder()
+	_u.mutation.SetSortOrder(v)
+	return _u
 }
 
 // SetNillableSortOrder sets the "sort_order" field if the given value is not nil.
-func (spuo *SLAPolicyUpdateOne) SetNillableSortOrder(i *int) *SLAPolicyUpdateOne {
-	if i != nil {
-		spuo.SetSortOrder(*i)
+func (_u *SLAPolicyUpdateOne) SetNillableSortOrder(v *int) *SLAPolicyUpdateOne {
+	if v != nil {
+		_u.SetSortOrder(*v)
 	}
-	return spuo
+	return _u
 }
 
-// AddSortOrder adds i to the "sort_order" field.
-func (spuo *SLAPolicyUpdateOne) AddSortOrder(i int) *SLAPolicyUpdateOne {
-	spuo.mutation.AddSortOrder(i)
-	return spuo
+// AddSortOrder adds value to the "sort_order" field.
+func (_u *SLAPolicyUpdateOne) AddSortOrder(v int) *SLAPolicyUpdateOne {
+	_u.mutation.AddSortOrder(v)
+	return _u
 }
 
 // SetBusinessHours sets the "business_hours" field.
-func (spuo *SLAPolicyUpdateOne) SetBusinessHours(m map[string]interface{}) *SLAPolicyUpdateOne {
-	spuo.mutation.SetBusinessHours(m)
-	return spuo
+func (_u *SLAPolicyUpdateOne) SetBusinessHours(v map[string]interface{}) *SLAPolicyUpdateOne {
+	_u.mutation.SetBusinessHours(v)
+	return _u
 }
 
 // ClearBusinessHours clears the value of the "business_hours" field.
-func (spuo *SLAPolicyUpdateOne) ClearBusinessHours() *SLAPolicyUpdateOne {
-	spuo.mutation.ClearBusinessHours()
-	return spuo
+func (_u *SLAPolicyUpdateOne) ClearBusinessHours() *SLAPolicyUpdateOne {
+	_u.mutation.ClearBusinessHours()
+	return _u
 }
 
 // SetMetadata sets the "metadata" field.
-func (spuo *SLAPolicyUpdateOne) SetMetadata(m map[string]interface{}) *SLAPolicyUpdateOne {
-	spuo.mutation.SetMetadata(m)
-	return spuo
+func (_u *SLAPolicyUpdateOne) SetMetadata(v map[string]interface{}) *SLAPolicyUpdateOne {
+	_u.mutation.SetMetadata(v)
+	return _u
 }
 
 // ClearMetadata clears the value of the "metadata" field.
-func (spuo *SLAPolicyUpdateOne) ClearMetadata() *SLAPolicyUpdateOne {
-	spuo.mutation.ClearMetadata()
-	return spuo
+func (_u *SLAPolicyUpdateOne) ClearMetadata() *SLAPolicyUpdateOne {
+	_u.mutation.ClearMetadata()
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (spuo *SLAPolicyUpdateOne) SetUpdatedAt(t time.Time) *SLAPolicyUpdateOne {
-	spuo.mutation.SetUpdatedAt(t)
-	return spuo
+func (_u *SLAPolicyUpdateOne) SetUpdatedAt(v time.Time) *SLAPolicyUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // Mutation returns the SLAPolicyMutation object of the builder.
-func (spuo *SLAPolicyUpdateOne) Mutation() *SLAPolicyMutation {
-	return spuo.mutation
+func (_u *SLAPolicyUpdateOne) Mutation() *SLAPolicyMutation {
+	return _u.mutation
 }
 
 // Where appends a list predicates to the SLAPolicyUpdate builder.
-func (spuo *SLAPolicyUpdateOne) Where(ps ...predicate.SLAPolicy) *SLAPolicyUpdateOne {
-	spuo.mutation.Where(ps...)
-	return spuo
+func (_u *SLAPolicyUpdateOne) Where(ps ...predicate.SLAPolicy) *SLAPolicyUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (spuo *SLAPolicyUpdateOne) Select(field string, fields ...string) *SLAPolicyUpdateOne {
-	spuo.fields = append([]string{field}, fields...)
-	return spuo
+func (_u *SLAPolicyUpdateOne) Select(field string, fields ...string) *SLAPolicyUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated SLAPolicy entity.
-func (spuo *SLAPolicyUpdateOne) Save(ctx context.Context) (*SLAPolicy, error) {
-	spuo.defaults()
-	return withHooks(ctx, spuo.sqlSave, spuo.mutation, spuo.hooks)
+func (_u *SLAPolicyUpdateOne) Save(ctx context.Context) (*SLAPolicy, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (spuo *SLAPolicyUpdateOne) SaveX(ctx context.Context) *SLAPolicy {
-	node, err := spuo.Save(ctx)
+func (_u *SLAPolicyUpdateOne) SaveX(ctx context.Context) *SLAPolicy {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -648,34 +648,34 @@ func (spuo *SLAPolicyUpdateOne) SaveX(ctx context.Context) *SLAPolicy {
 }
 
 // Exec executes the query on the entity.
-func (spuo *SLAPolicyUpdateOne) Exec(ctx context.Context) error {
-	_, err := spuo.Save(ctx)
+func (_u *SLAPolicyUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (spuo *SLAPolicyUpdateOne) ExecX(ctx context.Context) {
-	if err := spuo.Exec(ctx); err != nil {
+func (_u *SLAPolicyUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (spuo *SLAPolicyUpdateOne) defaults() {
-	if _, ok := spuo.mutation.UpdatedAt(); !ok {
+func (_u *SLAPolicyUpdateOne) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := slapolicy.UpdateDefaultUpdatedAt()
-		spuo.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (spuo *SLAPolicyUpdateOne) check() error {
-	if v, ok := spuo.mutation.Name(); ok {
+func (_u *SLAPolicyUpdateOne) check() error {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := slapolicy.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "SLAPolicy.name": %w`, err)}
 		}
 	}
-	if v, ok := spuo.mutation.Priority(); ok {
+	if v, ok := _u.mutation.Priority(); ok {
 		if err := slapolicy.PriorityValidator(v); err != nil {
 			return &ValidationError{Name: "priority", err: fmt.Errorf(`ent: validator failed for field "SLAPolicy.priority": %w`, err)}
 		}
@@ -683,17 +683,17 @@ func (spuo *SLAPolicyUpdateOne) check() error {
 	return nil
 }
 
-func (spuo *SLAPolicyUpdateOne) sqlSave(ctx context.Context) (_node *SLAPolicy, err error) {
-	if err := spuo.check(); err != nil {
+func (_u *SLAPolicyUpdateOne) sqlSave(ctx context.Context) (_node *SLAPolicy, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(slapolicy.Table, slapolicy.Columns, sqlgraph.NewFieldSpec(slapolicy.FieldID, field.TypeUUID))
-	id, ok := spuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "SLAPolicy.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := spuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, slapolicy.FieldID)
 		for _, f := range fields {
@@ -705,80 +705,80 @@ func (spuo *SLAPolicyUpdateOne) sqlSave(ctx context.Context) (_node *SLAPolicy, 
 			}
 		}
 	}
-	if ps := spuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := spuo.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(slapolicy.FieldTenantID, field.TypeUUID, value)
 	}
-	if value, ok := spuo.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(slapolicy.FieldName, field.TypeString, value)
 	}
-	if value, ok := spuo.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(slapolicy.FieldDescription, field.TypeString, value)
 	}
-	if spuo.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(slapolicy.FieldDescription, field.TypeString)
 	}
-	if value, ok := spuo.mutation.Priority(); ok {
+	if value, ok := _u.mutation.Priority(); ok {
 		_spec.SetField(slapolicy.FieldPriority, field.TypeEnum, value)
 	}
-	if value, ok := spuo.mutation.CategoryID(); ok {
+	if value, ok := _u.mutation.CategoryID(); ok {
 		_spec.SetField(slapolicy.FieldCategoryID, field.TypeUUID, value)
 	}
-	if spuo.mutation.CategoryIDCleared() {
+	if _u.mutation.CategoryIDCleared() {
 		_spec.ClearField(slapolicy.FieldCategoryID, field.TypeUUID)
 	}
-	if value, ok := spuo.mutation.FirstResponseMinutes(); ok {
+	if value, ok := _u.mutation.FirstResponseMinutes(); ok {
 		_spec.SetField(slapolicy.FieldFirstResponseMinutes, field.TypeInt, value)
 	}
-	if value, ok := spuo.mutation.AddedFirstResponseMinutes(); ok {
+	if value, ok := _u.mutation.AddedFirstResponseMinutes(); ok {
 		_spec.AddField(slapolicy.FieldFirstResponseMinutes, field.TypeInt, value)
 	}
-	if value, ok := spuo.mutation.FirstResponseBusinessHours(); ok {
+	if value, ok := _u.mutation.FirstResponseBusinessHours(); ok {
 		_spec.SetField(slapolicy.FieldFirstResponseBusinessHours, field.TypeBool, value)
 	}
-	if value, ok := spuo.mutation.ResolutionMinutes(); ok {
+	if value, ok := _u.mutation.ResolutionMinutes(); ok {
 		_spec.SetField(slapolicy.FieldResolutionMinutes, field.TypeInt, value)
 	}
-	if value, ok := spuo.mutation.AddedResolutionMinutes(); ok {
+	if value, ok := _u.mutation.AddedResolutionMinutes(); ok {
 		_spec.AddField(slapolicy.FieldResolutionMinutes, field.TypeInt, value)
 	}
-	if value, ok := spuo.mutation.ResolutionBusinessHours(); ok {
+	if value, ok := _u.mutation.ResolutionBusinessHours(); ok {
 		_spec.SetField(slapolicy.FieldResolutionBusinessHours, field.TypeBool, value)
 	}
-	if value, ok := spuo.mutation.IsActive(); ok {
+	if value, ok := _u.mutation.IsActive(); ok {
 		_spec.SetField(slapolicy.FieldIsActive, field.TypeBool, value)
 	}
-	if value, ok := spuo.mutation.SortOrder(); ok {
+	if value, ok := _u.mutation.SortOrder(); ok {
 		_spec.SetField(slapolicy.FieldSortOrder, field.TypeInt, value)
 	}
-	if value, ok := spuo.mutation.AddedSortOrder(); ok {
+	if value, ok := _u.mutation.AddedSortOrder(); ok {
 		_spec.AddField(slapolicy.FieldSortOrder, field.TypeInt, value)
 	}
-	if value, ok := spuo.mutation.BusinessHours(); ok {
+	if value, ok := _u.mutation.BusinessHours(); ok {
 		_spec.SetField(slapolicy.FieldBusinessHours, field.TypeJSON, value)
 	}
-	if spuo.mutation.BusinessHoursCleared() {
+	if _u.mutation.BusinessHoursCleared() {
 		_spec.ClearField(slapolicy.FieldBusinessHours, field.TypeJSON)
 	}
-	if value, ok := spuo.mutation.Metadata(); ok {
+	if value, ok := _u.mutation.Metadata(); ok {
 		_spec.SetField(slapolicy.FieldMetadata, field.TypeJSON, value)
 	}
-	if spuo.mutation.MetadataCleared() {
+	if _u.mutation.MetadataCleared() {
 		_spec.ClearField(slapolicy.FieldMetadata, field.TypeJSON)
 	}
-	if value, ok := spuo.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(slapolicy.FieldUpdatedAt, field.TypeTime, value)
 	}
-	_node = &SLAPolicy{config: spuo.config}
+	_node = &SLAPolicy{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, spuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{slapolicy.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -786,6 +786,6 @@ func (spuo *SLAPolicyUpdateOne) sqlSave(ctx context.Context) (_node *SLAPolicy, 
 		}
 		return nil, err
 	}
-	spuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

@@ -1,6 +1,8 @@
 package router
 
 import (
+	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -9,11 +11,18 @@ import (
 	"go.uber.org/zap"
 
 	authclient "github.com/Bengo-Hub/shared-auth-client"
+	sharedcache "github.com/Bengo-Hub/cache"
 	"github.com/bengobox/ticketing-service/internal/http/handlers"
 	"github.com/bengobox/ticketing-service/internal/modules/identity"
 	"github.com/bengobox/ticketing-service/internal/modules/tickets"
 	sharedmw "github.com/bengobox/ticketing-service/internal/shared/middleware"
 )
+
+// tenantResolver resolves tenant details from cache/auth-api.
+type tenantResolver interface {
+	GetBranding(ctx context.Context, slug string) (sharedcache.TenantBranding, error)
+	GetTenantDetails(ctx context.Context, slug string) (sharedcache.TenantDetails, error)
+}
 
 // Config holds all module handlers for the router.
 type Config struct {
@@ -23,6 +32,7 @@ type Config struct {
 	AllowedOrigins  []string
 	IdentityHandler *identity.Handler
 	TicketsHandler  *tickets.Handler
+	TenantResolver  tenantResolver
 }
 
 // New constructs the chi router with global middleware and base routes.
@@ -72,6 +82,20 @@ func New(cfg Config) http.Handler {
 
 			// Tenant-scoped routes
 			v1.Route("/{tenant}", func(tenant chi.Router) {
+				// Branding endpoint — returns tenant details from cache/auth-api (no DB query)
+				if cfg.TenantResolver != nil {
+					tenant.Get("/branding", func(w http.ResponseWriter, r *http.Request) {
+						slug := chi.URLParam(r, "tenant")
+						details, err := cfg.TenantResolver.GetTenantDetails(r.Context(), slug)
+						if err != nil {
+							http.Error(w, `{"error":"tenant not found"}`, http.StatusNotFound)
+							return
+						}
+						w.Header().Set("Content-Type", "application/json")
+						json.NewEncoder(w).Encode(details)
+					})
+				}
+
 				// Identity module (teams, agents)
 				if cfg.IdentityHandler != nil {
 					cfg.IdentityHandler.RegisterRoutes(tenant)

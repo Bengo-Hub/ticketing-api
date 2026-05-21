@@ -26,409 +26,409 @@ type TicketCreate struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (tc *TicketCreate) SetTenantID(u uuid.UUID) *TicketCreate {
-	tc.mutation.SetTenantID(u)
-	return tc
+func (_c *TicketCreate) SetTenantID(v uuid.UUID) *TicketCreate {
+	_c.mutation.SetTenantID(v)
+	return _c
 }
 
 // SetTicketNumber sets the "ticket_number" field.
-func (tc *TicketCreate) SetTicketNumber(s string) *TicketCreate {
-	tc.mutation.SetTicketNumber(s)
-	return tc
+func (_c *TicketCreate) SetTicketNumber(v string) *TicketCreate {
+	_c.mutation.SetTicketNumber(v)
+	return _c
 }
 
 // SetCustomerID sets the "customer_id" field.
-func (tc *TicketCreate) SetCustomerID(u uuid.UUID) *TicketCreate {
-	tc.mutation.SetCustomerID(u)
-	return tc
+func (_c *TicketCreate) SetCustomerID(v uuid.UUID) *TicketCreate {
+	_c.mutation.SetCustomerID(v)
+	return _c
 }
 
 // SetCategoryID sets the "category_id" field.
-func (tc *TicketCreate) SetCategoryID(u uuid.UUID) *TicketCreate {
-	tc.mutation.SetCategoryID(u)
-	return tc
+func (_c *TicketCreate) SetCategoryID(v uuid.UUID) *TicketCreate {
+	_c.mutation.SetCategoryID(v)
+	return _c
 }
 
 // SetNillableCategoryID sets the "category_id" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableCategoryID(u *uuid.UUID) *TicketCreate {
-	if u != nil {
-		tc.SetCategoryID(*u)
+func (_c *TicketCreate) SetNillableCategoryID(v *uuid.UUID) *TicketCreate {
+	if v != nil {
+		_c.SetCategoryID(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetAssignedAgentID sets the "assigned_agent_id" field.
-func (tc *TicketCreate) SetAssignedAgentID(u uuid.UUID) *TicketCreate {
-	tc.mutation.SetAssignedAgentID(u)
-	return tc
+func (_c *TicketCreate) SetAssignedAgentID(v uuid.UUID) *TicketCreate {
+	_c.mutation.SetAssignedAgentID(v)
+	return _c
 }
 
 // SetNillableAssignedAgentID sets the "assigned_agent_id" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableAssignedAgentID(u *uuid.UUID) *TicketCreate {
-	if u != nil {
-		tc.SetAssignedAgentID(*u)
+func (_c *TicketCreate) SetNillableAssignedAgentID(v *uuid.UUID) *TicketCreate {
+	if v != nil {
+		_c.SetAssignedAgentID(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetAssignedTeamID sets the "assigned_team_id" field.
-func (tc *TicketCreate) SetAssignedTeamID(u uuid.UUID) *TicketCreate {
-	tc.mutation.SetAssignedTeamID(u)
-	return tc
+func (_c *TicketCreate) SetAssignedTeamID(v uuid.UUID) *TicketCreate {
+	_c.mutation.SetAssignedTeamID(v)
+	return _c
 }
 
 // SetNillableAssignedTeamID sets the "assigned_team_id" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableAssignedTeamID(u *uuid.UUID) *TicketCreate {
-	if u != nil {
-		tc.SetAssignedTeamID(*u)
+func (_c *TicketCreate) SetNillableAssignedTeamID(v *uuid.UUID) *TicketCreate {
+	if v != nil {
+		_c.SetAssignedTeamID(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetSubject sets the "subject" field.
-func (tc *TicketCreate) SetSubject(s string) *TicketCreate {
-	tc.mutation.SetSubject(s)
-	return tc
+func (_c *TicketCreate) SetSubject(v string) *TicketCreate {
+	_c.mutation.SetSubject(v)
+	return _c
 }
 
 // SetDescription sets the "description" field.
-func (tc *TicketCreate) SetDescription(s string) *TicketCreate {
-	tc.mutation.SetDescription(s)
-	return tc
+func (_c *TicketCreate) SetDescription(v string) *TicketCreate {
+	_c.mutation.SetDescription(v)
+	return _c
 }
 
 // SetStatus sets the "status" field.
-func (tc *TicketCreate) SetStatus(t ticket.Status) *TicketCreate {
-	tc.mutation.SetStatus(t)
-	return tc
+func (_c *TicketCreate) SetStatus(v ticket.Status) *TicketCreate {
+	_c.mutation.SetStatus(v)
+	return _c
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableStatus(t *ticket.Status) *TicketCreate {
-	if t != nil {
-		tc.SetStatus(*t)
+func (_c *TicketCreate) SetNillableStatus(v *ticket.Status) *TicketCreate {
+	if v != nil {
+		_c.SetStatus(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetPriority sets the "priority" field.
-func (tc *TicketCreate) SetPriority(t ticket.Priority) *TicketCreate {
-	tc.mutation.SetPriority(t)
-	return tc
+func (_c *TicketCreate) SetPriority(v ticket.Priority) *TicketCreate {
+	_c.mutation.SetPriority(v)
+	return _c
 }
 
 // SetNillablePriority sets the "priority" field if the given value is not nil.
-func (tc *TicketCreate) SetNillablePriority(t *ticket.Priority) *TicketCreate {
-	if t != nil {
-		tc.SetPriority(*t)
+func (_c *TicketCreate) SetNillablePriority(v *ticket.Priority) *TicketCreate {
+	if v != nil {
+		_c.SetPriority(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetChannel sets the "channel" field.
-func (tc *TicketCreate) SetChannel(t ticket.Channel) *TicketCreate {
-	tc.mutation.SetChannel(t)
-	return tc
+func (_c *TicketCreate) SetChannel(v ticket.Channel) *TicketCreate {
+	_c.mutation.SetChannel(v)
+	return _c
 }
 
 // SetNillableChannel sets the "channel" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableChannel(t *ticket.Channel) *TicketCreate {
-	if t != nil {
-		tc.SetChannel(*t)
+func (_c *TicketCreate) SetNillableChannel(v *ticket.Channel) *TicketCreate {
+	if v != nil {
+		_c.SetChannel(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetOrderID sets the "order_id" field.
-func (tc *TicketCreate) SetOrderID(u uuid.UUID) *TicketCreate {
-	tc.mutation.SetOrderID(u)
-	return tc
+func (_c *TicketCreate) SetOrderID(v uuid.UUID) *TicketCreate {
+	_c.mutation.SetOrderID(v)
+	return _c
 }
 
 // SetNillableOrderID sets the "order_id" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableOrderID(u *uuid.UUID) *TicketCreate {
-	if u != nil {
-		tc.SetOrderID(*u)
+func (_c *TicketCreate) SetNillableOrderID(v *uuid.UUID) *TicketCreate {
+	if v != nil {
+		_c.SetOrderID(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetExternalReference sets the "external_reference" field.
-func (tc *TicketCreate) SetExternalReference(s string) *TicketCreate {
-	tc.mutation.SetExternalReference(s)
-	return tc
+func (_c *TicketCreate) SetExternalReference(v string) *TicketCreate {
+	_c.mutation.SetExternalReference(v)
+	return _c
 }
 
 // SetNillableExternalReference sets the "external_reference" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableExternalReference(s *string) *TicketCreate {
-	if s != nil {
-		tc.SetExternalReference(*s)
+func (_c *TicketCreate) SetNillableExternalReference(v *string) *TicketCreate {
+	if v != nil {
+		_c.SetExternalReference(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetSLAResponseDueAt sets the "sla_response_due_at" field.
-func (tc *TicketCreate) SetSLAResponseDueAt(t time.Time) *TicketCreate {
-	tc.mutation.SetSLAResponseDueAt(t)
-	return tc
+func (_c *TicketCreate) SetSLAResponseDueAt(v time.Time) *TicketCreate {
+	_c.mutation.SetSLAResponseDueAt(v)
+	return _c
 }
 
 // SetNillableSLAResponseDueAt sets the "sla_response_due_at" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableSLAResponseDueAt(t *time.Time) *TicketCreate {
-	if t != nil {
-		tc.SetSLAResponseDueAt(*t)
+func (_c *TicketCreate) SetNillableSLAResponseDueAt(v *time.Time) *TicketCreate {
+	if v != nil {
+		_c.SetSLAResponseDueAt(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetSLAResolutionDueAt sets the "sla_resolution_due_at" field.
-func (tc *TicketCreate) SetSLAResolutionDueAt(t time.Time) *TicketCreate {
-	tc.mutation.SetSLAResolutionDueAt(t)
-	return tc
+func (_c *TicketCreate) SetSLAResolutionDueAt(v time.Time) *TicketCreate {
+	_c.mutation.SetSLAResolutionDueAt(v)
+	return _c
 }
 
 // SetNillableSLAResolutionDueAt sets the "sla_resolution_due_at" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableSLAResolutionDueAt(t *time.Time) *TicketCreate {
-	if t != nil {
-		tc.SetSLAResolutionDueAt(*t)
+func (_c *TicketCreate) SetNillableSLAResolutionDueAt(v *time.Time) *TicketCreate {
+	if v != nil {
+		_c.SetSLAResolutionDueAt(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetSLAResponseBreached sets the "sla_response_breached" field.
-func (tc *TicketCreate) SetSLAResponseBreached(b bool) *TicketCreate {
-	tc.mutation.SetSLAResponseBreached(b)
-	return tc
+func (_c *TicketCreate) SetSLAResponseBreached(v bool) *TicketCreate {
+	_c.mutation.SetSLAResponseBreached(v)
+	return _c
 }
 
 // SetNillableSLAResponseBreached sets the "sla_response_breached" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableSLAResponseBreached(b *bool) *TicketCreate {
-	if b != nil {
-		tc.SetSLAResponseBreached(*b)
+func (_c *TicketCreate) SetNillableSLAResponseBreached(v *bool) *TicketCreate {
+	if v != nil {
+		_c.SetSLAResponseBreached(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetSLAResolutionBreached sets the "sla_resolution_breached" field.
-func (tc *TicketCreate) SetSLAResolutionBreached(b bool) *TicketCreate {
-	tc.mutation.SetSLAResolutionBreached(b)
-	return tc
+func (_c *TicketCreate) SetSLAResolutionBreached(v bool) *TicketCreate {
+	_c.mutation.SetSLAResolutionBreached(v)
+	return _c
 }
 
 // SetNillableSLAResolutionBreached sets the "sla_resolution_breached" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableSLAResolutionBreached(b *bool) *TicketCreate {
-	if b != nil {
-		tc.SetSLAResolutionBreached(*b)
+func (_c *TicketCreate) SetNillableSLAResolutionBreached(v *bool) *TicketCreate {
+	if v != nil {
+		_c.SetSLAResolutionBreached(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetFirstResponseAt sets the "first_response_at" field.
-func (tc *TicketCreate) SetFirstResponseAt(t time.Time) *TicketCreate {
-	tc.mutation.SetFirstResponseAt(t)
-	return tc
+func (_c *TicketCreate) SetFirstResponseAt(v time.Time) *TicketCreate {
+	_c.mutation.SetFirstResponseAt(v)
+	return _c
 }
 
 // SetNillableFirstResponseAt sets the "first_response_at" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableFirstResponseAt(t *time.Time) *TicketCreate {
-	if t != nil {
-		tc.SetFirstResponseAt(*t)
+func (_c *TicketCreate) SetNillableFirstResponseAt(v *time.Time) *TicketCreate {
+	if v != nil {
+		_c.SetFirstResponseAt(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetResolvedAt sets the "resolved_at" field.
-func (tc *TicketCreate) SetResolvedAt(t time.Time) *TicketCreate {
-	tc.mutation.SetResolvedAt(t)
-	return tc
+func (_c *TicketCreate) SetResolvedAt(v time.Time) *TicketCreate {
+	_c.mutation.SetResolvedAt(v)
+	return _c
 }
 
 // SetNillableResolvedAt sets the "resolved_at" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableResolvedAt(t *time.Time) *TicketCreate {
-	if t != nil {
-		tc.SetResolvedAt(*t)
+func (_c *TicketCreate) SetNillableResolvedAt(v *time.Time) *TicketCreate {
+	if v != nil {
+		_c.SetResolvedAt(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetClosedAt sets the "closed_at" field.
-func (tc *TicketCreate) SetClosedAt(t time.Time) *TicketCreate {
-	tc.mutation.SetClosedAt(t)
-	return tc
+func (_c *TicketCreate) SetClosedAt(v time.Time) *TicketCreate {
+	_c.mutation.SetClosedAt(v)
+	return _c
 }
 
 // SetNillableClosedAt sets the "closed_at" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableClosedAt(t *time.Time) *TicketCreate {
-	if t != nil {
-		tc.SetClosedAt(*t)
+func (_c *TicketCreate) SetNillableClosedAt(v *time.Time) *TicketCreate {
+	if v != nil {
+		_c.SetClosedAt(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetReopenedAt sets the "reopened_at" field.
-func (tc *TicketCreate) SetReopenedAt(t time.Time) *TicketCreate {
-	tc.mutation.SetReopenedAt(t)
-	return tc
+func (_c *TicketCreate) SetReopenedAt(v time.Time) *TicketCreate {
+	_c.mutation.SetReopenedAt(v)
+	return _c
 }
 
 // SetNillableReopenedAt sets the "reopened_at" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableReopenedAt(t *time.Time) *TicketCreate {
-	if t != nil {
-		tc.SetReopenedAt(*t)
+func (_c *TicketCreate) SetNillableReopenedAt(v *time.Time) *TicketCreate {
+	if v != nil {
+		_c.SetReopenedAt(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetEscalationLevel sets the "escalation_level" field.
-func (tc *TicketCreate) SetEscalationLevel(i int) *TicketCreate {
-	tc.mutation.SetEscalationLevel(i)
-	return tc
+func (_c *TicketCreate) SetEscalationLevel(v int) *TicketCreate {
+	_c.mutation.SetEscalationLevel(v)
+	return _c
 }
 
 // SetNillableEscalationLevel sets the "escalation_level" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableEscalationLevel(i *int) *TicketCreate {
-	if i != nil {
-		tc.SetEscalationLevel(*i)
+func (_c *TicketCreate) SetNillableEscalationLevel(v *int) *TicketCreate {
+	if v != nil {
+		_c.SetEscalationLevel(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetEscalatedAt sets the "escalated_at" field.
-func (tc *TicketCreate) SetEscalatedAt(t time.Time) *TicketCreate {
-	tc.mutation.SetEscalatedAt(t)
-	return tc
+func (_c *TicketCreate) SetEscalatedAt(v time.Time) *TicketCreate {
+	_c.mutation.SetEscalatedAt(v)
+	return _c
 }
 
 // SetNillableEscalatedAt sets the "escalated_at" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableEscalatedAt(t *time.Time) *TicketCreate {
-	if t != nil {
-		tc.SetEscalatedAt(*t)
+func (_c *TicketCreate) SetNillableEscalatedAt(v *time.Time) *TicketCreate {
+	if v != nil {
+		_c.SetEscalatedAt(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetTags sets the "tags" field.
-func (tc *TicketCreate) SetTags(s []string) *TicketCreate {
-	tc.mutation.SetTags(s)
-	return tc
+func (_c *TicketCreate) SetTags(v []string) *TicketCreate {
+	_c.mutation.SetTags(v)
+	return _c
 }
 
 // SetMetadata sets the "metadata" field.
-func (tc *TicketCreate) SetMetadata(m map[string]interface{}) *TicketCreate {
-	tc.mutation.SetMetadata(m)
-	return tc
+func (_c *TicketCreate) SetMetadata(v map[string]interface{}) *TicketCreate {
+	_c.mutation.SetMetadata(v)
+	return _c
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (tc *TicketCreate) SetCreatedAt(t time.Time) *TicketCreate {
-	tc.mutation.SetCreatedAt(t)
-	return tc
+func (_c *TicketCreate) SetCreatedAt(v time.Time) *TicketCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
 }
 
 // SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableCreatedAt(t *time.Time) *TicketCreate {
-	if t != nil {
-		tc.SetCreatedAt(*t)
+func (_c *TicketCreate) SetNillableCreatedAt(v *time.Time) *TicketCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (tc *TicketCreate) SetUpdatedAt(t time.Time) *TicketCreate {
-	tc.mutation.SetUpdatedAt(t)
-	return tc
+func (_c *TicketCreate) SetUpdatedAt(v time.Time) *TicketCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
 }
 
 // SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableUpdatedAt(t *time.Time) *TicketCreate {
-	if t != nil {
-		tc.SetUpdatedAt(*t)
+func (_c *TicketCreate) SetNillableUpdatedAt(v *time.Time) *TicketCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetDeletedAt sets the "deleted_at" field.
-func (tc *TicketCreate) SetDeletedAt(t time.Time) *TicketCreate {
-	tc.mutation.SetDeletedAt(t)
-	return tc
+func (_c *TicketCreate) SetDeletedAt(v time.Time) *TicketCreate {
+	_c.mutation.SetDeletedAt(v)
+	return _c
 }
 
 // SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableDeletedAt(t *time.Time) *TicketCreate {
-	if t != nil {
-		tc.SetDeletedAt(*t)
+func (_c *TicketCreate) SetNillableDeletedAt(v *time.Time) *TicketCreate {
+	if v != nil {
+		_c.SetDeletedAt(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetID sets the "id" field.
-func (tc *TicketCreate) SetID(u uuid.UUID) *TicketCreate {
-	tc.mutation.SetID(u)
-	return tc
+func (_c *TicketCreate) SetID(v uuid.UUID) *TicketCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (tc *TicketCreate) SetNillableID(u *uuid.UUID) *TicketCreate {
-	if u != nil {
-		tc.SetID(*u)
+func (_c *TicketCreate) SetNillableID(v *uuid.UUID) *TicketCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return tc
+	return _c
 }
 
 // SetCategory sets the "category" edge to the TicketCategory entity.
-func (tc *TicketCreate) SetCategory(t *TicketCategory) *TicketCreate {
-	return tc.SetCategoryID(t.ID)
+func (_c *TicketCreate) SetCategory(v *TicketCategory) *TicketCreate {
+	return _c.SetCategoryID(v.ID)
 }
 
 // SetAssignedAgent sets the "assigned_agent" edge to the Agent entity.
-func (tc *TicketCreate) SetAssignedAgent(a *Agent) *TicketCreate {
-	return tc.SetAssignedAgentID(a.ID)
+func (_c *TicketCreate) SetAssignedAgent(v *Agent) *TicketCreate {
+	return _c.SetAssignedAgentID(v.ID)
 }
 
 // AddCommentIDs adds the "comments" edge to the TicketComment entity by IDs.
-func (tc *TicketCreate) AddCommentIDs(ids ...uuid.UUID) *TicketCreate {
-	tc.mutation.AddCommentIDs(ids...)
-	return tc
+func (_c *TicketCreate) AddCommentIDs(ids ...uuid.UUID) *TicketCreate {
+	_c.mutation.AddCommentIDs(ids...)
+	return _c
 }
 
 // AddComments adds the "comments" edges to the TicketComment entity.
-func (tc *TicketCreate) AddComments(t ...*TicketComment) *TicketCreate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_c *TicketCreate) AddComments(v ...*TicketComment) *TicketCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tc.AddCommentIDs(ids...)
+	return _c.AddCommentIDs(ids...)
 }
 
 // AddAttachmentIDs adds the "attachments" edge to the TicketAttachment entity by IDs.
-func (tc *TicketCreate) AddAttachmentIDs(ids ...uuid.UUID) *TicketCreate {
-	tc.mutation.AddAttachmentIDs(ids...)
-	return tc
+func (_c *TicketCreate) AddAttachmentIDs(ids ...uuid.UUID) *TicketCreate {
+	_c.mutation.AddAttachmentIDs(ids...)
+	return _c
 }
 
 // AddAttachments adds the "attachments" edges to the TicketAttachment entity.
-func (tc *TicketCreate) AddAttachments(t ...*TicketAttachment) *TicketCreate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_c *TicketCreate) AddAttachments(v ...*TicketAttachment) *TicketCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tc.AddAttachmentIDs(ids...)
+	return _c.AddAttachmentIDs(ids...)
 }
 
 // Mutation returns the TicketMutation object of the builder.
-func (tc *TicketCreate) Mutation() *TicketMutation {
-	return tc.mutation
+func (_c *TicketCreate) Mutation() *TicketMutation {
+	return _c.mutation
 }
 
 // Save creates the Ticket in the database.
-func (tc *TicketCreate) Save(ctx context.Context) (*Ticket, error) {
-	tc.defaults()
-	return withHooks(ctx, tc.sqlSave, tc.mutation, tc.hooks)
+func (_c *TicketCreate) Save(ctx context.Context) (*Ticket, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (tc *TicketCreate) SaveX(ctx context.Context) *Ticket {
-	v, err := tc.Save(ctx)
+func (_c *TicketCreate) SaveX(ctx context.Context) *Ticket {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -436,143 +436,143 @@ func (tc *TicketCreate) SaveX(ctx context.Context) *Ticket {
 }
 
 // Exec executes the query.
-func (tc *TicketCreate) Exec(ctx context.Context) error {
-	_, err := tc.Save(ctx)
+func (_c *TicketCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tc *TicketCreate) ExecX(ctx context.Context) {
-	if err := tc.Exec(ctx); err != nil {
+func (_c *TicketCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (tc *TicketCreate) defaults() {
-	if _, ok := tc.mutation.Status(); !ok {
+func (_c *TicketCreate) defaults() {
+	if _, ok := _c.mutation.Status(); !ok {
 		v := ticket.DefaultStatus
-		tc.mutation.SetStatus(v)
+		_c.mutation.SetStatus(v)
 	}
-	if _, ok := tc.mutation.Priority(); !ok {
+	if _, ok := _c.mutation.Priority(); !ok {
 		v := ticket.DefaultPriority
-		tc.mutation.SetPriority(v)
+		_c.mutation.SetPriority(v)
 	}
-	if _, ok := tc.mutation.Channel(); !ok {
+	if _, ok := _c.mutation.Channel(); !ok {
 		v := ticket.DefaultChannel
-		tc.mutation.SetChannel(v)
+		_c.mutation.SetChannel(v)
 	}
-	if _, ok := tc.mutation.SLAResponseBreached(); !ok {
+	if _, ok := _c.mutation.SLAResponseBreached(); !ok {
 		v := ticket.DefaultSLAResponseBreached
-		tc.mutation.SetSLAResponseBreached(v)
+		_c.mutation.SetSLAResponseBreached(v)
 	}
-	if _, ok := tc.mutation.SLAResolutionBreached(); !ok {
+	if _, ok := _c.mutation.SLAResolutionBreached(); !ok {
 		v := ticket.DefaultSLAResolutionBreached
-		tc.mutation.SetSLAResolutionBreached(v)
+		_c.mutation.SetSLAResolutionBreached(v)
 	}
-	if _, ok := tc.mutation.EscalationLevel(); !ok {
+	if _, ok := _c.mutation.EscalationLevel(); !ok {
 		v := ticket.DefaultEscalationLevel
-		tc.mutation.SetEscalationLevel(v)
+		_c.mutation.SetEscalationLevel(v)
 	}
-	if _, ok := tc.mutation.CreatedAt(); !ok {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := ticket.DefaultCreatedAt()
-		tc.mutation.SetCreatedAt(v)
+		_c.mutation.SetCreatedAt(v)
 	}
-	if _, ok := tc.mutation.UpdatedAt(); !ok {
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		v := ticket.DefaultUpdatedAt()
-		tc.mutation.SetUpdatedAt(v)
+		_c.mutation.SetUpdatedAt(v)
 	}
-	if _, ok := tc.mutation.ID(); !ok {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := ticket.DefaultID()
-		tc.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (tc *TicketCreate) check() error {
-	if _, ok := tc.mutation.TenantID(); !ok {
+func (_c *TicketCreate) check() error {
+	if _, ok := _c.mutation.TenantID(); !ok {
 		return &ValidationError{Name: "tenant_id", err: errors.New(`ent: missing required field "Ticket.tenant_id"`)}
 	}
-	if _, ok := tc.mutation.TicketNumber(); !ok {
+	if _, ok := _c.mutation.TicketNumber(); !ok {
 		return &ValidationError{Name: "ticket_number", err: errors.New(`ent: missing required field "Ticket.ticket_number"`)}
 	}
-	if v, ok := tc.mutation.TicketNumber(); ok {
+	if v, ok := _c.mutation.TicketNumber(); ok {
 		if err := ticket.TicketNumberValidator(v); err != nil {
 			return &ValidationError{Name: "ticket_number", err: fmt.Errorf(`ent: validator failed for field "Ticket.ticket_number": %w`, err)}
 		}
 	}
-	if _, ok := tc.mutation.CustomerID(); !ok {
+	if _, ok := _c.mutation.CustomerID(); !ok {
 		return &ValidationError{Name: "customer_id", err: errors.New(`ent: missing required field "Ticket.customer_id"`)}
 	}
-	if _, ok := tc.mutation.Subject(); !ok {
+	if _, ok := _c.mutation.Subject(); !ok {
 		return &ValidationError{Name: "subject", err: errors.New(`ent: missing required field "Ticket.subject"`)}
 	}
-	if v, ok := tc.mutation.Subject(); ok {
+	if v, ok := _c.mutation.Subject(); ok {
 		if err := ticket.SubjectValidator(v); err != nil {
 			return &ValidationError{Name: "subject", err: fmt.Errorf(`ent: validator failed for field "Ticket.subject": %w`, err)}
 		}
 	}
-	if _, ok := tc.mutation.Description(); !ok {
+	if _, ok := _c.mutation.Description(); !ok {
 		return &ValidationError{Name: "description", err: errors.New(`ent: missing required field "Ticket.description"`)}
 	}
-	if v, ok := tc.mutation.Description(); ok {
+	if v, ok := _c.mutation.Description(); ok {
 		if err := ticket.DescriptionValidator(v); err != nil {
 			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Ticket.description": %w`, err)}
 		}
 	}
-	if _, ok := tc.mutation.Status(); !ok {
+	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Ticket.status"`)}
 	}
-	if v, ok := tc.mutation.Status(); ok {
+	if v, ok := _c.mutation.Status(); ok {
 		if err := ticket.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Ticket.status": %w`, err)}
 		}
 	}
-	if _, ok := tc.mutation.Priority(); !ok {
+	if _, ok := _c.mutation.Priority(); !ok {
 		return &ValidationError{Name: "priority", err: errors.New(`ent: missing required field "Ticket.priority"`)}
 	}
-	if v, ok := tc.mutation.Priority(); ok {
+	if v, ok := _c.mutation.Priority(); ok {
 		if err := ticket.PriorityValidator(v); err != nil {
 			return &ValidationError{Name: "priority", err: fmt.Errorf(`ent: validator failed for field "Ticket.priority": %w`, err)}
 		}
 	}
-	if _, ok := tc.mutation.Channel(); !ok {
+	if _, ok := _c.mutation.Channel(); !ok {
 		return &ValidationError{Name: "channel", err: errors.New(`ent: missing required field "Ticket.channel"`)}
 	}
-	if v, ok := tc.mutation.Channel(); ok {
+	if v, ok := _c.mutation.Channel(); ok {
 		if err := ticket.ChannelValidator(v); err != nil {
 			return &ValidationError{Name: "channel", err: fmt.Errorf(`ent: validator failed for field "Ticket.channel": %w`, err)}
 		}
 	}
-	if v, ok := tc.mutation.ExternalReference(); ok {
+	if v, ok := _c.mutation.ExternalReference(); ok {
 		if err := ticket.ExternalReferenceValidator(v); err != nil {
 			return &ValidationError{Name: "external_reference", err: fmt.Errorf(`ent: validator failed for field "Ticket.external_reference": %w`, err)}
 		}
 	}
-	if _, ok := tc.mutation.SLAResponseBreached(); !ok {
+	if _, ok := _c.mutation.SLAResponseBreached(); !ok {
 		return &ValidationError{Name: "sla_response_breached", err: errors.New(`ent: missing required field "Ticket.sla_response_breached"`)}
 	}
-	if _, ok := tc.mutation.SLAResolutionBreached(); !ok {
+	if _, ok := _c.mutation.SLAResolutionBreached(); !ok {
 		return &ValidationError{Name: "sla_resolution_breached", err: errors.New(`ent: missing required field "Ticket.sla_resolution_breached"`)}
 	}
-	if _, ok := tc.mutation.EscalationLevel(); !ok {
+	if _, ok := _c.mutation.EscalationLevel(); !ok {
 		return &ValidationError{Name: "escalation_level", err: errors.New(`ent: missing required field "Ticket.escalation_level"`)}
 	}
-	if _, ok := tc.mutation.CreatedAt(); !ok {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Ticket.created_at"`)}
 	}
-	if _, ok := tc.mutation.UpdatedAt(); !ok {
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Ticket.updated_at"`)}
 	}
 	return nil
 }
 
-func (tc *TicketCreate) sqlSave(ctx context.Context) (*Ticket, error) {
-	if err := tc.check(); err != nil {
+func (_c *TicketCreate) sqlSave(ctx context.Context) (*Ticket, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := tc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, tc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -585,125 +585,125 @@ func (tc *TicketCreate) sqlSave(ctx context.Context) (*Ticket, error) {
 			return nil, err
 		}
 	}
-	tc.mutation.id = &_node.ID
-	tc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (tc *TicketCreate) createSpec() (*Ticket, *sqlgraph.CreateSpec) {
+func (_c *TicketCreate) createSpec() (*Ticket, *sqlgraph.CreateSpec) {
 	var (
-		_node = &Ticket{config: tc.config}
+		_node = &Ticket{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(ticket.Table, sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeUUID))
 	)
-	if id, ok := tc.mutation.ID(); ok {
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := tc.mutation.TenantID(); ok {
+	if value, ok := _c.mutation.TenantID(); ok {
 		_spec.SetField(ticket.FieldTenantID, field.TypeUUID, value)
 		_node.TenantID = value
 	}
-	if value, ok := tc.mutation.TicketNumber(); ok {
+	if value, ok := _c.mutation.TicketNumber(); ok {
 		_spec.SetField(ticket.FieldTicketNumber, field.TypeString, value)
 		_node.TicketNumber = value
 	}
-	if value, ok := tc.mutation.CustomerID(); ok {
+	if value, ok := _c.mutation.CustomerID(); ok {
 		_spec.SetField(ticket.FieldCustomerID, field.TypeUUID, value)
 		_node.CustomerID = value
 	}
-	if value, ok := tc.mutation.AssignedTeamID(); ok {
+	if value, ok := _c.mutation.AssignedTeamID(); ok {
 		_spec.SetField(ticket.FieldAssignedTeamID, field.TypeUUID, value)
 		_node.AssignedTeamID = &value
 	}
-	if value, ok := tc.mutation.Subject(); ok {
+	if value, ok := _c.mutation.Subject(); ok {
 		_spec.SetField(ticket.FieldSubject, field.TypeString, value)
 		_node.Subject = value
 	}
-	if value, ok := tc.mutation.Description(); ok {
+	if value, ok := _c.mutation.Description(); ok {
 		_spec.SetField(ticket.FieldDescription, field.TypeString, value)
 		_node.Description = value
 	}
-	if value, ok := tc.mutation.Status(); ok {
+	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(ticket.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
 	}
-	if value, ok := tc.mutation.Priority(); ok {
+	if value, ok := _c.mutation.Priority(); ok {
 		_spec.SetField(ticket.FieldPriority, field.TypeEnum, value)
 		_node.Priority = value
 	}
-	if value, ok := tc.mutation.Channel(); ok {
+	if value, ok := _c.mutation.Channel(); ok {
 		_spec.SetField(ticket.FieldChannel, field.TypeEnum, value)
 		_node.Channel = value
 	}
-	if value, ok := tc.mutation.OrderID(); ok {
+	if value, ok := _c.mutation.OrderID(); ok {
 		_spec.SetField(ticket.FieldOrderID, field.TypeUUID, value)
 		_node.OrderID = &value
 	}
-	if value, ok := tc.mutation.ExternalReference(); ok {
+	if value, ok := _c.mutation.ExternalReference(); ok {
 		_spec.SetField(ticket.FieldExternalReference, field.TypeString, value)
 		_node.ExternalReference = value
 	}
-	if value, ok := tc.mutation.SLAResponseDueAt(); ok {
+	if value, ok := _c.mutation.SLAResponseDueAt(); ok {
 		_spec.SetField(ticket.FieldSLAResponseDueAt, field.TypeTime, value)
 		_node.SLAResponseDueAt = &value
 	}
-	if value, ok := tc.mutation.SLAResolutionDueAt(); ok {
+	if value, ok := _c.mutation.SLAResolutionDueAt(); ok {
 		_spec.SetField(ticket.FieldSLAResolutionDueAt, field.TypeTime, value)
 		_node.SLAResolutionDueAt = &value
 	}
-	if value, ok := tc.mutation.SLAResponseBreached(); ok {
+	if value, ok := _c.mutation.SLAResponseBreached(); ok {
 		_spec.SetField(ticket.FieldSLAResponseBreached, field.TypeBool, value)
 		_node.SLAResponseBreached = value
 	}
-	if value, ok := tc.mutation.SLAResolutionBreached(); ok {
+	if value, ok := _c.mutation.SLAResolutionBreached(); ok {
 		_spec.SetField(ticket.FieldSLAResolutionBreached, field.TypeBool, value)
 		_node.SLAResolutionBreached = value
 	}
-	if value, ok := tc.mutation.FirstResponseAt(); ok {
+	if value, ok := _c.mutation.FirstResponseAt(); ok {
 		_spec.SetField(ticket.FieldFirstResponseAt, field.TypeTime, value)
 		_node.FirstResponseAt = &value
 	}
-	if value, ok := tc.mutation.ResolvedAt(); ok {
+	if value, ok := _c.mutation.ResolvedAt(); ok {
 		_spec.SetField(ticket.FieldResolvedAt, field.TypeTime, value)
 		_node.ResolvedAt = &value
 	}
-	if value, ok := tc.mutation.ClosedAt(); ok {
+	if value, ok := _c.mutation.ClosedAt(); ok {
 		_spec.SetField(ticket.FieldClosedAt, field.TypeTime, value)
 		_node.ClosedAt = &value
 	}
-	if value, ok := tc.mutation.ReopenedAt(); ok {
+	if value, ok := _c.mutation.ReopenedAt(); ok {
 		_spec.SetField(ticket.FieldReopenedAt, field.TypeTime, value)
 		_node.ReopenedAt = &value
 	}
-	if value, ok := tc.mutation.EscalationLevel(); ok {
+	if value, ok := _c.mutation.EscalationLevel(); ok {
 		_spec.SetField(ticket.FieldEscalationLevel, field.TypeInt, value)
 		_node.EscalationLevel = value
 	}
-	if value, ok := tc.mutation.EscalatedAt(); ok {
+	if value, ok := _c.mutation.EscalatedAt(); ok {
 		_spec.SetField(ticket.FieldEscalatedAt, field.TypeTime, value)
 		_node.EscalatedAt = &value
 	}
-	if value, ok := tc.mutation.Tags(); ok {
+	if value, ok := _c.mutation.Tags(); ok {
 		_spec.SetField(ticket.FieldTags, field.TypeJSON, value)
 		_node.Tags = value
 	}
-	if value, ok := tc.mutation.Metadata(); ok {
+	if value, ok := _c.mutation.Metadata(); ok {
 		_spec.SetField(ticket.FieldMetadata, field.TypeJSON, value)
 		_node.Metadata = value
 	}
-	if value, ok := tc.mutation.CreatedAt(); ok {
+	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(ticket.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
-	if value, ok := tc.mutation.UpdatedAt(); ok {
+	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(ticket.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
-	if value, ok := tc.mutation.DeletedAt(); ok {
+	if value, ok := _c.mutation.DeletedAt(); ok {
 		_spec.SetField(ticket.FieldDeletedAt, field.TypeTime, value)
 		_node.DeletedAt = &value
 	}
-	if nodes := tc.mutation.CategoryIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.CategoryIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -720,7 +720,7 @@ func (tc *TicketCreate) createSpec() (*Ticket, *sqlgraph.CreateSpec) {
 		_node.CategoryID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := tc.mutation.AssignedAgentIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.AssignedAgentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -737,7 +737,7 @@ func (tc *TicketCreate) createSpec() (*Ticket, *sqlgraph.CreateSpec) {
 		_node.AssignedAgentID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := tc.mutation.CommentsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.CommentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -753,7 +753,7 @@ func (tc *TicketCreate) createSpec() (*Ticket, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := tc.mutation.AttachmentsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.AttachmentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -780,16 +780,16 @@ type TicketCreateBulk struct {
 }
 
 // Save creates the Ticket entities in the database.
-func (tcb *TicketCreateBulk) Save(ctx context.Context) ([]*Ticket, error) {
-	if tcb.err != nil {
-		return nil, tcb.err
+func (_c *TicketCreateBulk) Save(ctx context.Context) ([]*Ticket, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(tcb.builders))
-	nodes := make([]*Ticket, len(tcb.builders))
-	mutators := make([]Mutator, len(tcb.builders))
-	for i := range tcb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*Ticket, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := tcb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*TicketMutation)
@@ -803,11 +803,11 @@ func (tcb *TicketCreateBulk) Save(ctx context.Context) ([]*Ticket, error) {
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, tcb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, tcb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -827,7 +827,7 @@ func (tcb *TicketCreateBulk) Save(ctx context.Context) ([]*Ticket, error) {
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, tcb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -835,8 +835,8 @@ func (tcb *TicketCreateBulk) Save(ctx context.Context) ([]*Ticket, error) {
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (tcb *TicketCreateBulk) SaveX(ctx context.Context) []*Ticket {
-	v, err := tcb.Save(ctx)
+func (_c *TicketCreateBulk) SaveX(ctx context.Context) []*Ticket {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -844,14 +844,14 @@ func (tcb *TicketCreateBulk) SaveX(ctx context.Context) []*Ticket {
 }
 
 // Exec executes the query.
-func (tcb *TicketCreateBulk) Exec(ctx context.Context) error {
-	_, err := tcb.Save(ctx)
+func (_c *TicketCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tcb *TicketCreateBulk) ExecX(ctx context.Context) {
-	if err := tcb.Exec(ctx); err != nil {
+func (_c *TicketCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

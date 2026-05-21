@@ -3,8 +3,8 @@ package identity
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
+	pagination "github.com/Bengo-Hub/pagination"
 	authclient "github.com/Bengo-Hub/shared-auth-client"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -108,7 +108,7 @@ func (h *Handler) GetTeam(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, team)
 }
 
-// ListTeams lists teams with filtering.
+// ListTeams lists teams with pagination.
 func (h *Handler) ListTeams(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -122,24 +122,12 @@ func (h *Handler) ListTeams(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filter := TeamFilter{
-		TenantID: *tenantID,
-		Limit:    50,
-	}
+	p := pagination.Parse(r)
+	filter := TeamFilter{TenantID: *tenantID, Limit: p.Limit, Offset: p.Offset}
 
 	if v := r.URL.Query().Get("active"); v != "" {
 		isActive := v == "true"
 		filter.IsActive = &isActive
-	}
-	if v := r.URL.Query().Get("offset"); v != "" {
-		if offset, err := strconv.Atoi(v); err == nil {
-			filter.Offset = offset
-		}
-	}
-	if v := r.URL.Query().Get("limit"); v != "" {
-		if limit, err := strconv.Atoi(v); err == nil && limit > 0 && limit <= 100 {
-			filter.Limit = limit
-		}
 	}
 
 	teams, total, err := h.service.ListTeams(r.Context(), *tenantID, filter)
@@ -148,10 +136,7 @@ func (h *Handler) ListTeams(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusOK, map[string]any{
-		"teams": teams,
-		"total": total,
-	})
+	respondJSON(w, http.StatusOK, pagination.NewResponse(teams, total, p))
 }
 
 // UpdateTeam updates a team.
@@ -306,7 +291,7 @@ func (h *Handler) GetAgentByUserID(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, agent)
 }
 
-// ListAgents lists agents with filtering.
+// ListAgents lists agents with pagination.
 func (h *Handler) ListAgents(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authclient.ClaimsFromContext(r.Context())
 	if !ok {
@@ -320,37 +305,26 @@ func (h *Handler) ListAgents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filter := AgentFilter{
-		TenantID: *tenantID,
-		Limit:    50,
-	}
+	p := pagination.Parse(r)
+	filter := AgentFilter{TenantID: *tenantID, Limit: p.Limit, Offset: p.Offset}
 
-	if v := r.URL.Query().Get("teamId"); v != "" {
+	q := r.URL.Query()
+	if v := q.Get("teamId"); v != "" {
 		if teamID, err := uuid.Parse(v); err == nil {
 			filter.TeamID = &teamID
 		}
 	}
-	if v := r.URL.Query().Get("status"); v != "" {
-		status := AgentStatus(v)
-		filter.Status = &status
+	if v := q.Get("status"); v != "" {
+		s := AgentStatus(v)
+		filter.Status = &s
 	}
-	if v := r.URL.Query().Get("role"); v != "" {
-		role := AgentRole(v)
-		filter.Role = &role
+	if v := q.Get("role"); v != "" {
+		ro := AgentRole(v)
+		filter.Role = &ro
 	}
-	if v := r.URL.Query().Get("active"); v != "" {
+	if v := q.Get("active"); v != "" {
 		isActive := v == "true"
 		filter.IsActive = &isActive
-	}
-	if v := r.URL.Query().Get("offset"); v != "" {
-		if offset, err := strconv.Atoi(v); err == nil {
-			filter.Offset = offset
-		}
-	}
-	if v := r.URL.Query().Get("limit"); v != "" {
-		if limit, err := strconv.Atoi(v); err == nil && limit > 0 && limit <= 100 {
-			filter.Limit = limit
-		}
 	}
 
 	agents, total, err := h.service.ListAgents(r.Context(), *tenantID, filter)
@@ -359,10 +333,7 @@ func (h *Handler) ListAgents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusOK, map[string]any{
-		"agents": agents,
-		"total":  total,
-	})
+	respondJSON(w, http.StatusOK, pagination.NewResponse(agents, total, p))
 }
 
 // UpdateAgent updates an agent.

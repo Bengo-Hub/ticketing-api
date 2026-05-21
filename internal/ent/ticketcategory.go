@@ -114,7 +114,7 @@ func (*TicketCategory) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the TicketCategory fields.
-func (tc *TicketCategory) assignValues(columns []string, values []any) error {
+func (_m *TicketCategory) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -124,78 +124,78 @@ func (tc *TicketCategory) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				tc.ID = *value
+				_m.ID = *value
 			}
 		case ticketcategory.FieldTenantID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field tenant_id", values[i])
 			} else if value != nil {
-				tc.TenantID = *value
+				_m.TenantID = *value
 			}
 		case ticketcategory.FieldParentID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field parent_id", values[i])
 			} else if value.Valid {
-				tc.ParentID = new(uuid.UUID)
-				*tc.ParentID = *value.S.(*uuid.UUID)
+				_m.ParentID = new(uuid.UUID)
+				*_m.ParentID = *value.S.(*uuid.UUID)
 			}
 		case ticketcategory.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
-				tc.Name = value.String
+				_m.Name = value.String
 			}
 		case ticketcategory.FieldSlug:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field slug", values[i])
 			} else if value.Valid {
-				tc.Slug = value.String
+				_m.Slug = value.String
 			}
 		case ticketcategory.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				tc.Description = value.String
+				_m.Description = value.String
 			}
 		case ticketcategory.FieldIcon:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field icon", values[i])
 			} else if value.Valid {
-				tc.Icon = value.String
+				_m.Icon = value.String
 			}
 		case ticketcategory.FieldSortOrder:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field sort_order", values[i])
 			} else if value.Valid {
-				tc.SortOrder = int(value.Int64)
+				_m.SortOrder = int(value.Int64)
 			}
 		case ticketcategory.FieldIsActive:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field is_active", values[i])
 			} else if value.Valid {
-				tc.IsActive = value.Bool
+				_m.IsActive = value.Bool
 			}
 		case ticketcategory.FieldDefaultAssigneeID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field default_assignee_id", values[i])
 			} else if value.Valid {
-				tc.DefaultAssigneeID = new(uuid.UUID)
-				*tc.DefaultAssigneeID = *value.S.(*uuid.UUID)
+				_m.DefaultAssigneeID = new(uuid.UUID)
+				*_m.DefaultAssigneeID = *value.S.(*uuid.UUID)
 			}
 		case ticketcategory.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
-				tc.CreatedAt = value.Time
+				_m.CreatedAt = value.Time
 			}
 		case ticketcategory.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
-				tc.UpdatedAt = value.Time
+				_m.UpdatedAt = value.Time
 			}
 		default:
-			tc.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -203,84 +203,84 @@ func (tc *TicketCategory) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the TicketCategory.
 // This includes values selected through modifiers, order, etc.
-func (tc *TicketCategory) Value(name string) (ent.Value, error) {
-	return tc.selectValues.Get(name)
+func (_m *TicketCategory) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryTickets queries the "tickets" edge of the TicketCategory entity.
-func (tc *TicketCategory) QueryTickets() *TicketQuery {
-	return NewTicketCategoryClient(tc.config).QueryTickets(tc)
+func (_m *TicketCategory) QueryTickets() *TicketQuery {
+	return NewTicketCategoryClient(_m.config).QueryTickets(_m)
 }
 
 // QueryParent queries the "parent" edge of the TicketCategory entity.
-func (tc *TicketCategory) QueryParent() *TicketCategoryQuery {
-	return NewTicketCategoryClient(tc.config).QueryParent(tc)
+func (_m *TicketCategory) QueryParent() *TicketCategoryQuery {
+	return NewTicketCategoryClient(_m.config).QueryParent(_m)
 }
 
 // QueryChildren queries the "children" edge of the TicketCategory entity.
-func (tc *TicketCategory) QueryChildren() *TicketCategoryQuery {
-	return NewTicketCategoryClient(tc.config).QueryChildren(tc)
+func (_m *TicketCategory) QueryChildren() *TicketCategoryQuery {
+	return NewTicketCategoryClient(_m.config).QueryChildren(_m)
 }
 
 // Update returns a builder for updating this TicketCategory.
 // Note that you need to call TicketCategory.Unwrap() before calling this method if this TicketCategory
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (tc *TicketCategory) Update() *TicketCategoryUpdateOne {
-	return NewTicketCategoryClient(tc.config).UpdateOne(tc)
+func (_m *TicketCategory) Update() *TicketCategoryUpdateOne {
+	return NewTicketCategoryClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the TicketCategory entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (tc *TicketCategory) Unwrap() *TicketCategory {
-	_tx, ok := tc.config.driver.(*txDriver)
+func (_m *TicketCategory) Unwrap() *TicketCategory {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: TicketCategory is not a transactional entity")
 	}
-	tc.config.driver = _tx.drv
-	return tc
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (tc *TicketCategory) String() string {
+func (_m *TicketCategory) String() string {
 	var builder strings.Builder
 	builder.WriteString("TicketCategory(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", tc.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("tenant_id=")
-	builder.WriteString(fmt.Sprintf("%v", tc.TenantID))
+	builder.WriteString(fmt.Sprintf("%v", _m.TenantID))
 	builder.WriteString(", ")
-	if v := tc.ParentID; v != nil {
+	if v := _m.ParentID; v != nil {
 		builder.WriteString("parent_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("name=")
-	builder.WriteString(tc.Name)
+	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
 	builder.WriteString("slug=")
-	builder.WriteString(tc.Slug)
+	builder.WriteString(_m.Slug)
 	builder.WriteString(", ")
 	builder.WriteString("description=")
-	builder.WriteString(tc.Description)
+	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
 	builder.WriteString("icon=")
-	builder.WriteString(tc.Icon)
+	builder.WriteString(_m.Icon)
 	builder.WriteString(", ")
 	builder.WriteString("sort_order=")
-	builder.WriteString(fmt.Sprintf("%v", tc.SortOrder))
+	builder.WriteString(fmt.Sprintf("%v", _m.SortOrder))
 	builder.WriteString(", ")
 	builder.WriteString("is_active=")
-	builder.WriteString(fmt.Sprintf("%v", tc.IsActive))
+	builder.WriteString(fmt.Sprintf("%v", _m.IsActive))
 	builder.WriteString(", ")
-	if v := tc.DefaultAssigneeID; v != nil {
+	if v := _m.DefaultAssigneeID; v != nil {
 		builder.WriteString("default_assignee_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
-	builder.WriteString(tc.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
-	builder.WriteString(tc.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -96,7 +96,7 @@ func (*TicketComment) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the TicketComment fields.
-func (tc *TicketComment) assignValues(columns []string, values []any) error {
+func (_m *TicketComment) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -106,63 +106,63 @@ func (tc *TicketComment) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				tc.ID = *value
+				_m.ID = *value
 			}
 		case ticketcomment.FieldTicketID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field ticket_id", values[i])
 			} else if value != nil {
-				tc.TicketID = *value
+				_m.TicketID = *value
 			}
 		case ticketcomment.FieldAuthorID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field author_id", values[i])
 			} else if value.Valid {
-				tc.AuthorID = new(uuid.UUID)
-				*tc.AuthorID = *value.S.(*uuid.UUID)
+				_m.AuthorID = new(uuid.UUID)
+				*_m.AuthorID = *value.S.(*uuid.UUID)
 			}
 		case ticketcomment.FieldAuthorType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field author_type", values[i])
 			} else if value.Valid {
-				tc.AuthorType = ticketcomment.AuthorType(value.String)
+				_m.AuthorType = ticketcomment.AuthorType(value.String)
 			}
 		case ticketcomment.FieldCommentType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field comment_type", values[i])
 			} else if value.Valid {
-				tc.CommentType = ticketcomment.CommentType(value.String)
+				_m.CommentType = ticketcomment.CommentType(value.String)
 			}
 		case ticketcomment.FieldContent:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field content", values[i])
 			} else if value.Valid {
-				tc.Content = value.String
+				_m.Content = value.String
 			}
 		case ticketcomment.FieldContentHTML:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field content_html", values[i])
 			} else if value.Valid {
-				tc.ContentHTML = value.String
+				_m.ContentHTML = value.String
 			}
 		case ticketcomment.FieldIsEdited:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field is_edited", values[i])
 			} else if value.Valid {
-				tc.IsEdited = value.Bool
+				_m.IsEdited = value.Bool
 			}
 		case ticketcomment.FieldEditedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field edited_at", values[i])
 			} else if value.Valid {
-				tc.EditedAt = new(time.Time)
-				*tc.EditedAt = value.Time
+				_m.EditedAt = new(time.Time)
+				*_m.EditedAt = value.Time
 			}
 		case ticketcomment.FieldMentions:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field mentions", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &tc.Mentions); err != nil {
+				if err := json.Unmarshal(*value, &_m.Mentions); err != nil {
 					return fmt.Errorf("unmarshal field mentions: %w", err)
 				}
 			}
@@ -170,7 +170,7 @@ func (tc *TicketComment) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field metadata", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &tc.Metadata); err != nil {
+				if err := json.Unmarshal(*value, &_m.Metadata); err != nil {
 					return fmt.Errorf("unmarshal field metadata: %w", err)
 				}
 			}
@@ -178,17 +178,17 @@ func (tc *TicketComment) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
-				tc.CreatedAt = value.Time
+				_m.CreatedAt = value.Time
 			}
 		case ticketcomment.FieldDeletedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
 			} else if value.Valid {
-				tc.DeletedAt = new(time.Time)
-				*tc.DeletedAt = value.Time
+				_m.DeletedAt = new(time.Time)
+				*_m.DeletedAt = value.Time
 			}
 		default:
-			tc.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -196,76 +196,76 @@ func (tc *TicketComment) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the TicketComment.
 // This includes values selected through modifiers, order, etc.
-func (tc *TicketComment) Value(name string) (ent.Value, error) {
-	return tc.selectValues.Get(name)
+func (_m *TicketComment) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryTicket queries the "ticket" edge of the TicketComment entity.
-func (tc *TicketComment) QueryTicket() *TicketQuery {
-	return NewTicketCommentClient(tc.config).QueryTicket(tc)
+func (_m *TicketComment) QueryTicket() *TicketQuery {
+	return NewTicketCommentClient(_m.config).QueryTicket(_m)
 }
 
 // Update returns a builder for updating this TicketComment.
 // Note that you need to call TicketComment.Unwrap() before calling this method if this TicketComment
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (tc *TicketComment) Update() *TicketCommentUpdateOne {
-	return NewTicketCommentClient(tc.config).UpdateOne(tc)
+func (_m *TicketComment) Update() *TicketCommentUpdateOne {
+	return NewTicketCommentClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the TicketComment entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (tc *TicketComment) Unwrap() *TicketComment {
-	_tx, ok := tc.config.driver.(*txDriver)
+func (_m *TicketComment) Unwrap() *TicketComment {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: TicketComment is not a transactional entity")
 	}
-	tc.config.driver = _tx.drv
-	return tc
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (tc *TicketComment) String() string {
+func (_m *TicketComment) String() string {
 	var builder strings.Builder
 	builder.WriteString("TicketComment(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", tc.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("ticket_id=")
-	builder.WriteString(fmt.Sprintf("%v", tc.TicketID))
+	builder.WriteString(fmt.Sprintf("%v", _m.TicketID))
 	builder.WriteString(", ")
-	if v := tc.AuthorID; v != nil {
+	if v := _m.AuthorID; v != nil {
 		builder.WriteString("author_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("author_type=")
-	builder.WriteString(fmt.Sprintf("%v", tc.AuthorType))
+	builder.WriteString(fmt.Sprintf("%v", _m.AuthorType))
 	builder.WriteString(", ")
 	builder.WriteString("comment_type=")
-	builder.WriteString(fmt.Sprintf("%v", tc.CommentType))
+	builder.WriteString(fmt.Sprintf("%v", _m.CommentType))
 	builder.WriteString(", ")
 	builder.WriteString("content=")
-	builder.WriteString(tc.Content)
+	builder.WriteString(_m.Content)
 	builder.WriteString(", ")
 	builder.WriteString("content_html=")
-	builder.WriteString(tc.ContentHTML)
+	builder.WriteString(_m.ContentHTML)
 	builder.WriteString(", ")
 	builder.WriteString("is_edited=")
-	builder.WriteString(fmt.Sprintf("%v", tc.IsEdited))
+	builder.WriteString(fmt.Sprintf("%v", _m.IsEdited))
 	builder.WriteString(", ")
-	if v := tc.EditedAt; v != nil {
+	if v := _m.EditedAt; v != nil {
 		builder.WriteString("edited_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("mentions=")
-	builder.WriteString(fmt.Sprintf("%v", tc.Mentions))
+	builder.WriteString(fmt.Sprintf("%v", _m.Mentions))
 	builder.WriteString(", ")
 	builder.WriteString("metadata=")
-	builder.WriteString(fmt.Sprintf("%v", tc.Metadata))
+	builder.WriteString(fmt.Sprintf("%v", _m.Metadata))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
-	builder.WriteString(tc.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	if v := tc.DeletedAt; v != nil {
+	if v := _m.DeletedAt; v != nil {
 		builder.WriteString("deleted_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}

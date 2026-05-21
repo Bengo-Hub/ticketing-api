@@ -29,576 +29,576 @@ type TicketUpdate struct {
 }
 
 // Where appends a list predicates to the TicketUpdate builder.
-func (tu *TicketUpdate) Where(ps ...predicate.Ticket) *TicketUpdate {
-	tu.mutation.Where(ps...)
-	return tu
+func (_u *TicketUpdate) Where(ps ...predicate.Ticket) *TicketUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (tu *TicketUpdate) SetTenantID(u uuid.UUID) *TicketUpdate {
-	tu.mutation.SetTenantID(u)
-	return tu
+func (_u *TicketUpdate) SetTenantID(v uuid.UUID) *TicketUpdate {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableTenantID(u *uuid.UUID) *TicketUpdate {
-	if u != nil {
-		tu.SetTenantID(*u)
+func (_u *TicketUpdate) SetNillableTenantID(v *uuid.UUID) *TicketUpdate {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return tu
+	return _u
 }
 
 // SetTicketNumber sets the "ticket_number" field.
-func (tu *TicketUpdate) SetTicketNumber(s string) *TicketUpdate {
-	tu.mutation.SetTicketNumber(s)
-	return tu
+func (_u *TicketUpdate) SetTicketNumber(v string) *TicketUpdate {
+	_u.mutation.SetTicketNumber(v)
+	return _u
 }
 
 // SetNillableTicketNumber sets the "ticket_number" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableTicketNumber(s *string) *TicketUpdate {
-	if s != nil {
-		tu.SetTicketNumber(*s)
+func (_u *TicketUpdate) SetNillableTicketNumber(v *string) *TicketUpdate {
+	if v != nil {
+		_u.SetTicketNumber(*v)
 	}
-	return tu
+	return _u
 }
 
 // SetCustomerID sets the "customer_id" field.
-func (tu *TicketUpdate) SetCustomerID(u uuid.UUID) *TicketUpdate {
-	tu.mutation.SetCustomerID(u)
-	return tu
+func (_u *TicketUpdate) SetCustomerID(v uuid.UUID) *TicketUpdate {
+	_u.mutation.SetCustomerID(v)
+	return _u
 }
 
 // SetNillableCustomerID sets the "customer_id" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableCustomerID(u *uuid.UUID) *TicketUpdate {
-	if u != nil {
-		tu.SetCustomerID(*u)
+func (_u *TicketUpdate) SetNillableCustomerID(v *uuid.UUID) *TicketUpdate {
+	if v != nil {
+		_u.SetCustomerID(*v)
 	}
-	return tu
+	return _u
 }
 
 // SetCategoryID sets the "category_id" field.
-func (tu *TicketUpdate) SetCategoryID(u uuid.UUID) *TicketUpdate {
-	tu.mutation.SetCategoryID(u)
-	return tu
+func (_u *TicketUpdate) SetCategoryID(v uuid.UUID) *TicketUpdate {
+	_u.mutation.SetCategoryID(v)
+	return _u
 }
 
 // SetNillableCategoryID sets the "category_id" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableCategoryID(u *uuid.UUID) *TicketUpdate {
-	if u != nil {
-		tu.SetCategoryID(*u)
+func (_u *TicketUpdate) SetNillableCategoryID(v *uuid.UUID) *TicketUpdate {
+	if v != nil {
+		_u.SetCategoryID(*v)
 	}
-	return tu
+	return _u
 }
 
 // ClearCategoryID clears the value of the "category_id" field.
-func (tu *TicketUpdate) ClearCategoryID() *TicketUpdate {
-	tu.mutation.ClearCategoryID()
-	return tu
+func (_u *TicketUpdate) ClearCategoryID() *TicketUpdate {
+	_u.mutation.ClearCategoryID()
+	return _u
 }
 
 // SetAssignedAgentID sets the "assigned_agent_id" field.
-func (tu *TicketUpdate) SetAssignedAgentID(u uuid.UUID) *TicketUpdate {
-	tu.mutation.SetAssignedAgentID(u)
-	return tu
+func (_u *TicketUpdate) SetAssignedAgentID(v uuid.UUID) *TicketUpdate {
+	_u.mutation.SetAssignedAgentID(v)
+	return _u
 }
 
 // SetNillableAssignedAgentID sets the "assigned_agent_id" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableAssignedAgentID(u *uuid.UUID) *TicketUpdate {
-	if u != nil {
-		tu.SetAssignedAgentID(*u)
+func (_u *TicketUpdate) SetNillableAssignedAgentID(v *uuid.UUID) *TicketUpdate {
+	if v != nil {
+		_u.SetAssignedAgentID(*v)
 	}
-	return tu
+	return _u
 }
 
 // ClearAssignedAgentID clears the value of the "assigned_agent_id" field.
-func (tu *TicketUpdate) ClearAssignedAgentID() *TicketUpdate {
-	tu.mutation.ClearAssignedAgentID()
-	return tu
+func (_u *TicketUpdate) ClearAssignedAgentID() *TicketUpdate {
+	_u.mutation.ClearAssignedAgentID()
+	return _u
 }
 
 // SetAssignedTeamID sets the "assigned_team_id" field.
-func (tu *TicketUpdate) SetAssignedTeamID(u uuid.UUID) *TicketUpdate {
-	tu.mutation.SetAssignedTeamID(u)
-	return tu
+func (_u *TicketUpdate) SetAssignedTeamID(v uuid.UUID) *TicketUpdate {
+	_u.mutation.SetAssignedTeamID(v)
+	return _u
 }
 
 // SetNillableAssignedTeamID sets the "assigned_team_id" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableAssignedTeamID(u *uuid.UUID) *TicketUpdate {
-	if u != nil {
-		tu.SetAssignedTeamID(*u)
+func (_u *TicketUpdate) SetNillableAssignedTeamID(v *uuid.UUID) *TicketUpdate {
+	if v != nil {
+		_u.SetAssignedTeamID(*v)
 	}
-	return tu
+	return _u
 }
 
 // ClearAssignedTeamID clears the value of the "assigned_team_id" field.
-func (tu *TicketUpdate) ClearAssignedTeamID() *TicketUpdate {
-	tu.mutation.ClearAssignedTeamID()
-	return tu
+func (_u *TicketUpdate) ClearAssignedTeamID() *TicketUpdate {
+	_u.mutation.ClearAssignedTeamID()
+	return _u
 }
 
 // SetSubject sets the "subject" field.
-func (tu *TicketUpdate) SetSubject(s string) *TicketUpdate {
-	tu.mutation.SetSubject(s)
-	return tu
+func (_u *TicketUpdate) SetSubject(v string) *TicketUpdate {
+	_u.mutation.SetSubject(v)
+	return _u
 }
 
 // SetNillableSubject sets the "subject" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableSubject(s *string) *TicketUpdate {
-	if s != nil {
-		tu.SetSubject(*s)
+func (_u *TicketUpdate) SetNillableSubject(v *string) *TicketUpdate {
+	if v != nil {
+		_u.SetSubject(*v)
 	}
-	return tu
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (tu *TicketUpdate) SetDescription(s string) *TicketUpdate {
-	tu.mutation.SetDescription(s)
-	return tu
+func (_u *TicketUpdate) SetDescription(v string) *TicketUpdate {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableDescription(s *string) *TicketUpdate {
-	if s != nil {
-		tu.SetDescription(*s)
+func (_u *TicketUpdate) SetNillableDescription(v *string) *TicketUpdate {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return tu
+	return _u
 }
 
 // SetStatus sets the "status" field.
-func (tu *TicketUpdate) SetStatus(t ticket.Status) *TicketUpdate {
-	tu.mutation.SetStatus(t)
-	return tu
+func (_u *TicketUpdate) SetStatus(v ticket.Status) *TicketUpdate {
+	_u.mutation.SetStatus(v)
+	return _u
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableStatus(t *ticket.Status) *TicketUpdate {
-	if t != nil {
-		tu.SetStatus(*t)
+func (_u *TicketUpdate) SetNillableStatus(v *ticket.Status) *TicketUpdate {
+	if v != nil {
+		_u.SetStatus(*v)
 	}
-	return tu
+	return _u
 }
 
 // SetPriority sets the "priority" field.
-func (tu *TicketUpdate) SetPriority(t ticket.Priority) *TicketUpdate {
-	tu.mutation.SetPriority(t)
-	return tu
+func (_u *TicketUpdate) SetPriority(v ticket.Priority) *TicketUpdate {
+	_u.mutation.SetPriority(v)
+	return _u
 }
 
 // SetNillablePriority sets the "priority" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillablePriority(t *ticket.Priority) *TicketUpdate {
-	if t != nil {
-		tu.SetPriority(*t)
+func (_u *TicketUpdate) SetNillablePriority(v *ticket.Priority) *TicketUpdate {
+	if v != nil {
+		_u.SetPriority(*v)
 	}
-	return tu
+	return _u
 }
 
 // SetChannel sets the "channel" field.
-func (tu *TicketUpdate) SetChannel(t ticket.Channel) *TicketUpdate {
-	tu.mutation.SetChannel(t)
-	return tu
+func (_u *TicketUpdate) SetChannel(v ticket.Channel) *TicketUpdate {
+	_u.mutation.SetChannel(v)
+	return _u
 }
 
 // SetNillableChannel sets the "channel" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableChannel(t *ticket.Channel) *TicketUpdate {
-	if t != nil {
-		tu.SetChannel(*t)
+func (_u *TicketUpdate) SetNillableChannel(v *ticket.Channel) *TicketUpdate {
+	if v != nil {
+		_u.SetChannel(*v)
 	}
-	return tu
+	return _u
 }
 
 // SetOrderID sets the "order_id" field.
-func (tu *TicketUpdate) SetOrderID(u uuid.UUID) *TicketUpdate {
-	tu.mutation.SetOrderID(u)
-	return tu
+func (_u *TicketUpdate) SetOrderID(v uuid.UUID) *TicketUpdate {
+	_u.mutation.SetOrderID(v)
+	return _u
 }
 
 // SetNillableOrderID sets the "order_id" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableOrderID(u *uuid.UUID) *TicketUpdate {
-	if u != nil {
-		tu.SetOrderID(*u)
+func (_u *TicketUpdate) SetNillableOrderID(v *uuid.UUID) *TicketUpdate {
+	if v != nil {
+		_u.SetOrderID(*v)
 	}
-	return tu
+	return _u
 }
 
 // ClearOrderID clears the value of the "order_id" field.
-func (tu *TicketUpdate) ClearOrderID() *TicketUpdate {
-	tu.mutation.ClearOrderID()
-	return tu
+func (_u *TicketUpdate) ClearOrderID() *TicketUpdate {
+	_u.mutation.ClearOrderID()
+	return _u
 }
 
 // SetExternalReference sets the "external_reference" field.
-func (tu *TicketUpdate) SetExternalReference(s string) *TicketUpdate {
-	tu.mutation.SetExternalReference(s)
-	return tu
+func (_u *TicketUpdate) SetExternalReference(v string) *TicketUpdate {
+	_u.mutation.SetExternalReference(v)
+	return _u
 }
 
 // SetNillableExternalReference sets the "external_reference" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableExternalReference(s *string) *TicketUpdate {
-	if s != nil {
-		tu.SetExternalReference(*s)
+func (_u *TicketUpdate) SetNillableExternalReference(v *string) *TicketUpdate {
+	if v != nil {
+		_u.SetExternalReference(*v)
 	}
-	return tu
+	return _u
 }
 
 // ClearExternalReference clears the value of the "external_reference" field.
-func (tu *TicketUpdate) ClearExternalReference() *TicketUpdate {
-	tu.mutation.ClearExternalReference()
-	return tu
+func (_u *TicketUpdate) ClearExternalReference() *TicketUpdate {
+	_u.mutation.ClearExternalReference()
+	return _u
 }
 
 // SetSLAResponseDueAt sets the "sla_response_due_at" field.
-func (tu *TicketUpdate) SetSLAResponseDueAt(t time.Time) *TicketUpdate {
-	tu.mutation.SetSLAResponseDueAt(t)
-	return tu
+func (_u *TicketUpdate) SetSLAResponseDueAt(v time.Time) *TicketUpdate {
+	_u.mutation.SetSLAResponseDueAt(v)
+	return _u
 }
 
 // SetNillableSLAResponseDueAt sets the "sla_response_due_at" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableSLAResponseDueAt(t *time.Time) *TicketUpdate {
-	if t != nil {
-		tu.SetSLAResponseDueAt(*t)
+func (_u *TicketUpdate) SetNillableSLAResponseDueAt(v *time.Time) *TicketUpdate {
+	if v != nil {
+		_u.SetSLAResponseDueAt(*v)
 	}
-	return tu
+	return _u
 }
 
 // ClearSLAResponseDueAt clears the value of the "sla_response_due_at" field.
-func (tu *TicketUpdate) ClearSLAResponseDueAt() *TicketUpdate {
-	tu.mutation.ClearSLAResponseDueAt()
-	return tu
+func (_u *TicketUpdate) ClearSLAResponseDueAt() *TicketUpdate {
+	_u.mutation.ClearSLAResponseDueAt()
+	return _u
 }
 
 // SetSLAResolutionDueAt sets the "sla_resolution_due_at" field.
-func (tu *TicketUpdate) SetSLAResolutionDueAt(t time.Time) *TicketUpdate {
-	tu.mutation.SetSLAResolutionDueAt(t)
-	return tu
+func (_u *TicketUpdate) SetSLAResolutionDueAt(v time.Time) *TicketUpdate {
+	_u.mutation.SetSLAResolutionDueAt(v)
+	return _u
 }
 
 // SetNillableSLAResolutionDueAt sets the "sla_resolution_due_at" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableSLAResolutionDueAt(t *time.Time) *TicketUpdate {
-	if t != nil {
-		tu.SetSLAResolutionDueAt(*t)
+func (_u *TicketUpdate) SetNillableSLAResolutionDueAt(v *time.Time) *TicketUpdate {
+	if v != nil {
+		_u.SetSLAResolutionDueAt(*v)
 	}
-	return tu
+	return _u
 }
 
 // ClearSLAResolutionDueAt clears the value of the "sla_resolution_due_at" field.
-func (tu *TicketUpdate) ClearSLAResolutionDueAt() *TicketUpdate {
-	tu.mutation.ClearSLAResolutionDueAt()
-	return tu
+func (_u *TicketUpdate) ClearSLAResolutionDueAt() *TicketUpdate {
+	_u.mutation.ClearSLAResolutionDueAt()
+	return _u
 }
 
 // SetSLAResponseBreached sets the "sla_response_breached" field.
-func (tu *TicketUpdate) SetSLAResponseBreached(b bool) *TicketUpdate {
-	tu.mutation.SetSLAResponseBreached(b)
-	return tu
+func (_u *TicketUpdate) SetSLAResponseBreached(v bool) *TicketUpdate {
+	_u.mutation.SetSLAResponseBreached(v)
+	return _u
 }
 
 // SetNillableSLAResponseBreached sets the "sla_response_breached" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableSLAResponseBreached(b *bool) *TicketUpdate {
-	if b != nil {
-		tu.SetSLAResponseBreached(*b)
+func (_u *TicketUpdate) SetNillableSLAResponseBreached(v *bool) *TicketUpdate {
+	if v != nil {
+		_u.SetSLAResponseBreached(*v)
 	}
-	return tu
+	return _u
 }
 
 // SetSLAResolutionBreached sets the "sla_resolution_breached" field.
-func (tu *TicketUpdate) SetSLAResolutionBreached(b bool) *TicketUpdate {
-	tu.mutation.SetSLAResolutionBreached(b)
-	return tu
+func (_u *TicketUpdate) SetSLAResolutionBreached(v bool) *TicketUpdate {
+	_u.mutation.SetSLAResolutionBreached(v)
+	return _u
 }
 
 // SetNillableSLAResolutionBreached sets the "sla_resolution_breached" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableSLAResolutionBreached(b *bool) *TicketUpdate {
-	if b != nil {
-		tu.SetSLAResolutionBreached(*b)
+func (_u *TicketUpdate) SetNillableSLAResolutionBreached(v *bool) *TicketUpdate {
+	if v != nil {
+		_u.SetSLAResolutionBreached(*v)
 	}
-	return tu
+	return _u
 }
 
 // SetFirstResponseAt sets the "first_response_at" field.
-func (tu *TicketUpdate) SetFirstResponseAt(t time.Time) *TicketUpdate {
-	tu.mutation.SetFirstResponseAt(t)
-	return tu
+func (_u *TicketUpdate) SetFirstResponseAt(v time.Time) *TicketUpdate {
+	_u.mutation.SetFirstResponseAt(v)
+	return _u
 }
 
 // SetNillableFirstResponseAt sets the "first_response_at" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableFirstResponseAt(t *time.Time) *TicketUpdate {
-	if t != nil {
-		tu.SetFirstResponseAt(*t)
+func (_u *TicketUpdate) SetNillableFirstResponseAt(v *time.Time) *TicketUpdate {
+	if v != nil {
+		_u.SetFirstResponseAt(*v)
 	}
-	return tu
+	return _u
 }
 
 // ClearFirstResponseAt clears the value of the "first_response_at" field.
-func (tu *TicketUpdate) ClearFirstResponseAt() *TicketUpdate {
-	tu.mutation.ClearFirstResponseAt()
-	return tu
+func (_u *TicketUpdate) ClearFirstResponseAt() *TicketUpdate {
+	_u.mutation.ClearFirstResponseAt()
+	return _u
 }
 
 // SetResolvedAt sets the "resolved_at" field.
-func (tu *TicketUpdate) SetResolvedAt(t time.Time) *TicketUpdate {
-	tu.mutation.SetResolvedAt(t)
-	return tu
+func (_u *TicketUpdate) SetResolvedAt(v time.Time) *TicketUpdate {
+	_u.mutation.SetResolvedAt(v)
+	return _u
 }
 
 // SetNillableResolvedAt sets the "resolved_at" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableResolvedAt(t *time.Time) *TicketUpdate {
-	if t != nil {
-		tu.SetResolvedAt(*t)
+func (_u *TicketUpdate) SetNillableResolvedAt(v *time.Time) *TicketUpdate {
+	if v != nil {
+		_u.SetResolvedAt(*v)
 	}
-	return tu
+	return _u
 }
 
 // ClearResolvedAt clears the value of the "resolved_at" field.
-func (tu *TicketUpdate) ClearResolvedAt() *TicketUpdate {
-	tu.mutation.ClearResolvedAt()
-	return tu
+func (_u *TicketUpdate) ClearResolvedAt() *TicketUpdate {
+	_u.mutation.ClearResolvedAt()
+	return _u
 }
 
 // SetClosedAt sets the "closed_at" field.
-func (tu *TicketUpdate) SetClosedAt(t time.Time) *TicketUpdate {
-	tu.mutation.SetClosedAt(t)
-	return tu
+func (_u *TicketUpdate) SetClosedAt(v time.Time) *TicketUpdate {
+	_u.mutation.SetClosedAt(v)
+	return _u
 }
 
 // SetNillableClosedAt sets the "closed_at" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableClosedAt(t *time.Time) *TicketUpdate {
-	if t != nil {
-		tu.SetClosedAt(*t)
+func (_u *TicketUpdate) SetNillableClosedAt(v *time.Time) *TicketUpdate {
+	if v != nil {
+		_u.SetClosedAt(*v)
 	}
-	return tu
+	return _u
 }
 
 // ClearClosedAt clears the value of the "closed_at" field.
-func (tu *TicketUpdate) ClearClosedAt() *TicketUpdate {
-	tu.mutation.ClearClosedAt()
-	return tu
+func (_u *TicketUpdate) ClearClosedAt() *TicketUpdate {
+	_u.mutation.ClearClosedAt()
+	return _u
 }
 
 // SetReopenedAt sets the "reopened_at" field.
-func (tu *TicketUpdate) SetReopenedAt(t time.Time) *TicketUpdate {
-	tu.mutation.SetReopenedAt(t)
-	return tu
+func (_u *TicketUpdate) SetReopenedAt(v time.Time) *TicketUpdate {
+	_u.mutation.SetReopenedAt(v)
+	return _u
 }
 
 // SetNillableReopenedAt sets the "reopened_at" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableReopenedAt(t *time.Time) *TicketUpdate {
-	if t != nil {
-		tu.SetReopenedAt(*t)
+func (_u *TicketUpdate) SetNillableReopenedAt(v *time.Time) *TicketUpdate {
+	if v != nil {
+		_u.SetReopenedAt(*v)
 	}
-	return tu
+	return _u
 }
 
 // ClearReopenedAt clears the value of the "reopened_at" field.
-func (tu *TicketUpdate) ClearReopenedAt() *TicketUpdate {
-	tu.mutation.ClearReopenedAt()
-	return tu
+func (_u *TicketUpdate) ClearReopenedAt() *TicketUpdate {
+	_u.mutation.ClearReopenedAt()
+	return _u
 }
 
 // SetEscalationLevel sets the "escalation_level" field.
-func (tu *TicketUpdate) SetEscalationLevel(i int) *TicketUpdate {
-	tu.mutation.ResetEscalationLevel()
-	tu.mutation.SetEscalationLevel(i)
-	return tu
+func (_u *TicketUpdate) SetEscalationLevel(v int) *TicketUpdate {
+	_u.mutation.ResetEscalationLevel()
+	_u.mutation.SetEscalationLevel(v)
+	return _u
 }
 
 // SetNillableEscalationLevel sets the "escalation_level" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableEscalationLevel(i *int) *TicketUpdate {
-	if i != nil {
-		tu.SetEscalationLevel(*i)
+func (_u *TicketUpdate) SetNillableEscalationLevel(v *int) *TicketUpdate {
+	if v != nil {
+		_u.SetEscalationLevel(*v)
 	}
-	return tu
+	return _u
 }
 
-// AddEscalationLevel adds i to the "escalation_level" field.
-func (tu *TicketUpdate) AddEscalationLevel(i int) *TicketUpdate {
-	tu.mutation.AddEscalationLevel(i)
-	return tu
+// AddEscalationLevel adds value to the "escalation_level" field.
+func (_u *TicketUpdate) AddEscalationLevel(v int) *TicketUpdate {
+	_u.mutation.AddEscalationLevel(v)
+	return _u
 }
 
 // SetEscalatedAt sets the "escalated_at" field.
-func (tu *TicketUpdate) SetEscalatedAt(t time.Time) *TicketUpdate {
-	tu.mutation.SetEscalatedAt(t)
-	return tu
+func (_u *TicketUpdate) SetEscalatedAt(v time.Time) *TicketUpdate {
+	_u.mutation.SetEscalatedAt(v)
+	return _u
 }
 
 // SetNillableEscalatedAt sets the "escalated_at" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableEscalatedAt(t *time.Time) *TicketUpdate {
-	if t != nil {
-		tu.SetEscalatedAt(*t)
+func (_u *TicketUpdate) SetNillableEscalatedAt(v *time.Time) *TicketUpdate {
+	if v != nil {
+		_u.SetEscalatedAt(*v)
 	}
-	return tu
+	return _u
 }
 
 // ClearEscalatedAt clears the value of the "escalated_at" field.
-func (tu *TicketUpdate) ClearEscalatedAt() *TicketUpdate {
-	tu.mutation.ClearEscalatedAt()
-	return tu
+func (_u *TicketUpdate) ClearEscalatedAt() *TicketUpdate {
+	_u.mutation.ClearEscalatedAt()
+	return _u
 }
 
 // SetTags sets the "tags" field.
-func (tu *TicketUpdate) SetTags(s []string) *TicketUpdate {
-	tu.mutation.SetTags(s)
-	return tu
+func (_u *TicketUpdate) SetTags(v []string) *TicketUpdate {
+	_u.mutation.SetTags(v)
+	return _u
 }
 
-// AppendTags appends s to the "tags" field.
-func (tu *TicketUpdate) AppendTags(s []string) *TicketUpdate {
-	tu.mutation.AppendTags(s)
-	return tu
+// AppendTags appends value to the "tags" field.
+func (_u *TicketUpdate) AppendTags(v []string) *TicketUpdate {
+	_u.mutation.AppendTags(v)
+	return _u
 }
 
 // ClearTags clears the value of the "tags" field.
-func (tu *TicketUpdate) ClearTags() *TicketUpdate {
-	tu.mutation.ClearTags()
-	return tu
+func (_u *TicketUpdate) ClearTags() *TicketUpdate {
+	_u.mutation.ClearTags()
+	return _u
 }
 
 // SetMetadata sets the "metadata" field.
-func (tu *TicketUpdate) SetMetadata(m map[string]interface{}) *TicketUpdate {
-	tu.mutation.SetMetadata(m)
-	return tu
+func (_u *TicketUpdate) SetMetadata(v map[string]interface{}) *TicketUpdate {
+	_u.mutation.SetMetadata(v)
+	return _u
 }
 
 // ClearMetadata clears the value of the "metadata" field.
-func (tu *TicketUpdate) ClearMetadata() *TicketUpdate {
-	tu.mutation.ClearMetadata()
-	return tu
+func (_u *TicketUpdate) ClearMetadata() *TicketUpdate {
+	_u.mutation.ClearMetadata()
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (tu *TicketUpdate) SetUpdatedAt(t time.Time) *TicketUpdate {
-	tu.mutation.SetUpdatedAt(t)
-	return tu
+func (_u *TicketUpdate) SetUpdatedAt(v time.Time) *TicketUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetDeletedAt sets the "deleted_at" field.
-func (tu *TicketUpdate) SetDeletedAt(t time.Time) *TicketUpdate {
-	tu.mutation.SetDeletedAt(t)
-	return tu
+func (_u *TicketUpdate) SetDeletedAt(v time.Time) *TicketUpdate {
+	_u.mutation.SetDeletedAt(v)
+	return _u
 }
 
 // SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
-func (tu *TicketUpdate) SetNillableDeletedAt(t *time.Time) *TicketUpdate {
-	if t != nil {
-		tu.SetDeletedAt(*t)
+func (_u *TicketUpdate) SetNillableDeletedAt(v *time.Time) *TicketUpdate {
+	if v != nil {
+		_u.SetDeletedAt(*v)
 	}
-	return tu
+	return _u
 }
 
 // ClearDeletedAt clears the value of the "deleted_at" field.
-func (tu *TicketUpdate) ClearDeletedAt() *TicketUpdate {
-	tu.mutation.ClearDeletedAt()
-	return tu
+func (_u *TicketUpdate) ClearDeletedAt() *TicketUpdate {
+	_u.mutation.ClearDeletedAt()
+	return _u
 }
 
 // SetCategory sets the "category" edge to the TicketCategory entity.
-func (tu *TicketUpdate) SetCategory(t *TicketCategory) *TicketUpdate {
-	return tu.SetCategoryID(t.ID)
+func (_u *TicketUpdate) SetCategory(v *TicketCategory) *TicketUpdate {
+	return _u.SetCategoryID(v.ID)
 }
 
 // SetAssignedAgent sets the "assigned_agent" edge to the Agent entity.
-func (tu *TicketUpdate) SetAssignedAgent(a *Agent) *TicketUpdate {
-	return tu.SetAssignedAgentID(a.ID)
+func (_u *TicketUpdate) SetAssignedAgent(v *Agent) *TicketUpdate {
+	return _u.SetAssignedAgentID(v.ID)
 }
 
 // AddCommentIDs adds the "comments" edge to the TicketComment entity by IDs.
-func (tu *TicketUpdate) AddCommentIDs(ids ...uuid.UUID) *TicketUpdate {
-	tu.mutation.AddCommentIDs(ids...)
-	return tu
+func (_u *TicketUpdate) AddCommentIDs(ids ...uuid.UUID) *TicketUpdate {
+	_u.mutation.AddCommentIDs(ids...)
+	return _u
 }
 
 // AddComments adds the "comments" edges to the TicketComment entity.
-func (tu *TicketUpdate) AddComments(t ...*TicketComment) *TicketUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *TicketUpdate) AddComments(v ...*TicketComment) *TicketUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tu.AddCommentIDs(ids...)
+	return _u.AddCommentIDs(ids...)
 }
 
 // AddAttachmentIDs adds the "attachments" edge to the TicketAttachment entity by IDs.
-func (tu *TicketUpdate) AddAttachmentIDs(ids ...uuid.UUID) *TicketUpdate {
-	tu.mutation.AddAttachmentIDs(ids...)
-	return tu
+func (_u *TicketUpdate) AddAttachmentIDs(ids ...uuid.UUID) *TicketUpdate {
+	_u.mutation.AddAttachmentIDs(ids...)
+	return _u
 }
 
 // AddAttachments adds the "attachments" edges to the TicketAttachment entity.
-func (tu *TicketUpdate) AddAttachments(t ...*TicketAttachment) *TicketUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *TicketUpdate) AddAttachments(v ...*TicketAttachment) *TicketUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tu.AddAttachmentIDs(ids...)
+	return _u.AddAttachmentIDs(ids...)
 }
 
 // Mutation returns the TicketMutation object of the builder.
-func (tu *TicketUpdate) Mutation() *TicketMutation {
-	return tu.mutation
+func (_u *TicketUpdate) Mutation() *TicketMutation {
+	return _u.mutation
 }
 
 // ClearCategory clears the "category" edge to the TicketCategory entity.
-func (tu *TicketUpdate) ClearCategory() *TicketUpdate {
-	tu.mutation.ClearCategory()
-	return tu
+func (_u *TicketUpdate) ClearCategory() *TicketUpdate {
+	_u.mutation.ClearCategory()
+	return _u
 }
 
 // ClearAssignedAgent clears the "assigned_agent" edge to the Agent entity.
-func (tu *TicketUpdate) ClearAssignedAgent() *TicketUpdate {
-	tu.mutation.ClearAssignedAgent()
-	return tu
+func (_u *TicketUpdate) ClearAssignedAgent() *TicketUpdate {
+	_u.mutation.ClearAssignedAgent()
+	return _u
 }
 
 // ClearComments clears all "comments" edges to the TicketComment entity.
-func (tu *TicketUpdate) ClearComments() *TicketUpdate {
-	tu.mutation.ClearComments()
-	return tu
+func (_u *TicketUpdate) ClearComments() *TicketUpdate {
+	_u.mutation.ClearComments()
+	return _u
 }
 
 // RemoveCommentIDs removes the "comments" edge to TicketComment entities by IDs.
-func (tu *TicketUpdate) RemoveCommentIDs(ids ...uuid.UUID) *TicketUpdate {
-	tu.mutation.RemoveCommentIDs(ids...)
-	return tu
+func (_u *TicketUpdate) RemoveCommentIDs(ids ...uuid.UUID) *TicketUpdate {
+	_u.mutation.RemoveCommentIDs(ids...)
+	return _u
 }
 
 // RemoveComments removes "comments" edges to TicketComment entities.
-func (tu *TicketUpdate) RemoveComments(t ...*TicketComment) *TicketUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *TicketUpdate) RemoveComments(v ...*TicketComment) *TicketUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tu.RemoveCommentIDs(ids...)
+	return _u.RemoveCommentIDs(ids...)
 }
 
 // ClearAttachments clears all "attachments" edges to the TicketAttachment entity.
-func (tu *TicketUpdate) ClearAttachments() *TicketUpdate {
-	tu.mutation.ClearAttachments()
-	return tu
+func (_u *TicketUpdate) ClearAttachments() *TicketUpdate {
+	_u.mutation.ClearAttachments()
+	return _u
 }
 
 // RemoveAttachmentIDs removes the "attachments" edge to TicketAttachment entities by IDs.
-func (tu *TicketUpdate) RemoveAttachmentIDs(ids ...uuid.UUID) *TicketUpdate {
-	tu.mutation.RemoveAttachmentIDs(ids...)
-	return tu
+func (_u *TicketUpdate) RemoveAttachmentIDs(ids ...uuid.UUID) *TicketUpdate {
+	_u.mutation.RemoveAttachmentIDs(ids...)
+	return _u
 }
 
 // RemoveAttachments removes "attachments" edges to TicketAttachment entities.
-func (tu *TicketUpdate) RemoveAttachments(t ...*TicketAttachment) *TicketUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *TicketUpdate) RemoveAttachments(v ...*TicketAttachment) *TicketUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tu.RemoveAttachmentIDs(ids...)
+	return _u.RemoveAttachmentIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (tu *TicketUpdate) Save(ctx context.Context) (int, error) {
-	tu.defaults()
-	return withHooks(ctx, tu.sqlSave, tu.mutation, tu.hooks)
+func (_u *TicketUpdate) Save(ctx context.Context) (int, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (tu *TicketUpdate) SaveX(ctx context.Context) int {
-	affected, err := tu.Save(ctx)
+func (_u *TicketUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -606,59 +606,59 @@ func (tu *TicketUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (tu *TicketUpdate) Exec(ctx context.Context) error {
-	_, err := tu.Save(ctx)
+func (_u *TicketUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tu *TicketUpdate) ExecX(ctx context.Context) {
-	if err := tu.Exec(ctx); err != nil {
+func (_u *TicketUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (tu *TicketUpdate) defaults() {
-	if _, ok := tu.mutation.UpdatedAt(); !ok {
+func (_u *TicketUpdate) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := ticket.UpdateDefaultUpdatedAt()
-		tu.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (tu *TicketUpdate) check() error {
-	if v, ok := tu.mutation.TicketNumber(); ok {
+func (_u *TicketUpdate) check() error {
+	if v, ok := _u.mutation.TicketNumber(); ok {
 		if err := ticket.TicketNumberValidator(v); err != nil {
 			return &ValidationError{Name: "ticket_number", err: fmt.Errorf(`ent: validator failed for field "Ticket.ticket_number": %w`, err)}
 		}
 	}
-	if v, ok := tu.mutation.Subject(); ok {
+	if v, ok := _u.mutation.Subject(); ok {
 		if err := ticket.SubjectValidator(v); err != nil {
 			return &ValidationError{Name: "subject", err: fmt.Errorf(`ent: validator failed for field "Ticket.subject": %w`, err)}
 		}
 	}
-	if v, ok := tu.mutation.Description(); ok {
+	if v, ok := _u.mutation.Description(); ok {
 		if err := ticket.DescriptionValidator(v); err != nil {
 			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Ticket.description": %w`, err)}
 		}
 	}
-	if v, ok := tu.mutation.Status(); ok {
+	if v, ok := _u.mutation.Status(); ok {
 		if err := ticket.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Ticket.status": %w`, err)}
 		}
 	}
-	if v, ok := tu.mutation.Priority(); ok {
+	if v, ok := _u.mutation.Priority(); ok {
 		if err := ticket.PriorityValidator(v); err != nil {
 			return &ValidationError{Name: "priority", err: fmt.Errorf(`ent: validator failed for field "Ticket.priority": %w`, err)}
 		}
 	}
-	if v, ok := tu.mutation.Channel(); ok {
+	if v, ok := _u.mutation.Channel(); ok {
 		if err := ticket.ChannelValidator(v); err != nil {
 			return &ValidationError{Name: "channel", err: fmt.Errorf(`ent: validator failed for field "Ticket.channel": %w`, err)}
 		}
 	}
-	if v, ok := tu.mutation.ExternalReference(); ok {
+	if v, ok := _u.mutation.ExternalReference(); ok {
 		if err := ticket.ExternalReferenceValidator(v); err != nil {
 			return &ValidationError{Name: "external_reference", err: fmt.Errorf(`ent: validator failed for field "Ticket.external_reference": %w`, err)}
 		}
@@ -666,141 +666,141 @@ func (tu *TicketUpdate) check() error {
 	return nil
 }
 
-func (tu *TicketUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := tu.check(); err != nil {
-		return n, err
+func (_u *TicketUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(ticket.Table, ticket.Columns, sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeUUID))
-	if ps := tu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := tu.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(ticket.FieldTenantID, field.TypeUUID, value)
 	}
-	if value, ok := tu.mutation.TicketNumber(); ok {
+	if value, ok := _u.mutation.TicketNumber(); ok {
 		_spec.SetField(ticket.FieldTicketNumber, field.TypeString, value)
 	}
-	if value, ok := tu.mutation.CustomerID(); ok {
+	if value, ok := _u.mutation.CustomerID(); ok {
 		_spec.SetField(ticket.FieldCustomerID, field.TypeUUID, value)
 	}
-	if value, ok := tu.mutation.AssignedTeamID(); ok {
+	if value, ok := _u.mutation.AssignedTeamID(); ok {
 		_spec.SetField(ticket.FieldAssignedTeamID, field.TypeUUID, value)
 	}
-	if tu.mutation.AssignedTeamIDCleared() {
+	if _u.mutation.AssignedTeamIDCleared() {
 		_spec.ClearField(ticket.FieldAssignedTeamID, field.TypeUUID)
 	}
-	if value, ok := tu.mutation.Subject(); ok {
+	if value, ok := _u.mutation.Subject(); ok {
 		_spec.SetField(ticket.FieldSubject, field.TypeString, value)
 	}
-	if value, ok := tu.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(ticket.FieldDescription, field.TypeString, value)
 	}
-	if value, ok := tu.mutation.Status(); ok {
+	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(ticket.FieldStatus, field.TypeEnum, value)
 	}
-	if value, ok := tu.mutation.Priority(); ok {
+	if value, ok := _u.mutation.Priority(); ok {
 		_spec.SetField(ticket.FieldPriority, field.TypeEnum, value)
 	}
-	if value, ok := tu.mutation.Channel(); ok {
+	if value, ok := _u.mutation.Channel(); ok {
 		_spec.SetField(ticket.FieldChannel, field.TypeEnum, value)
 	}
-	if value, ok := tu.mutation.OrderID(); ok {
+	if value, ok := _u.mutation.OrderID(); ok {
 		_spec.SetField(ticket.FieldOrderID, field.TypeUUID, value)
 	}
-	if tu.mutation.OrderIDCleared() {
+	if _u.mutation.OrderIDCleared() {
 		_spec.ClearField(ticket.FieldOrderID, field.TypeUUID)
 	}
-	if value, ok := tu.mutation.ExternalReference(); ok {
+	if value, ok := _u.mutation.ExternalReference(); ok {
 		_spec.SetField(ticket.FieldExternalReference, field.TypeString, value)
 	}
-	if tu.mutation.ExternalReferenceCleared() {
+	if _u.mutation.ExternalReferenceCleared() {
 		_spec.ClearField(ticket.FieldExternalReference, field.TypeString)
 	}
-	if value, ok := tu.mutation.SLAResponseDueAt(); ok {
+	if value, ok := _u.mutation.SLAResponseDueAt(); ok {
 		_spec.SetField(ticket.FieldSLAResponseDueAt, field.TypeTime, value)
 	}
-	if tu.mutation.SLAResponseDueAtCleared() {
+	if _u.mutation.SLAResponseDueAtCleared() {
 		_spec.ClearField(ticket.FieldSLAResponseDueAt, field.TypeTime)
 	}
-	if value, ok := tu.mutation.SLAResolutionDueAt(); ok {
+	if value, ok := _u.mutation.SLAResolutionDueAt(); ok {
 		_spec.SetField(ticket.FieldSLAResolutionDueAt, field.TypeTime, value)
 	}
-	if tu.mutation.SLAResolutionDueAtCleared() {
+	if _u.mutation.SLAResolutionDueAtCleared() {
 		_spec.ClearField(ticket.FieldSLAResolutionDueAt, field.TypeTime)
 	}
-	if value, ok := tu.mutation.SLAResponseBreached(); ok {
+	if value, ok := _u.mutation.SLAResponseBreached(); ok {
 		_spec.SetField(ticket.FieldSLAResponseBreached, field.TypeBool, value)
 	}
-	if value, ok := tu.mutation.SLAResolutionBreached(); ok {
+	if value, ok := _u.mutation.SLAResolutionBreached(); ok {
 		_spec.SetField(ticket.FieldSLAResolutionBreached, field.TypeBool, value)
 	}
-	if value, ok := tu.mutation.FirstResponseAt(); ok {
+	if value, ok := _u.mutation.FirstResponseAt(); ok {
 		_spec.SetField(ticket.FieldFirstResponseAt, field.TypeTime, value)
 	}
-	if tu.mutation.FirstResponseAtCleared() {
+	if _u.mutation.FirstResponseAtCleared() {
 		_spec.ClearField(ticket.FieldFirstResponseAt, field.TypeTime)
 	}
-	if value, ok := tu.mutation.ResolvedAt(); ok {
+	if value, ok := _u.mutation.ResolvedAt(); ok {
 		_spec.SetField(ticket.FieldResolvedAt, field.TypeTime, value)
 	}
-	if tu.mutation.ResolvedAtCleared() {
+	if _u.mutation.ResolvedAtCleared() {
 		_spec.ClearField(ticket.FieldResolvedAt, field.TypeTime)
 	}
-	if value, ok := tu.mutation.ClosedAt(); ok {
+	if value, ok := _u.mutation.ClosedAt(); ok {
 		_spec.SetField(ticket.FieldClosedAt, field.TypeTime, value)
 	}
-	if tu.mutation.ClosedAtCleared() {
+	if _u.mutation.ClosedAtCleared() {
 		_spec.ClearField(ticket.FieldClosedAt, field.TypeTime)
 	}
-	if value, ok := tu.mutation.ReopenedAt(); ok {
+	if value, ok := _u.mutation.ReopenedAt(); ok {
 		_spec.SetField(ticket.FieldReopenedAt, field.TypeTime, value)
 	}
-	if tu.mutation.ReopenedAtCleared() {
+	if _u.mutation.ReopenedAtCleared() {
 		_spec.ClearField(ticket.FieldReopenedAt, field.TypeTime)
 	}
-	if value, ok := tu.mutation.EscalationLevel(); ok {
+	if value, ok := _u.mutation.EscalationLevel(); ok {
 		_spec.SetField(ticket.FieldEscalationLevel, field.TypeInt, value)
 	}
-	if value, ok := tu.mutation.AddedEscalationLevel(); ok {
+	if value, ok := _u.mutation.AddedEscalationLevel(); ok {
 		_spec.AddField(ticket.FieldEscalationLevel, field.TypeInt, value)
 	}
-	if value, ok := tu.mutation.EscalatedAt(); ok {
+	if value, ok := _u.mutation.EscalatedAt(); ok {
 		_spec.SetField(ticket.FieldEscalatedAt, field.TypeTime, value)
 	}
-	if tu.mutation.EscalatedAtCleared() {
+	if _u.mutation.EscalatedAtCleared() {
 		_spec.ClearField(ticket.FieldEscalatedAt, field.TypeTime)
 	}
-	if value, ok := tu.mutation.Tags(); ok {
+	if value, ok := _u.mutation.Tags(); ok {
 		_spec.SetField(ticket.FieldTags, field.TypeJSON, value)
 	}
-	if value, ok := tu.mutation.AppendedTags(); ok {
+	if value, ok := _u.mutation.AppendedTags(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, ticket.FieldTags, value)
 		})
 	}
-	if tu.mutation.TagsCleared() {
+	if _u.mutation.TagsCleared() {
 		_spec.ClearField(ticket.FieldTags, field.TypeJSON)
 	}
-	if value, ok := tu.mutation.Metadata(); ok {
+	if value, ok := _u.mutation.Metadata(); ok {
 		_spec.SetField(ticket.FieldMetadata, field.TypeJSON, value)
 	}
-	if tu.mutation.MetadataCleared() {
+	if _u.mutation.MetadataCleared() {
 		_spec.ClearField(ticket.FieldMetadata, field.TypeJSON)
 	}
-	if value, ok := tu.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(ticket.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if value, ok := tu.mutation.DeletedAt(); ok {
+	if value, ok := _u.mutation.DeletedAt(); ok {
 		_spec.SetField(ticket.FieldDeletedAt, field.TypeTime, value)
 	}
-	if tu.mutation.DeletedAtCleared() {
+	if _u.mutation.DeletedAtCleared() {
 		_spec.ClearField(ticket.FieldDeletedAt, field.TypeTime)
 	}
-	if tu.mutation.CategoryCleared() {
+	if _u.mutation.CategoryCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -813,7 +813,7 @@ func (tu *TicketUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.CategoryIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.CategoryIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -829,7 +829,7 @@ func (tu *TicketUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tu.mutation.AssignedAgentCleared() {
+	if _u.mutation.AssignedAgentCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -842,7 +842,7 @@ func (tu *TicketUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.AssignedAgentIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.AssignedAgentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -858,7 +858,7 @@ func (tu *TicketUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tu.mutation.CommentsCleared() {
+	if _u.mutation.CommentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -871,7 +871,7 @@ func (tu *TicketUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.RemovedCommentsIDs(); len(nodes) > 0 && !tu.mutation.CommentsCleared() {
+	if nodes := _u.mutation.RemovedCommentsIDs(); len(nodes) > 0 && !_u.mutation.CommentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -887,7 +887,7 @@ func (tu *TicketUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.CommentsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.CommentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -903,7 +903,7 @@ func (tu *TicketUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tu.mutation.AttachmentsCleared() {
+	if _u.mutation.AttachmentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -916,7 +916,7 @@ func (tu *TicketUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.RemovedAttachmentsIDs(); len(nodes) > 0 && !tu.mutation.AttachmentsCleared() {
+	if nodes := _u.mutation.RemovedAttachmentsIDs(); len(nodes) > 0 && !_u.mutation.AttachmentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -932,7 +932,7 @@ func (tu *TicketUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.AttachmentsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.AttachmentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -948,7 +948,7 @@ func (tu *TicketUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{ticket.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -956,8 +956,8 @@ func (tu *TicketUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
-	tu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // TicketUpdateOne is the builder for updating a single Ticket entity.
@@ -969,583 +969,583 @@ type TicketUpdateOne struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (tuo *TicketUpdateOne) SetTenantID(u uuid.UUID) *TicketUpdateOne {
-	tuo.mutation.SetTenantID(u)
-	return tuo
+func (_u *TicketUpdateOne) SetTenantID(v uuid.UUID) *TicketUpdateOne {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableTenantID(u *uuid.UUID) *TicketUpdateOne {
-	if u != nil {
-		tuo.SetTenantID(*u)
+func (_u *TicketUpdateOne) SetNillableTenantID(v *uuid.UUID) *TicketUpdateOne {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return tuo
+	return _u
 }
 
 // SetTicketNumber sets the "ticket_number" field.
-func (tuo *TicketUpdateOne) SetTicketNumber(s string) *TicketUpdateOne {
-	tuo.mutation.SetTicketNumber(s)
-	return tuo
+func (_u *TicketUpdateOne) SetTicketNumber(v string) *TicketUpdateOne {
+	_u.mutation.SetTicketNumber(v)
+	return _u
 }
 
 // SetNillableTicketNumber sets the "ticket_number" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableTicketNumber(s *string) *TicketUpdateOne {
-	if s != nil {
-		tuo.SetTicketNumber(*s)
+func (_u *TicketUpdateOne) SetNillableTicketNumber(v *string) *TicketUpdateOne {
+	if v != nil {
+		_u.SetTicketNumber(*v)
 	}
-	return tuo
+	return _u
 }
 
 // SetCustomerID sets the "customer_id" field.
-func (tuo *TicketUpdateOne) SetCustomerID(u uuid.UUID) *TicketUpdateOne {
-	tuo.mutation.SetCustomerID(u)
-	return tuo
+func (_u *TicketUpdateOne) SetCustomerID(v uuid.UUID) *TicketUpdateOne {
+	_u.mutation.SetCustomerID(v)
+	return _u
 }
 
 // SetNillableCustomerID sets the "customer_id" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableCustomerID(u *uuid.UUID) *TicketUpdateOne {
-	if u != nil {
-		tuo.SetCustomerID(*u)
+func (_u *TicketUpdateOne) SetNillableCustomerID(v *uuid.UUID) *TicketUpdateOne {
+	if v != nil {
+		_u.SetCustomerID(*v)
 	}
-	return tuo
+	return _u
 }
 
 // SetCategoryID sets the "category_id" field.
-func (tuo *TicketUpdateOne) SetCategoryID(u uuid.UUID) *TicketUpdateOne {
-	tuo.mutation.SetCategoryID(u)
-	return tuo
+func (_u *TicketUpdateOne) SetCategoryID(v uuid.UUID) *TicketUpdateOne {
+	_u.mutation.SetCategoryID(v)
+	return _u
 }
 
 // SetNillableCategoryID sets the "category_id" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableCategoryID(u *uuid.UUID) *TicketUpdateOne {
-	if u != nil {
-		tuo.SetCategoryID(*u)
+func (_u *TicketUpdateOne) SetNillableCategoryID(v *uuid.UUID) *TicketUpdateOne {
+	if v != nil {
+		_u.SetCategoryID(*v)
 	}
-	return tuo
+	return _u
 }
 
 // ClearCategoryID clears the value of the "category_id" field.
-func (tuo *TicketUpdateOne) ClearCategoryID() *TicketUpdateOne {
-	tuo.mutation.ClearCategoryID()
-	return tuo
+func (_u *TicketUpdateOne) ClearCategoryID() *TicketUpdateOne {
+	_u.mutation.ClearCategoryID()
+	return _u
 }
 
 // SetAssignedAgentID sets the "assigned_agent_id" field.
-func (tuo *TicketUpdateOne) SetAssignedAgentID(u uuid.UUID) *TicketUpdateOne {
-	tuo.mutation.SetAssignedAgentID(u)
-	return tuo
+func (_u *TicketUpdateOne) SetAssignedAgentID(v uuid.UUID) *TicketUpdateOne {
+	_u.mutation.SetAssignedAgentID(v)
+	return _u
 }
 
 // SetNillableAssignedAgentID sets the "assigned_agent_id" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableAssignedAgentID(u *uuid.UUID) *TicketUpdateOne {
-	if u != nil {
-		tuo.SetAssignedAgentID(*u)
+func (_u *TicketUpdateOne) SetNillableAssignedAgentID(v *uuid.UUID) *TicketUpdateOne {
+	if v != nil {
+		_u.SetAssignedAgentID(*v)
 	}
-	return tuo
+	return _u
 }
 
 // ClearAssignedAgentID clears the value of the "assigned_agent_id" field.
-func (tuo *TicketUpdateOne) ClearAssignedAgentID() *TicketUpdateOne {
-	tuo.mutation.ClearAssignedAgentID()
-	return tuo
+func (_u *TicketUpdateOne) ClearAssignedAgentID() *TicketUpdateOne {
+	_u.mutation.ClearAssignedAgentID()
+	return _u
 }
 
 // SetAssignedTeamID sets the "assigned_team_id" field.
-func (tuo *TicketUpdateOne) SetAssignedTeamID(u uuid.UUID) *TicketUpdateOne {
-	tuo.mutation.SetAssignedTeamID(u)
-	return tuo
+func (_u *TicketUpdateOne) SetAssignedTeamID(v uuid.UUID) *TicketUpdateOne {
+	_u.mutation.SetAssignedTeamID(v)
+	return _u
 }
 
 // SetNillableAssignedTeamID sets the "assigned_team_id" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableAssignedTeamID(u *uuid.UUID) *TicketUpdateOne {
-	if u != nil {
-		tuo.SetAssignedTeamID(*u)
+func (_u *TicketUpdateOne) SetNillableAssignedTeamID(v *uuid.UUID) *TicketUpdateOne {
+	if v != nil {
+		_u.SetAssignedTeamID(*v)
 	}
-	return tuo
+	return _u
 }
 
 // ClearAssignedTeamID clears the value of the "assigned_team_id" field.
-func (tuo *TicketUpdateOne) ClearAssignedTeamID() *TicketUpdateOne {
-	tuo.mutation.ClearAssignedTeamID()
-	return tuo
+func (_u *TicketUpdateOne) ClearAssignedTeamID() *TicketUpdateOne {
+	_u.mutation.ClearAssignedTeamID()
+	return _u
 }
 
 // SetSubject sets the "subject" field.
-func (tuo *TicketUpdateOne) SetSubject(s string) *TicketUpdateOne {
-	tuo.mutation.SetSubject(s)
-	return tuo
+func (_u *TicketUpdateOne) SetSubject(v string) *TicketUpdateOne {
+	_u.mutation.SetSubject(v)
+	return _u
 }
 
 // SetNillableSubject sets the "subject" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableSubject(s *string) *TicketUpdateOne {
-	if s != nil {
-		tuo.SetSubject(*s)
+func (_u *TicketUpdateOne) SetNillableSubject(v *string) *TicketUpdateOne {
+	if v != nil {
+		_u.SetSubject(*v)
 	}
-	return tuo
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (tuo *TicketUpdateOne) SetDescription(s string) *TicketUpdateOne {
-	tuo.mutation.SetDescription(s)
-	return tuo
+func (_u *TicketUpdateOne) SetDescription(v string) *TicketUpdateOne {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableDescription(s *string) *TicketUpdateOne {
-	if s != nil {
-		tuo.SetDescription(*s)
+func (_u *TicketUpdateOne) SetNillableDescription(v *string) *TicketUpdateOne {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return tuo
+	return _u
 }
 
 // SetStatus sets the "status" field.
-func (tuo *TicketUpdateOne) SetStatus(t ticket.Status) *TicketUpdateOne {
-	tuo.mutation.SetStatus(t)
-	return tuo
+func (_u *TicketUpdateOne) SetStatus(v ticket.Status) *TicketUpdateOne {
+	_u.mutation.SetStatus(v)
+	return _u
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableStatus(t *ticket.Status) *TicketUpdateOne {
-	if t != nil {
-		tuo.SetStatus(*t)
+func (_u *TicketUpdateOne) SetNillableStatus(v *ticket.Status) *TicketUpdateOne {
+	if v != nil {
+		_u.SetStatus(*v)
 	}
-	return tuo
+	return _u
 }
 
 // SetPriority sets the "priority" field.
-func (tuo *TicketUpdateOne) SetPriority(t ticket.Priority) *TicketUpdateOne {
-	tuo.mutation.SetPriority(t)
-	return tuo
+func (_u *TicketUpdateOne) SetPriority(v ticket.Priority) *TicketUpdateOne {
+	_u.mutation.SetPriority(v)
+	return _u
 }
 
 // SetNillablePriority sets the "priority" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillablePriority(t *ticket.Priority) *TicketUpdateOne {
-	if t != nil {
-		tuo.SetPriority(*t)
+func (_u *TicketUpdateOne) SetNillablePriority(v *ticket.Priority) *TicketUpdateOne {
+	if v != nil {
+		_u.SetPriority(*v)
 	}
-	return tuo
+	return _u
 }
 
 // SetChannel sets the "channel" field.
-func (tuo *TicketUpdateOne) SetChannel(t ticket.Channel) *TicketUpdateOne {
-	tuo.mutation.SetChannel(t)
-	return tuo
+func (_u *TicketUpdateOne) SetChannel(v ticket.Channel) *TicketUpdateOne {
+	_u.mutation.SetChannel(v)
+	return _u
 }
 
 // SetNillableChannel sets the "channel" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableChannel(t *ticket.Channel) *TicketUpdateOne {
-	if t != nil {
-		tuo.SetChannel(*t)
+func (_u *TicketUpdateOne) SetNillableChannel(v *ticket.Channel) *TicketUpdateOne {
+	if v != nil {
+		_u.SetChannel(*v)
 	}
-	return tuo
+	return _u
 }
 
 // SetOrderID sets the "order_id" field.
-func (tuo *TicketUpdateOne) SetOrderID(u uuid.UUID) *TicketUpdateOne {
-	tuo.mutation.SetOrderID(u)
-	return tuo
+func (_u *TicketUpdateOne) SetOrderID(v uuid.UUID) *TicketUpdateOne {
+	_u.mutation.SetOrderID(v)
+	return _u
 }
 
 // SetNillableOrderID sets the "order_id" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableOrderID(u *uuid.UUID) *TicketUpdateOne {
-	if u != nil {
-		tuo.SetOrderID(*u)
+func (_u *TicketUpdateOne) SetNillableOrderID(v *uuid.UUID) *TicketUpdateOne {
+	if v != nil {
+		_u.SetOrderID(*v)
 	}
-	return tuo
+	return _u
 }
 
 // ClearOrderID clears the value of the "order_id" field.
-func (tuo *TicketUpdateOne) ClearOrderID() *TicketUpdateOne {
-	tuo.mutation.ClearOrderID()
-	return tuo
+func (_u *TicketUpdateOne) ClearOrderID() *TicketUpdateOne {
+	_u.mutation.ClearOrderID()
+	return _u
 }
 
 // SetExternalReference sets the "external_reference" field.
-func (tuo *TicketUpdateOne) SetExternalReference(s string) *TicketUpdateOne {
-	tuo.mutation.SetExternalReference(s)
-	return tuo
+func (_u *TicketUpdateOne) SetExternalReference(v string) *TicketUpdateOne {
+	_u.mutation.SetExternalReference(v)
+	return _u
 }
 
 // SetNillableExternalReference sets the "external_reference" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableExternalReference(s *string) *TicketUpdateOne {
-	if s != nil {
-		tuo.SetExternalReference(*s)
+func (_u *TicketUpdateOne) SetNillableExternalReference(v *string) *TicketUpdateOne {
+	if v != nil {
+		_u.SetExternalReference(*v)
 	}
-	return tuo
+	return _u
 }
 
 // ClearExternalReference clears the value of the "external_reference" field.
-func (tuo *TicketUpdateOne) ClearExternalReference() *TicketUpdateOne {
-	tuo.mutation.ClearExternalReference()
-	return tuo
+func (_u *TicketUpdateOne) ClearExternalReference() *TicketUpdateOne {
+	_u.mutation.ClearExternalReference()
+	return _u
 }
 
 // SetSLAResponseDueAt sets the "sla_response_due_at" field.
-func (tuo *TicketUpdateOne) SetSLAResponseDueAt(t time.Time) *TicketUpdateOne {
-	tuo.mutation.SetSLAResponseDueAt(t)
-	return tuo
+func (_u *TicketUpdateOne) SetSLAResponseDueAt(v time.Time) *TicketUpdateOne {
+	_u.mutation.SetSLAResponseDueAt(v)
+	return _u
 }
 
 // SetNillableSLAResponseDueAt sets the "sla_response_due_at" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableSLAResponseDueAt(t *time.Time) *TicketUpdateOne {
-	if t != nil {
-		tuo.SetSLAResponseDueAt(*t)
+func (_u *TicketUpdateOne) SetNillableSLAResponseDueAt(v *time.Time) *TicketUpdateOne {
+	if v != nil {
+		_u.SetSLAResponseDueAt(*v)
 	}
-	return tuo
+	return _u
 }
 
 // ClearSLAResponseDueAt clears the value of the "sla_response_due_at" field.
-func (tuo *TicketUpdateOne) ClearSLAResponseDueAt() *TicketUpdateOne {
-	tuo.mutation.ClearSLAResponseDueAt()
-	return tuo
+func (_u *TicketUpdateOne) ClearSLAResponseDueAt() *TicketUpdateOne {
+	_u.mutation.ClearSLAResponseDueAt()
+	return _u
 }
 
 // SetSLAResolutionDueAt sets the "sla_resolution_due_at" field.
-func (tuo *TicketUpdateOne) SetSLAResolutionDueAt(t time.Time) *TicketUpdateOne {
-	tuo.mutation.SetSLAResolutionDueAt(t)
-	return tuo
+func (_u *TicketUpdateOne) SetSLAResolutionDueAt(v time.Time) *TicketUpdateOne {
+	_u.mutation.SetSLAResolutionDueAt(v)
+	return _u
 }
 
 // SetNillableSLAResolutionDueAt sets the "sla_resolution_due_at" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableSLAResolutionDueAt(t *time.Time) *TicketUpdateOne {
-	if t != nil {
-		tuo.SetSLAResolutionDueAt(*t)
+func (_u *TicketUpdateOne) SetNillableSLAResolutionDueAt(v *time.Time) *TicketUpdateOne {
+	if v != nil {
+		_u.SetSLAResolutionDueAt(*v)
 	}
-	return tuo
+	return _u
 }
 
 // ClearSLAResolutionDueAt clears the value of the "sla_resolution_due_at" field.
-func (tuo *TicketUpdateOne) ClearSLAResolutionDueAt() *TicketUpdateOne {
-	tuo.mutation.ClearSLAResolutionDueAt()
-	return tuo
+func (_u *TicketUpdateOne) ClearSLAResolutionDueAt() *TicketUpdateOne {
+	_u.mutation.ClearSLAResolutionDueAt()
+	return _u
 }
 
 // SetSLAResponseBreached sets the "sla_response_breached" field.
-func (tuo *TicketUpdateOne) SetSLAResponseBreached(b bool) *TicketUpdateOne {
-	tuo.mutation.SetSLAResponseBreached(b)
-	return tuo
+func (_u *TicketUpdateOne) SetSLAResponseBreached(v bool) *TicketUpdateOne {
+	_u.mutation.SetSLAResponseBreached(v)
+	return _u
 }
 
 // SetNillableSLAResponseBreached sets the "sla_response_breached" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableSLAResponseBreached(b *bool) *TicketUpdateOne {
-	if b != nil {
-		tuo.SetSLAResponseBreached(*b)
+func (_u *TicketUpdateOne) SetNillableSLAResponseBreached(v *bool) *TicketUpdateOne {
+	if v != nil {
+		_u.SetSLAResponseBreached(*v)
 	}
-	return tuo
+	return _u
 }
 
 // SetSLAResolutionBreached sets the "sla_resolution_breached" field.
-func (tuo *TicketUpdateOne) SetSLAResolutionBreached(b bool) *TicketUpdateOne {
-	tuo.mutation.SetSLAResolutionBreached(b)
-	return tuo
+func (_u *TicketUpdateOne) SetSLAResolutionBreached(v bool) *TicketUpdateOne {
+	_u.mutation.SetSLAResolutionBreached(v)
+	return _u
 }
 
 // SetNillableSLAResolutionBreached sets the "sla_resolution_breached" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableSLAResolutionBreached(b *bool) *TicketUpdateOne {
-	if b != nil {
-		tuo.SetSLAResolutionBreached(*b)
+func (_u *TicketUpdateOne) SetNillableSLAResolutionBreached(v *bool) *TicketUpdateOne {
+	if v != nil {
+		_u.SetSLAResolutionBreached(*v)
 	}
-	return tuo
+	return _u
 }
 
 // SetFirstResponseAt sets the "first_response_at" field.
-func (tuo *TicketUpdateOne) SetFirstResponseAt(t time.Time) *TicketUpdateOne {
-	tuo.mutation.SetFirstResponseAt(t)
-	return tuo
+func (_u *TicketUpdateOne) SetFirstResponseAt(v time.Time) *TicketUpdateOne {
+	_u.mutation.SetFirstResponseAt(v)
+	return _u
 }
 
 // SetNillableFirstResponseAt sets the "first_response_at" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableFirstResponseAt(t *time.Time) *TicketUpdateOne {
-	if t != nil {
-		tuo.SetFirstResponseAt(*t)
+func (_u *TicketUpdateOne) SetNillableFirstResponseAt(v *time.Time) *TicketUpdateOne {
+	if v != nil {
+		_u.SetFirstResponseAt(*v)
 	}
-	return tuo
+	return _u
 }
 
 // ClearFirstResponseAt clears the value of the "first_response_at" field.
-func (tuo *TicketUpdateOne) ClearFirstResponseAt() *TicketUpdateOne {
-	tuo.mutation.ClearFirstResponseAt()
-	return tuo
+func (_u *TicketUpdateOne) ClearFirstResponseAt() *TicketUpdateOne {
+	_u.mutation.ClearFirstResponseAt()
+	return _u
 }
 
 // SetResolvedAt sets the "resolved_at" field.
-func (tuo *TicketUpdateOne) SetResolvedAt(t time.Time) *TicketUpdateOne {
-	tuo.mutation.SetResolvedAt(t)
-	return tuo
+func (_u *TicketUpdateOne) SetResolvedAt(v time.Time) *TicketUpdateOne {
+	_u.mutation.SetResolvedAt(v)
+	return _u
 }
 
 // SetNillableResolvedAt sets the "resolved_at" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableResolvedAt(t *time.Time) *TicketUpdateOne {
-	if t != nil {
-		tuo.SetResolvedAt(*t)
+func (_u *TicketUpdateOne) SetNillableResolvedAt(v *time.Time) *TicketUpdateOne {
+	if v != nil {
+		_u.SetResolvedAt(*v)
 	}
-	return tuo
+	return _u
 }
 
 // ClearResolvedAt clears the value of the "resolved_at" field.
-func (tuo *TicketUpdateOne) ClearResolvedAt() *TicketUpdateOne {
-	tuo.mutation.ClearResolvedAt()
-	return tuo
+func (_u *TicketUpdateOne) ClearResolvedAt() *TicketUpdateOne {
+	_u.mutation.ClearResolvedAt()
+	return _u
 }
 
 // SetClosedAt sets the "closed_at" field.
-func (tuo *TicketUpdateOne) SetClosedAt(t time.Time) *TicketUpdateOne {
-	tuo.mutation.SetClosedAt(t)
-	return tuo
+func (_u *TicketUpdateOne) SetClosedAt(v time.Time) *TicketUpdateOne {
+	_u.mutation.SetClosedAt(v)
+	return _u
 }
 
 // SetNillableClosedAt sets the "closed_at" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableClosedAt(t *time.Time) *TicketUpdateOne {
-	if t != nil {
-		tuo.SetClosedAt(*t)
+func (_u *TicketUpdateOne) SetNillableClosedAt(v *time.Time) *TicketUpdateOne {
+	if v != nil {
+		_u.SetClosedAt(*v)
 	}
-	return tuo
+	return _u
 }
 
 // ClearClosedAt clears the value of the "closed_at" field.
-func (tuo *TicketUpdateOne) ClearClosedAt() *TicketUpdateOne {
-	tuo.mutation.ClearClosedAt()
-	return tuo
+func (_u *TicketUpdateOne) ClearClosedAt() *TicketUpdateOne {
+	_u.mutation.ClearClosedAt()
+	return _u
 }
 
 // SetReopenedAt sets the "reopened_at" field.
-func (tuo *TicketUpdateOne) SetReopenedAt(t time.Time) *TicketUpdateOne {
-	tuo.mutation.SetReopenedAt(t)
-	return tuo
+func (_u *TicketUpdateOne) SetReopenedAt(v time.Time) *TicketUpdateOne {
+	_u.mutation.SetReopenedAt(v)
+	return _u
 }
 
 // SetNillableReopenedAt sets the "reopened_at" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableReopenedAt(t *time.Time) *TicketUpdateOne {
-	if t != nil {
-		tuo.SetReopenedAt(*t)
+func (_u *TicketUpdateOne) SetNillableReopenedAt(v *time.Time) *TicketUpdateOne {
+	if v != nil {
+		_u.SetReopenedAt(*v)
 	}
-	return tuo
+	return _u
 }
 
 // ClearReopenedAt clears the value of the "reopened_at" field.
-func (tuo *TicketUpdateOne) ClearReopenedAt() *TicketUpdateOne {
-	tuo.mutation.ClearReopenedAt()
-	return tuo
+func (_u *TicketUpdateOne) ClearReopenedAt() *TicketUpdateOne {
+	_u.mutation.ClearReopenedAt()
+	return _u
 }
 
 // SetEscalationLevel sets the "escalation_level" field.
-func (tuo *TicketUpdateOne) SetEscalationLevel(i int) *TicketUpdateOne {
-	tuo.mutation.ResetEscalationLevel()
-	tuo.mutation.SetEscalationLevel(i)
-	return tuo
+func (_u *TicketUpdateOne) SetEscalationLevel(v int) *TicketUpdateOne {
+	_u.mutation.ResetEscalationLevel()
+	_u.mutation.SetEscalationLevel(v)
+	return _u
 }
 
 // SetNillableEscalationLevel sets the "escalation_level" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableEscalationLevel(i *int) *TicketUpdateOne {
-	if i != nil {
-		tuo.SetEscalationLevel(*i)
+func (_u *TicketUpdateOne) SetNillableEscalationLevel(v *int) *TicketUpdateOne {
+	if v != nil {
+		_u.SetEscalationLevel(*v)
 	}
-	return tuo
+	return _u
 }
 
-// AddEscalationLevel adds i to the "escalation_level" field.
-func (tuo *TicketUpdateOne) AddEscalationLevel(i int) *TicketUpdateOne {
-	tuo.mutation.AddEscalationLevel(i)
-	return tuo
+// AddEscalationLevel adds value to the "escalation_level" field.
+func (_u *TicketUpdateOne) AddEscalationLevel(v int) *TicketUpdateOne {
+	_u.mutation.AddEscalationLevel(v)
+	return _u
 }
 
 // SetEscalatedAt sets the "escalated_at" field.
-func (tuo *TicketUpdateOne) SetEscalatedAt(t time.Time) *TicketUpdateOne {
-	tuo.mutation.SetEscalatedAt(t)
-	return tuo
+func (_u *TicketUpdateOne) SetEscalatedAt(v time.Time) *TicketUpdateOne {
+	_u.mutation.SetEscalatedAt(v)
+	return _u
 }
 
 // SetNillableEscalatedAt sets the "escalated_at" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableEscalatedAt(t *time.Time) *TicketUpdateOne {
-	if t != nil {
-		tuo.SetEscalatedAt(*t)
+func (_u *TicketUpdateOne) SetNillableEscalatedAt(v *time.Time) *TicketUpdateOne {
+	if v != nil {
+		_u.SetEscalatedAt(*v)
 	}
-	return tuo
+	return _u
 }
 
 // ClearEscalatedAt clears the value of the "escalated_at" field.
-func (tuo *TicketUpdateOne) ClearEscalatedAt() *TicketUpdateOne {
-	tuo.mutation.ClearEscalatedAt()
-	return tuo
+func (_u *TicketUpdateOne) ClearEscalatedAt() *TicketUpdateOne {
+	_u.mutation.ClearEscalatedAt()
+	return _u
 }
 
 // SetTags sets the "tags" field.
-func (tuo *TicketUpdateOne) SetTags(s []string) *TicketUpdateOne {
-	tuo.mutation.SetTags(s)
-	return tuo
+func (_u *TicketUpdateOne) SetTags(v []string) *TicketUpdateOne {
+	_u.mutation.SetTags(v)
+	return _u
 }
 
-// AppendTags appends s to the "tags" field.
-func (tuo *TicketUpdateOne) AppendTags(s []string) *TicketUpdateOne {
-	tuo.mutation.AppendTags(s)
-	return tuo
+// AppendTags appends value to the "tags" field.
+func (_u *TicketUpdateOne) AppendTags(v []string) *TicketUpdateOne {
+	_u.mutation.AppendTags(v)
+	return _u
 }
 
 // ClearTags clears the value of the "tags" field.
-func (tuo *TicketUpdateOne) ClearTags() *TicketUpdateOne {
-	tuo.mutation.ClearTags()
-	return tuo
+func (_u *TicketUpdateOne) ClearTags() *TicketUpdateOne {
+	_u.mutation.ClearTags()
+	return _u
 }
 
 // SetMetadata sets the "metadata" field.
-func (tuo *TicketUpdateOne) SetMetadata(m map[string]interface{}) *TicketUpdateOne {
-	tuo.mutation.SetMetadata(m)
-	return tuo
+func (_u *TicketUpdateOne) SetMetadata(v map[string]interface{}) *TicketUpdateOne {
+	_u.mutation.SetMetadata(v)
+	return _u
 }
 
 // ClearMetadata clears the value of the "metadata" field.
-func (tuo *TicketUpdateOne) ClearMetadata() *TicketUpdateOne {
-	tuo.mutation.ClearMetadata()
-	return tuo
+func (_u *TicketUpdateOne) ClearMetadata() *TicketUpdateOne {
+	_u.mutation.ClearMetadata()
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (tuo *TicketUpdateOne) SetUpdatedAt(t time.Time) *TicketUpdateOne {
-	tuo.mutation.SetUpdatedAt(t)
-	return tuo
+func (_u *TicketUpdateOne) SetUpdatedAt(v time.Time) *TicketUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetDeletedAt sets the "deleted_at" field.
-func (tuo *TicketUpdateOne) SetDeletedAt(t time.Time) *TicketUpdateOne {
-	tuo.mutation.SetDeletedAt(t)
-	return tuo
+func (_u *TicketUpdateOne) SetDeletedAt(v time.Time) *TicketUpdateOne {
+	_u.mutation.SetDeletedAt(v)
+	return _u
 }
 
 // SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
-func (tuo *TicketUpdateOne) SetNillableDeletedAt(t *time.Time) *TicketUpdateOne {
-	if t != nil {
-		tuo.SetDeletedAt(*t)
+func (_u *TicketUpdateOne) SetNillableDeletedAt(v *time.Time) *TicketUpdateOne {
+	if v != nil {
+		_u.SetDeletedAt(*v)
 	}
-	return tuo
+	return _u
 }
 
 // ClearDeletedAt clears the value of the "deleted_at" field.
-func (tuo *TicketUpdateOne) ClearDeletedAt() *TicketUpdateOne {
-	tuo.mutation.ClearDeletedAt()
-	return tuo
+func (_u *TicketUpdateOne) ClearDeletedAt() *TicketUpdateOne {
+	_u.mutation.ClearDeletedAt()
+	return _u
 }
 
 // SetCategory sets the "category" edge to the TicketCategory entity.
-func (tuo *TicketUpdateOne) SetCategory(t *TicketCategory) *TicketUpdateOne {
-	return tuo.SetCategoryID(t.ID)
+func (_u *TicketUpdateOne) SetCategory(v *TicketCategory) *TicketUpdateOne {
+	return _u.SetCategoryID(v.ID)
 }
 
 // SetAssignedAgent sets the "assigned_agent" edge to the Agent entity.
-func (tuo *TicketUpdateOne) SetAssignedAgent(a *Agent) *TicketUpdateOne {
-	return tuo.SetAssignedAgentID(a.ID)
+func (_u *TicketUpdateOne) SetAssignedAgent(v *Agent) *TicketUpdateOne {
+	return _u.SetAssignedAgentID(v.ID)
 }
 
 // AddCommentIDs adds the "comments" edge to the TicketComment entity by IDs.
-func (tuo *TicketUpdateOne) AddCommentIDs(ids ...uuid.UUID) *TicketUpdateOne {
-	tuo.mutation.AddCommentIDs(ids...)
-	return tuo
+func (_u *TicketUpdateOne) AddCommentIDs(ids ...uuid.UUID) *TicketUpdateOne {
+	_u.mutation.AddCommentIDs(ids...)
+	return _u
 }
 
 // AddComments adds the "comments" edges to the TicketComment entity.
-func (tuo *TicketUpdateOne) AddComments(t ...*TicketComment) *TicketUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *TicketUpdateOne) AddComments(v ...*TicketComment) *TicketUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tuo.AddCommentIDs(ids...)
+	return _u.AddCommentIDs(ids...)
 }
 
 // AddAttachmentIDs adds the "attachments" edge to the TicketAttachment entity by IDs.
-func (tuo *TicketUpdateOne) AddAttachmentIDs(ids ...uuid.UUID) *TicketUpdateOne {
-	tuo.mutation.AddAttachmentIDs(ids...)
-	return tuo
+func (_u *TicketUpdateOne) AddAttachmentIDs(ids ...uuid.UUID) *TicketUpdateOne {
+	_u.mutation.AddAttachmentIDs(ids...)
+	return _u
 }
 
 // AddAttachments adds the "attachments" edges to the TicketAttachment entity.
-func (tuo *TicketUpdateOne) AddAttachments(t ...*TicketAttachment) *TicketUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *TicketUpdateOne) AddAttachments(v ...*TicketAttachment) *TicketUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tuo.AddAttachmentIDs(ids...)
+	return _u.AddAttachmentIDs(ids...)
 }
 
 // Mutation returns the TicketMutation object of the builder.
-func (tuo *TicketUpdateOne) Mutation() *TicketMutation {
-	return tuo.mutation
+func (_u *TicketUpdateOne) Mutation() *TicketMutation {
+	return _u.mutation
 }
 
 // ClearCategory clears the "category" edge to the TicketCategory entity.
-func (tuo *TicketUpdateOne) ClearCategory() *TicketUpdateOne {
-	tuo.mutation.ClearCategory()
-	return tuo
+func (_u *TicketUpdateOne) ClearCategory() *TicketUpdateOne {
+	_u.mutation.ClearCategory()
+	return _u
 }
 
 // ClearAssignedAgent clears the "assigned_agent" edge to the Agent entity.
-func (tuo *TicketUpdateOne) ClearAssignedAgent() *TicketUpdateOne {
-	tuo.mutation.ClearAssignedAgent()
-	return tuo
+func (_u *TicketUpdateOne) ClearAssignedAgent() *TicketUpdateOne {
+	_u.mutation.ClearAssignedAgent()
+	return _u
 }
 
 // ClearComments clears all "comments" edges to the TicketComment entity.
-func (tuo *TicketUpdateOne) ClearComments() *TicketUpdateOne {
-	tuo.mutation.ClearComments()
-	return tuo
+func (_u *TicketUpdateOne) ClearComments() *TicketUpdateOne {
+	_u.mutation.ClearComments()
+	return _u
 }
 
 // RemoveCommentIDs removes the "comments" edge to TicketComment entities by IDs.
-func (tuo *TicketUpdateOne) RemoveCommentIDs(ids ...uuid.UUID) *TicketUpdateOne {
-	tuo.mutation.RemoveCommentIDs(ids...)
-	return tuo
+func (_u *TicketUpdateOne) RemoveCommentIDs(ids ...uuid.UUID) *TicketUpdateOne {
+	_u.mutation.RemoveCommentIDs(ids...)
+	return _u
 }
 
 // RemoveComments removes "comments" edges to TicketComment entities.
-func (tuo *TicketUpdateOne) RemoveComments(t ...*TicketComment) *TicketUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *TicketUpdateOne) RemoveComments(v ...*TicketComment) *TicketUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tuo.RemoveCommentIDs(ids...)
+	return _u.RemoveCommentIDs(ids...)
 }
 
 // ClearAttachments clears all "attachments" edges to the TicketAttachment entity.
-func (tuo *TicketUpdateOne) ClearAttachments() *TicketUpdateOne {
-	tuo.mutation.ClearAttachments()
-	return tuo
+func (_u *TicketUpdateOne) ClearAttachments() *TicketUpdateOne {
+	_u.mutation.ClearAttachments()
+	return _u
 }
 
 // RemoveAttachmentIDs removes the "attachments" edge to TicketAttachment entities by IDs.
-func (tuo *TicketUpdateOne) RemoveAttachmentIDs(ids ...uuid.UUID) *TicketUpdateOne {
-	tuo.mutation.RemoveAttachmentIDs(ids...)
-	return tuo
+func (_u *TicketUpdateOne) RemoveAttachmentIDs(ids ...uuid.UUID) *TicketUpdateOne {
+	_u.mutation.RemoveAttachmentIDs(ids...)
+	return _u
 }
 
 // RemoveAttachments removes "attachments" edges to TicketAttachment entities.
-func (tuo *TicketUpdateOne) RemoveAttachments(t ...*TicketAttachment) *TicketUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *TicketUpdateOne) RemoveAttachments(v ...*TicketAttachment) *TicketUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tuo.RemoveAttachmentIDs(ids...)
+	return _u.RemoveAttachmentIDs(ids...)
 }
 
 // Where appends a list predicates to the TicketUpdate builder.
-func (tuo *TicketUpdateOne) Where(ps ...predicate.Ticket) *TicketUpdateOne {
-	tuo.mutation.Where(ps...)
-	return tuo
+func (_u *TicketUpdateOne) Where(ps ...predicate.Ticket) *TicketUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (tuo *TicketUpdateOne) Select(field string, fields ...string) *TicketUpdateOne {
-	tuo.fields = append([]string{field}, fields...)
-	return tuo
+func (_u *TicketUpdateOne) Select(field string, fields ...string) *TicketUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated Ticket entity.
-func (tuo *TicketUpdateOne) Save(ctx context.Context) (*Ticket, error) {
-	tuo.defaults()
-	return withHooks(ctx, tuo.sqlSave, tuo.mutation, tuo.hooks)
+func (_u *TicketUpdateOne) Save(ctx context.Context) (*Ticket, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (tuo *TicketUpdateOne) SaveX(ctx context.Context) *Ticket {
-	node, err := tuo.Save(ctx)
+func (_u *TicketUpdateOne) SaveX(ctx context.Context) *Ticket {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -1553,59 +1553,59 @@ func (tuo *TicketUpdateOne) SaveX(ctx context.Context) *Ticket {
 }
 
 // Exec executes the query on the entity.
-func (tuo *TicketUpdateOne) Exec(ctx context.Context) error {
-	_, err := tuo.Save(ctx)
+func (_u *TicketUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tuo *TicketUpdateOne) ExecX(ctx context.Context) {
-	if err := tuo.Exec(ctx); err != nil {
+func (_u *TicketUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (tuo *TicketUpdateOne) defaults() {
-	if _, ok := tuo.mutation.UpdatedAt(); !ok {
+func (_u *TicketUpdateOne) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := ticket.UpdateDefaultUpdatedAt()
-		tuo.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (tuo *TicketUpdateOne) check() error {
-	if v, ok := tuo.mutation.TicketNumber(); ok {
+func (_u *TicketUpdateOne) check() error {
+	if v, ok := _u.mutation.TicketNumber(); ok {
 		if err := ticket.TicketNumberValidator(v); err != nil {
 			return &ValidationError{Name: "ticket_number", err: fmt.Errorf(`ent: validator failed for field "Ticket.ticket_number": %w`, err)}
 		}
 	}
-	if v, ok := tuo.mutation.Subject(); ok {
+	if v, ok := _u.mutation.Subject(); ok {
 		if err := ticket.SubjectValidator(v); err != nil {
 			return &ValidationError{Name: "subject", err: fmt.Errorf(`ent: validator failed for field "Ticket.subject": %w`, err)}
 		}
 	}
-	if v, ok := tuo.mutation.Description(); ok {
+	if v, ok := _u.mutation.Description(); ok {
 		if err := ticket.DescriptionValidator(v); err != nil {
 			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Ticket.description": %w`, err)}
 		}
 	}
-	if v, ok := tuo.mutation.Status(); ok {
+	if v, ok := _u.mutation.Status(); ok {
 		if err := ticket.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Ticket.status": %w`, err)}
 		}
 	}
-	if v, ok := tuo.mutation.Priority(); ok {
+	if v, ok := _u.mutation.Priority(); ok {
 		if err := ticket.PriorityValidator(v); err != nil {
 			return &ValidationError{Name: "priority", err: fmt.Errorf(`ent: validator failed for field "Ticket.priority": %w`, err)}
 		}
 	}
-	if v, ok := tuo.mutation.Channel(); ok {
+	if v, ok := _u.mutation.Channel(); ok {
 		if err := ticket.ChannelValidator(v); err != nil {
 			return &ValidationError{Name: "channel", err: fmt.Errorf(`ent: validator failed for field "Ticket.channel": %w`, err)}
 		}
 	}
-	if v, ok := tuo.mutation.ExternalReference(); ok {
+	if v, ok := _u.mutation.ExternalReference(); ok {
 		if err := ticket.ExternalReferenceValidator(v); err != nil {
 			return &ValidationError{Name: "external_reference", err: fmt.Errorf(`ent: validator failed for field "Ticket.external_reference": %w`, err)}
 		}
@@ -1613,17 +1613,17 @@ func (tuo *TicketUpdateOne) check() error {
 	return nil
 }
 
-func (tuo *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err error) {
-	if err := tuo.check(); err != nil {
+func (_u *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(ticket.Table, ticket.Columns, sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeUUID))
-	id, ok := tuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Ticket.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := tuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, ticket.FieldID)
 		for _, f := range fields {
@@ -1635,136 +1635,136 @@ func (tuo *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err err
 			}
 		}
 	}
-	if ps := tuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := tuo.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(ticket.FieldTenantID, field.TypeUUID, value)
 	}
-	if value, ok := tuo.mutation.TicketNumber(); ok {
+	if value, ok := _u.mutation.TicketNumber(); ok {
 		_spec.SetField(ticket.FieldTicketNumber, field.TypeString, value)
 	}
-	if value, ok := tuo.mutation.CustomerID(); ok {
+	if value, ok := _u.mutation.CustomerID(); ok {
 		_spec.SetField(ticket.FieldCustomerID, field.TypeUUID, value)
 	}
-	if value, ok := tuo.mutation.AssignedTeamID(); ok {
+	if value, ok := _u.mutation.AssignedTeamID(); ok {
 		_spec.SetField(ticket.FieldAssignedTeamID, field.TypeUUID, value)
 	}
-	if tuo.mutation.AssignedTeamIDCleared() {
+	if _u.mutation.AssignedTeamIDCleared() {
 		_spec.ClearField(ticket.FieldAssignedTeamID, field.TypeUUID)
 	}
-	if value, ok := tuo.mutation.Subject(); ok {
+	if value, ok := _u.mutation.Subject(); ok {
 		_spec.SetField(ticket.FieldSubject, field.TypeString, value)
 	}
-	if value, ok := tuo.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(ticket.FieldDescription, field.TypeString, value)
 	}
-	if value, ok := tuo.mutation.Status(); ok {
+	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(ticket.FieldStatus, field.TypeEnum, value)
 	}
-	if value, ok := tuo.mutation.Priority(); ok {
+	if value, ok := _u.mutation.Priority(); ok {
 		_spec.SetField(ticket.FieldPriority, field.TypeEnum, value)
 	}
-	if value, ok := tuo.mutation.Channel(); ok {
+	if value, ok := _u.mutation.Channel(); ok {
 		_spec.SetField(ticket.FieldChannel, field.TypeEnum, value)
 	}
-	if value, ok := tuo.mutation.OrderID(); ok {
+	if value, ok := _u.mutation.OrderID(); ok {
 		_spec.SetField(ticket.FieldOrderID, field.TypeUUID, value)
 	}
-	if tuo.mutation.OrderIDCleared() {
+	if _u.mutation.OrderIDCleared() {
 		_spec.ClearField(ticket.FieldOrderID, field.TypeUUID)
 	}
-	if value, ok := tuo.mutation.ExternalReference(); ok {
+	if value, ok := _u.mutation.ExternalReference(); ok {
 		_spec.SetField(ticket.FieldExternalReference, field.TypeString, value)
 	}
-	if tuo.mutation.ExternalReferenceCleared() {
+	if _u.mutation.ExternalReferenceCleared() {
 		_spec.ClearField(ticket.FieldExternalReference, field.TypeString)
 	}
-	if value, ok := tuo.mutation.SLAResponseDueAt(); ok {
+	if value, ok := _u.mutation.SLAResponseDueAt(); ok {
 		_spec.SetField(ticket.FieldSLAResponseDueAt, field.TypeTime, value)
 	}
-	if tuo.mutation.SLAResponseDueAtCleared() {
+	if _u.mutation.SLAResponseDueAtCleared() {
 		_spec.ClearField(ticket.FieldSLAResponseDueAt, field.TypeTime)
 	}
-	if value, ok := tuo.mutation.SLAResolutionDueAt(); ok {
+	if value, ok := _u.mutation.SLAResolutionDueAt(); ok {
 		_spec.SetField(ticket.FieldSLAResolutionDueAt, field.TypeTime, value)
 	}
-	if tuo.mutation.SLAResolutionDueAtCleared() {
+	if _u.mutation.SLAResolutionDueAtCleared() {
 		_spec.ClearField(ticket.FieldSLAResolutionDueAt, field.TypeTime)
 	}
-	if value, ok := tuo.mutation.SLAResponseBreached(); ok {
+	if value, ok := _u.mutation.SLAResponseBreached(); ok {
 		_spec.SetField(ticket.FieldSLAResponseBreached, field.TypeBool, value)
 	}
-	if value, ok := tuo.mutation.SLAResolutionBreached(); ok {
+	if value, ok := _u.mutation.SLAResolutionBreached(); ok {
 		_spec.SetField(ticket.FieldSLAResolutionBreached, field.TypeBool, value)
 	}
-	if value, ok := tuo.mutation.FirstResponseAt(); ok {
+	if value, ok := _u.mutation.FirstResponseAt(); ok {
 		_spec.SetField(ticket.FieldFirstResponseAt, field.TypeTime, value)
 	}
-	if tuo.mutation.FirstResponseAtCleared() {
+	if _u.mutation.FirstResponseAtCleared() {
 		_spec.ClearField(ticket.FieldFirstResponseAt, field.TypeTime)
 	}
-	if value, ok := tuo.mutation.ResolvedAt(); ok {
+	if value, ok := _u.mutation.ResolvedAt(); ok {
 		_spec.SetField(ticket.FieldResolvedAt, field.TypeTime, value)
 	}
-	if tuo.mutation.ResolvedAtCleared() {
+	if _u.mutation.ResolvedAtCleared() {
 		_spec.ClearField(ticket.FieldResolvedAt, field.TypeTime)
 	}
-	if value, ok := tuo.mutation.ClosedAt(); ok {
+	if value, ok := _u.mutation.ClosedAt(); ok {
 		_spec.SetField(ticket.FieldClosedAt, field.TypeTime, value)
 	}
-	if tuo.mutation.ClosedAtCleared() {
+	if _u.mutation.ClosedAtCleared() {
 		_spec.ClearField(ticket.FieldClosedAt, field.TypeTime)
 	}
-	if value, ok := tuo.mutation.ReopenedAt(); ok {
+	if value, ok := _u.mutation.ReopenedAt(); ok {
 		_spec.SetField(ticket.FieldReopenedAt, field.TypeTime, value)
 	}
-	if tuo.mutation.ReopenedAtCleared() {
+	if _u.mutation.ReopenedAtCleared() {
 		_spec.ClearField(ticket.FieldReopenedAt, field.TypeTime)
 	}
-	if value, ok := tuo.mutation.EscalationLevel(); ok {
+	if value, ok := _u.mutation.EscalationLevel(); ok {
 		_spec.SetField(ticket.FieldEscalationLevel, field.TypeInt, value)
 	}
-	if value, ok := tuo.mutation.AddedEscalationLevel(); ok {
+	if value, ok := _u.mutation.AddedEscalationLevel(); ok {
 		_spec.AddField(ticket.FieldEscalationLevel, field.TypeInt, value)
 	}
-	if value, ok := tuo.mutation.EscalatedAt(); ok {
+	if value, ok := _u.mutation.EscalatedAt(); ok {
 		_spec.SetField(ticket.FieldEscalatedAt, field.TypeTime, value)
 	}
-	if tuo.mutation.EscalatedAtCleared() {
+	if _u.mutation.EscalatedAtCleared() {
 		_spec.ClearField(ticket.FieldEscalatedAt, field.TypeTime)
 	}
-	if value, ok := tuo.mutation.Tags(); ok {
+	if value, ok := _u.mutation.Tags(); ok {
 		_spec.SetField(ticket.FieldTags, field.TypeJSON, value)
 	}
-	if value, ok := tuo.mutation.AppendedTags(); ok {
+	if value, ok := _u.mutation.AppendedTags(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, ticket.FieldTags, value)
 		})
 	}
-	if tuo.mutation.TagsCleared() {
+	if _u.mutation.TagsCleared() {
 		_spec.ClearField(ticket.FieldTags, field.TypeJSON)
 	}
-	if value, ok := tuo.mutation.Metadata(); ok {
+	if value, ok := _u.mutation.Metadata(); ok {
 		_spec.SetField(ticket.FieldMetadata, field.TypeJSON, value)
 	}
-	if tuo.mutation.MetadataCleared() {
+	if _u.mutation.MetadataCleared() {
 		_spec.ClearField(ticket.FieldMetadata, field.TypeJSON)
 	}
-	if value, ok := tuo.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(ticket.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if value, ok := tuo.mutation.DeletedAt(); ok {
+	if value, ok := _u.mutation.DeletedAt(); ok {
 		_spec.SetField(ticket.FieldDeletedAt, field.TypeTime, value)
 	}
-	if tuo.mutation.DeletedAtCleared() {
+	if _u.mutation.DeletedAtCleared() {
 		_spec.ClearField(ticket.FieldDeletedAt, field.TypeTime)
 	}
-	if tuo.mutation.CategoryCleared() {
+	if _u.mutation.CategoryCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -1777,7 +1777,7 @@ func (tuo *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.CategoryIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.CategoryIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -1793,7 +1793,7 @@ func (tuo *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err err
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tuo.mutation.AssignedAgentCleared() {
+	if _u.mutation.AssignedAgentCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -1806,7 +1806,7 @@ func (tuo *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.AssignedAgentIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.AssignedAgentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -1822,7 +1822,7 @@ func (tuo *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err err
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tuo.mutation.CommentsCleared() {
+	if _u.mutation.CommentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1835,7 +1835,7 @@ func (tuo *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.RemovedCommentsIDs(); len(nodes) > 0 && !tuo.mutation.CommentsCleared() {
+	if nodes := _u.mutation.RemovedCommentsIDs(); len(nodes) > 0 && !_u.mutation.CommentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1851,7 +1851,7 @@ func (tuo *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.CommentsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.CommentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1867,7 +1867,7 @@ func (tuo *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err err
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tuo.mutation.AttachmentsCleared() {
+	if _u.mutation.AttachmentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1880,7 +1880,7 @@ func (tuo *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.RemovedAttachmentsIDs(); len(nodes) > 0 && !tuo.mutation.AttachmentsCleared() {
+	if nodes := _u.mutation.RemovedAttachmentsIDs(); len(nodes) > 0 && !_u.mutation.AttachmentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1896,7 +1896,7 @@ func (tuo *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.AttachmentsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.AttachmentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1912,10 +1912,10 @@ func (tuo *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err err
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &Ticket{config: tuo.config}
+	_node = &Ticket{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, tuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{ticket.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -1923,6 +1923,6 @@ func (tuo *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err err
 		}
 		return nil, err
 	}
-	tuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

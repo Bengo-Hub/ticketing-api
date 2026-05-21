@@ -319,8 +319,8 @@ func (c *AgentClient) Update() *AgentUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *AgentClient) UpdateOne(a *Agent) *AgentUpdateOne {
-	mutation := newAgentMutation(c.config, OpUpdateOne, withAgent(a))
+func (c *AgentClient) UpdateOne(_m *Agent) *AgentUpdateOne {
+	mutation := newAgentMutation(c.config, OpUpdateOne, withAgent(_m))
 	return &AgentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -337,8 +337,8 @@ func (c *AgentClient) Delete() *AgentDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *AgentClient) DeleteOne(a *Agent) *AgentDeleteOne {
-	return c.DeleteOneID(a.ID)
+func (c *AgentClient) DeleteOne(_m *Agent) *AgentDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -373,32 +373,32 @@ func (c *AgentClient) GetX(ctx context.Context, id uuid.UUID) *Agent {
 }
 
 // QueryTeam queries the team edge of a Agent.
-func (c *AgentClient) QueryTeam(a *Agent) *TeamQuery {
+func (c *AgentClient) QueryTeam(_m *Agent) *TeamQuery {
 	query := (&TeamClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := a.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(agent.Table, agent.FieldID, id),
 			sqlgraph.To(team.Table, team.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, agent.TeamTable, agent.TeamColumn),
 		)
-		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryAssignedTickets queries the assigned_tickets edge of a Agent.
-func (c *AgentClient) QueryAssignedTickets(a *Agent) *TicketQuery {
+func (c *AgentClient) QueryAssignedTickets(_m *Agent) *TicketQuery {
 	query := (&TicketClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := a.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(agent.Table, agent.FieldID, id),
 			sqlgraph.To(ticket.Table, ticket.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, agent.AssignedTicketsTable, agent.AssignedTicketsColumn),
 		)
-		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -484,8 +484,8 @@ func (c *OutboxEventClient) Update() *OutboxEventUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *OutboxEventClient) UpdateOne(oe *OutboxEvent) *OutboxEventUpdateOne {
-	mutation := newOutboxEventMutation(c.config, OpUpdateOne, withOutboxEvent(oe))
+func (c *OutboxEventClient) UpdateOne(_m *OutboxEvent) *OutboxEventUpdateOne {
+	mutation := newOutboxEventMutation(c.config, OpUpdateOne, withOutboxEvent(_m))
 	return &OutboxEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -502,8 +502,8 @@ func (c *OutboxEventClient) Delete() *OutboxEventDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *OutboxEventClient) DeleteOne(oe *OutboxEvent) *OutboxEventDeleteOne {
-	return c.DeleteOneID(oe.ID)
+func (c *OutboxEventClient) DeleteOne(_m *OutboxEvent) *OutboxEventDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -617,8 +617,8 @@ func (c *SLAPolicyClient) Update() *SLAPolicyUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *SLAPolicyClient) UpdateOne(sp *SLAPolicy) *SLAPolicyUpdateOne {
-	mutation := newSLAPolicyMutation(c.config, OpUpdateOne, withSLAPolicy(sp))
+func (c *SLAPolicyClient) UpdateOne(_m *SLAPolicy) *SLAPolicyUpdateOne {
+	mutation := newSLAPolicyMutation(c.config, OpUpdateOne, withSLAPolicy(_m))
 	return &SLAPolicyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -635,8 +635,8 @@ func (c *SLAPolicyClient) Delete() *SLAPolicyDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *SLAPolicyClient) DeleteOne(sp *SLAPolicy) *SLAPolicyDeleteOne {
-	return c.DeleteOneID(sp.ID)
+func (c *SLAPolicyClient) DeleteOne(_m *SLAPolicy) *SLAPolicyDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -750,8 +750,8 @@ func (c *TeamClient) Update() *TeamUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *TeamClient) UpdateOne(t *Team) *TeamUpdateOne {
-	mutation := newTeamMutation(c.config, OpUpdateOne, withTeam(t))
+func (c *TeamClient) UpdateOne(_m *Team) *TeamUpdateOne {
+	mutation := newTeamMutation(c.config, OpUpdateOne, withTeam(_m))
 	return &TeamUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -768,8 +768,8 @@ func (c *TeamClient) Delete() *TeamDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *TeamClient) DeleteOne(t *Team) *TeamDeleteOne {
-	return c.DeleteOneID(t.ID)
+func (c *TeamClient) DeleteOne(_m *Team) *TeamDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -804,16 +804,16 @@ func (c *TeamClient) GetX(ctx context.Context, id uuid.UUID) *Team {
 }
 
 // QueryAgents queries the agents edge of a Team.
-func (c *TeamClient) QueryAgents(t *Team) *AgentQuery {
+func (c *TeamClient) QueryAgents(_m *Team) *AgentQuery {
 	query := (&AgentClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := t.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(team.Table, team.FieldID, id),
 			sqlgraph.To(agent.Table, agent.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, team.AgentsTable, team.AgentsColumn),
 		)
-		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -899,8 +899,8 @@ func (c *TicketClient) Update() *TicketUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *TicketClient) UpdateOne(t *Ticket) *TicketUpdateOne {
-	mutation := newTicketMutation(c.config, OpUpdateOne, withTicket(t))
+func (c *TicketClient) UpdateOne(_m *Ticket) *TicketUpdateOne {
+	mutation := newTicketMutation(c.config, OpUpdateOne, withTicket(_m))
 	return &TicketUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -917,8 +917,8 @@ func (c *TicketClient) Delete() *TicketDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *TicketClient) DeleteOne(t *Ticket) *TicketDeleteOne {
-	return c.DeleteOneID(t.ID)
+func (c *TicketClient) DeleteOne(_m *Ticket) *TicketDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -953,64 +953,64 @@ func (c *TicketClient) GetX(ctx context.Context, id uuid.UUID) *Ticket {
 }
 
 // QueryCategory queries the category edge of a Ticket.
-func (c *TicketClient) QueryCategory(t *Ticket) *TicketCategoryQuery {
+func (c *TicketClient) QueryCategory(_m *Ticket) *TicketCategoryQuery {
 	query := (&TicketCategoryClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := t.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(ticket.Table, ticket.FieldID, id),
 			sqlgraph.To(ticketcategory.Table, ticketcategory.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, ticket.CategoryTable, ticket.CategoryColumn),
 		)
-		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryAssignedAgent queries the assigned_agent edge of a Ticket.
-func (c *TicketClient) QueryAssignedAgent(t *Ticket) *AgentQuery {
+func (c *TicketClient) QueryAssignedAgent(_m *Ticket) *AgentQuery {
 	query := (&AgentClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := t.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(ticket.Table, ticket.FieldID, id),
 			sqlgraph.To(agent.Table, agent.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, ticket.AssignedAgentTable, ticket.AssignedAgentColumn),
 		)
-		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryComments queries the comments edge of a Ticket.
-func (c *TicketClient) QueryComments(t *Ticket) *TicketCommentQuery {
+func (c *TicketClient) QueryComments(_m *Ticket) *TicketCommentQuery {
 	query := (&TicketCommentClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := t.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(ticket.Table, ticket.FieldID, id),
 			sqlgraph.To(ticketcomment.Table, ticketcomment.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, ticket.CommentsTable, ticket.CommentsColumn),
 		)
-		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryAttachments queries the attachments edge of a Ticket.
-func (c *TicketClient) QueryAttachments(t *Ticket) *TicketAttachmentQuery {
+func (c *TicketClient) QueryAttachments(_m *Ticket) *TicketAttachmentQuery {
 	query := (&TicketAttachmentClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := t.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(ticket.Table, ticket.FieldID, id),
 			sqlgraph.To(ticketattachment.Table, ticketattachment.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, ticket.AttachmentsTable, ticket.AttachmentsColumn),
 		)
-		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -1096,8 +1096,8 @@ func (c *TicketAttachmentClient) Update() *TicketAttachmentUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *TicketAttachmentClient) UpdateOne(ta *TicketAttachment) *TicketAttachmentUpdateOne {
-	mutation := newTicketAttachmentMutation(c.config, OpUpdateOne, withTicketAttachment(ta))
+func (c *TicketAttachmentClient) UpdateOne(_m *TicketAttachment) *TicketAttachmentUpdateOne {
+	mutation := newTicketAttachmentMutation(c.config, OpUpdateOne, withTicketAttachment(_m))
 	return &TicketAttachmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -1114,8 +1114,8 @@ func (c *TicketAttachmentClient) Delete() *TicketAttachmentDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *TicketAttachmentClient) DeleteOne(ta *TicketAttachment) *TicketAttachmentDeleteOne {
-	return c.DeleteOneID(ta.ID)
+func (c *TicketAttachmentClient) DeleteOne(_m *TicketAttachment) *TicketAttachmentDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -1150,16 +1150,16 @@ func (c *TicketAttachmentClient) GetX(ctx context.Context, id uuid.UUID) *Ticket
 }
 
 // QueryTicket queries the ticket edge of a TicketAttachment.
-func (c *TicketAttachmentClient) QueryTicket(ta *TicketAttachment) *TicketQuery {
+func (c *TicketAttachmentClient) QueryTicket(_m *TicketAttachment) *TicketQuery {
 	query := (&TicketClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := ta.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(ticketattachment.Table, ticketattachment.FieldID, id),
 			sqlgraph.To(ticket.Table, ticket.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, ticketattachment.TicketTable, ticketattachment.TicketColumn),
 		)
-		fromV = sqlgraph.Neighbors(ta.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -1245,8 +1245,8 @@ func (c *TicketCategoryClient) Update() *TicketCategoryUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *TicketCategoryClient) UpdateOne(tc *TicketCategory) *TicketCategoryUpdateOne {
-	mutation := newTicketCategoryMutation(c.config, OpUpdateOne, withTicketCategory(tc))
+func (c *TicketCategoryClient) UpdateOne(_m *TicketCategory) *TicketCategoryUpdateOne {
+	mutation := newTicketCategoryMutation(c.config, OpUpdateOne, withTicketCategory(_m))
 	return &TicketCategoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -1263,8 +1263,8 @@ func (c *TicketCategoryClient) Delete() *TicketCategoryDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *TicketCategoryClient) DeleteOne(tc *TicketCategory) *TicketCategoryDeleteOne {
-	return c.DeleteOneID(tc.ID)
+func (c *TicketCategoryClient) DeleteOne(_m *TicketCategory) *TicketCategoryDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -1299,48 +1299,48 @@ func (c *TicketCategoryClient) GetX(ctx context.Context, id uuid.UUID) *TicketCa
 }
 
 // QueryTickets queries the tickets edge of a TicketCategory.
-func (c *TicketCategoryClient) QueryTickets(tc *TicketCategory) *TicketQuery {
+func (c *TicketCategoryClient) QueryTickets(_m *TicketCategory) *TicketQuery {
 	query := (&TicketClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := tc.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(ticketcategory.Table, ticketcategory.FieldID, id),
 			sqlgraph.To(ticket.Table, ticket.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, ticketcategory.TicketsTable, ticketcategory.TicketsColumn),
 		)
-		fromV = sqlgraph.Neighbors(tc.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryParent queries the parent edge of a TicketCategory.
-func (c *TicketCategoryClient) QueryParent(tc *TicketCategory) *TicketCategoryQuery {
+func (c *TicketCategoryClient) QueryParent(_m *TicketCategory) *TicketCategoryQuery {
 	query := (&TicketCategoryClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := tc.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(ticketcategory.Table, ticketcategory.FieldID, id),
 			sqlgraph.To(ticketcategory.Table, ticketcategory.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, ticketcategory.ParentTable, ticketcategory.ParentColumn),
 		)
-		fromV = sqlgraph.Neighbors(tc.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryChildren queries the children edge of a TicketCategory.
-func (c *TicketCategoryClient) QueryChildren(tc *TicketCategory) *TicketCategoryQuery {
+func (c *TicketCategoryClient) QueryChildren(_m *TicketCategory) *TicketCategoryQuery {
 	query := (&TicketCategoryClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := tc.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(ticketcategory.Table, ticketcategory.FieldID, id),
 			sqlgraph.To(ticketcategory.Table, ticketcategory.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, ticketcategory.ChildrenTable, ticketcategory.ChildrenColumn),
 		)
-		fromV = sqlgraph.Neighbors(tc.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -1426,8 +1426,8 @@ func (c *TicketCommentClient) Update() *TicketCommentUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *TicketCommentClient) UpdateOne(tc *TicketComment) *TicketCommentUpdateOne {
-	mutation := newTicketCommentMutation(c.config, OpUpdateOne, withTicketComment(tc))
+func (c *TicketCommentClient) UpdateOne(_m *TicketComment) *TicketCommentUpdateOne {
+	mutation := newTicketCommentMutation(c.config, OpUpdateOne, withTicketComment(_m))
 	return &TicketCommentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -1444,8 +1444,8 @@ func (c *TicketCommentClient) Delete() *TicketCommentDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *TicketCommentClient) DeleteOne(tc *TicketComment) *TicketCommentDeleteOne {
-	return c.DeleteOneID(tc.ID)
+func (c *TicketCommentClient) DeleteOne(_m *TicketComment) *TicketCommentDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -1480,16 +1480,16 @@ func (c *TicketCommentClient) GetX(ctx context.Context, id uuid.UUID) *TicketCom
 }
 
 // QueryTicket queries the ticket edge of a TicketComment.
-func (c *TicketCommentClient) QueryTicket(tc *TicketComment) *TicketQuery {
+func (c *TicketCommentClient) QueryTicket(_m *TicketComment) *TicketQuery {
 	query := (&TicketClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := tc.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(ticketcomment.Table, ticketcomment.FieldID, id),
 			sqlgraph.To(ticket.Table, ticket.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, ticketcomment.TicketTable, ticketcomment.TicketColumn),
 		)
-		fromV = sqlgraph.Neighbors(tc.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query

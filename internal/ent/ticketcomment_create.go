@@ -23,174 +23,174 @@ type TicketCommentCreate struct {
 }
 
 // SetTicketID sets the "ticket_id" field.
-func (tcc *TicketCommentCreate) SetTicketID(u uuid.UUID) *TicketCommentCreate {
-	tcc.mutation.SetTicketID(u)
-	return tcc
+func (_c *TicketCommentCreate) SetTicketID(v uuid.UUID) *TicketCommentCreate {
+	_c.mutation.SetTicketID(v)
+	return _c
 }
 
 // SetAuthorID sets the "author_id" field.
-func (tcc *TicketCommentCreate) SetAuthorID(u uuid.UUID) *TicketCommentCreate {
-	tcc.mutation.SetAuthorID(u)
-	return tcc
+func (_c *TicketCommentCreate) SetAuthorID(v uuid.UUID) *TicketCommentCreate {
+	_c.mutation.SetAuthorID(v)
+	return _c
 }
 
 // SetNillableAuthorID sets the "author_id" field if the given value is not nil.
-func (tcc *TicketCommentCreate) SetNillableAuthorID(u *uuid.UUID) *TicketCommentCreate {
-	if u != nil {
-		tcc.SetAuthorID(*u)
+func (_c *TicketCommentCreate) SetNillableAuthorID(v *uuid.UUID) *TicketCommentCreate {
+	if v != nil {
+		_c.SetAuthorID(*v)
 	}
-	return tcc
+	return _c
 }
 
 // SetAuthorType sets the "author_type" field.
-func (tcc *TicketCommentCreate) SetAuthorType(tt ticketcomment.AuthorType) *TicketCommentCreate {
-	tcc.mutation.SetAuthorType(tt)
-	return tcc
+func (_c *TicketCommentCreate) SetAuthorType(v ticketcomment.AuthorType) *TicketCommentCreate {
+	_c.mutation.SetAuthorType(v)
+	return _c
 }
 
 // SetNillableAuthorType sets the "author_type" field if the given value is not nil.
-func (tcc *TicketCommentCreate) SetNillableAuthorType(tt *ticketcomment.AuthorType) *TicketCommentCreate {
-	if tt != nil {
-		tcc.SetAuthorType(*tt)
+func (_c *TicketCommentCreate) SetNillableAuthorType(v *ticketcomment.AuthorType) *TicketCommentCreate {
+	if v != nil {
+		_c.SetAuthorType(*v)
 	}
-	return tcc
+	return _c
 }
 
 // SetCommentType sets the "comment_type" field.
-func (tcc *TicketCommentCreate) SetCommentType(tt ticketcomment.CommentType) *TicketCommentCreate {
-	tcc.mutation.SetCommentType(tt)
-	return tcc
+func (_c *TicketCommentCreate) SetCommentType(v ticketcomment.CommentType) *TicketCommentCreate {
+	_c.mutation.SetCommentType(v)
+	return _c
 }
 
 // SetNillableCommentType sets the "comment_type" field if the given value is not nil.
-func (tcc *TicketCommentCreate) SetNillableCommentType(tt *ticketcomment.CommentType) *TicketCommentCreate {
-	if tt != nil {
-		tcc.SetCommentType(*tt)
+func (_c *TicketCommentCreate) SetNillableCommentType(v *ticketcomment.CommentType) *TicketCommentCreate {
+	if v != nil {
+		_c.SetCommentType(*v)
 	}
-	return tcc
+	return _c
 }
 
 // SetContent sets the "content" field.
-func (tcc *TicketCommentCreate) SetContent(s string) *TicketCommentCreate {
-	tcc.mutation.SetContent(s)
-	return tcc
+func (_c *TicketCommentCreate) SetContent(v string) *TicketCommentCreate {
+	_c.mutation.SetContent(v)
+	return _c
 }
 
 // SetContentHTML sets the "content_html" field.
-func (tcc *TicketCommentCreate) SetContentHTML(s string) *TicketCommentCreate {
-	tcc.mutation.SetContentHTML(s)
-	return tcc
+func (_c *TicketCommentCreate) SetContentHTML(v string) *TicketCommentCreate {
+	_c.mutation.SetContentHTML(v)
+	return _c
 }
 
 // SetNillableContentHTML sets the "content_html" field if the given value is not nil.
-func (tcc *TicketCommentCreate) SetNillableContentHTML(s *string) *TicketCommentCreate {
-	if s != nil {
-		tcc.SetContentHTML(*s)
+func (_c *TicketCommentCreate) SetNillableContentHTML(v *string) *TicketCommentCreate {
+	if v != nil {
+		_c.SetContentHTML(*v)
 	}
-	return tcc
+	return _c
 }
 
 // SetIsEdited sets the "is_edited" field.
-func (tcc *TicketCommentCreate) SetIsEdited(b bool) *TicketCommentCreate {
-	tcc.mutation.SetIsEdited(b)
-	return tcc
+func (_c *TicketCommentCreate) SetIsEdited(v bool) *TicketCommentCreate {
+	_c.mutation.SetIsEdited(v)
+	return _c
 }
 
 // SetNillableIsEdited sets the "is_edited" field if the given value is not nil.
-func (tcc *TicketCommentCreate) SetNillableIsEdited(b *bool) *TicketCommentCreate {
-	if b != nil {
-		tcc.SetIsEdited(*b)
+func (_c *TicketCommentCreate) SetNillableIsEdited(v *bool) *TicketCommentCreate {
+	if v != nil {
+		_c.SetIsEdited(*v)
 	}
-	return tcc
+	return _c
 }
 
 // SetEditedAt sets the "edited_at" field.
-func (tcc *TicketCommentCreate) SetEditedAt(t time.Time) *TicketCommentCreate {
-	tcc.mutation.SetEditedAt(t)
-	return tcc
+func (_c *TicketCommentCreate) SetEditedAt(v time.Time) *TicketCommentCreate {
+	_c.mutation.SetEditedAt(v)
+	return _c
 }
 
 // SetNillableEditedAt sets the "edited_at" field if the given value is not nil.
-func (tcc *TicketCommentCreate) SetNillableEditedAt(t *time.Time) *TicketCommentCreate {
-	if t != nil {
-		tcc.SetEditedAt(*t)
+func (_c *TicketCommentCreate) SetNillableEditedAt(v *time.Time) *TicketCommentCreate {
+	if v != nil {
+		_c.SetEditedAt(*v)
 	}
-	return tcc
+	return _c
 }
 
 // SetMentions sets the "mentions" field.
-func (tcc *TicketCommentCreate) SetMentions(u []uuid.UUID) *TicketCommentCreate {
-	tcc.mutation.SetMentions(u)
-	return tcc
+func (_c *TicketCommentCreate) SetMentions(v []uuid.UUID) *TicketCommentCreate {
+	_c.mutation.SetMentions(v)
+	return _c
 }
 
 // SetMetadata sets the "metadata" field.
-func (tcc *TicketCommentCreate) SetMetadata(m map[string]interface{}) *TicketCommentCreate {
-	tcc.mutation.SetMetadata(m)
-	return tcc
+func (_c *TicketCommentCreate) SetMetadata(v map[string]interface{}) *TicketCommentCreate {
+	_c.mutation.SetMetadata(v)
+	return _c
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (tcc *TicketCommentCreate) SetCreatedAt(t time.Time) *TicketCommentCreate {
-	tcc.mutation.SetCreatedAt(t)
-	return tcc
+func (_c *TicketCommentCreate) SetCreatedAt(v time.Time) *TicketCommentCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
 }
 
 // SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (tcc *TicketCommentCreate) SetNillableCreatedAt(t *time.Time) *TicketCommentCreate {
-	if t != nil {
-		tcc.SetCreatedAt(*t)
+func (_c *TicketCommentCreate) SetNillableCreatedAt(v *time.Time) *TicketCommentCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
 	}
-	return tcc
+	return _c
 }
 
 // SetDeletedAt sets the "deleted_at" field.
-func (tcc *TicketCommentCreate) SetDeletedAt(t time.Time) *TicketCommentCreate {
-	tcc.mutation.SetDeletedAt(t)
-	return tcc
+func (_c *TicketCommentCreate) SetDeletedAt(v time.Time) *TicketCommentCreate {
+	_c.mutation.SetDeletedAt(v)
+	return _c
 }
 
 // SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
-func (tcc *TicketCommentCreate) SetNillableDeletedAt(t *time.Time) *TicketCommentCreate {
-	if t != nil {
-		tcc.SetDeletedAt(*t)
+func (_c *TicketCommentCreate) SetNillableDeletedAt(v *time.Time) *TicketCommentCreate {
+	if v != nil {
+		_c.SetDeletedAt(*v)
 	}
-	return tcc
+	return _c
 }
 
 // SetID sets the "id" field.
-func (tcc *TicketCommentCreate) SetID(u uuid.UUID) *TicketCommentCreate {
-	tcc.mutation.SetID(u)
-	return tcc
+func (_c *TicketCommentCreate) SetID(v uuid.UUID) *TicketCommentCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (tcc *TicketCommentCreate) SetNillableID(u *uuid.UUID) *TicketCommentCreate {
-	if u != nil {
-		tcc.SetID(*u)
+func (_c *TicketCommentCreate) SetNillableID(v *uuid.UUID) *TicketCommentCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return tcc
+	return _c
 }
 
 // SetTicket sets the "ticket" edge to the Ticket entity.
-func (tcc *TicketCommentCreate) SetTicket(t *Ticket) *TicketCommentCreate {
-	return tcc.SetTicketID(t.ID)
+func (_c *TicketCommentCreate) SetTicket(v *Ticket) *TicketCommentCreate {
+	return _c.SetTicketID(v.ID)
 }
 
 // Mutation returns the TicketCommentMutation object of the builder.
-func (tcc *TicketCommentCreate) Mutation() *TicketCommentMutation {
-	return tcc.mutation
+func (_c *TicketCommentCreate) Mutation() *TicketCommentMutation {
+	return _c.mutation
 }
 
 // Save creates the TicketComment in the database.
-func (tcc *TicketCommentCreate) Save(ctx context.Context) (*TicketComment, error) {
-	tcc.defaults()
-	return withHooks(ctx, tcc.sqlSave, tcc.mutation, tcc.hooks)
+func (_c *TicketCommentCreate) Save(ctx context.Context) (*TicketComment, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (tcc *TicketCommentCreate) SaveX(ctx context.Context) *TicketComment {
-	v, err := tcc.Save(ctx)
+func (_c *TicketCommentCreate) SaveX(ctx context.Context) *TicketComment {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -198,89 +198,89 @@ func (tcc *TicketCommentCreate) SaveX(ctx context.Context) *TicketComment {
 }
 
 // Exec executes the query.
-func (tcc *TicketCommentCreate) Exec(ctx context.Context) error {
-	_, err := tcc.Save(ctx)
+func (_c *TicketCommentCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tcc *TicketCommentCreate) ExecX(ctx context.Context) {
-	if err := tcc.Exec(ctx); err != nil {
+func (_c *TicketCommentCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (tcc *TicketCommentCreate) defaults() {
-	if _, ok := tcc.mutation.AuthorType(); !ok {
+func (_c *TicketCommentCreate) defaults() {
+	if _, ok := _c.mutation.AuthorType(); !ok {
 		v := ticketcomment.DefaultAuthorType
-		tcc.mutation.SetAuthorType(v)
+		_c.mutation.SetAuthorType(v)
 	}
-	if _, ok := tcc.mutation.CommentType(); !ok {
+	if _, ok := _c.mutation.CommentType(); !ok {
 		v := ticketcomment.DefaultCommentType
-		tcc.mutation.SetCommentType(v)
+		_c.mutation.SetCommentType(v)
 	}
-	if _, ok := tcc.mutation.IsEdited(); !ok {
+	if _, ok := _c.mutation.IsEdited(); !ok {
 		v := ticketcomment.DefaultIsEdited
-		tcc.mutation.SetIsEdited(v)
+		_c.mutation.SetIsEdited(v)
 	}
-	if _, ok := tcc.mutation.CreatedAt(); !ok {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := ticketcomment.DefaultCreatedAt()
-		tcc.mutation.SetCreatedAt(v)
+		_c.mutation.SetCreatedAt(v)
 	}
-	if _, ok := tcc.mutation.ID(); !ok {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := ticketcomment.DefaultID()
-		tcc.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (tcc *TicketCommentCreate) check() error {
-	if _, ok := tcc.mutation.TicketID(); !ok {
+func (_c *TicketCommentCreate) check() error {
+	if _, ok := _c.mutation.TicketID(); !ok {
 		return &ValidationError{Name: "ticket_id", err: errors.New(`ent: missing required field "TicketComment.ticket_id"`)}
 	}
-	if _, ok := tcc.mutation.AuthorType(); !ok {
+	if _, ok := _c.mutation.AuthorType(); !ok {
 		return &ValidationError{Name: "author_type", err: errors.New(`ent: missing required field "TicketComment.author_type"`)}
 	}
-	if v, ok := tcc.mutation.AuthorType(); ok {
+	if v, ok := _c.mutation.AuthorType(); ok {
 		if err := ticketcomment.AuthorTypeValidator(v); err != nil {
 			return &ValidationError{Name: "author_type", err: fmt.Errorf(`ent: validator failed for field "TicketComment.author_type": %w`, err)}
 		}
 	}
-	if _, ok := tcc.mutation.CommentType(); !ok {
+	if _, ok := _c.mutation.CommentType(); !ok {
 		return &ValidationError{Name: "comment_type", err: errors.New(`ent: missing required field "TicketComment.comment_type"`)}
 	}
-	if v, ok := tcc.mutation.CommentType(); ok {
+	if v, ok := _c.mutation.CommentType(); ok {
 		if err := ticketcomment.CommentTypeValidator(v); err != nil {
 			return &ValidationError{Name: "comment_type", err: fmt.Errorf(`ent: validator failed for field "TicketComment.comment_type": %w`, err)}
 		}
 	}
-	if _, ok := tcc.mutation.Content(); !ok {
+	if _, ok := _c.mutation.Content(); !ok {
 		return &ValidationError{Name: "content", err: errors.New(`ent: missing required field "TicketComment.content"`)}
 	}
-	if v, ok := tcc.mutation.Content(); ok {
+	if v, ok := _c.mutation.Content(); ok {
 		if err := ticketcomment.ContentValidator(v); err != nil {
 			return &ValidationError{Name: "content", err: fmt.Errorf(`ent: validator failed for field "TicketComment.content": %w`, err)}
 		}
 	}
-	if _, ok := tcc.mutation.IsEdited(); !ok {
+	if _, ok := _c.mutation.IsEdited(); !ok {
 		return &ValidationError{Name: "is_edited", err: errors.New(`ent: missing required field "TicketComment.is_edited"`)}
 	}
-	if _, ok := tcc.mutation.CreatedAt(); !ok {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "TicketComment.created_at"`)}
 	}
-	if _, ok := tcc.mutation.TicketID(); !ok {
+	if len(_c.mutation.TicketIDs()) == 0 {
 		return &ValidationError{Name: "ticket", err: errors.New(`ent: missing required edge "TicketComment.ticket"`)}
 	}
 	return nil
 }
 
-func (tcc *TicketCommentCreate) sqlSave(ctx context.Context) (*TicketComment, error) {
-	if err := tcc.check(); err != nil {
+func (_c *TicketCommentCreate) sqlSave(ctx context.Context) (*TicketComment, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := tcc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, tcc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -293,65 +293,65 @@ func (tcc *TicketCommentCreate) sqlSave(ctx context.Context) (*TicketComment, er
 			return nil, err
 		}
 	}
-	tcc.mutation.id = &_node.ID
-	tcc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (tcc *TicketCommentCreate) createSpec() (*TicketComment, *sqlgraph.CreateSpec) {
+func (_c *TicketCommentCreate) createSpec() (*TicketComment, *sqlgraph.CreateSpec) {
 	var (
-		_node = &TicketComment{config: tcc.config}
+		_node = &TicketComment{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(ticketcomment.Table, sqlgraph.NewFieldSpec(ticketcomment.FieldID, field.TypeUUID))
 	)
-	if id, ok := tcc.mutation.ID(); ok {
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := tcc.mutation.AuthorID(); ok {
+	if value, ok := _c.mutation.AuthorID(); ok {
 		_spec.SetField(ticketcomment.FieldAuthorID, field.TypeUUID, value)
 		_node.AuthorID = &value
 	}
-	if value, ok := tcc.mutation.AuthorType(); ok {
+	if value, ok := _c.mutation.AuthorType(); ok {
 		_spec.SetField(ticketcomment.FieldAuthorType, field.TypeEnum, value)
 		_node.AuthorType = value
 	}
-	if value, ok := tcc.mutation.CommentType(); ok {
+	if value, ok := _c.mutation.CommentType(); ok {
 		_spec.SetField(ticketcomment.FieldCommentType, field.TypeEnum, value)
 		_node.CommentType = value
 	}
-	if value, ok := tcc.mutation.Content(); ok {
+	if value, ok := _c.mutation.Content(); ok {
 		_spec.SetField(ticketcomment.FieldContent, field.TypeString, value)
 		_node.Content = value
 	}
-	if value, ok := tcc.mutation.ContentHTML(); ok {
+	if value, ok := _c.mutation.ContentHTML(); ok {
 		_spec.SetField(ticketcomment.FieldContentHTML, field.TypeString, value)
 		_node.ContentHTML = value
 	}
-	if value, ok := tcc.mutation.IsEdited(); ok {
+	if value, ok := _c.mutation.IsEdited(); ok {
 		_spec.SetField(ticketcomment.FieldIsEdited, field.TypeBool, value)
 		_node.IsEdited = value
 	}
-	if value, ok := tcc.mutation.EditedAt(); ok {
+	if value, ok := _c.mutation.EditedAt(); ok {
 		_spec.SetField(ticketcomment.FieldEditedAt, field.TypeTime, value)
 		_node.EditedAt = &value
 	}
-	if value, ok := tcc.mutation.Mentions(); ok {
+	if value, ok := _c.mutation.Mentions(); ok {
 		_spec.SetField(ticketcomment.FieldMentions, field.TypeJSON, value)
 		_node.Mentions = value
 	}
-	if value, ok := tcc.mutation.Metadata(); ok {
+	if value, ok := _c.mutation.Metadata(); ok {
 		_spec.SetField(ticketcomment.FieldMetadata, field.TypeJSON, value)
 		_node.Metadata = value
 	}
-	if value, ok := tcc.mutation.CreatedAt(); ok {
+	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(ticketcomment.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
-	if value, ok := tcc.mutation.DeletedAt(); ok {
+	if value, ok := _c.mutation.DeletedAt(); ok {
 		_spec.SetField(ticketcomment.FieldDeletedAt, field.TypeTime, value)
 		_node.DeletedAt = &value
 	}
-	if nodes := tcc.mutation.TicketIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.TicketIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -379,16 +379,16 @@ type TicketCommentCreateBulk struct {
 }
 
 // Save creates the TicketComment entities in the database.
-func (tccb *TicketCommentCreateBulk) Save(ctx context.Context) ([]*TicketComment, error) {
-	if tccb.err != nil {
-		return nil, tccb.err
+func (_c *TicketCommentCreateBulk) Save(ctx context.Context) ([]*TicketComment, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(tccb.builders))
-	nodes := make([]*TicketComment, len(tccb.builders))
-	mutators := make([]Mutator, len(tccb.builders))
-	for i := range tccb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*TicketComment, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := tccb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*TicketCommentMutation)
@@ -402,11 +402,11 @@ func (tccb *TicketCommentCreateBulk) Save(ctx context.Context) ([]*TicketComment
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, tccb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, tccb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -426,7 +426,7 @@ func (tccb *TicketCommentCreateBulk) Save(ctx context.Context) ([]*TicketComment
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, tccb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -434,8 +434,8 @@ func (tccb *TicketCommentCreateBulk) Save(ctx context.Context) ([]*TicketComment
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (tccb *TicketCommentCreateBulk) SaveX(ctx context.Context) []*TicketComment {
-	v, err := tccb.Save(ctx)
+func (_c *TicketCommentCreateBulk) SaveX(ctx context.Context) []*TicketComment {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -443,14 +443,14 @@ func (tccb *TicketCommentCreateBulk) SaveX(ctx context.Context) []*TicketComment
 }
 
 // Exec executes the query.
-func (tccb *TicketCommentCreateBulk) Exec(ctx context.Context) error {
-	_, err := tccb.Save(ctx)
+func (_c *TicketCommentCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tccb *TicketCommentCreateBulk) ExecX(ctx context.Context) {
-	if err := tccb.Exec(ctx); err != nil {
+func (_c *TicketCommentCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
