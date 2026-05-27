@@ -26,9 +26,12 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
-	dbURL := os.Getenv("POSTGRES_URL")
+	dbURL := os.Getenv("POSTGRES_MIGRATE_URL")
 	if dbURL == "" {
-		log.Fatalln("POSTGRES_URL is required")
+		dbURL = os.Getenv("POSTGRES_URL")
+	}
+	if dbURL == "" {
+		log.Fatalln("POSTGRES_URL or POSTGRES_MIGRATE_URL is required")
 	}
 
 	log.Printf("connecting to database: %s", maskPassword(dbURL))
