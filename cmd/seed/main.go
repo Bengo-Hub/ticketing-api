@@ -46,7 +46,11 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
-	dbURL := os.Getenv("POSTGRES_URL")
+	// Prefer the direct PostgreSQL URL (POSTGRES_MIGRATE_URL) to bypass PgBouncer for seed DDL/DML.
+	dbURL := os.Getenv("POSTGRES_MIGRATE_URL")
+	if dbURL == "" {
+		dbURL = os.Getenv("POSTGRES_URL")
+	}
 	if dbURL == "" {
 		log.Fatalln("POSTGRES_URL is required")
 	}
