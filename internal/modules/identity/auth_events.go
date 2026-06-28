@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	eventslib "github.com/Bengo-Hub/shared-events"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -37,6 +38,13 @@ type authUserEvent struct {
 	Payload       map[string]interface{} `json:"payload"`
 }
 
+// authJITQueue is the core-NATS deliver-group shared by both auth.user.* JIT
+// subscriptions. Using a queue group ensures each event is processed by exactly
+// one replica (no double-provisioning) instead of fanned out to every pod as
+// plain nc.Subscribe would do. The two subjects are non-overlapping so they can
+// safely share one group.
+const authJITQueue = "ticketing-auth-jit"
+
 // SubscribeToAuthEvents subscribes to auth.user.created via plain NATS (not JetStream).
 func (h *AuthEventHandler) SubscribeToAuthEvents(nc *nats.Conn) error {
 	if nc == nil {
@@ -44,7 +52,7 @@ func (h *AuthEventHandler) SubscribeToAuthEvents(nc *nats.Conn) error {
 		return nil
 	}
 
-	_, err := nc.Subscribe("auth.user.created", func(msg *nats.Msg) {
+	_, err := eventslib.QueueSubscribe(h.logger, nc, "auth.user.created", authJITQueue, func(msg *nats.Msg) {
 		var evt authUserEvent
 		if err := json.Unmarshal(msg.Data, &evt); err != nil {
 			h.logger.Error("failed to unmarshal auth.user.created", zap.Error(err))
@@ -58,7 +66,7 @@ func (h *AuthEventHandler) SubscribeToAuthEvents(nc *nats.Conn) error {
 		return fmt.Errorf("subscribe auth.user.created: %w", err)
 	}
 
-	_, err = nc.Subscribe("auth.user.updated", func(msg *nats.Msg) {
+	_, err = eventslib.QueueSubscribe(h.logger, nc, "auth.user.updated", authJITQueue, func(msg *nats.Msg) {
 		var evt authUserEvent
 		if err := json.Unmarshal(msg.Data, &evt); err != nil {
 			h.logger.Error("failed to unmarshal auth.user.updated", zap.Error(err))
