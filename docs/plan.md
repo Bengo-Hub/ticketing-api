@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-**System Purpose**: Multi-tenant customer support and helpdesk ticketing system for BengoBox ecosystem. Provides comprehensive ticket management, SLA tracking, knowledge base integration, and customer satisfaction measurement. Enables support teams to efficiently handle customer inquiries, technical issues, and service requests across all BengoBox services.
+**System Purpose**: Multi-tenant customer support and helpdesk ticketing system for Codevertex ecosystem. Provides comprehensive ticket management, SLA tracking, knowledge base integration, and customer satisfaction measurement. Enables support teams to efficiently handle customer inquiries, technical issues, and service requests across all Codevertex services.
 
 **Key Capabilities**:
 - Multi-channel ticket creation (web, email, API, chat)
@@ -12,7 +12,7 @@
 - Knowledge base integration
 - Customer satisfaction surveys
 - Ticket analytics and reporting
-- Integration with all BengoBox services for context-aware support
+- Integration with all Codevertex services for context-aware support
 
 **Entity Ownership**: This service owns all ticketing-specific entities: tickets, ticket comments, attachments, ticket assignments, SLA records, knowledge base articles, and satisfaction surveys. **Ticketing does NOT own**: users (references auth-service via `user_id`), tenants (references from auth-service), orders (references from ordering/POS services), projects (references from projects-service), financial transactions (references from treasury-api).
 
