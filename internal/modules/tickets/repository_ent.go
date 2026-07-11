@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bengobox/ticketing-service/internal/ent"
+	entagent "github.com/bengobox/ticketing-service/internal/ent/agent"
 	"github.com/bengobox/ticketing-service/internal/ent/ticket"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketattachment"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketcategory"
@@ -877,6 +878,21 @@ func (r *EntRepository) GetAgentTicketCount(ctx context.Context, tenantID uuid.U
 			ticket.StatusNotIn(ticket.StatusClosed, ticket.StatusCancelled, ticket.StatusResolved),
 		).
 		Count(ctx)
+}
+
+// GetAgentEmail returns the assigned agent's email so ticket.assigned events can reach the
+// agent directly (notifications-api reads payload.agent_email). Returns "" if not found.
+func (r *EntRepository) GetAgentEmail(ctx context.Context, tenantID uuid.UUID, agentID uuid.UUID) (string, error) {
+	a, err := r.client.Agent.Query().
+		Where(entagent.TenantID(tenantID), entagent.ID(agentID)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return "", nil
+		}
+		return "", err
+	}
+	return a.Email, nil
 }
 
 func (r *EntRepository) ListTicketsPendingBreach(ctx context.Context, now time.Time, limit int) ([]*Ticket, error) {

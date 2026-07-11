@@ -51,6 +51,7 @@ type Repository interface {
 	GetTicketCountsByPriority(ctx context.Context, tenantID uuid.UUID) (map[TicketPriority]int, error)
 	GetTicketTrend(ctx context.Context, tenantID uuid.UUID, from, to time.Time, bucketDays int) ([]TrendPoint, error)
 	GetAgentTicketCount(ctx context.Context, tenantID uuid.UUID, agentID uuid.UUID) (int, error)
+	GetAgentEmail(ctx context.Context, tenantID uuid.UUID, agentID uuid.UUID) (string, error)
 
 	// SLA breach scanning — returns open tickets with past-due SLA targets
 	ListTicketsPendingBreach(ctx context.Context, now time.Time, limit int) ([]*Ticket, error)

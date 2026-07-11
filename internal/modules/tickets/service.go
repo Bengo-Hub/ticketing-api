@@ -307,14 +307,22 @@ func (s *Service) AssignTicket(ctx context.Context, tenantID uuid.UUID, ticketID
 	// Publish assigned event
 	if s.publisher != nil && ticket != nil {
 		agentIDStr := ""
+		agentEmail := ""
 		if req.AgentID != nil {
 			agentIDStr = req.AgentID.String()
+			// Include the agent's email so notifications-api can email the assignee
+			// directly; without it the notification silently fell back to the tenant
+			// mailbox and the agent never learned they were assigned.
+			if email, err := s.repo.GetAgentEmail(ctx, tenantID, *req.AgentID); err == nil {
+				agentEmail = email
+			}
 		}
 		_ = s.publisher.PublishTicketAssigned(ctx, tenantID, map[string]any{
 			"ticket_id":     ticketID.String(),
 			"ticket_number": ticket.TicketNumber,
 			"subject":       ticket.Subject,
 			"agent_id":      agentIDStr,
+			"agent_email":   agentEmail,
 			"priority":      string(ticket.Priority),
 		})
 	}
