@@ -8,8 +8,8 @@ github.com/Bengo-Hub/cache v0.3.0 h1:u2yzA9u2YDzKjGnmGYS0kr4rEm++3Ri7AHS5KPg5I3o
 github.com/Bengo-Hub/cache v0.3.0/go.mod h1:cmDX41mNXK/oAHgxERnDd6LGVDx+bqkJ+t7uU+Iex18=
 github.com/Bengo-Hub/pagination v0.3.0 h1:cvFHj+A5fMD5B+L89Epw/SfVxIPAzL82JViXAYlxjEM=
 github.com/Bengo-Hub/pagination v0.3.0/go.mod h1:qXxXpX45Shf6qplVtxqEeOMeKiSr/W4nT4nMLQqF4/g=
-github.com/Bengo-Hub/shared-events v0.6.0 h1:NCkaQC5fitZpUpg//VeeFne3PQEQzQc7Sm7OzxeyaFE=
-github.com/Bengo-Hub/shared-events v0.6.0/go.mod h1:eLz1wguUzi7PRZC29V/E4lq/YbT3yGDb8H2oXX7DXQU=
+github.com/Bengo-Hub/shared-events v0.6.1 h1:mSegYSPD4kh6SIsDMABRPf7LETZ1jH7Qkorqm2K0EHA=
+github.com/Bengo-Hub/shared-events v0.6.1/go.mod h1:eLz1wguUzi7PRZC29V/E4lq/YbT3yGDb8H2oXX7DXQU=
 github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20OEh60=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
