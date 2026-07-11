@@ -89,10 +89,20 @@ func (h *AuthEventHandler) handleUserCreated(ctx context.Context, evt *authUserE
 	userIDStr, _ := evt.Payload["user_id"].(string)
 	email, _ := evt.Payload["email"].(string)
 	fullName, _ := evt.Payload["full_name"].(string)
-	roleStr, _ := evt.Payload["role"].(string)
+
+	// auth publishes `roles` as a []string under payload (never a singular `role`);
+	// reading `role` left this empty so isSupportRole was always false and NO agent was
+	// ever JIT-provisioned. Pick the first support role from the array.
+	roleStr := ""
+	for _, r := range rolesFromPayload(evt.Payload) {
+		if isSupportRole(r) {
+			roleStr = r
+			break
+		}
+	}
 
 	// Only provision agents for support staff roles; customers do not get agent records.
-	if !isSupportRole(roleStr) {
+	if roleStr == "" {
 		return nil
 	}
 
@@ -176,6 +186,24 @@ func (h *AuthEventHandler) handleUserUpdated(ctx context.Context, evt *authUserE
 
 	h.logger.Info("agent synced from auth.user.updated",
 		zap.String("user_id", userIDStr))
+	return nil
+}
+
+// rolesFromPayload extracts the auth `roles` array from an event payload, tolerating a
+// legacy singular `role` string for backward compatibility.
+func rolesFromPayload(payload map[string]any) []string {
+	if raw, ok := payload["roles"].([]interface{}); ok {
+		out := make([]string, 0, len(raw))
+		for _, v := range raw {
+			if s, ok := v.(string); ok {
+				out = append(out, s)
+			}
+		}
+		return out
+	}
+	if s, ok := payload["role"].(string); ok && s != "" {
+		return []string{s}
+	}
 	return nil
 }
 

@@ -165,7 +165,7 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 
 	// Publish CRM activity event if a CRM contact is linked.
 	if s.publisher != nil && ticket.CRMContactID != nil {
-		_ = s.publisher.PublishCRMActivityRequest(ctx, map[string]any{
+		_ = s.publisher.PublishCRMActivityRequest(ctx, ticket.TenantID, map[string]any{
 			"entity_type":   "contact",
 			"entity_id":     ticket.CRMContactID.String(),
 			"activity_type": "ticket_opened",
@@ -267,7 +267,7 @@ func (s *Service) UpdateTicketStatus(ctx context.Context, tenantID uuid.UUID, ti
 
 			// Publish CRM activity event if a CRM contact is linked.
 			if ticket.CRMContactID != nil {
-				_ = s.publisher.PublishCRMActivityRequest(ctx, map[string]any{
+				_ = s.publisher.PublishCRMActivityRequest(ctx, tenantID, map[string]any{
 					"entity_type":   "contact",
 					"entity_id":     ticket.CRMContactID.String(),
 					"activity_type": "ticket_resolved",

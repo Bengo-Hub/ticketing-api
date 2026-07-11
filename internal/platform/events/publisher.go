@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	eventslib "github.com/Bengo-Hub/shared-events"
 	"github.com/google/uuid"
@@ -29,13 +30,20 @@ func (p *Publisher) OutboxRepo() eventslib.OutboxRepository {
 	return p.repo
 }
 
-// publish writes an event to the outbox for background publishing to NATS.
+// publish writes a ticketing-aggregate event to the outbox for background publishing.
 func (p *Publisher) publish(ctx context.Context, tenantID uuid.UUID, eventType string, data map[string]any) error {
+	return p.publishWithAggregate(ctx, tenantID, "ticketing", eventType, data)
+}
+
+// publishWithAggregate writes an event under an explicit aggregate so cross-domain
+// events (crm.*, sla.*) get the correct subject ({aggregate}.{event_type}) instead of
+// being mis-prefixed as ticketing.crm.* / ticketing.sla.* (which no consumer subscribes to).
+func (p *Publisher) publishWithAggregate(ctx context.Context, tenantID uuid.UUID, aggregate, eventType string, data map[string]any) error {
 	if p == nil {
 		return nil
 	}
 
-	event := eventslib.NewEvent(eventType, "ticketing", uuid.New(), tenantID, data)
+	event := eventslib.NewEvent(eventType, aggregate, uuid.New(), tenantID, data)
 
 	tx, err := p.repo.BeginTx(ctx)
 	if err != nil {
@@ -69,16 +77,20 @@ func (p *Publisher) PublishTicketResolved(ctx context.Context, tenantID uuid.UUI
 }
 
 // PublishCRMActivityRequest publishes a crm.activity.log_requested event for CRM integration.
-// The CRM service subscribes to this subject to log contact/lead activity.
-func (p *Publisher) PublishCRMActivityRequest(ctx context.Context, data map[string]any) error {
-	return p.publish(ctx, uuid.Nil, "crm.activity.log_requested", data)
+// The CRM service subscribes to this subject to log contact/lead activity. It is published
+// under the crm aggregate (subject "crm.activity.log_requested") with the ticket's real
+// tenant id — previously it went out as "ticketing.crm.activity.log_requested" with a nil
+// tenant, so the CRM service never received it.
+func (p *Publisher) PublishCRMActivityRequest(ctx context.Context, tenantID uuid.UUID, data map[string]any) error {
+	return p.publishWithAggregate(ctx, tenantID, "crm", "activity.log_requested", data)
 }
 
-// PublishSLABreach publishes an sla.breach event for a ticket that missed its SLA target.
+// PublishSLABreach publishes an sla.* event for a ticket that missed its SLA target,
+// under the sla aggregate (subject "sla.first_response_breached").
 func (p *Publisher) PublishSLABreach(ctx context.Context, tenantID uuid.UUID, data map[string]any) error {
-	eventType := "sla.first_response_breached"
+	eventType := "first_response_breached"
 	if t, ok := data["event_type"].(string); ok {
-		eventType = t
+		eventType = strings.TrimPrefix(t, "sla.")
 	}
-	return p.publish(ctx, tenantID, eventType, data)
+	return p.publishWithAggregate(ctx, tenantID, "sla", eventType, data)
 }
