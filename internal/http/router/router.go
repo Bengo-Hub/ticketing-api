@@ -98,59 +98,64 @@ func New(cfg Config) http.Handler {
 				})
 			}
 
-			// Apply auth middleware to protected routes
-			if cfg.AuthMiddleware != nil {
-				v1.Use(cfg.AuthMiddleware.RequireAuth)
-			}
-
-			// Health status (auth required)
-			v1.Get("/status", cfg.HealthHandler.Status)
-
-			// Tenant-scoped routes
-			v1.Route("/{tenant}", func(tenant chi.Router) {
-				// Branding endpoint — returns tenant details from cache/auth-api (no DB query)
-				if cfg.TenantResolver != nil {
-					tenant.Get("/branding", func(w http.ResponseWriter, r *http.Request) {
-						slug := chi.URLParam(r, "tenant")
-						details, err := cfg.TenantResolver.GetTenantDetails(r.Context(), slug)
-						if err != nil {
-							http.Error(w, `{"error":"tenant not found"}`, http.StatusNotFound)
-							return
-						}
-						w.Header().Set("Content-Type", "application/json")
-						json.NewEncoder(w).Encode(details)
-					})
+			// Protected routes live in their own Group so Use() is applied
+			// before any route is registered on it (chi requires middleware
+			// to precede routes on a given mux — v1 already has the S2S and
+			// public routes above, so auth can't be added via v1.Use here).
+			v1.Group(func(protected chi.Router) {
+				if cfg.AuthMiddleware != nil {
+					protected.Use(cfg.AuthMiddleware.RequireAuth)
 				}
 
-				// Identity module (teams, agents)
-				if cfg.IdentityHandler != nil {
-					cfg.IdentityHandler.RegisterRoutes(tenant)
-				}
+				// Health status (auth required)
+				protected.Get("/status", cfg.HealthHandler.Status)
 
-				// Tickets module (tickets, comments, categories)
-				if cfg.TicketsHandler != nil {
-					cfg.TicketsHandler.RegisterRoutes(tenant)
-				}
+				// Tenant-scoped routes
+				protected.Route("/{tenant}", func(tenant chi.Router) {
+					// Branding endpoint — returns tenant details from cache/auth-api (no DB query)
+					if cfg.TenantResolver != nil {
+						tenant.Get("/branding", func(w http.ResponseWriter, r *http.Request) {
+							slug := chi.URLParam(r, "tenant")
+							details, err := cfg.TenantResolver.GetTenantDetails(r.Context(), slug)
+							if err != nil {
+								http.Error(w, `{"error":"tenant not found"}`, http.StatusNotFound)
+								return
+							}
+							w.Header().Set("Content-Type", "application/json")
+							json.NewEncoder(w).Encode(details)
+						})
+					}
 
-				// SLA module (policies)
-				if cfg.SLAHandler != nil {
-					cfg.SLAHandler.RegisterRoutes(tenant)
-				}
+					// Identity module (teams, agents)
+					if cfg.IdentityHandler != nil {
+						cfg.IdentityHandler.RegisterRoutes(tenant)
+					}
 
-				// KB module (articles)
-				if cfg.KBHandler != nil {
-					cfg.KBHandler.RegisterRoutes(tenant)
-				}
+					// Tickets module (tickets, comments, categories)
+					if cfg.TicketsHandler != nil {
+						cfg.TicketsHandler.RegisterRoutes(tenant)
+					}
 
-				// Routing rules module
-				if cfg.RoutingHandler != nil {
-					cfg.RoutingHandler.RegisterRoutes(tenant)
-				}
+					// SLA module (policies)
+					if cfg.SLAHandler != nil {
+						cfg.SLAHandler.RegisterRoutes(tenant)
+					}
 
-				// SSE streaming endpoints
-				if cfg.TicketsHandler != nil && cfg.SSEBroker != nil {
-					cfg.TicketsHandler.RegisterSSERoutes(tenant, cfg.SSEBroker)
-				}
+					// KB module (articles)
+					if cfg.KBHandler != nil {
+						cfg.KBHandler.RegisterRoutes(tenant)
+					}
+
+					// Routing rules module
+					if cfg.RoutingHandler != nil {
+						cfg.RoutingHandler.RegisterRoutes(tenant)
+					}
+
+					// SSE streaming endpoints
+					if cfg.TicketsHandler != nil && cfg.SSEBroker != nil {
+						cfg.TicketsHandler.RegisterSSERoutes(tenant, cfg.SSEBroker)
+					}
+				})
 			})
 		})
 	})

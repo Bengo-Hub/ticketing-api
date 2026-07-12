@@ -60,7 +60,7 @@ type RedisConfig struct {
 type EventsConfig struct {
 	NATSURL    string `envconfig:"EVENTS_NATS_URL" default:"nats://localhost:4222"`
 	StreamName string `envconfig:"NATS_STREAM" default:"ticketing"`
-	Cluster    string `envconfig:"NATS_CLUSTER" default:codevertex`
+	Cluster    string `envconfig:"NATS_CLUSTER" default:"codevertex"`
 }
 
 // NotificationsConfig holds notifications service client configuration.
