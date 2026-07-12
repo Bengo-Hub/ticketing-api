@@ -11,8 +11,8 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 
-	authclient "github.com/Bengo-Hub/shared-auth-client"
 	sharedcache "github.com/Bengo-Hub/cache"
+	authclient "github.com/Bengo-Hub/shared-auth-client"
 	_ "github.com/bengobox/ticketing-service/docs"
 	"github.com/bengobox/ticketing-service/internal/http/handlers"
 	"github.com/bengobox/ticketing-service/internal/modules/identity"
@@ -32,10 +32,10 @@ type tenantResolver interface {
 
 // Config holds all module handlers for the router.
 type Config struct {
-	Log             *zap.Logger
-	HealthHandler   *handlers.HealthHandler
-	AuthMiddleware  *authclient.AuthMiddleware
-	AllowedOrigins  []string
+	Log                  *zap.Logger
+	HealthHandler        *handlers.HealthHandler
+	AuthMiddleware       *authclient.AuthMiddleware
+	AllowedOrigins       []string
 	IdentityHandler      *identity.Handler
 	TicketsHandler       *tickets.Handler
 	PublicTicketsHandler *tickets.PublicHandler
@@ -86,35 +86,40 @@ func New(cfg Config) http.Handler {
 				v1.Post("/internal/tickets", cfg.TicketsHandler.InternalCreateTicket)
 			}
 
-			// Public (no-auth) tenant-scoped routes
-			if cfg.PublicTicketsHandler != nil || cfg.KBHandler != nil {
-				v1.Route("/{tenant}", func(pub chi.Router) {
-					if cfg.PublicTicketsHandler != nil {
-						cfg.PublicTicketsHandler.RegisterPublicRoutes(pub)
-					}
-					if cfg.KBHandler != nil {
-						cfg.KBHandler.RegisterPublicRoutes(pub)
-					}
-				})
-			}
-
-			// Protected routes live in their own Group so Use() is applied
-			// before any route is registered on it (chi requires middleware
-			// to precede routes on a given mux — v1 already has the S2S and
-			// public routes above, so auth can't be added via v1.Use here).
+			// Health status (auth required) lives in its own Group so Use()
+			// precedes it — v1 already has the S2S route above, so auth
+			// can't be added via a bare v1.Use here.
 			v1.Group(func(protected chi.Router) {
 				if cfg.AuthMiddleware != nil {
 					protected.Use(cfg.AuthMiddleware.RequireAuth)
 				}
-
-				// Health status (auth required)
 				protected.Get("/status", cfg.HealthHandler.Status)
+			})
 
-				// Tenant-scoped routes
-				protected.Route("/{tenant}", func(tenant chi.Router) {
+			// Tenant-scoped routes: ONE /{tenant} sub-router hosting both the
+			// public (no-auth) routes and, nested inside it, the auth-protected
+			// ones. chi panics if the same mux mounts two Route()/Mount() calls
+			// at the same pattern, so these must not be two separate
+			// v1.Route("/{tenant}", ...) calls — the protected subset instead
+			// gets its own inner Group() so Use() still precedes its routes.
+			v1.Route("/{tenant}", func(tenant chi.Router) {
+				// Public (no-auth) routes
+				if cfg.PublicTicketsHandler != nil {
+					cfg.PublicTicketsHandler.RegisterPublicRoutes(tenant)
+				}
+				if cfg.KBHandler != nil {
+					cfg.KBHandler.RegisterPublicRoutes(tenant)
+				}
+
+				// Auth-protected routes
+				tenant.Group(func(protected chi.Router) {
+					if cfg.AuthMiddleware != nil {
+						protected.Use(cfg.AuthMiddleware.RequireAuth)
+					}
+
 					// Branding endpoint — returns tenant details from cache/auth-api (no DB query)
 					if cfg.TenantResolver != nil {
-						tenant.Get("/branding", func(w http.ResponseWriter, r *http.Request) {
+						protected.Get("/branding", func(w http.ResponseWriter, r *http.Request) {
 							slug := chi.URLParam(r, "tenant")
 							details, err := cfg.TenantResolver.GetTenantDetails(r.Context(), slug)
 							if err != nil {
@@ -128,32 +133,32 @@ func New(cfg Config) http.Handler {
 
 					// Identity module (teams, agents)
 					if cfg.IdentityHandler != nil {
-						cfg.IdentityHandler.RegisterRoutes(tenant)
+						cfg.IdentityHandler.RegisterRoutes(protected)
 					}
 
 					// Tickets module (tickets, comments, categories)
 					if cfg.TicketsHandler != nil {
-						cfg.TicketsHandler.RegisterRoutes(tenant)
+						cfg.TicketsHandler.RegisterRoutes(protected)
 					}
 
 					// SLA module (policies)
 					if cfg.SLAHandler != nil {
-						cfg.SLAHandler.RegisterRoutes(tenant)
+						cfg.SLAHandler.RegisterRoutes(protected)
 					}
 
 					// KB module (articles)
 					if cfg.KBHandler != nil {
-						cfg.KBHandler.RegisterRoutes(tenant)
+						cfg.KBHandler.RegisterRoutes(protected)
 					}
 
 					// Routing rules module
 					if cfg.RoutingHandler != nil {
-						cfg.RoutingHandler.RegisterRoutes(tenant)
+						cfg.RoutingHandler.RegisterRoutes(protected)
 					}
 
 					// SSE streaming endpoints
 					if cfg.TicketsHandler != nil && cfg.SSEBroker != nil {
-						cfg.TicketsHandler.RegisterSSERoutes(tenant, cfg.SSEBroker)
+						cfg.TicketsHandler.RegisterSSERoutes(protected, cfg.SSEBroker)
 					}
 				})
 			})
