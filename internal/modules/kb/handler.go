@@ -24,17 +24,21 @@ func NewHandler(service *Service, logger *zap.Logger) *Handler {
 	}
 }
 
-// RegisterRoutes mounts KB routes under the tenant router.
-// Public (read-only) routes are mounted separately via RegisterPublicRoutes.
+// RegisterRoutes mounts staff/admin KB routes under /kb/admin — a distinct
+// path from the public /kb mount (see RegisterPublicRoutes) because chi
+// cannot Mount() two routers at the identical pattern, and ListArticles here
+// has no server-side status filter (it trusts the caller), unlike
+// ListPublicArticles which force-filters to published+public. Voting is
+// intentionally NOT duplicated here — VotePublicArticle already covers it
+// identically (neither reads claims) and this avoided dead reachable code.
 func (h *Handler) RegisterRoutes(r chi.Router) {
-	r.Route("/kb", func(kb chi.Router) {
+	r.Route("/kb/admin", func(kb chi.Router) {
 		kb.Route("/articles", func(articles chi.Router) {
 			articles.Post("/", h.CreateArticle)
 			articles.Get("/", h.ListArticles)
 			articles.Get("/{articleId}", h.GetArticle)
 			articles.Put("/{articleId}", h.UpdateArticle)
 			articles.Delete("/{articleId}", h.DeleteArticle)
-			articles.Post("/{articleId}/vote", h.VoteArticle)
 		})
 	})
 }
@@ -241,26 +245,6 @@ func (h *Handler) DeleteArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.service.DeleteArticle(r.Context(), tenantID, articleID); err != nil {
-		h.handleError(w, err)
-		return
-	}
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func (h *Handler) VoteArticle(w http.ResponseWriter, r *http.Request) {
-	articleID, err := uuid.Parse(chi.URLParam(r, "articleId"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid article ID")
-		return
-	}
-	var body struct {
-		Helpful bool `json:"helpful"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-	if err := h.service.VoteArticle(r.Context(), articleID, body.Helpful); err != nil {
 		h.handleError(w, err)
 		return
 	}
