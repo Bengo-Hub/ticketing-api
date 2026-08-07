@@ -35,7 +35,7 @@ type HTTPConfig struct {
 	ReadTimeout    time.Duration `envconfig:"HTTP_READ_TIMEOUT" default:"30s"`
 	WriteTimeout   time.Duration `envconfig:"HTTP_WRITE_TIMEOUT" default:"30s"`
 	IdleTimeout    time.Duration `envconfig:"HTTP_IDLE_TIMEOUT" default:"60s"`
-	AllowedOrigins []string      `envconfig:"HTTP_ALLOWED_ORIGINS" default:"https://accounts.codevertexafrica.com,https://ordersapp.codevertexafrica.com,https://pos.codevertexafrica.com"`
+	AllowedOrigins []string      `envconfig:"HTTP_ALLOWED_ORIGINS" default:"https://accounts.codevertexafrica.com,https://ordering.codevertexafrica.com,https://pos.codevertexafrica.com"`
 }
 
 // PostgresConfig holds database configuration.
