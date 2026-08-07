@@ -14,7 +14,7 @@ import (
 // @title           Ticketing API
 // @version         1.0
 // @description     Codevertex Ticketing Service — ticket lifecycle, SLA, KB, real-time SSE
-// @host            ticketingapi.codevertexitsolutions.com
+// @host            ticketingapi.codevertexafrica.com
 // @BasePath        /api/v1
 // @securityDefinitions.apikey BearerAuth
 // @in header

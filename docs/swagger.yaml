@@ -666,7 +666,7 @@ definitions:
       resolved:
         type: integer
     type: object
-host: ticketingapi.codevertexitsolutions.com
+host: ticketingapi.codevertexafrica.com
 info:
   contact: {}
   description: Codevertex Ticketing Service — ticket lifecycle, SLA, KB, real-time

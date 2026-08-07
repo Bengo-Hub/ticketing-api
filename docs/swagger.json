@@ -6,7 +6,7 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "ticketingapi.codevertexitsolutions.com",
+    "host": "ticketingapi.codevertexafrica.com",
     "basePath": "/api/v1",
     "paths": {
         "/{tenant}/agents": {
