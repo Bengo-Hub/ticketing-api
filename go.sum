@@ -6,6 +6,8 @@ github.com/Bengo-Hub/auth-client v0.13.0 h1:KFgNyNJdGtHszcFpGLMFz3rzAob9KPtDSsCT
 github.com/Bengo-Hub/auth-client v0.13.0/go.mod h1:mdQYYsCgNpXdeNBMRiKoWUAYgSmMFEG0g3pyM2Mxogo=
 github.com/Bengo-Hub/cache v0.3.0 h1:u2yzA9u2YDzKjGnmGYS0kr4rEm++3Ri7AHS5KPg5I3o=
 github.com/Bengo-Hub/cache v0.3.0/go.mod h1:cmDX41mNXK/oAHgxERnDd6LGVDx+bqkJ+t7uU+Iex18=
+github.com/Bengo-Hub/cache v0.4.1 h1:j3io3nAnjq/biX+31NAF6YEF6VXankZHlaYAPGHc/9I=
+github.com/Bengo-Hub/cache v0.4.1/go.mod h1:cmDX41mNXK/oAHgxERnDd6LGVDx+bqkJ+t7uU+Iex18=
 github.com/Bengo-Hub/pagination v0.3.0 h1:cvFHj+A5fMD5B+L89Epw/SfVxIPAzL82JViXAYlxjEM=
 github.com/Bengo-Hub/pagination v0.3.0/go.mod h1:qXxXpX45Shf6qplVtxqEeOMeKiSr/W4nT4nMLQqF4/g=
 github.com/Bengo-Hub/shared-events v0.6.1 h1:mSegYSPD4kh6SIsDMABRPf7LETZ1jH7Qkorqm2K0EHA=
