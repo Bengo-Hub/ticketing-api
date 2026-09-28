@@ -78,8 +78,8 @@ type TenantConfig struct {
 // AuthConfig holds authentication/authorization configuration.
 type AuthConfig struct {
 	ServiceURL          string        `envconfig:"AUTH_SERVICE_URL" default:"http://localhost:8080"`
-	Issuer              string        `envconfig:"AUTH_ISSUER" default:"bengobox-auth"`
-	Audience            string        `envconfig:"AUTH_AUDIENCE" default:"bengobox-ticketing"`
+	Issuer              string        `envconfig:"AUTH_ISSUER" default:"https://sso.codevertexafrica.com"`
+	Audience            string        `envconfig:"AUTH_AUDIENCE" default:"codevertex"`
 	JWKSCacheTTL        time.Duration `envconfig:"AUTH_JWKS_CACHE_TTL" default:"1h"`
 	JWKSRefreshInterval time.Duration `envconfig:"AUTH_JWKS_REFRESH_INTERVAL" default:"15m"`
 	EnableAPIKeyAuth    bool          `envconfig:"AUTH_ENABLE_API_KEY" default:"false"`

@@ -116,8 +116,8 @@ Client → GET /api/v1/{tenant}/branding
 | `REDIS_ADDR` | — | `localhost:6379` | Redis address |
 | `EVENTS_NATS_URL` | — | `nats://localhost:4222` | NATS server URL |
 | `AUTH_SERVICE_URL` | — | `http://localhost:8080` | auth-api base URL |
-| `AUTH_ISSUER` | — | `bengobox-auth` | JWT issuer |
-| `AUTH_AUDIENCE` | — | `bengobox-ticketing` | JWT audience |
+| `AUTH_ISSUER` | — | `https://sso.codevertexafrica.com` | JWT issuer (must match the SSO token `iss`) |
+| `AUTH_AUDIENCE` | — | `codevertex` | JWT audience (SSO tokens carry `codevertex`) |
 | `INTERNAL_SERVICE_KEY` | — | `""` | Shared S2S API key |
 | `NOTIFICATIONS_SERVICE_URL` | — | `http://localhost:4003` | notifications-api base URL |
 | `TENANT_CACHE_TTL` | — | `5m` | Tenant detail cache TTL |
