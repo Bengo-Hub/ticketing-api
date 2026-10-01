@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	sharedcache "github.com/Bengo-Hub/cache"
 	"net/http"
 	"time"
 
@@ -13,11 +14,10 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
 
-	"github.com/google/uuid"
 	authclient "github.com/Bengo-Hub/shared-auth-client"
 	eventslib "github.com/Bengo-Hub/shared-events"
+	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
 	"github.com/bengobox/ticketing-service/internal/clients"
-	"github.com/bengobox/ticketing-service/internal/platform/ratelimit"
 	"github.com/bengobox/ticketing-service/internal/config"
 	"github.com/bengobox/ticketing-service/internal/ent"
 	"github.com/bengobox/ticketing-service/internal/http/handlers"
@@ -27,12 +27,12 @@ import (
 	"github.com/bengobox/ticketing-service/internal/modules/routing"
 	"github.com/bengobox/ticketing-service/internal/modules/sla"
 	"github.com/bengobox/ticketing-service/internal/modules/tickets"
-	"github.com/bengobox/ticketing-service/internal/platform/cache"
 	"github.com/bengobox/ticketing-service/internal/platform/database"
 	"github.com/bengobox/ticketing-service/internal/platform/events"
 	"github.com/bengobox/ticketing-service/internal/platform/sse"
 	"github.com/bengobox/ticketing-service/internal/platform/tenantcache"
 	"github.com/bengobox/ticketing-service/internal/shared/logger"
+	"github.com/google/uuid"
 )
 
 // App holds the application dependencies.
@@ -111,12 +111,26 @@ func New(ctx context.Context) (*App, error) {
 		return nil, fmt.Errorf("app: postgres init: %w", err)
 	}
 
-	redisClient := cache.NewClient(cfg.Redis)
+	redisClient, redisErr := sharedcache.NewRedis(ctx, sharedcache.RedisConfig{
+		URL: cfg.Redis.URL, Addr: cfg.Redis.Addr, Password: cfg.Redis.Password, DB: cfg.Redis.DB,
+	})
+	if redisErr != nil {
+		log.Warn("app: redis not reachable at startup", zap.Error(redisErr))
+	}
+	sharedcache.SetLeaseClient(redisClient)
 	tenantResolver := tenantcache.New(redisClient, cfg.Auth.ServiceURL, cfg.Tenant.CacheTTL, log)
 
 	natsConn, err := events.Connect(cfg.Events)
 	if err != nil {
 		log.Warn("app: nats connect failed", zap.Error(err))
+	}
+	var relay *eventslib.Broadcaster
+	if natsConn != nil {
+		relay = eventslib.NewBroadcaster(log, natsConn, "ticketing")
+		// Drop revoked/rotated API keys from every validator on this pod at once.
+		_ = eventslib.NewBroadcaster(log, natsConn, "auth").Subscribe("apikey.changed", func(m eventslib.BroadcastMessage) {
+			authclient.InvalidateAPIKeyHash(string(m.Data))
+		})
 	}
 
 	// Ensure ticketing JetStream stream exists
@@ -139,11 +153,9 @@ func New(ctx context.Context) (*App, error) {
 
 	drv := entsql.OpenDB(dialect.Postgres, sqlDB)
 	ormClient := ent.NewClient(ent.Driver(drv))
-	if err := ormClient.Schema.Create(ctx); err != nil {
-		return nil, fmt.Errorf("app: ent schema create: %w", err)
-	}
-
-	log.Info("app: migrations completed - run 'go run cmd/seed/main.go' to seed initial data (idempotent)")
+	// Schema changes are applied once per rollout by ticketing-migrate (entrypoint,
+	// advisory-locked, versioned migrations). The ent auto-diff that used to run here on every
+	// pod start was unlocked, ran through PgBouncer, and bypassed the versioned migrations.
 
 	// Initialize auth-service JWT validator
 	var authMiddleware *authclient.AuthMiddleware
@@ -178,7 +190,7 @@ func New(ctx context.Context) (*App, error) {
 	otpClient := clients.NewOTPClient(cfg.Auth.ServiceURL, log)
 
 	// Initialize rate limiter for public endpoints
-	rl := ratelimit.New(redisClient)
+	rl := ratelimit.NewLimiter(redisClient, log, "ticketing")
 
 	// Initialize identity module (teams, agents)
 	identityRepo := identity.NewEntRepository(ormClient)
@@ -193,8 +205,11 @@ func New(ctx context.Context) (*App, error) {
 		}
 	}
 
-	// Initialize SSE broker (in-memory pub/sub for real-time clients)
-	sseBroker := sse.New()
+	// SSE broker: per-tenant ticket events, relayed across replicas.
+	sseBroker, sseErr := sse.New(relay)
+	if sseErr != nil {
+		log.Warn("app: sse relay subscribe failed, single-replica delivery only", zap.Error(sseErr))
+	}
 
 	// Initialize KB module
 	kbRepo := kb.NewEntRepository(ormClient)

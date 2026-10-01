@@ -42,13 +42,13 @@ type SSEPublisher interface {
 
 // Service provides ticket business logic.
 type Service struct {
-	repo    Repository
-	logger  *zap.Logger
+	repo      Repository
+	logger    *zap.Logger
 	publisher *events.Publisher
-	sla     SLAComputer
-	notif   Notifier
-	sse     SSEPublisher
-	routing RulesEvaluator
+	sla       SLAComputer
+	notif     Notifier
+	sse       SSEPublisher
+	routing   RulesEvaluator
 }
 
 // NewService creates a new ticket service.
@@ -251,7 +251,7 @@ func (s *Service) UpdateTicketStatus(ctx context.Context, tenantID uuid.UUID, ti
 		// Check if resolution SLA was breached
 		if ticket.SLAResolutionDueAt != nil && !ticket.SLAResolutionBreached {
 			if time.Now().After(*ticket.SLAResolutionDueAt) {
-				if err := s.repo.MarkSLABreached(ctx, tenantID, ticketID, false, true); err != nil {
+				if _, err := s.repo.MarkSLABreached(ctx, tenantID, ticketID, false, true); err != nil {
 					s.logger.Warn("failed to mark resolution sla breach", zap.Error(err))
 				}
 			}
@@ -383,7 +383,7 @@ func (s *Service) AddComment(ctx context.Context, req *AddCommentRequest) (*Tick
 			ticket, tErr := s.repo.GetTicket(ctx, req.TenantID, req.TicketID)
 			if tErr == nil && ticket.SLAResponseDueAt != nil && !ticket.SLAResponseBreached {
 				if time.Now().After(*ticket.SLAResponseDueAt) {
-					if bErr := s.repo.MarkSLABreached(ctx, req.TenantID, req.TicketID, true, false); bErr != nil {
+					if _, bErr := s.repo.MarkSLABreached(ctx, req.TenantID, req.TicketID, true, false); bErr != nil {
 						s.logger.Warn("failed to mark response sla breach", zap.Error(bErr))
 					}
 				}

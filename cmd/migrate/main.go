@@ -22,8 +22,13 @@ func maskPassword(url string) string {
 	return re.ReplaceAllString(url, "://$1:****@")
 }
 
+// migrationLockKey serializes migrations across pods (every replica's entrypoint runs this
+// binary); concurrent schema runs can race on the same DDL. Stable and unique per service
+// ("TKTM", ticketing migrate).
+const migrationLockKey int64 = 0x544B_544D
+
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
 	dbURL := os.Getenv("POSTGRES_MIGRATE_URL")
@@ -41,6 +46,12 @@ func main() {
 		log.Fatalf("failed to open database: %v", err)
 	}
 	defer db.Close()
+	// One connection: the advisory lock and every migration statement share one session.
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+	if _, err := db.ExecContext(ctx, "SELECT pg_advisory_lock($1)", migrationLockKey); err != nil {
+		log.Fatalf("acquire migration lock: %v", err)
+	}
 
 	if os.Getenv("RESET_DB") == "true" {
 		log.Println("resetting database...")
@@ -57,10 +68,12 @@ func main() {
 	client := ent.NewClient(ent.Driver(drv))
 	defer client.Close()
 
-	if err := client.Schema.Create(ctx,
-		schema.WithDir(migrate.Dir),
-	); err != nil {
-		log.Fatalf("failed to run migrations: %v", err)
+	migrateErr := client.Schema.Create(ctx, schema.WithDir(migrate.Dir))
+	if _, err := db.ExecContext(context.Background(), "SELECT pg_advisory_unlock($1)", migrationLockKey); err != nil {
+		log.Printf("release migration lock: %v", err)
+	}
+	if migrateErr != nil {
+		log.Fatalf("failed to run migrations: %v", migrateErr)
 	}
 
 	log.Println("database migrations applied successfully")

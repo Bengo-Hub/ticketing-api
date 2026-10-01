@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"encoding/json"
+	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -52,7 +53,8 @@ func New(cfg Config) http.Handler {
 
 	// Global middleware
 	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
+	// Never chi RealIP: it trusts client-sent True-Client-IP/X-Forwarded-For.
+	r.Use(ratelimit.TrustedRealIP)
 	r.Use(middleware.Heartbeat("/readyz"))
 	r.Use(sharedmw.RequestID)
 	r.Use(sharedmw.Logging(cfg.Log))

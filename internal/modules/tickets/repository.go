@@ -22,7 +22,8 @@ type Repository interface {
 	// SLA tracking
 	SetSLADeadlines(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, responseDue, resolutionDue *time.Time) error
 	MarkFirstResponse(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID) error
-	MarkSLABreached(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, responseBreached, resolutionBreached bool) error
+	// MarkSLABreached sets breach flags that are still false; changed reports whether it did.
+	MarkSLABreached(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, responseBreached, resolutionBreached bool) (changed bool, err error)
 
 	// Comment operations
 	CreateComment(ctx context.Context, tenantID uuid.UUID, comment *TicketComment) error

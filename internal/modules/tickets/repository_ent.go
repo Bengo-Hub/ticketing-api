@@ -3,6 +3,7 @@ package tickets
 import (
 	"context"
 	"fmt"
+	"github.com/bengobox/ticketing-service/internal/ent/predicate"
 	"time"
 
 	"github.com/bengobox/ticketing-service/internal/ent"
@@ -348,28 +349,37 @@ func (r *EntRepository) MarkFirstResponse(ctx context.Context, tenantID uuid.UUI
 	return nil
 }
 
-func (r *EntRepository) MarkSLABreached(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, responseBreached, resolutionBreached bool) error {
+func (r *EntRepository) MarkSLABreached(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, responseBreached, resolutionBreached bool) (bool, error) {
+	// Only flip a flag that is still false, and report whether this call did it, so the
+	// breach is acted on (event published) once even when the SLA worker on every replica,
+	// and the status-change paths, all detect it.
+	var unmarked []predicate.Ticket
+	if responseBreached {
+		unmarked = append(unmarked, ticket.SLAResponseBreached(false))
+	}
+	if resolutionBreached {
+		unmarked = append(unmarked, ticket.SLAResolutionBreached(false))
+	}
+	if len(unmarked) == 0 {
+		return false, nil
+	}
 	update := r.client.Ticket.Update().
 		Where(
 			ticket.ID(ticketID),
 			ticket.TenantID(tenantID),
+			ticket.Or(unmarked...),
 		)
-
 	if responseBreached {
 		update = update.SetSLAResponseBreached(true)
 	}
 	if resolutionBreached {
 		update = update.SetSLAResolutionBreached(true)
 	}
-
 	n, err := update.Save(ctx)
 	if err != nil {
-		return err
+		return false, err
 	}
-	if n == 0 {
-		return ErrTicketNotFound
-	}
-	return nil
+	return n > 0, nil
 }
 
 // Comment operations

@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sync"
+	"time"
 
+	"github.com/Bengo-Hub/httpware"
+	eventslib "github.com/Bengo-Hub/shared-events"
 	"github.com/google/uuid"
 )
 
@@ -15,95 +17,73 @@ type Event struct {
 	Payload any    `json:"payload"` // serialisable payload
 }
 
-// Broker manages per-tenant SSE subscriptions.
+// heartbeatInterval keeps an idle stream open through ingress and proxy idle timeouts.
+const heartbeatInterval = 15 * time.Second
+
+// Broker streams per-tenant ticket events to SSE clients on every replica.
+//
+// A client's stream lives on whichever replica the load balancer picked while the ticket
+// change happens on whichever replica handled the write, so events go through the shared
+// events.FanoutHub, which relays them to all replicas (each delivers to its own streams).
+// The previous broker was in-memory only, so clients on other pods never saw the change.
 type Broker struct {
-	mu   sync.RWMutex
-	subs map[string]map[uint64]chan Event // tenantID → {subID → ch}
-	next uint64
+	fan *eventslib.FanoutHub
 }
 
-// New creates a new Broker.
-func New() *Broker {
-	return &Broker{subs: make(map[string]map[uint64]chan Event)}
+// New creates a Broker. relay may be nil (single replica, tests): delivery is then local only.
+func New(relay *eventslib.Broadcaster) (*Broker, error) {
+	fan, err := eventslib.NewFanoutHub(relay, "ticket-sse", 16)
+	return &Broker{fan: fan}, err
 }
 
-// Subscribe returns a channel that will receive events for tenantID.
-// Call the returned unsub function to clean up.
-func (b *Broker) Subscribe(tenantID uuid.UUID) (<-chan Event, func()) {
-	key := tenantID.String()
-
-	b.mu.Lock()
-	b.next++
-	id := b.next
-	ch := make(chan Event, 16)
-	if b.subs[key] == nil {
-		b.subs[key] = make(map[uint64]chan Event)
-	}
-	b.subs[key][id] = ch
-	b.mu.Unlock()
-
-	unsub := func() {
-		b.mu.Lock()
-		delete(b.subs[key], id)
-		close(ch)
-		b.mu.Unlock()
-	}
-	return ch, unsub
-}
-
-// Publish sends an event to all subscribers of tenantID.
+// Publish sends an event to all subscribers of tenantID on every replica.
 // Implements tickets.SSEPublisher so it can be wired directly into the service.
 func (b *Broker) Publish(tenantID uuid.UUID, eventType string, payload any) {
-	b.publish(tenantID, Event{Type: eventType, Payload: payload})
-}
-
-func (b *Broker) publish(tenantID uuid.UUID, evt Event) {
-	key := tenantID.String()
-	b.mu.RLock()
-	defer b.mu.RUnlock()
-	for _, ch := range b.subs[key] {
-		select {
-		case ch <- evt:
-		default: // drop if subscriber is slow
-		}
+	data, err := json.Marshal(Event{Type: eventType, Payload: payload})
+	if err != nil {
+		return
 	}
+	b.fan.Publish(tenantID.String(), "", data)
 }
 
-// ServeHTTP streams SSE events for a tenant until the client disconnects.
-// Expects tenantID to be set by the handler.
+// ServeStream streams SSE events for a tenant until the client disconnects.
 func (b *Broker) ServeStream(w http.ResponseWriter, r *http.Request, tenantID uuid.UUID) {
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		http.Error(w, "streaming not supported", http.StatusInternalServerError)
+	httpware.StreamHeaders(w)
+	// The server WriteTimeout (30s) would cut the stream; the heartbeat keeps it alive instead.
+	httpware.ExtendWriteDeadline(w)
+	flusher := http.NewResponseController(w)
+
+	sub := b.fan.Subscribe(tenantID.String())
+	defer b.fan.Unsubscribe(sub)
+
+	fmt.Fprint(w, "event: connected\ndata: {}\n\n")
+	if err := flusher.Flush(); err != nil {
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("X-Accel-Buffering", "no")
-
-	ch, unsub := b.Subscribe(tenantID)
-	defer unsub()
-
-	// Send an initial "connected" event
-	fmt.Fprintf(w, "event: connected\ndata: {}\n\n")
-	flusher.Flush()
-
+	heartbeat := time.NewTicker(heartbeatInterval)
+	defer heartbeat.Stop()
 	for {
 		select {
 		case <-r.Context().Done():
 			return
-		case evt, ok := <-ch:
+		case <-heartbeat.C:
+			fmt.Fprint(w, ": heartbeat\n\n")
+			if flusher.Flush() != nil {
+				return
+			}
+		case raw, ok := <-sub.C:
 			if !ok {
 				return
 			}
-			data, err := json.Marshal(evt)
-			if err != nil {
+			var evt Event
+			if json.Unmarshal(raw, &evt) != nil {
 				continue
 			}
-			fmt.Fprintf(w, "event: %s\ndata: %s\n\n", evt.Type, data)
-			flusher.Flush()
+			fmt.Fprintf(w, "event: %s\ndata: %s\n\n", evt.Type, raw)
+			if flusher.Flush() != nil {
+				return
+			}
 		}
 	}
 }

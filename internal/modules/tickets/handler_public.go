@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
 	"net/http"
 	"strings"
 	"time"
@@ -18,17 +19,18 @@ type otpValidator interface {
 	Validate(ctx context.Context, token string) (email string, err error)
 }
 
-// rateLimiter enforces per-key request limits.
+// rateLimiter enforces per-key request limits (shared-ratelimit's Limiter: GCRA in Redis,
+// exact across replicas, per-pod fallback while Redis is down).
 type rateLimiter interface {
-	Allow(ctx context.Context, key string, maxCount int, window time.Duration) (bool, error)
+	Allow(ctx context.Context, key string, opts ratelimit.Options, cost int) (bool, time.Duration)
 }
 
 // PublicHandler handles unauthenticated public ticket endpoints.
 type PublicHandler struct {
-	service  *Service
-	otp      otpValidator
-	limiter  rateLimiter
-	logger   *zap.Logger
+	service *Service
+	otp     otpValidator
+	limiter rateLimiter
+	logger  *zap.Logger
 }
 
 // NewPublicHandler creates a handler for the public ticket endpoints.
@@ -75,21 +77,15 @@ func (h *PublicHandler) CreatePublicTicket(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Rate limit by IP (5 per hour)
-	ip := realIP(r)
+	// Rate limit by IP (5 per hour) and by verified email (10 per day). The old limiter reset
+	// the TTL on every hit, so a client that kept trying never got out of the window.
+	ip := ratelimit.ClientIP(r)
 	if h.limiter != nil {
-		ok, err := h.limiter.Allow(r.Context(), "rl:ip:"+tenantSlug+":"+ip, 5, time.Hour)
-		if err != nil {
-			h.logger.Warn("rate limit check failed", zap.Error(err))
-		} else if !ok {
+		if ok, _ := h.limiter.Allow(r.Context(), tenantSlug+":"+ip, ratelimit.Options{Name: "public-ticket-ip", Limit: 5, Window: time.Hour}, 1); !ok {
 			respondError(w, http.StatusTooManyRequests, "rate limit exceeded: too many tickets from this IP")
 			return
 		}
-		// Rate limit by email (10 per 24h)
-		ok, err = h.limiter.Allow(r.Context(), "rl:email:"+tenantSlug+":"+email, 10, 24*time.Hour)
-		if err != nil {
-			h.logger.Warn("rate limit check failed", zap.Error(err))
-		} else if !ok {
+		if ok, _ := h.limiter.Allow(r.Context(), tenantSlug+":"+strings.ToLower(email), ratelimit.Options{Name: "public-ticket-email", Limit: 10, Window: 24 * time.Hour}, 1); !ok {
 			respondError(w, http.StatusTooManyRequests, "rate limit exceeded: too many tickets from this email")
 			return
 		}
@@ -258,13 +254,3 @@ func emailToUUID(email string) uuid.UUID {
 }
 
 // realIP extracts the real client IP, respecting X-Forwarded-For.
-func realIP(r *http.Request) string {
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		parts := strings.SplitN(xff, ",", 2)
-		return strings.TrimSpace(parts[0])
-	}
-	if ip := r.Header.Get("X-Real-IP"); ip != "" {
-		return ip
-	}
-	return r.RemoteAddr
-}

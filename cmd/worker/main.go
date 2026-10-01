@@ -14,16 +14,16 @@ import (
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 
-	"github.com/nats-io/nats.go"
 	"github.com/bengobox/ticketing-service/internal/ent"
 	"github.com/bengobox/ticketing-service/internal/modules/tickets"
 	"github.com/bengobox/ticketing-service/internal/platform/events"
 	"github.com/bengobox/ticketing-service/internal/shared/logger"
+	"github.com/nats-io/nats.go"
 )
 
 const (
-	pollInterval   = 5 * time.Minute
-	breachBatch    = 200
+	pollInterval = 5 * time.Minute
+	breachBatch  = 200
 )
 
 func main() {
@@ -114,12 +114,16 @@ func runBreachCheck(ctx context.Context, repo tickets.Repository, publisher *eve
 			continue
 		}
 
-		if err := repo.MarkSLABreached(ctx, t.TenantID, t.ID, responseBreached, resolutionBreached); err != nil {
+		changed, err := repo.MarkSLABreached(ctx, t.TenantID, t.ID, responseBreached, resolutionBreached)
+		if err != nil {
 			log.Error("breach check: failed to mark breach",
 				zap.String("ticket_id", t.ID.String()),
 				zap.Error(err),
 			)
 			continue
+		}
+		if !changed {
+			continue // another replica (or a status change) already recorded this breach
 		}
 
 		// Publish breach event for notifications-api to consume
