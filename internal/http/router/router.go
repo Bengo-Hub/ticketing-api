@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 
@@ -22,7 +21,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/modules/sla"
 	"github.com/bengobox/ticketing-service/internal/modules/tickets"
 	"github.com/bengobox/ticketing-service/internal/platform/sse"
-	sharedmw "github.com/bengobox/ticketing-service/internal/shared/middleware"
+	httpware "github.com/Bengo-Hub/httpware"
 )
 
 // tenantResolver resolves tenant details from cache/auth-api.
@@ -56,17 +55,10 @@ func New(cfg Config) http.Handler {
 	// Never chi RealIP: it trusts client-sent True-Client-IP/X-Forwarded-For.
 	r.Use(ratelimit.TrustedRealIP)
 	r.Use(middleware.Heartbeat("/readyz"))
-	r.Use(sharedmw.RequestID)
-	r.Use(sharedmw.Logging(cfg.Log))
-	r.Use(sharedmw.Recover(cfg.Log))
-	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   cfg.AllowedOrigins,
-		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Request-ID", "X-Tenant-ID"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-		MaxAge:           300,
-	}))
+	r.Use(httpware.RequestID)
+	r.Use(httpware.Logging(cfg.Log))
+	r.Use(httpware.Recover(cfg.Log))
+	r.Use(httpware.CORS(httpware.StandardCORS(cfg.AllowedOrigins)))
 
 	// Health endpoints (no auth required)
 	r.Get("/healthz", cfg.HealthHandler.Liveness)

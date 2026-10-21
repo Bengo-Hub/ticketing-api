@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	httpware "github.com/Bengo-Hub/httpware"
 	pagination "github.com/Bengo-Hub/pagination"
 	authclient "github.com/Bengo-Hub/shared-auth-client"
 	"github.com/go-chi/chi/v5"
@@ -970,7 +971,7 @@ func containsAny(s string, keywords ...string) bool {
 // Accepts a wider payload: title/description from the agent tool schema plus
 // requester_name, requester_email stored in metadata.
 func (h *Handler) InternalCreateTicket(w http.ResponseWriter, r *http.Request) {
-	if h.serviceKey == "" || r.Header.Get("X-API-Key") != h.serviceKey {
+	if !httpware.ValidServiceKey(r, h.serviceKey) {
 		respondError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
