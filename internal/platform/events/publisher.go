@@ -35,9 +35,9 @@ func (p *Publisher) publish(ctx context.Context, tenantID uuid.UUID, eventType s
 	return p.publishWithAggregate(ctx, tenantID, "ticketing", eventType, data)
 }
 
-// publishWithAggregate writes an event under an explicit aggregate so cross-domain
-// events (crm.*, sla.*) get the correct subject ({aggregate}.{event_type}) instead of
-// being mis-prefixed as ticketing.crm.* / ticketing.sla.* (which no consumer subscribes to).
+// publishWithAggregate writes an event under an explicit aggregate so a cross-domain event
+// (crm.*) gets the subject its own stream and consumer listen on ({aggregate}.{event_type})
+// instead of ticketing.crm.*.
 func (p *Publisher) publishWithAggregate(ctx context.Context, tenantID uuid.UUID, aggregate, eventType string, data map[string]any) error {
 	if p == nil {
 		return nil
@@ -85,12 +85,20 @@ func (p *Publisher) PublishCRMActivityRequest(ctx context.Context, tenantID uuid
 	return p.publishWithAggregate(ctx, tenantID, "crm", "activity.log_requested", data)
 }
 
-// PublishSLABreach publishes an sla.* event for a ticket that missed its SLA target,
-// under the sla aggregate (subject "sla.first_response_breached").
+// PublishSLABreach publishes a ticket's SLA breach on the ticketing stream, subject
+// "ticketing.sla.first_response_breached" or "ticketing.sla.resolution_breached", event type
+// "sla.<kind>". No stream captures a bare "sla.>" subject, so the earlier "sla" aggregate meant
+// notifications-api's ticketing consumer (ticketing.>) never received a breach alert.
 func (p *Publisher) PublishSLABreach(ctx context.Context, tenantID uuid.UUID, data map[string]any) error {
-	eventType := "first_response_breached"
-	if t, ok := data["event_type"].(string); ok {
-		eventType = strings.TrimPrefix(t, "sla.")
+	return p.publish(ctx, tenantID, slaBreachEventType(data), data)
+}
+
+// slaBreachEventType is "sla.first_response_breached" or "sla.resolution_breached" from the
+// payload's event_type, with or without its "sla." prefix; first response is the default.
+func slaBreachEventType(data map[string]any) string {
+	kind := "first_response_breached"
+	if t, ok := data["event_type"].(string); ok && t != "" {
+		kind = strings.TrimPrefix(t, "sla.")
 	}
-	return p.publishWithAggregate(ctx, tenantID, "sla", eventType, data)
+	return "sla." + kind
 }

@@ -104,7 +104,7 @@ Client → GET /api/v1/{tenant}/branding
 | `auth.user.updated` | auth-api | ticketing-api (agent sync) |
 | `ticketing.ticket.assigned` | ticketing-api (outbox) | notifications-api |
 | `ticketing.ticket.resolved` | ticketing-api (outbox) | notifications-api |
-| `ticketing.sla.breach` | ticketing-api (worker) | notifications-api |
+| `ticketing.sla.first_response_breached`, `ticketing.sla.resolution_breached` | ticketing-api (worker) | notifications-api |
 
 ---
 

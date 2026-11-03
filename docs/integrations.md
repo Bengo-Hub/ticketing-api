@@ -62,7 +62,7 @@ This document provides detailed integration information for all external service
 - `ticketing.ticket.assigned` - Ticket assigned
 - `ticketing.ticket.escalated` - Ticket escalated
 - `ticketing.comment.added` - Comment added
-- `ticketing.sla.breached` - SLA breached
+- `ticketing.sla.first_response_breached`, `ticketing.sla.resolution_breached` - SLA breached (SLA worker; event type `sla.<kind>`)
 
 ### Projects Service
 
@@ -361,20 +361,30 @@ This document provides detailed integration information for all external service
 }
 ```
 
-**ticketing.sla.breached**
+**ticketing.sla.first_response_breached** and **ticketing.sla.resolution_breached**
+
+Published by the SLA worker (`cmd/worker`) on the `ticketing` stream once per breach (another
+replica that already recorded it publishes nothing). notifications-api's ticketing consumer
+alerts the assigned agent, or the tenant contact when the payload carries no agent.
 ```json
 {
-  "event_id": "uuid",
-  "event_type": "ticketing.sla.breached",
+  "id": "uuid",
+  "event_type": "sla.first_response_breached",
+  "aggregate_type": "ticketing",
   "tenant_id": "tenant-uuid",
-  "timestamp": "2024-12-05T10:30:00Z",
-  "data": {
+  "payload": {
     "ticket_id": "ticket-uuid",
-    "sla_policy_id": "sla-uuid",
-    "breach_type": "response_time"
+    "ticket_number": "1042",
+    "subject": "Printer down",
+    "priority": "high",
+    "response_breached": true,
+    "resolution_breached": false,
+    "event_type": "sla.first_response_breached"
   }
 }
 ```
+The payload has no `agent_email` or `agent_name` yet, so alerts reach the tenant contact until the
+worker adds the assignee.
 
 #### Inbound Events (Consumed by Ticketing Service)
 
