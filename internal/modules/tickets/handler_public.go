@@ -63,6 +63,23 @@ func (h *PublicHandler) CreatePublicTicket(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// The body is checked before the token is traded: a token works once, so a typo must not burn it.
+	var req CreatePublicTicketRequest
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 32<<10)).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	req.TenantID = tenantID
+
+	req.Subject, req.Description = strings.TrimSpace(req.Subject), strings.TrimSpace(req.Description)
+	if req.Subject == "" || req.Description == "" {
+		respondError(w, http.StatusBadRequest, "subject and description are required")
+		return
+	}
+	if len([]rune(req.Subject)) > 200 || len([]rune(req.Description)) > 5000 || len([]rune(req.CustomerName)) > 120 {
+		respondError(w, http.StatusBadRequest, "subject, description or name is too long")
+		return
+	}
 	// Validate OTP token → get verified email
 	otpToken := r.Header.Get("X-OTP-Token")
 	if otpToken == "" {
@@ -91,18 +108,8 @@ func (h *PublicHandler) CreatePublicTicket(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	var req CreatePublicTicketRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-	req.TenantID = tenantID
 	req.CustomerEmail = email
 
-	if req.Subject == "" || req.Description == "" {
-		respondError(w, http.StatusBadRequest, "subject and description are required")
-		return
-	}
 	if req.Channel == "" {
 		req.Channel = ChannelWeb
 	}

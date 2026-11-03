@@ -187,7 +187,7 @@ func New(ctx context.Context) (*App, error) {
 	notifClient := clients.NewNotificationsClient(cfg.Notifications, log)
 
 	// Initialize OTP validator (calls auth-api to validate public OTP tokens)
-	otpClient := clients.NewOTPClient(cfg.Auth.ServiceURL, log)
+	otpClient := clients.NewOTPClient(cfg.Auth.ServiceURL, cfg.Auth.InternalServiceKey, log)
 
 	// Initialize rate limiter for public endpoints
 	rl := ratelimit.NewLimiter(redisClient, log, "ticketing")
