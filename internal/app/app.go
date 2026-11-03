@@ -250,6 +250,12 @@ func New(ctx context.Context) (*App, error) {
 		} else {
 			pubCfg := eventslib.DefaultPublisherConfig(js, eventPub.OutboxRepo(), log)
 			outboxPub = eventslib.NewPublisher(pubCfg)
+			// tenant.purge (dormancy, a deleted tenant, a declined registration): delete every row
+			// this service holds for the tenant, by the shared schema-driven purger.
+			purger := &eventslib.TenantPurger{DB: sqlDB, Log: log.Named("tenant-purge"), Service: "ticketing"}
+			if err := purger.Subscribe(js); err != nil {
+				log.Warn("tenant purge consumer not started", zap.Error(err))
+			}
 		}
 	}
 
