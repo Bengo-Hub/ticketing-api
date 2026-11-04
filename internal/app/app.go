@@ -215,6 +215,7 @@ func New(ctx context.Context) (*App, error) {
 	kbRepo := kb.NewEntRepository(ormClient)
 	kbService := kb.NewService(kbRepo, log)
 	kbHandler := kb.NewHandler(kbService, log)
+	kbHandler.SetTenantLookup(tenantResolver)
 
 	// Initialize SLA module
 	slaRepo := sla.NewEntRepository(ormClient)

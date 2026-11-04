@@ -1,10 +1,12 @@
 package kb
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
 
+	sharedcache "github.com/Bengo-Hub/cache"
 	pagination "github.com/Bengo-Hub/pagination"
 	authclient "github.com/Bengo-Hub/shared-auth-client"
 	"github.com/go-chi/chi/v5"
@@ -14,8 +16,18 @@ import (
 
 type Handler struct {
 	service *Service
+	tenants TenantLookup
 	logger  *zap.Logger
 }
+
+// TenantLookup resolves a tenant slug to auth-api's tenant (tenantcache.Resolver: Redis, then
+// auth-api).
+type TenantLookup interface {
+	GetTenantDetails(ctx context.Context, slug string) (sharedcache.TenantDetails, error)
+}
+
+// SetTenantLookup wires the slug lookup the public routes need.
+func (h *Handler) SetTenantLookup(l TenantLookup) { h.tenants = l }
 
 func NewHandler(service *Service, logger *zap.Logger) *Handler {
 	return &Handler{
@@ -266,8 +278,11 @@ func (h *Handler) DeleteArticle(w http.ResponseWriter, r *http.Request) {
 // @Success      200 {object} map[string]interface{}
 // @Router       /{tenant}/kb/articles [get]
 func (h *Handler) ListPublicArticles(w http.ResponseWriter, r *http.Request) {
-	slug := chi.URLParam(r, "tenant")
-	tenantID := tenantIDFromSlug(slug)
+	tenantID, ok := h.publicTenant(r)
+	if !ok {
+		respondError(w, http.StatusNotFound, "tenant not found")
+		return
+	}
 	p := pagination.Parse(r)
 	isPublic := true
 	filter := ArticleFilter{
@@ -298,22 +313,26 @@ func (h *Handler) ListPublicArticles(w http.ResponseWriter, r *http.Request) {
 // @Failure      404 {object} map[string]string
 // @Router       /{tenant}/kb/articles/{slug} [get]
 func (h *Handler) GetPublicArticleBySlug(w http.ResponseWriter, r *http.Request) {
-	slug := chi.URLParam(r, "tenant")
-	tenantID := tenantIDFromSlug(slug)
+	tenantID, ok := h.publicTenant(r)
+	if !ok {
+		respondError(w, http.StatusNotFound, "article not found")
+		return
+	}
 	articleSlug := chi.URLParam(r, "slug")
 	article, err := h.service.GetArticleBySlug(r.Context(), tenantID, articleSlug)
 	if err != nil {
 		h.handleError(w, err)
 		return
 	}
-	if !article.IsPublic {
-		respondError(w, http.StatusNotFound, "article not found")
-		return
-	}
 	respondJSON(w, http.StatusOK, article)
 }
 
 func (h *Handler) VotePublicArticle(w http.ResponseWriter, r *http.Request) {
+	tenantID, ok := h.publicTenant(r)
+	if !ok {
+		respondError(w, http.StatusNotFound, "article not found")
+		return
+	}
 	articleID, err := uuid.Parse(chi.URLParam(r, "articleId"))
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "invalid article ID")
@@ -326,7 +345,7 @@ func (h *Handler) VotePublicArticle(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	if err := h.service.VoteArticle(r.Context(), articleID, body.Helpful); err != nil {
+	if err := h.service.VoteArticle(r.Context(), tenantID, articleID, body.Helpful); err != nil {
 		h.handleError(w, err)
 		return
 	}
@@ -349,8 +368,23 @@ func (h *Handler) requireTenantID(w http.ResponseWriter, r *http.Request) uuid.U
 	return *tenantID
 }
 
-func tenantIDFromSlug(slug string) uuid.UUID {
-	return uuid.NewSHA1(uuid.NameSpaceDNS, []byte(slug))
+// publicTenant resolves the {tenant} path segment (a slug or a UUID) to the tenant's real id.
+// Tenant ids are auth-api's own UUIDs, never derived from the slug, so a slug is looked up; an
+// unknown one is not found.
+func (h *Handler) publicTenant(r *http.Request) (uuid.UUID, bool) {
+	raw := chi.URLParam(r, "tenant")
+	if id, err := uuid.Parse(raw); err == nil {
+		return id, true
+	}
+	if raw == "" || h.tenants == nil {
+		return uuid.Nil, false
+	}
+	d, err := h.tenants.GetTenantDetails(r.Context(), raw)
+	if err != nil {
+		return uuid.Nil, false
+	}
+	id, err := uuid.Parse(d.ID)
+	return id, err == nil && id != uuid.Nil
 }
 
 func (h *Handler) handleError(w http.ResponseWriter, err error) {

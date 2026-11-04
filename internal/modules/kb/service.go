@@ -28,10 +28,15 @@ func (s *Service) GetArticle(ctx context.Context, tenantID, id uuid.UUID) (*Arti
 	return s.repo.GetByID(ctx, tenantID, id)
 }
 
+// GetArticleBySlug serves the public KB page: only a public, published article of the tenant is
+// found (a draft or archived article, or one marked private, is not found) and only then counted.
 func (s *Service) GetArticleBySlug(ctx context.Context, tenantID uuid.UUID, slug string) (*Article, error) {
 	article, err := s.repo.GetBySlug(ctx, tenantID, slug)
 	if err != nil {
 		return nil, err
+	}
+	if !publiclyVisible(article) {
+		return nil, ErrArticleNotFound
 	}
 	// Fire-and-forget view count increment
 	go func() {
@@ -54,8 +59,22 @@ func (s *Service) ListArticles(ctx context.Context, filter ArticleFilter) (*Arti
 	return s.repo.List(ctx, filter)
 }
 
-func (s *Service) VoteArticle(ctx context.Context, id uuid.UUID, helpful bool) error {
+// VoteArticle records a public "was this helpful" vote, only on a public, published article of
+// the tenant in the path.
+func (s *Service) VoteArticle(ctx context.Context, tenantID, id uuid.UUID, helpful bool) error {
+	article, err := s.repo.GetByID(ctx, tenantID, id)
+	if err != nil {
+		return err
+	}
+	if !publiclyVisible(article) {
+		return ErrArticleNotFound
+	}
 	return s.repo.Vote(ctx, id, helpful)
+}
+
+// publiclyVisible is what the public routes may show: public and published.
+func publiclyVisible(a *Article) bool {
+	return a != nil && a.IsPublic && a.Status == StatusPublished
 }
 
 func slugify(s string) string {
