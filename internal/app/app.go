@@ -238,6 +238,7 @@ func New(ctx context.Context) (*App, error) {
 		tickets.WithServiceKey(cfg.Auth.InternalServiceKey),
 	)
 	publicTicketsHandler := tickets.NewPublicHandler(ticketsService, otpClient, rl, log)
+	publicTicketsHandler.SetTenantLookup(tenantResolver)
 
 	// Wire event publisher for ticket lifecycle events (shared-events outbox pattern)
 	var outboxPub *eventslib.Publisher

@@ -1,14 +1,13 @@
 package kb
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
 
-	sharedcache "github.com/Bengo-Hub/cache"
 	pagination "github.com/Bengo-Hub/pagination"
 	authclient "github.com/Bengo-Hub/shared-auth-client"
+	"github.com/bengobox/ticketing-service/internal/platform/tenantcache"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -21,10 +20,8 @@ type Handler struct {
 }
 
 // TenantLookup resolves a tenant slug to auth-api's tenant (tenantcache.Resolver: Redis, then
-// auth-api).
-type TenantLookup interface {
-	GetTenantDetails(ctx context.Context, slug string) (sharedcache.TenantDetails, error)
-}
+// auth-api). It is the shared tenantcache.Lookup, also used by the public tickets routes.
+type TenantLookup = tenantcache.Lookup
 
 // SetTenantLookup wires the slug lookup the public routes need.
 func (h *Handler) SetTenantLookup(l TenantLookup) { h.tenants = l }
@@ -372,19 +369,7 @@ func (h *Handler) requireTenantID(w http.ResponseWriter, r *http.Request) uuid.U
 // Tenant ids are auth-api's own UUIDs, never derived from the slug, so a slug is looked up; an
 // unknown one is not found.
 func (h *Handler) publicTenant(r *http.Request) (uuid.UUID, bool) {
-	raw := chi.URLParam(r, "tenant")
-	if id, err := uuid.Parse(raw); err == nil {
-		return id, true
-	}
-	if raw == "" || h.tenants == nil {
-		return uuid.Nil, false
-	}
-	d, err := h.tenants.GetTenantDetails(r.Context(), raw)
-	if err != nil {
-		return uuid.Nil, false
-	}
-	id, err := uuid.Parse(d.ID)
-	return id, err == nil && id != uuid.Nil
+	return tenantcache.PublicTenantID(r.Context(), h.tenants, chi.URLParam(r, "tenant"))
 }
 
 func (h *Handler) handleError(w http.ResponseWriter, err error) {

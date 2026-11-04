@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
 	"net/http"
 	"strings"
 	"time"
 
+	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
+	"github.com/bengobox/ticketing-service/internal/platform/tenantcache"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -30,8 +31,12 @@ type PublicHandler struct {
 	service *Service
 	otp     otpValidator
 	limiter rateLimiter
+	tenants tenantcache.Lookup
 	logger  *zap.Logger
 }
+
+// SetTenantLookup wires the slug lookup (tenantcache.Resolver: Redis, then auth-api).
+func (h *PublicHandler) SetTenantLookup(l tenantcache.Lookup) { h.tenants = l }
 
 // NewPublicHandler creates a handler for the public ticket endpoints.
 func NewPublicHandler(service *Service, otp otpValidator, limiter rateLimiter, logger *zap.Logger) *PublicHandler {
@@ -59,7 +64,7 @@ func (h *PublicHandler) CreatePublicTicket(w http.ResponseWriter, r *http.Reques
 	tenantSlug := chi.URLParam(r, "tenant")
 	tenantID, err := h.resolveTenantID(r, tenantSlug)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid tenant")
+		h.tenantError(w, err)
 		return
 	}
 
@@ -147,7 +152,7 @@ func (h *PublicHandler) GetPublicTicket(w http.ResponseWriter, r *http.Request) 
 	tenantSlug := chi.URLParam(r, "tenant")
 	tenantID, err := h.resolveTenantID(r, tenantSlug)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid tenant")
+		h.tenantError(w, err)
 		return
 	}
 
@@ -178,7 +183,7 @@ func (h *PublicHandler) AddPublicComment(w http.ResponseWriter, r *http.Request)
 	tenantSlug := chi.URLParam(r, "tenant")
 	tenantID, err := h.resolveTenantID(r, tenantSlug)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid tenant")
+		h.tenantError(w, err)
 		return
 	}
 
@@ -244,14 +249,28 @@ func (h *PublicHandler) AddPublicComment(w http.ResponseWriter, r *http.Request)
 // or falls back to parsing the tenant slug from the URL.
 // Public endpoints don't have JWT claims, so we parse the slug from the X-Tenant-ID header
 // or derive it from context. For now, we use a deterministic UUID from the slug.
-func (h *PublicHandler) resolveTenantID(_ *http.Request, slug string) (uuid.UUID, error) {
+// resolveTenantID turns the route's tenant slug into auth-api's tenant id. It used to derive
+// uuid5(DNS, slug), which matches no real tenant (auth-api ids are random), so public tickets
+// were stored where no agent could see them. An unknown slug is now refused.
+func (h *PublicHandler) resolveTenantID(r *http.Request, slug string) (uuid.UUID, error) {
 	if slug == "" {
 		return uuid.Nil, errors.New("tenant slug required")
 	}
-	// Derive a deterministic tenant UUID from the slug via UUIDv5 (DNS namespace).
-	// This matches the convention used by auth-api when it provisions tenants.
-	id := uuid.NewSHA1(uuid.NameSpaceDNS, []byte(slug))
+	id, ok := tenantcache.PublicTenantID(r.Context(), h.tenants, slug)
+	if !ok {
+		return uuid.Nil, errUnknownTenant
+	}
 	return id, nil
+}
+
+var errUnknownTenant = errors.New("unknown tenant")
+
+func (h *PublicHandler) tenantError(w http.ResponseWriter, err error) {
+	if errors.Is(err, errUnknownTenant) {
+		respondError(w, http.StatusNotFound, "tenant not found")
+		return
+	}
+	respondError(w, http.StatusBadRequest, "invalid tenant")
 }
 
 // emailToUUID derives a deterministic UUID from an email address.
