@@ -60,7 +60,7 @@ func (Ticket) Fields() []ent.Field {
 			Default("normal").
 			Comment("Ticket priority"),
 		field.Enum("channel").
-			Values("web", "email", "api", "chat", "phone", "internal").
+			Values("web", "email", "api", "chat", "whatsapp", "phone", "internal").
 			Default("web").
 			Comment("Channel ticket was created through"),
 		// External references for integration

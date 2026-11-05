@@ -292,7 +292,7 @@ var (
 		{Name: "description", Type: field.TypeString, Size: 2147483647},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"new", "open", "in_progress", "pending_customer", "pending_internal", "resolved", "closed", "cancelled"}, Default: "new"},
 		{Name: "priority", Type: field.TypeEnum, Enums: []string{"low", "normal", "high", "urgent", "critical"}, Default: "normal"},
-		{Name: "channel", Type: field.TypeEnum, Enums: []string{"web", "email", "api", "chat", "phone", "internal"}, Default: "web"},
+		{Name: "channel", Type: field.TypeEnum, Enums: []string{"web", "email", "api", "chat", "whatsapp", "phone", "internal"}, Default: "web"},
 		{Name: "order_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "external_reference", Type: field.TypeString, Nullable: true, Size: 255},
 		{Name: "crm_contact_id", Type: field.TypeUUID, Nullable: true},

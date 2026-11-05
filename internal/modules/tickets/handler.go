@@ -983,11 +983,16 @@ func (h *Handler) InternalCreateTicket(w http.ResponseWriter, r *http.Request) {
 		Priority       string `json:"priority"`
 		Category       string `json:"category"`
 		Source         string `json:"source"`
+		Channel        string `json:"channel"`
 		RequesterName  string `json:"requester_name"`
 		RequesterEmail string `json:"requester_email"`
-		SessionID      string `json:"session_id"`
+		RequesterPhone string `json:"requester_phone"`
+		// ContactHash is the caller's keyed hash of the contact it verified. The caller proves a later
+		// reader against it; ticketing never needs to read the contact itself.
+		ContactHash string `json:"contact_hash"`
+		SessionID   string `json:"session_id"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10)).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
@@ -1002,15 +1007,34 @@ func (h *Handler) InternalCreateTicket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	prio := TicketPriority(req.Priority)
-	if prio == "" {
+	switch prio {
+	case "":
 		prio = PriorityNormal
+	case PriorityLow, PriorityNormal, PriorityHigh, PriorityUrgent, PriorityCritical:
+	default:
+		respondError(w, http.StatusBadRequest, "invalid priority")
+		return
+	}
+	channel := TicketChannel(req.Channel)
+	switch channel {
+	case "":
+		channel = ChannelWeb
+	case ChannelWeb, ChannelEmail, ChannelAPI, ChannelChat, ChannelWhatsApp, ChannelPhone, ChannelInternal:
+	default:
+		respondError(w, http.StatusBadRequest, "invalid channel")
+		return
 	}
 
 	meta := map[string]any{
 		"source":          req.Source,
+		"category":        req.Category,
 		"requester_name":  req.RequesterName,
 		"requester_email": req.RequesterEmail,
+		"requester_phone": req.RequesterPhone,
 		"session_id":      req.SessionID,
+	}
+	if req.ContactHash != "" {
+		meta["contact_hash"] = req.ContactHash
 	}
 
 	domainReq := &CreateTicketRequest{
@@ -1018,8 +1042,12 @@ func (h *Handler) InternalCreateTicket(w http.ResponseWriter, r *http.Request) {
 		Subject:     req.Title,
 		Description: req.Description,
 		Priority:    prio,
-		Channel:     "web",
+		Channel:     channel,
 		Metadata:    meta,
+	}
+	if req.ContactHash != "" {
+		// One contact's tickets group under one synthetic customer, as the public routes do by email.
+		domainReq.CustomerID = uuid.NewSHA1(uuid.NameSpaceOID, []byte(req.ContactHash))
 	}
 
 	ticket, err := h.service.CreateTicket(r.Context(), domainReq)
@@ -1038,6 +1066,48 @@ func (h *Handler) InternalCreateTicket(w http.ResponseWriter, r *http.Request) {
 		"ticket_number": ticket.TicketNumber,
 		"status":        ticket.Status,
 	})
+}
+
+// InternalGetTicket is the S2S read of one ticket by number for a service that verified the contact
+// itself, gated by X-API-Key: the ticket, who may read it (contact_hash) and its public comments only.
+// Internal notes and the requester's contact details never leave here.
+func (h *Handler) InternalGetTicket(w http.ResponseWriter, r *http.Request) {
+	if !httpware.ValidServiceKey(r, h.serviceKey) {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	tenantID, err := uuid.Parse(r.URL.Query().Get("tenant_id"))
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+	ticket, err := h.service.GetTicketByNumber(r.Context(), tenantID, chi.URLParam(r, "ticketNumber"))
+	if err != nil {
+		h.handleError(w, err)
+		return
+	}
+	comments, err := h.service.ListComments(r.Context(), tenantID, ticket.ID)
+	if err != nil {
+		h.handleError(w, err)
+		return
+	}
+	respondJSON(w, http.StatusOK, internalTicketView(ticket, comments))
+}
+
+// internalTicketView keeps only what a calling service may show its own user.
+func internalTicketView(t *Ticket, comments []*TicketComment) map[string]any {
+	public := make([]map[string]any, 0, len(comments))
+	for _, c := range comments {
+		if c.CommentType != CommentPublic {
+			continue
+		}
+		public = append(public, map[string]any{"author_type": c.AuthorType, "content": c.Content, "created_at": c.CreatedAt})
+	}
+	return map[string]any{
+		"id": t.ID.String(), "ticket_number": t.TicketNumber, "status": t.Status, "priority": t.Priority, "channel": t.Channel,
+		"subject": t.Subject, "description": t.Description, "category": t.Metadata["category"], "contact_hash": t.Metadata["contact_hash"],
+		"created_at": t.CreatedAt, "updated_at": t.UpdatedAt, "comments": public,
+	}
 }
 
 func (h *Handler) handleError(w http.ResponseWriter, err error) {

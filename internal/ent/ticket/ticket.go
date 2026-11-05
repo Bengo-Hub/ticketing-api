@@ -259,6 +259,7 @@ const (
 	ChannelEmail    Channel = "email"
 	ChannelAPI      Channel = "api"
 	ChannelChat     Channel = "chat"
+	ChannelWhatsapp Channel = "whatsapp"
 	ChannelPhone    Channel = "phone"
 	ChannelInternal Channel = "internal"
 )
@@ -270,7 +271,7 @@ func (c Channel) String() string {
 // ChannelValidator is a validator for the "channel" field enum values. It is called by the builders before save.
 func ChannelValidator(c Channel) error {
 	switch c {
-	case ChannelWeb, ChannelEmail, ChannelAPI, ChannelChat, ChannelPhone, ChannelInternal:
+	case ChannelWeb, ChannelEmail, ChannelAPI, ChannelChat, ChannelWhatsapp, ChannelPhone, ChannelInternal:
 		return nil
 	default:
 		return fmt.Errorf("ticket: invalid enum value for channel field: %q", c)

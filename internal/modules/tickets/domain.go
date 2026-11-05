@@ -39,6 +39,7 @@ const (
 	ChannelEmail    TicketChannel = "email"
 	ChannelAPI      TicketChannel = "api"
 	ChannelChat     TicketChannel = "chat"
+	ChannelWhatsApp TicketChannel = "whatsapp"
 	ChannelPhone    TicketChannel = "phone"
 	ChannelInternal TicketChannel = "internal"
 )

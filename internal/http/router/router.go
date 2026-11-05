@@ -78,6 +78,7 @@ func New(cfg Config) http.Handler {
 			// S2S internal endpoint — no JWT auth, validated by X-API-Key header
 			if cfg.TicketsHandler != nil {
 				v1.Post("/internal/tickets", cfg.TicketsHandler.InternalCreateTicket)
+				v1.Get("/internal/tickets/{ticketNumber}", cfg.TicketsHandler.InternalGetTicket)
 			}
 
 			// Health status (auth required) lives in its own Group so Use()

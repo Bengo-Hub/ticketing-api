@@ -182,6 +182,17 @@ else
   warn "update_helm_values function not available - helm values not updated"
 fi
 
+# The SLA worker runs from the same image in its own Deployment.
+if declare -f update_plain_manifest_image >/dev/null 2>&1; then
+  update_plain_manifest_image \
+    "manifests/ticketing-worker-deployment.yaml" \
+    ".spec.template.spec.containers[0].image" \
+    "${IMAGE_REPO}:${GIT_COMMIT_ID}" \
+    || warn "ticketing-worker image update failed - it will keep running its last-pinned tag"
+else
+  warn "update_plain_manifest_image function not available - ticketing-worker image not updated"
+fi
+
 info "Deployment summary"
 echo "  Image      : ${IMAGE_REPO}:${GIT_COMMIT_ID}"
 echo "  Namespace  : ${NAMESPACE}"
