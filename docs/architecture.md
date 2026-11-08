@@ -122,3 +122,25 @@ Client → GET /api/v1/{tenant}/branding
 | `NOTIFICATIONS_SERVICE_URL` | — | `http://localhost:4003` | notifications-api base URL |
 | `TENANT_CACHE_TTL` | — | `5m` | Tenant detail cache TTL |
 | `HTTP_PORT` | — | `4009` | HTTP listen port |
+
+## Seed
+
+`cmd/seed` (built into the image as `/app/ticketing-seed`, run at start by `scripts/entrypoint.sh`)
+is idempotent and per tenant. It writes only what the tenant does not have yet.
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `TENANT_ID` | yes | The tenant's auth UUID |
+| `KB_SET` | no | Knowledge-base article set to load from `cmd/seed/kb/<set>/*.json` (for example `hadia`) |
+| `SEED_SCOPE` | no | `kb` loads only the articles and leaves categories and SLA policies alone; default `all` |
+
+Without `TENANT_ID` the start-up seed exits early, which is expected for a shared deployment.
+Articles are published and public, with author `00000000-0000-0000-0000-000000000000` (seeded) and
+`metadata.seeded_from = ticketing-seed`. An article whose slug the tenant already has is never
+changed, even if staff edited, archived or deleted it. Each JSON file holds `slug`, `title`,
+`excerpt`, `category`, `tags` and `content_html`; `kb_test.go` checks every set before it ships.
+
+To seed one tenant in the cluster, run a one-off Job with the deployment's image and its own
+`POSTGRES_URL` and `POSTGRES_MIGRATE_URL` secret references, plus `TENANT_ID`, `KB_SET` and
+`SEED_SCOPE=kb`. First used 8 November 2026 for Hadia's safety article (Job
+`ticketing-kb-seed-hadia`, cleaned up an hour after it finishes).
