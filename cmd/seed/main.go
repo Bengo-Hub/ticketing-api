@@ -11,8 +11,8 @@ import (
 
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/google/uuid"
+	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/bengobox/ticketing-service/internal/ent"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
@@ -75,6 +75,28 @@ func main() {
 	drv := entsql.OpenDB(dialect.Postgres, db)
 	client := ent.NewClient(ent.Driver(drv))
 	defer client.Close()
+
+	// SEED_SCOPE=kb loads only knowledge-base articles (KB_SET), leaving the tenant's categories and
+	// SLA policies alone. Otherwise categories and SLAs are seeded as before, plus articles when
+	// KB_SET is given.
+	scope := os.Getenv("SEED_SCOPE")
+	kbSet := os.Getenv("KB_SET")
+	if scope != "" && scope != "all" && scope != "kb" {
+		log.Fatalf("SEED_SCOPE must be all or kb, got %q", scope)
+	}
+	if scope == "kb" && kbSet == "" {
+		log.Fatalln("SEED_SCOPE=kb needs KB_SET")
+	}
+	if kbSet != "" {
+		created, skipped, err := seedKB(ctx, client, tenantID, kbSet)
+		if err != nil {
+			log.Fatalf("failed to seed knowledge base: %v", err)
+		}
+		log.Printf("Seeded %d articles from KB_SET %q (%d skipped as already existing).", created, kbSet, skipped)
+	}
+	if scope == "kb" {
+		return
+	}
 
 	categories := []categorySpec{
 		{name: "General", icon: "help-circle", sortOrder: 0},

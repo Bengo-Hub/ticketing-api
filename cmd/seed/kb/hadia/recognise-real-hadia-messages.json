@@ -1,0 +1,8 @@
+{
+  "slug": "recognise-real-hadia-messages",
+  "title": "How to recognise a real Hadia message",
+  "excerpt": "Every real Hadia link uses hadiafrica.com. Here is how to check a message before you pay.",
+  "category": "Safety",
+  "tags": ["safety", "scam", "fraud", "payment", "m-pesa"],
+  "content_html": "<h2>Check the address</h2><p>Every Hadia page and link uses <strong>hadiafrica.com</strong>. Before you pay, look at the address in your browser. If it ends in anything else, even something that looks close, such as hadia-africa.com or hadiafrica.co, it is not Hadia. Close the page and do not pay.</p><h2>Check the registry code</h2><p>Each registry has its own code, and the host shares it with you. To be sure a link is real, open hadiafrica.com yourself, choose Find a registry and type the code. If the same registry opens, the link was genuine.</p><h2>How you pay on Hadia</h2><ul><li>You pay from the registry's own page on hadiafrica.com.</li><li>An M-Pesa prompt comes to your phone, and you enter your PIN only on that prompt.</li><li>If the prompt does not reach you, the page shows a paybill number and account to use instead.</li></ul><h2>What Hadia never asks for</h2><ul><li>Your M-Pesa PIN, in a message, on a call or on any web page.</li><li>Money sent to a personal phone number.</li><li>A code we sent you. Never read one out to anyone, even someone who says they work for Hadia.</li></ul><h2>If something looks wrong</h2><p>Do not pay. Tell us through Help on hadiafrica.com, and include the link or a screenshot of the message. Tell the host too, so they can warn their guests.</p>"
+}
