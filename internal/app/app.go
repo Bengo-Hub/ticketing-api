@@ -274,6 +274,7 @@ func New(ctx context.Context) (*App, error) {
 		RoutingHandler:       routingHandler,
 		SSEBroker:            sseBroker,
 		TenantResolver:       tenantResolver,
+		CRMLinks:             tickets.NewCRMLinksHandler(ormClient, tenantResolver, cfg.Auth.InternalServiceKey, log),
 	})
 
 	httpServer := &http.Server{

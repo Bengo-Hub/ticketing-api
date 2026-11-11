@@ -44,6 +44,8 @@ type Config struct {
 	RoutingHandler       *routing.Handler
 	SSEBroker            *sse.Broker
 	TenantResolver       tenantResolver
+	// CRMLinks answers marketflow's "does ticketing still link this contact" check (X-API-Key).
+	CRMLinks *tickets.CRMLinksHandler
 }
 
 // New constructs the chi router with global middleware and base routes.
@@ -79,6 +81,10 @@ func New(cfg Config) http.Handler {
 			if cfg.TicketsHandler != nil {
 				v1.Post("/internal/tickets", cfg.TicketsHandler.InternalCreateTicket)
 				v1.Get("/internal/tickets/{ticketNumber}", cfg.TicketsHandler.InternalGetTicket)
+			}
+			// Erasure link check for marketflow (X-API-Key checked by the handler).
+			if cfg.CRMLinks != nil {
+				v1.Get("/s2s/{tenant}/crm-links/{contactID}", cfg.CRMLinks.Referenced)
 			}
 
 			// Health status (auth required) lives in its own Group so Use()

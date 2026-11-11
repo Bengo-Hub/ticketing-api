@@ -193,6 +193,10 @@ This document provides detailed integration information for all external service
 **Events Consumed**:
 - `logistics.delivery.issue` - Create delivery support ticket
 
+### MarketFlow CRM: erasure link check
+
+When a person is erased in another service, marketflow asks every service whether it still links the CRM contact before it deletes it. Ticketing answers `GET /api/v1/s2s/{tenant}/crm-links/{contactID}` with `{"referenced": true|false}`, sent with the shared `X-API-Key` (`INTERNAL_SERVICE_KEY`). The answer is true when any ticket carries the contact id in `tickets.crm_contact_id`, in any tenant: CRM contact ids are random UUIDs minted by marketflow, so a match anywhere is the same person, and tickets held under a mismatched tenant id can only answer "referenced", which keeps the contact. Ticketing keeps no tenant table, so a tenant UUID is accepted as given and a slug is resolved through auth-api (an unknown slug answers 404). Only the flag is returned and logs carry ids only. A bad contact id answers 400 and a missing or wrong key 401; marketflow treats every answer other than a clean 200 as "cannot answer" and keeps the contact.
+
 ---
 
 ## External Third-Party Integrations
