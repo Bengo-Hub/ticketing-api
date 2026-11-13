@@ -110,6 +110,7 @@ func (h *Handler) CreateTicket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.TenantID = *tenantID
+	defaultRequesterToCaller(&req, claims.Subject, claims.Email)
 
 	ticket, err := h.service.CreateTicket(r.Context(), &req)
 	if err != nil {
@@ -118,6 +119,24 @@ func (h *Handler) CreateTicket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusCreated, ticket)
+}
+
+// defaultRequesterToCaller makes a signed-in user the requester of a ticket they raise for
+// themselves (no customer_id, or their own) when the body names no requester email. An agent
+// raising a ticket for someone else names the requester (requester_email/requester_phone).
+func defaultRequesterToCaller(req *CreateTicketRequest, subject, email string) {
+	if strings.TrimSpace(req.RequesterEmail) != "" || metaText(req.Metadata, MetaRequesterEmail, metaLegacyCustomerEmail) != "" {
+		return
+	}
+	self := req.CustomerID == uuid.Nil
+	if !self {
+		if uid, err := uuid.Parse(subject); err == nil && uid == req.CustomerID {
+			self = true
+		}
+	}
+	if self {
+		req.RequesterEmail = email
+	}
 }
 
 // GetTicket retrieves a ticket by ID.
@@ -1026,12 +1045,9 @@ func (h *Handler) InternalCreateTicket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	meta := map[string]any{
-		"source":          req.Source,
-		"category":        req.Category,
-		"requester_name":  req.RequesterName,
-		"requester_email": req.RequesterEmail,
-		"requester_phone": req.RequesterPhone,
-		"session_id":      req.SessionID,
+		"source":     req.Source,
+		"category":   req.Category,
+		"session_id": req.SessionID,
 	}
 	if req.ContactHash != "" {
 		meta["contact_hash"] = req.ContactHash
@@ -1045,6 +1061,10 @@ func (h *Handler) InternalCreateTicket(w http.ResponseWriter, r *http.Request) {
 		Channel:     channel,
 		Metadata:    meta,
 	}
+	// Stored as requester_* like every other create path (the service normalises them).
+	domainReq.RequesterName = req.RequesterName
+	domainReq.RequesterEmail = req.RequesterEmail
+	domainReq.RequesterPhone = req.RequesterPhone
 	if req.ContactHash != "" {
 		// One contact's tickets group under one synthetic customer, as the public routes do by email.
 		domainReq.CustomerID = uuid.NewSHA1(uuid.NameSpaceOID, []byte(req.ContactHash))

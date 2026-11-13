@@ -66,6 +66,21 @@ func (p *Publisher) publishWithAggregate(ctx context.Context, tenantID uuid.UUID
 	return nil
 }
 
+// PublishTicketCreated publishes a ticketing.ticket.created event (requester contact included).
+func (p *Publisher) PublishTicketCreated(ctx context.Context, tenantID uuid.UUID, data map[string]any) error {
+	return p.publish(ctx, tenantID, "ticket.created", data)
+}
+
+// PublishTicketCommentAdded publishes a ticketing.ticket.comment_added event: a public agent reply.
+func (p *Publisher) PublishTicketCommentAdded(ctx context.Context, tenantID uuid.UUID, data map[string]any) error {
+	return p.publish(ctx, tenantID, "ticket.comment_added", data)
+}
+
+// PublishTicketStatusChanged publishes a ticketing.ticket.status_changed event.
+func (p *Publisher) PublishTicketStatusChanged(ctx context.Context, tenantID uuid.UUID, data map[string]any) error {
+	return p.publish(ctx, tenantID, "ticket.status_changed", data)
+}
+
 // PublishTicketAssigned publishes a ticketing.ticket.assigned event.
 func (p *Publisher) PublishTicketAssigned(ctx context.Context, tenantID uuid.UUID, data map[string]any) error {
 	return p.publish(ctx, tenantID, "ticket.assigned", data)

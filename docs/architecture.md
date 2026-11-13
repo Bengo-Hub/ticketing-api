@@ -15,7 +15,8 @@ Multi-tenant SaaS ticketing service. All data is tenant-scoped via `tenant_id` d
 | Agents / teams | ticketing-api ✅ |
 | Tickets / comments / categories | ticketing-api ✅ |
 | SLA policies | ticketing-api (Sprint 3) |
-| Notifications delivery | notifications-api (S2S call) |
+| Notifications delivery | notifications-api, from the ticket events on `ticketing.>` (no direct call) |
+| Tenant support contact (support email, phone, WhatsApp) | auth-api tenant metadata `support`, read through the shared tenant cache |
 | Email templates | notifications-api |
 | File storage (attachments) | S3-compatible object store |
 
@@ -27,7 +28,7 @@ Multi-tenant SaaS ticketing service. All data is tenant-scoped via `tenant_id` d
 internal/
 ├── app/                  # Wire all dependencies
 ├── clients/
-│   └── notifications.go  # S2S → notifications-api
+│   └── otp.go            # auth-api public OTP token validation
 ├── config/               # envconfig-based config
 ├── ent/                  # Ent ORM (schema + generated code)
 │   └── schema/           # agents, teams, tickets, comments, attachments, categories, slapolicies, outboxevents
@@ -56,9 +57,15 @@ internal/
 ```
 Client → chi router → JWT middleware → tickets.Handler.CreateTicket
     → tickets.Service.CreateTicket → tickets.EntRepository.CreateTicket (PG)
-    → events.Publisher.publish (outbox → NATS background publisher)
-    → (async) notifications.Client.SendTicketCreated
+    then events.Publisher.PublishTicketCreated (outbox, then the NATS background publisher)
+    then the notifications-api ticketing consumer (email to the requester)
 ```
+
+The requester's contact is stored in ticket metadata as `requester_name`, `requester_email` and
+`requester_phone` on every create path: the signed-in route (the body's `requester_*` fields, or
+the caller's own email when they raise a ticket for themselves), the S2S route and the public form
+(its OTP-verified email). Public tickets created before 13 November 2026 kept `customer_email` and
+`customer_name`; readers still accept those.
 
 ### Ticket Creation (S2S — Vera AI)
 ```
@@ -102,9 +109,46 @@ Client → GET /api/v1/{tenant}/branding
 |---------|-----------|-----------|
 | `auth.user.created` | auth-api | ticketing-api (JIT provisioning) |
 | `auth.user.updated` | auth-api | ticketing-api (agent sync) |
-| `ticketing.ticket.assigned` | ticketing-api (outbox) | notifications-api |
-| `ticketing.ticket.resolved` | ticketing-api (outbox) | notifications-api |
-| `ticketing.sla.first_response_breached`, `ticketing.sla.resolution_breached` | ticketing-api (worker) | notifications-api |
+| `ticketing.ticket.created` | ticketing-api (outbox) | notifications-api (to the requester) |
+| `ticketing.ticket.assigned` | ticketing-api (outbox) | notifications-api (to the agent) |
+| `ticketing.ticket.comment_added` | ticketing-api (outbox), public agent replies only | notifications-api (to the requester) |
+| `ticketing.ticket.status_changed` | ticketing-api (outbox), every change except to resolved | notifications-api (to the requester) |
+| `ticketing.ticket.resolved` | ticketing-api (outbox) | notifications-api (to the requester) |
+| `ticketing.sla.first_response_breached`, `ticketing.sla.resolution_breached` | ticketing-api (worker) | notifications-api (to the agent) |
+| `crm.activity.log_requested` | ticketing-api (outbox) | marketflow CRM |
+
+Payloads are built in `internal/modules/tickets/events.go` and covered by `events_test.go`. Every
+ticket event carries `ticket_id`, `ticket_number`, `subject`, `status`, `priority`, `channel`,
+`source`, `agent_id`, `requester_name`, `requester_email` and `requester_phone` (each key always
+present, empty when unknown). On top of that:
+
+| Event | Extra keys |
+|-------|------------|
+| `ticket.created` | `description` (first 500 characters), `created_at` |
+| `ticket.assigned` | `agent_email` |
+| `ticket.comment_added` | `comment_id`, `comment` (first 500 characters), `author_id`, `author_type`, `agent_email` |
+| `ticket.status_changed` | `old_status`, `new_status` |
+| `ticket.resolved` | `old_status`, `new_status` (`resolved`), `resolved_at` |
+
+SLA events carry `ticket_id`, `ticket_number`, `subject`, `priority`, `status`, `agent_id`,
+`agent_email`, `team_id`, `response_breached`, `resolution_breached` and `event_type`, and never the
+requester's contact.
+
+## Support routing (12 November 2026)
+
+notifications-api emails the requester from the contact on the event: the receipt
+(`ticket.created`), every public agent reply (`ticket.comment_added`), a status change that needs
+them (waiting for their reply, closed, cancelled, reopened) and the resolution. The mail goes out
+under the tenant's name with the tenant's support address as Reply-To (auth-api tenant metadata
+`support`, read with `cache.ResolveSupportContact`, falling back to its contact email), so a
+reply reaches the tenant's support inbox. Platform tickets (the codevertex tenant) use
+support@codevertexafrica.com. A requester with no email gets nothing, never a copy in the
+tenant's mailbox. SMS and WhatsApp to the requester's phone are not sent yet: WhatsApp needs
+templates approved by Meta, and both wait for that work.
+
+Inbound email and WhatsApp to ticket are designed, not built: a message to a support address or
+number does not open a ticket yet. Tickets are opened by the signed-in route, the public form and
+the S2S route (Vera, marketflow-ai, other services).
 
 ---
 
@@ -119,7 +163,6 @@ Client → GET /api/v1/{tenant}/branding
 | `AUTH_ISSUER` | — | `https://sso.codevertexafrica.com` | JWT issuer (must match the SSO token `iss`) |
 | `AUTH_AUDIENCE` | — | `codevertex` | JWT audience (SSO tokens carry `codevertex`) |
 | `INTERNAL_SERVICE_KEY` | — | `""` | Shared S2S API key |
-| `NOTIFICATIONS_SERVICE_URL` | — | `http://localhost:4003` | notifications-api base URL |
 | `TENANT_CACHE_TTL` | — | `5m` | Tenant detail cache TTL |
 | `HTTP_PORT` | — | `4009` | HTTP listen port |
 

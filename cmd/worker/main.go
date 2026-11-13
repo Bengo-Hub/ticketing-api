@@ -126,21 +126,16 @@ func runBreachCheck(ctx context.Context, repo tickets.Repository, publisher *eve
 			continue // another replica (or a status change) already recorded this breach
 		}
 
-		// Publish breach event for notifications-api to consume
+		// Publish breach event for notifications-api to consume. The assigned agent's email lets it
+		// alert the agent directly; without one it alerts the tenant's support contact.
 		if publisher != nil {
-			eventType := "sla.first_response_breached"
-			if resolutionBreached {
-				eventType = "sla.resolution_breached"
+			agentEmail := ""
+			if t.AssignedAgentID != nil {
+				if email, err := repo.GetAgentEmail(ctx, t.TenantID, *t.AssignedAgentID); err == nil {
+					agentEmail = email
+				}
 			}
-			_ = publisher.PublishSLABreach(ctx, t.TenantID, map[string]any{
-				"ticket_id":           t.ID.String(),
-				"ticket_number":       t.TicketNumber,
-				"subject":             t.Subject,
-				"priority":            string(t.Priority),
-				"response_breached":   responseBreached,
-				"resolution_breached": resolutionBreached,
-				"event_type":          eventType,
-			})
+			_ = publisher.PublishSLABreach(ctx, t.TenantID, tickets.SLABreachPayload(t, agentEmail, responseBreached, resolutionBreached))
 		}
 
 		log.Info("breach marked",

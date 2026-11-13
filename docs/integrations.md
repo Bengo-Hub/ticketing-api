@@ -43,26 +43,34 @@ This document provides detailed integration information for all external service
 
 ### Notifications Service
 
-**Integration Type**: Events (NATS) + REST API
+**Integration Type**: Events (NATS) only. Ticketing makes no direct call to notifications-api; the
+old S2S client was never called and was removed on 13 November 2026.
 
-**Use Cases**:
-- Ticket creation notifications
-- Ticket status update notifications
-- Comment notifications
-- @mention alerts
-- SLA breach alerts
-- Survey delivery
+**Use Cases** (built):
+- Ticket created, sent to the requester
+- Public agent reply, sent to the requester
+- Status change and resolution, sent to the requester
+- Assignment, sent to the agent
+- SLA breach alerts, sent to the assigned agent (else the tenant's support contact)
 
-**REST API Usage**:
-- `POST /api/v1/notifications/messages` - Send notification
+Not built: @mention alerts and satisfaction surveys.
 
-**Events Published**:
-- `ticketing.ticket.created` - Ticket created
-- `ticketing.ticket.updated` - Ticket updated
-- `ticketing.ticket.assigned` - Ticket assigned
-- `ticketing.ticket.escalated` - Ticket escalated
-- `ticketing.comment.added` - Comment added
-- `ticketing.sla.first_response_breached`, `ticketing.sla.resolution_breached` - SLA breached (SLA worker; event type `sla.<kind>`)
+**Events Published** (subject `ticketing.<event type>`, outbox on the `ticketing` stream):
+- `ticketing.ticket.created`
+- `ticketing.ticket.assigned`
+- `ticketing.ticket.comment_added` (public agent replies only; internal notes and customer comments never)
+- `ticketing.ticket.status_changed` (every change except to resolved)
+- `ticketing.ticket.resolved`
+- `ticketing.sla.first_response_breached`, `ticketing.sla.resolution_breached` (SLA worker, event type `sla.<kind>`)
+
+Every ticket event carries the requester's `requester_name`, `requester_email` and `requester_phone`,
+so notifications-api can reach the customer (by email today; the phone is there for SMS and WhatsApp later). Payload shapes are in the
+event catalogue below.
+
+**Support routing** (owner decision, 12 November 2026): a tenant's ticket messages go out through
+the tenant's support contact (auth-api tenant metadata `support` {email, phone, whatsapp}, read with
+`cache.ResolveSupportContact` from the shared tenant cache), falling back to its contact email and
+phone. Platform tickets (the codevertex tenant) use support@codevertexafrica.com.
 
 ### Projects Service
 
@@ -203,19 +211,19 @@ When a person is erased in another service, marketflow asks every service whethe
 
 ### Email Providers
 
-**Purpose**: Email-to-ticket conversion, ticket notifications
+**Purpose**: Ticket notifications (built); email-to-ticket (designed, not built)
 
-**Configuration** (Tier 1):
-- SMTP credentials: Stored encrypted
-- IMAP/POP3 credentials: Stored encrypted
-- Email parsing rules: Configured
+**Built**: outbound only. Ticketing publishes the ticket events above and notifications-api sends
+the email from the tenant's own account (or the platform account) with the tenant's support email
+as Reply-To. Ticketing holds no SMTP, IMAP or POP3 credentials.
 
-**Use Cases**:
-- Email-to-ticket conversion
-- Ticket reply via email
-- Email notifications
+**Designed, not built** (owner decision, 12 November 2026: outbound only for now):
+- Email-to-ticket: a message to a support address opening a ticket
+- Ticket reply by email: a reply to a ticket email adding a comment
+- WhatsApp-to-ticket: a WhatsApp message to the support number opening a ticket
 
-**Integration**: Handled via notifications-service, ticketing publishes events
+Until these are built, a customer replies through the public ticket page (OTP verified) or opens a
+ticket through the public form, Vera or a service's S2S call.
 
 ### Chat Widgets
 
@@ -333,43 +341,63 @@ When a person is erased in another service, marketflow asks every service whethe
 
 #### Outbound Events (Published by Ticketing Service)
 
-**ticketing.ticket.created**
+All ticket events use the shared-events envelope (`id`, `event_type`, `aggregate_type`
+`ticketing`, `tenant_id`, `payload`) and the subject `ticketing.<event_type>`. Payloads are built in
+`internal/modules/tickets/events.go` and tested in `events_test.go`.
+
+Every ticket event's payload carries these keys, always present and empty when unknown:
+
+| Key | Meaning |
+|-----|---------|
+| `ticket_id`, `ticket_number`, `subject` | The ticket |
+| `status`, `priority`, `channel` | Its state; `status` is the new status on a status event |
+| `source` | Who opened it (`public_form`, `vera`, ...), from ticket metadata |
+| `agent_id` | The assigned agent, if any |
+| `requester_name`, `requester_email`, `requester_phone` | The requester's contact (phone in `+<digits>` form) |
+
+**ticketing.ticket.created** (event type `ticket.created`)
 ```json
 {
-  "event_id": "uuid",
-  "event_type": "ticketing.ticket.created",
+  "id": "uuid",
+  "event_type": "ticket.created",
+  "aggregate_type": "ticketing",
   "tenant_id": "tenant-uuid",
-  "timestamp": "2024-12-05T10:30:00Z",
-  "data": {
+  "payload": {
     "ticket_id": "ticket-uuid",
-    "ticket_number": "TKT-001",
-    "category": "support",
-    "priority": "high",
-    "customer_id": "customer-uuid"
+    "ticket_number": "TKT-0001",
+    "subject": "Payout not received",
+    "status": "new",
+    "priority": "normal",
+    "channel": "web",
+    "source": "public_form",
+    "agent_id": "",
+    "requester_name": "Amina",
+    "requester_email": "amina@example.com",
+    "requester_phone": "+254712345678",
+    "description": "First 500 characters of the description",
+    "created_at": "2026-11-13T09:00:00Z"
   }
 }
 ```
 
-**ticketing.ticket.assigned**
-```json
-{
-  "event_id": "uuid",
-  "event_type": "ticketing.ticket.assigned",
-  "tenant_id": "tenant-uuid",
-  "timestamp": "2024-12-05T10:30:00Z",
-  "data": {
-    "ticket_id": "ticket-uuid",
-    "agent_id": "agent-uuid",
-    "team_id": "team-uuid"
-  }
-}
-```
+**ticketing.ticket.assigned**: the shared keys plus `agent_id` (the new assignee) and `agent_email`.
+
+**ticketing.ticket.comment_added**: published for a public agent reply only. The shared keys plus
+`comment_id`, `comment` (first 500 characters), `author_id`, `author_type` (`agent`) and
+`agent_email` (the replying agent).
+
+**ticketing.ticket.status_changed**: every status change except to resolved. The shared keys plus
+`old_status` and `new_status`.
+
+**ticketing.ticket.resolved**: the shared keys (so the customer is told, not only the tenant) plus
+`old_status`, `new_status` (`resolved`) and `resolved_at`.
 
 **ticketing.sla.first_response_breached** and **ticketing.sla.resolution_breached**
 
 Published by the SLA worker (`cmd/worker`) on the `ticketing` stream once per breach (another
 replica that already recorded it publishes nothing). notifications-api's ticketing consumer
-alerts the assigned agent, or the tenant contact when the payload carries no agent.
+alerts the assigned agent (`agent_email`), or the tenant's support contact when there is none. The
+payload never carries the requester's contact.
 ```json
 {
   "id": "uuid",
@@ -378,17 +406,19 @@ alerts the assigned agent, or the tenant contact when the payload carries no age
   "tenant_id": "tenant-uuid",
   "payload": {
     "ticket_id": "ticket-uuid",
-    "ticket_number": "1042",
+    "ticket_number": "TKT-1042",
     "subject": "Printer down",
     "priority": "high",
+    "status": "open",
+    "agent_id": "agent-uuid",
+    "agent_email": "agent@example.com",
+    "team_id": "team-uuid",
     "response_breached": true,
     "resolution_breached": false,
     "event_type": "sla.first_response_breached"
   }
 }
 ```
-The payload has no `agent_email` or `agent_name` yet, so alerts reach the tenant contact until the
-worker adds the assignee.
 
 #### Inbound Events (Consumed by Ticketing Service)
 
@@ -490,7 +520,7 @@ worker adds the assignee.
 ## References
 
 - [Auth Service Integration](../auth-service/auth-api/docs/integrations.md)
-- [Notifications Service Integration](../notifications-service/docs/integrations.md)
+- [Notifications Service Integration](../../../../notifications-service/notifications-api/docs/integrations.md) (its ticketing consumer turns the ticket events above into email)
 - [Projects Service Integration](../projects-service/projects-api/docs/integrations.md)
 - [Treasury Service Integration](../finance-service/treasury-api/docs/integrations.md)
 

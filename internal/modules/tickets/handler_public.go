@@ -130,8 +130,11 @@ func (h *PublicHandler) CreatePublicTicket(w http.ResponseWriter, r *http.Reques
 		Priority:    PriorityNormal,
 		Channel:     req.Channel,
 		OrderID:     req.OrderID,
-		Metadata:    map[string]any{"customer_email": email, "customer_name": req.CustomerName},
+		Metadata:    map[string]any{"source": "public_form"},
 	}
+	// Stored as requester_* like every other create path (the verified email, never the body's).
+	createReq.RequesterName = strings.TrimSpace(req.CustomerName)
+	createReq.RequesterEmail = email
 
 	ticket, err := h.service.CreateTicket(r.Context(), createReq)
 	if err != nil {
@@ -209,12 +212,12 @@ func (h *PublicHandler) AddPublicComment(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Verify the customer email matches what's in the ticket metadata
-	if meta, ok := ticket.Metadata["customer_email"].(string); ok {
-		if !strings.EqualFold(meta, email) {
-			respondError(w, http.StatusForbidden, "not authorized for this ticket")
-			return
-		}
+	// Only the requester replies here: the verified email must be the ticket's requester email. A
+	// ticket with no requester email (a phone-only S2S ticket) takes no public replies; it used to
+	// accept one from any verified email.
+	if !canReplyAsRequester(ticket, email) {
+		respondError(w, http.StatusForbidden, "not authorized for this ticket")
+		return
 	}
 
 	var body struct {
@@ -271,6 +274,13 @@ func (h *PublicHandler) tenantError(w http.ResponseWriter, err error) {
 		return
 	}
 	respondError(w, http.StatusBadRequest, "invalid tenant")
+}
+
+// canReplyAsRequester reports whether a verified email is the ticket's requester (requester_email,
+// or the legacy customer_email of older public tickets).
+func canReplyAsRequester(t *Ticket, verifiedEmail string) bool {
+	want := RequesterOf(t).Email
+	return want != "" && strings.EqualFold(want, strings.TrimSpace(verifiedEmail))
 }
 
 // emailToUUID derives a deterministic UUID from an email address.

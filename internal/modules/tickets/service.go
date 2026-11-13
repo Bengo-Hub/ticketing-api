@@ -6,8 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
-
-	"github.com/bengobox/ticketing-service/internal/platform/events"
 )
 
 // SLAComputer computes SLA deadlines for new tickets.
@@ -27,14 +25,6 @@ type RoutingAction struct {
 	Value string // team/agent UUID string or priority string
 }
 
-// Notifier sends lifecycle notifications fire-and-forget.
-type Notifier interface {
-	SendTicketCreated(ctx context.Context, tenantSlug string, customerEmail string, data map[string]interface{})
-	SendTicketAssigned(ctx context.Context, tenantSlug string, agentEmail string, data map[string]interface{})
-	SendTicketResolved(ctx context.Context, tenantSlug string, customerEmail string, data map[string]interface{})
-	SendAgentComment(ctx context.Context, tenantSlug string, customerEmail string, data map[string]interface{})
-}
-
 // SSEPublisher broadcasts real-time events to connected SSE clients.
 type SSEPublisher interface {
 	Publish(tenantID uuid.UUID, eventType string, payload any)
@@ -44,9 +34,8 @@ type SSEPublisher interface {
 type Service struct {
 	repo      Repository
 	logger    *zap.Logger
-	publisher *events.Publisher
+	publisher EventPublisher
 	sla       SLAComputer
-	notif     Notifier
 	sse       SSEPublisher
 	routing   RulesEvaluator
 }
@@ -59,19 +48,16 @@ func NewService(repo Repository, logger *zap.Logger) *Service {
 	}
 }
 
-// SetPublisher sets the event publisher for ticket lifecycle events.
-func (s *Service) SetPublisher(p *events.Publisher) {
+// SetPublisher sets the event publisher for ticket lifecycle events (events.Publisher). Customer and
+// agent notifications go out only through these events (notifications-api's ticketing consumer);
+// ticketing-api has no direct notifications client.
+func (s *Service) SetPublisher(p EventPublisher) {
 	s.publisher = p
 }
 
 // SetSLAService wires in the SLA service for deadline computation.
 func (s *Service) SetSLAService(svc SLAComputer) {
 	s.sla = svc
-}
-
-// SetNotifier wires in the notifications client.
-func (s *Service) SetNotifier(n Notifier) {
-	s.notif = n
 }
 
 // SetSSEBroker wires in the SSE broker for real-time client streaming.
@@ -121,6 +107,11 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 		}
 	}
 
+	// The requester's contact is stored the same way on every create path (requester_*).
+	meta := withRequester(req.Metadata, RequesterContact{
+		Name: req.RequesterName, Email: req.RequesterEmail, Phone: req.RequesterPhone,
+	})
+
 	ticket := &Ticket{
 		ID:                uuid.New(),
 		TenantID:          req.TenantID,
@@ -139,7 +130,7 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 		CRMContactID:      req.CRMContactID,
 		CRMLeadID:         req.CRMLeadID,
 		Tags:              req.Tags,
-		Metadata:          req.Metadata,
+		Metadata:          meta,
 	}
 
 	if err := s.repo.CreateTicket(ctx, req.TenantID, ticket); err != nil {
@@ -173,6 +164,13 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 			"subject":       ticket.Subject,
 			"source":        "ticketing-api",
 		})
+	}
+
+	// The requester learns their ticket number; the tenant's helpdesk learns of a new ticket.
+	if s.publisher != nil {
+		if err := s.publisher.PublishTicketCreated(ctx, ticket.TenantID, TicketCreatedPayload(ticket)); err != nil {
+			s.logger.Warn("ticket.created not published", zap.String("ticket_id", ticket.ID.String()), zap.Error(err))
+		}
 	}
 
 	s.logger.Info("ticket created",
@@ -247,6 +245,13 @@ func (s *Service) UpdateTicketStatus(ctx context.Context, tenantID uuid.UUID, ti
 		s.sse.Publish(tenantID, "ticket.updated", map[string]any{"ticket_id": ticketID, "status": string(status)})
 	}
 
+	// Every other change tells the requester where their ticket stands; resolved has its own event.
+	if s.publisher != nil && status != StatusResolved && status != ticket.Status {
+		if err := s.publisher.PublishTicketStatusChanged(ctx, tenantID, TicketStatusChangedPayload(ticket, ticket.Status, status)); err != nil {
+			s.logger.Warn("ticket.status_changed not published", zap.String("ticket_id", ticketID.String()), zap.Error(err))
+		}
+	}
+
 	if status == StatusResolved {
 		// Check if resolution SLA was breached
 		if ticket.SLAResolutionDueAt != nil && !ticket.SLAResolutionBreached {
@@ -257,13 +262,11 @@ func (s *Service) UpdateTicketStatus(ctx context.Context, tenantID uuid.UUID, ti
 			}
 		}
 
-		// Publish resolved event
+		// Publish resolved event, with the requester's contact so the customer is told.
 		if s.publisher != nil {
-			_ = s.publisher.PublishTicketResolved(ctx, tenantID, map[string]any{
-				"ticket_id":     ticketID.String(),
-				"ticket_number": ticket.TicketNumber,
-				"subject":       ticket.Subject,
-			})
+			if err := s.publisher.PublishTicketResolved(ctx, tenantID, TicketResolvedPayload(ticket, ticket.Status, time.Now())); err != nil {
+				s.logger.Warn("ticket.resolved not published", zap.String("ticket_id", ticketID.String()), zap.Error(err))
+			}
 
 			// Publish CRM activity event if a CRM contact is linked.
 			if ticket.CRMContactID != nil {
@@ -295,7 +298,9 @@ func (s *Service) AssignTicket(ctx context.Context, tenantID uuid.UUID, ticketID
 	// Update status to open if it's new
 	ticket, err := s.repo.GetTicket(ctx, tenantID, ticketID)
 	if err == nil && ticket.Status == StatusNew && req.AgentID != nil {
-		_ = s.repo.UpdateTicketStatus(ctx, tenantID, ticketID, StatusOpen)
+		if s.repo.UpdateTicketStatus(ctx, tenantID, ticketID, StatusOpen) == nil {
+			ticket.Status = StatusOpen
+		}
 	}
 
 	s.logger.Info("ticket assigned",
@@ -306,10 +311,8 @@ func (s *Service) AssignTicket(ctx context.Context, tenantID uuid.UUID, ticketID
 
 	// Publish assigned event
 	if s.publisher != nil && ticket != nil {
-		agentIDStr := ""
 		agentEmail := ""
 		if req.AgentID != nil {
-			agentIDStr = req.AgentID.String()
 			// Include the agent's email so notifications-api can email the assignee
 			// directly; without it the notification silently fell back to the tenant
 			// mailbox and the agent never learned they were assigned.
@@ -317,14 +320,7 @@ func (s *Service) AssignTicket(ctx context.Context, tenantID uuid.UUID, ticketID
 				agentEmail = email
 			}
 		}
-		_ = s.publisher.PublishTicketAssigned(ctx, tenantID, map[string]any{
-			"ticket_id":     ticketID.String(),
-			"ticket_number": ticket.TicketNumber,
-			"subject":       ticket.Subject,
-			"agent_id":      agentIDStr,
-			"agent_email":   agentEmail,
-			"priority":      string(ticket.Priority),
-		})
+		_ = s.publisher.PublishTicketAssigned(ctx, tenantID, TicketAssignedPayload(ticket, req.AgentID, agentEmail))
 	}
 
 	return nil
@@ -376,17 +372,23 @@ func (s *Service) AddComment(ctx context.Context, req *AddCommentRequest) (*Tick
 
 	// Mark first response if this is an agent's first public response
 	if req.AuthorType == AuthorAgent && req.CommentType == CommentPublic {
+		ticket, tErr := s.repo.GetTicket(ctx, req.TenantID, req.TicketID)
 		if err := s.repo.MarkFirstResponse(ctx, req.TenantID, req.TicketID); err != nil {
 			s.logger.Warn("failed to mark first response", zap.Error(err))
-		} else {
+		} else if tErr == nil && ticket.SLAResponseDueAt != nil && !ticket.SLAResponseBreached {
 			// Check if first-response SLA was breached
-			ticket, tErr := s.repo.GetTicket(ctx, req.TenantID, req.TicketID)
-			if tErr == nil && ticket.SLAResponseDueAt != nil && !ticket.SLAResponseBreached {
-				if time.Now().After(*ticket.SLAResponseDueAt) {
-					if _, bErr := s.repo.MarkSLABreached(ctx, req.TenantID, req.TicketID, true, false); bErr != nil {
-						s.logger.Warn("failed to mark response sla breach", zap.Error(bErr))
-					}
+			if time.Now().After(*ticket.SLAResponseDueAt) {
+				if _, bErr := s.repo.MarkSLABreached(ctx, req.TenantID, req.TicketID, true, false); bErr != nil {
+					s.logger.Warn("failed to mark response sla breach", zap.Error(bErr))
 				}
+			}
+		}
+
+		// A public agent reply goes to the requester (internal notes and customer comments never do).
+		if s.publisher != nil && tErr == nil {
+			agentEmail, _ := s.repo.GetAgentEmail(ctx, req.TenantID, req.AuthorID)
+			if err := s.publisher.PublishTicketCommentAdded(ctx, req.TenantID, TicketCommentAddedPayload(ticket, comment, agentEmail)); err != nil {
+				s.logger.Warn("ticket.comment_added not published", zap.String("ticket_id", req.TicketID.String()), zap.Error(err))
 			}
 		}
 	}

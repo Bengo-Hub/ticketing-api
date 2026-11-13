@@ -158,6 +158,11 @@ type CreateTicketRequest struct {
 	CRMLeadID         *uuid.UUID      `json:"crm_lead_id,omitempty"`
 	Tags              []string        `json:"tags,omitempty"`
 	Metadata          map[string]any  `json:"metadata,omitempty"`
+	// Requester contact, stored in metadata as requester_name/requester_email/requester_phone on
+	// every create path. Ticket events carry it so the requester is told by email, WhatsApp or SMS.
+	RequesterName     string          `json:"requester_name,omitempty"`
+	RequesterEmail    string          `json:"requester_email,omitempty"`
+	RequesterPhone    string          `json:"requester_phone,omitempty"`
 }
 
 // UpdateTicketRequest represents a request to update a ticket.

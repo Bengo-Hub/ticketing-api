@@ -183,8 +183,8 @@ func New(ctx context.Context) (*App, error) {
 		}
 	}
 
-	// Initialize notifications S2S client
-	notifClient := clients.NewNotificationsClient(cfg.Notifications, log)
+	// Notifications go out only through ticket events (ticketing.>, notifications-api's ticketing
+	// consumer); there is no direct notifications client.
 
 	// Initialize OTP validator (calls auth-api to validate public OTP tokens)
 	otpClient := clients.NewOTPClient(cfg.Auth.ServiceURL, cfg.Auth.InternalServiceKey, log)
@@ -232,7 +232,6 @@ func New(ctx context.Context) (*App, error) {
 	ticketsService := tickets.NewService(ticketsRepo, log)
 	ticketsService.SetSLAService(&slaAdapter{svc: slaService})
 	ticketsService.SetRoutingService(&routingAdapter{svc: routingService})
-	ticketsService.SetNotifier(notifClient)
 	ticketsService.SetSSEBroker(sseBroker)
 	ticketsHandler := tickets.NewHandler(ticketsService, log,
 		tickets.WithServiceKey(cfg.Auth.InternalServiceKey),
