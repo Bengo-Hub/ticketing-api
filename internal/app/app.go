@@ -238,6 +238,12 @@ func New(ctx context.Context) (*App, error) {
 	)
 	publicTicketsHandler := tickets.NewPublicHandler(ticketsService, otpClient, rl, log)
 	publicTicketsHandler.SetTenantLookup(tenantResolver)
+	// Ticket access tokens for the public read and reply routes are signed with a key derived
+	// from the service key; without it the public read refuses every request.
+	publicTicketsHandler.SetAccessKey(cfg.Auth.InternalServiceKey)
+	if cfg.Auth.InternalServiceKey == "" {
+		log.Warn("INTERNAL_SERVICE_KEY is empty: public ticket reads are disabled")
+	}
 
 	// Wire event publisher for ticket lifecycle events (shared-events outbox pattern)
 	var outboxPub *eventslib.Publisher

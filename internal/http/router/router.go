@@ -60,7 +60,9 @@ func New(cfg Config) http.Handler {
 	r.Use(httpware.RequestID)
 	r.Use(httpware.Logging(cfg.Log))
 	r.Use(httpware.Recover(cfg.Log))
-	r.Use(httpware.CORS(httpware.StandardCORS(cfg.AllowedOrigins)))
+	// The public support pages call ticketing-api from the browser with an email code token or a
+	// ticket access token, so both headers must pass the CORS preflight.
+	r.Use(httpware.CORS(httpware.StandardCORS(cfg.AllowedOrigins, "X-OTP-Token", tickets.TicketAccessHeader)))
 
 	// Health endpoints (no auth required)
 	r.Get("/healthz", cfg.HealthHandler.Liveness)

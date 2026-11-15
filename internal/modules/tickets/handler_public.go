@@ -32,11 +32,16 @@ type PublicHandler struct {
 	otp     otpValidator
 	limiter rateLimiter
 	tenants tenantcache.Lookup
+	access  *ticketAccessSigner
 	logger  *zap.Logger
 }
 
 // SetTenantLookup wires the slug lookup (tenantcache.Resolver: Redis, then auth-api).
 func (h *PublicHandler) SetTenantLookup(l tenantcache.Lookup) { h.tenants = l }
+
+// SetAccessKey wires the secret ticket access tokens are signed with (INTERNAL_SERVICE_KEY;
+// the signing key is derived from it). Without one, the public read refuses every request.
+func (h *PublicHandler) SetAccessKey(secret string) { h.access = newTicketAccessSigner(secret) }
 
 // NewPublicHandler creates a handler for the public ticket endpoints.
 func NewPublicHandler(service *Service, otp otpValidator, limiter rateLimiter, logger *zap.Logger) *PublicHandler {
@@ -48,12 +53,14 @@ func NewPublicHandler(service *Service, otp otpValidator, limiter rateLimiter, l
 	}
 }
 
-// RegisterPublicRoutes mounts public routes on a tenant-scoped router.
-// These routes require NO JWT auth — OTP header is used instead.
+// RegisterPublicRoutes mounts public routes on a tenant-scoped router. They take no JWT: create
+// takes an auth-api one-use OTP token, access trades one for a ticket access token, the read
+// takes a ticket access token, and a comment takes either.
 func (h *PublicHandler) RegisterPublicRoutes(r chi.Router) {
 	r.Route("/public", func(pub chi.Router) {
 		pub.Post("/tickets", h.CreatePublicTicket)
 		pub.Get("/tickets/{ticketNumber}", h.GetPublicTicket)
+		pub.Post("/tickets/{ticketNumber}/access", h.RequestTicketAccess)
 		pub.Post("/tickets/{ticketNumber}/comments", h.AddPublicComment)
 	})
 }
@@ -150,46 +157,33 @@ func (h *PublicHandler) CreatePublicTicket(w http.ResponseWriter, r *http.Reques
 	})
 }
 
-// GetPublicTicket returns the status of a ticket by number without auth.
-func (h *PublicHandler) GetPublicTicket(w http.ResponseWriter, r *http.Request) {
-	tenantSlug := chi.URLParam(r, "tenant")
-	tenantID, err := h.resolveTenantID(r, tenantSlug)
-	if err != nil {
-		h.tenantError(w, err)
-		return
+// publicTicketView is the slim view a verified requester sees: no internal fields.
+func publicTicketView(t *Ticket) map[string]any {
+	return map[string]any{
+		"ticket_number": t.TicketNumber,
+		"status":        t.Status,
+		"subject":       t.Subject,
+		"channel":       t.Channel,
+		"created_at":    t.CreatedAt,
+		"updated_at":    t.UpdatedAt,
 	}
-
-	ticketNumber := chi.URLParam(r, "ticketNumber")
-	ticket, err := h.service.GetTicketByNumber(r.Context(), tenantID, ticketNumber)
-	if err != nil {
-		if errors.Is(err, ErrTicketNotFound) {
-			respondError(w, http.StatusNotFound, "ticket not found")
-			return
-		}
-		respondError(w, http.StatusInternalServerError, "failed to get ticket")
-		return
-	}
-
-	// Return slim public view — no internal fields
-	respondJSON(w, http.StatusOK, map[string]any{
-		"ticket_number": ticket.TicketNumber,
-		"status":        ticket.Status,
-		"subject":       ticket.Subject,
-		"channel":       ticket.Channel,
-		"created_at":    ticket.CreatedAt,
-		"updated_at":    ticket.UpdatedAt,
-	})
 }
 
-// AddPublicComment lets a customer reply to their ticket via OTP.
-func (h *PublicHandler) AddPublicComment(w http.ResponseWriter, r *http.Request) {
-	tenantSlug := chi.URLParam(r, "tenant")
-	tenantID, err := h.resolveTenantID(r, tenantSlug)
+// RequestTicketAccess trades a one-use OTP token for a ticket access token
+// (TicketAccessTTL) scoped to this tenant, this ticket and the verified email. It is issued
+// only when that email is the ticket's requester; a missing ticket and a different email get
+// the same 404, so the route never confirms that someone else's ticket exists.
+// POST /{tenant}/public/tickets/{ticketNumber}/access  (X-OTP-Token)
+func (h *PublicHandler) RequestTicketAccess(w http.ResponseWriter, r *http.Request) {
+	tenantID, err := h.resolveTenantID(r, chi.URLParam(r, "tenant"))
 	if err != nil {
 		h.tenantError(w, err)
 		return
 	}
-
+	if h.access == nil {
+		respondError(w, http.StatusServiceUnavailable, "ticket access is not available")
+		return
+	}
 	otpToken := r.Header.Get("X-OTP-Token")
 	if otpToken == "" {
 		respondError(w, http.StatusUnauthorized, "X-OTP-Token header required")
@@ -201,23 +195,133 @@ func (h *PublicHandler) AddPublicComment(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	ticketNumber := chi.URLParam(r, "ticketNumber")
-	ticket, err := h.service.GetTicketByNumber(r.Context(), tenantID, ticketNumber)
-	if err != nil {
-		if errors.Is(err, ErrTicketNotFound) {
-			respondError(w, http.StatusNotFound, "ticket not found")
-			return
-		}
+	ticket, err := h.service.GetTicketByNumber(r.Context(), tenantID, chi.URLParam(r, "ticketNumber"))
+	if err != nil && !errors.Is(err, ErrTicketNotFound) {
 		respondError(w, http.StatusInternalServerError, "failed to get ticket")
 		return
 	}
-
-	// Only the requester replies here: the verified email must be the ticket's requester email. A
-	// ticket with no requester email (a phone-only S2S ticket) takes no public replies; it used to
-	// accept one from any verified email.
-	if !canReplyAsRequester(ticket, email) {
-		respondError(w, http.StatusForbidden, "not authorized for this ticket")
+	if err != nil || !canReplyAsRequester(ticket, email) {
+		respondError(w, http.StatusNotFound, "ticket not found")
 		return
+	}
+
+	token, expires, err := h.access.Issue(tenantID, ticket.TicketNumber, email)
+	if err != nil {
+		h.logger.Error("failed to issue ticket access token", zap.Error(err))
+		respondError(w, http.StatusInternalServerError, "failed to issue access")
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]any{
+		"access_token": token,
+		"expires_at":   expires,
+		"ticket":       publicTicketView(ticket),
+	})
+}
+
+// GetPublicTicket returns a ticket's slim view to its verified requester. It needs a ticket
+// access token for this tenant and ticket; without one it answers 401 and shows nothing, and
+// a token for another ticket, or whose email is no longer the requester, gets a 404.
+func (h *PublicHandler) GetPublicTicket(w http.ResponseWriter, r *http.Request) {
+	tenantID, err := h.resolveTenantID(r, chi.URLParam(r, "tenant"))
+	if err != nil {
+		h.tenantError(w, err)
+		return
+	}
+	claims, ok := h.accessClaims(w, r)
+	if !ok {
+		return
+	}
+	ticket, ok := h.ticketForClaims(w, r, tenantID, claims)
+	if !ok {
+		return
+	}
+	respondJSON(w, http.StatusOK, publicTicketView(ticket))
+}
+
+// accessClaims reads and checks the ticket access token header, answering 401 when it is
+// missing, forged or expired.
+func (h *PublicHandler) accessClaims(w http.ResponseWriter, r *http.Request) (ticketAccessClaims, bool) {
+	token := r.Header.Get(TicketAccessHeader)
+	if token == "" {
+		respondError(w, http.StatusUnauthorized, TicketAccessHeader+" header required")
+		return ticketAccessClaims{}, false
+	}
+	claims, err := h.access.Verify(token)
+	if err != nil {
+		respondError(w, http.StatusUnauthorized, "invalid or expired ticket access token")
+		return ticketAccessClaims{}, false
+	}
+	return claims, true
+}
+
+// ticketForClaims loads the route's ticket and checks it is the one the claims cover. A
+// missing ticket and an out-of-scope one both answer 404.
+func (h *PublicHandler) ticketForClaims(w http.ResponseWriter, r *http.Request, tenantID uuid.UUID, claims ticketAccessClaims) (*Ticket, bool) {
+	ticket, err := h.service.GetTicketByNumber(r.Context(), tenantID, chi.URLParam(r, "ticketNumber"))
+	if err != nil && !errors.Is(err, ErrTicketNotFound) {
+		respondError(w, http.StatusInternalServerError, "failed to get ticket")
+		return nil, false
+	}
+	if err != nil || !claims.allows(tenantID, ticket) {
+		respondError(w, http.StatusNotFound, "ticket not found")
+		return nil, false
+	}
+	return ticket, true
+}
+
+// AddPublicComment lets a customer reply to their ticket. It takes a ticket access token
+// (TicketAccessHeader, reusable until it expires) or, as before, a one-use X-OTP-Token, which
+// the chat widget and the MarketFlow support form still send.
+func (h *PublicHandler) AddPublicComment(w http.ResponseWriter, r *http.Request) {
+	tenantSlug := chi.URLParam(r, "tenant")
+	tenantID, err := h.resolveTenantID(r, tenantSlug)
+	if err != nil {
+		h.tenantError(w, err)
+		return
+	}
+
+	var (
+		email  string
+		ticket *Ticket
+	)
+	if r.Header.Get(TicketAccessHeader) != "" {
+		claims, ok := h.accessClaims(w, r)
+		if !ok {
+			return
+		}
+		if ticket, ok = h.ticketForClaims(w, r, tenantID, claims); !ok {
+			return
+		}
+		email = claims.Email
+	} else {
+		otpToken := r.Header.Get("X-OTP-Token")
+		if otpToken == "" {
+			respondError(w, http.StatusUnauthorized, "X-OTP-Token or "+TicketAccessHeader+" header required")
+			return
+		}
+		email, err = h.otp.Validate(r.Context(), otpToken)
+		if err != nil {
+			respondError(w, http.StatusUnauthorized, "invalid or expired OTP token")
+			return
+		}
+
+		ticketNumber := chi.URLParam(r, "ticketNumber")
+		ticket, err = h.service.GetTicketByNumber(r.Context(), tenantID, ticketNumber)
+		if err != nil {
+			if errors.Is(err, ErrTicketNotFound) {
+				respondError(w, http.StatusNotFound, "ticket not found")
+				return
+			}
+			respondError(w, http.StatusInternalServerError, "failed to get ticket")
+			return
+		}
+
+		// Only the requester replies here: the verified email must be the ticket's requester email.
+		// A ticket with no requester email (a phone-only S2S ticket) takes no public replies.
+		if !canReplyAsRequester(ticket, email) {
+			respondError(w, http.StatusForbidden, "not authorized for this ticket")
+			return
+		}
 	}
 
 	var body struct {
