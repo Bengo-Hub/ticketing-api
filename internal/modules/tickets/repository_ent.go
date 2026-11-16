@@ -192,67 +192,6 @@ func (r *EntRepository) oneTicket(ctx context.Context, where ...predicate.Ticket
 	return entTicketToModel(t), nil
 }
 
-func (r *EntRepository) ListTickets(ctx context.Context, tenantID uuid.UUID, filter TicketFilter) ([]*Ticket, int, error) {
-	query := r.client.Ticket.Query().Where(ticket.TenantID(tenantID), ticket.DeletedAtIsNil())
-	if filter.Status != nil {
-		query = query.Where(ticket.StatusEQ(ticket.Status(*filter.Status)))
-	}
-	if len(filter.Statuses) > 0 {
-		statuses := make([]ticket.Status, len(filter.Statuses))
-		for i, s := range filter.Statuses {
-			statuses[i] = ticket.Status(s)
-		}
-		query = query.Where(ticket.StatusIn(statuses...))
-	}
-	if filter.Priority != nil {
-		query = query.Where(ticket.PriorityEQ(ticket.Priority(*filter.Priority)))
-	}
-	if filter.CustomerID != nil {
-		query = query.Where(ticket.CustomerID(*filter.CustomerID))
-	}
-	if filter.AssignedAgentID != nil {
-		query = query.Where(ticket.AssignedAgentID(*filter.AssignedAgentID))
-	}
-	if filter.AssignedTeamID != nil {
-		query = query.Where(ticket.AssignedTeamID(*filter.AssignedTeamID))
-	}
-	if filter.CategoryID != nil {
-		query = query.Where(ticket.CategoryID(*filter.CategoryID))
-	}
-	if filter.OrderID != nil {
-		query = query.Where(ticket.OrderID(*filter.OrderID))
-	}
-	if filter.Channel != nil {
-		query = query.Where(ticket.ChannelEQ(ticket.Channel(*filter.Channel)))
-	}
-	if filter.CreatedAfter != nil {
-		query = query.Where(ticket.CreatedAtGTE(*filter.CreatedAfter))
-	}
-	if filter.CreatedBefore != nil {
-		query = query.Where(ticket.CreatedAtLTE(*filter.CreatedBefore))
-	}
-
-	total, err := query.Clone().Count(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-	if filter.Offset > 0 {
-		query = query.Offset(filter.Offset)
-	}
-	if filter.Limit > 0 {
-		query = query.Limit(filter.Limit)
-	}
-	rows, err := query.Order(ent.Desc(ticket.FieldCreatedAt)).All(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-	result := make([]*Ticket, len(rows))
-	for i, t := range rows {
-		result[i] = entTicketToModel(t)
-	}
-	return result, total, nil
-}
-
 // updateOpen starts an update of one live ticket in the tenant.
 func (r *EntRepository) updateOpen(tenantID, ticketID uuid.UUID) *ent.TicketUpdate {
 	return r.client.Ticket.Update().Where(ticket.ID(ticketID), ticket.TenantID(tenantID), ticket.DeletedAtIsNil())

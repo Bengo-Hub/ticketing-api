@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Bengo-Hub/httpware/richtext"
 	"github.com/google/uuid"
 )
 
@@ -145,14 +146,10 @@ func ticketEventPayload(t *Ticket) map[string]any {
 	return p
 }
 
-// excerpt shortens text for an event payload (a notification shows a preview, never the whole body).
+// excerpt shortens text for an event payload (a notification shows a preview, never the whole body)
+// as plain text, so editor HTML never reaches an email or WhatsApp preview as tags.
 func excerpt(s string, limit int) string {
-	s = strings.TrimSpace(s)
-	r := []rune(s)
-	if len(r) <= limit {
-		return s
-	}
-	return string(r[:limit]) + "..."
+	return richtext.Excerpt(s, limit)
 }
 
 // eventExcerptLen bounds the description and comment text carried on events.

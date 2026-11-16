@@ -13,5 +13,6 @@ type Repository interface {
 	List(ctx context.Context, filter RuleFilter) ([]*RoutingRule, int, error)
 	Update(ctx context.Context, tenantID, ruleID uuid.UUID, req *UpdateRuleRequest) (*RoutingRule, error)
 	Delete(ctx context.Context, tenantID, ruleID uuid.UUID) error
-	ListActive(ctx context.Context, tenantID uuid.UUID) ([]*RoutingRule, error)
+	// ListActive returns at most limit active rules in evaluation order.
+	ListActive(ctx context.Context, tenantID uuid.UUID, limit int) ([]*RoutingRule, error)
 }

@@ -52,40 +52,6 @@ func (r *EntRepository) GetTicketCountsByPriority(ctx context.Context, tenantID 
 	return counts, nil
 }
 
-func (r *EntRepository) GetTicketTrend(ctx context.Context, tenantID uuid.UUID, from, to time.Time, bucketDays int) ([]TrendPoint, error) {
-	rows, err := r.client.Ticket.Query().
-		Where(ticket.TenantID(tenantID), ticket.DeletedAtIsNil(), ticket.CreatedAtGTE(from), ticket.CreatedAtLTE(to)).
-		Select(ticket.FieldCreatedAt, ticket.FieldStatus).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	type bucket struct{ created, resolved int }
-	buckets := make(map[string]*bucket)
-	for d := from; !d.After(to); d = d.AddDate(0, 0, bucketDays) {
-		buckets[d.Format("2006-01-02")] = &bucket{}
-	}
-	bucketKey := func(t time.Time) string {
-		diff := int(t.Sub(from).Hours() / 24)
-		return from.AddDate(0, 0, (diff/bucketDays)*bucketDays).Format("2006-01-02")
-	}
-	for _, t := range rows {
-		if b, ok := buckets[bucketKey(t.CreatedAt)]; ok {
-			b.created++
-			if t.Status == ticket.StatusResolved || t.Status == ticket.StatusClosed {
-				b.resolved++
-			}
-		}
-	}
-	var points []TrendPoint
-	for d := from; !d.After(to); d = d.AddDate(0, 0, bucketDays) {
-		key := d.Format("2006-01-02")
-		b := buckets[key]
-		points = append(points, TrendPoint{Date: key, Created: b.created, Resolved: b.resolved})
-	}
-	return points, nil
-}
-
 func (r *EntRepository) GetAgentTicketCount(ctx context.Context, tenantID uuid.UUID, agentID uuid.UUID) (int, error) {
 	return r.client.Ticket.Query().
 		Where(

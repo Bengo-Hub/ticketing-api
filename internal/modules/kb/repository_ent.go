@@ -2,13 +2,35 @@ package kb
 
 import (
 	"context"
-	"strings"
 	"time"
 
+	entsql "entgo.io/ent/dialect/sql"
+	pagination "github.com/Bengo-Hub/pagination"
 	"github.com/bengobox/ticketing-service/internal/ent"
 	entpkg "github.com/bengobox/ticketing-service/internal/ent/kbarticle"
+	"github.com/bengobox/ticketing-service/internal/ent/predicate"
 	"github.com/google/uuid"
 )
+
+// articleSearch matches title, excerpt and content by ILIKE through their trigram indexes
+// (kbarticle_*_trgm). A term under three characters, which a trigram index cannot serve,
+// matches the start of the title or excerpt instead.
+func articleSearch(term string) predicate.KBArticle {
+	pattern, cols := pagination.ContainsPattern(term), []string{entpkg.FieldTitle, entpkg.FieldExcerpt, entpkg.FieldContent}
+	if !pagination.MeetsMinLength(term, 3) {
+		pattern, cols = pagination.EscapeLike(term)+"%", []string{entpkg.FieldTitle, entpkg.FieldExcerpt}
+	}
+	return func(s *entsql.Selector) {
+		preds := make([]*entsql.Predicate, len(cols))
+		for i, col := range cols {
+			c := s.C(col)
+			preds[i] = entsql.P(func(b *entsql.Builder) {
+				b.WriteString(c).WriteString(" ILIKE ").Arg(pattern)
+			})
+		}
+		s.Where(entsql.Or(preds...))
+	}
+}
 
 type EntRepository struct {
 	client *ent.Client
@@ -163,15 +185,8 @@ func (r *EntRepository) List(ctx context.Context, filter ArticleFilter) (*Articl
 	if filter.IsPublic != nil {
 		q = q.Where(entpkg.IsPublicEQ(*filter.IsPublic))
 	}
-	if filter.Search != "" {
-		term := strings.ToLower(filter.Search)
-		q = q.Where(
-			entpkg.Or(
-				entpkg.TitleContainsFold(term),
-				entpkg.ExcerptContainsFold(term),
-				entpkg.ContentContainsFold(term),
-			),
-		)
+	if term := pagination.NormalizeSearch(filter.Search); term != "" {
+		q = q.Where(articleSearch(term))
 	}
 
 	total, err := q.Count(ctx)

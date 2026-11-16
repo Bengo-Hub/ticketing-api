@@ -201,8 +201,8 @@ func (s *Service) DeleteAgent(ctx context.Context, tenantID uuid.UUID, agentID u
 // Availability operations
 
 // GetAvailableAgents returns agents available for assignment.
-func (s *Service) GetAvailableAgents(ctx context.Context, tenantID uuid.UUID, teamID *uuid.UUID) ([]*Agent, error) {
-	return s.repo.GetAvailableAgents(ctx, tenantID, teamID)
+func (s *Service) GetAvailableAgents(ctx context.Context, tenantID uuid.UUID, teamID *uuid.UUID, limit int) ([]*Agent, error) {
+	return s.repo.GetAvailableAgents(ctx, tenantID, teamID, limit)
 }
 
 // GetLeastLoadedAgent returns the agent with lowest ticket count.

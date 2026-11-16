@@ -12,6 +12,9 @@ type Agent func(*sql.Selector)
 // KBArticle is the predicate function for kbarticle builders.
 type KBArticle func(*sql.Selector)
 
+// Macro is the predicate function for macro builders.
+type Macro func(*sql.Selector)
+
 // OutboxEvent is the predicate function for outboxevent builders.
 type OutboxEvent func(*sql.Selector)
 
@@ -39,8 +42,14 @@ type TicketCategory func(*sql.Selector)
 // TicketComment is the predicate function for ticketcomment builders.
 type TicketComment func(*sql.Selector)
 
+// TicketLink is the predicate function for ticketlink builders.
+type TicketLink func(*sql.Selector)
+
 // TicketSequence is the predicate function for ticketsequence builders.
 type TicketSequence func(*sql.Selector)
+
+// TicketView is the predicate function for ticketview builders.
+type TicketView func(*sql.Selector)
 
 // TicketingPermission is the predicate function for ticketingpermission builders.
 type TicketingPermission func(*sql.Selector)

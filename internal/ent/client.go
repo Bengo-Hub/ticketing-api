@@ -18,6 +18,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
 	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
+	"github.com/bengobox/ticketing-service/internal/ent/macro"
 	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
 	"github.com/bengobox/ticketing-service/internal/ent/rolepermission"
 	"github.com/bengobox/ticketing-service/internal/ent/routingrule"
@@ -30,7 +31,9 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/ticketingpermission"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketingrole"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketinguser"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketlink"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketsequence"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketview"
 	"github.com/bengobox/ticketing-service/internal/ent/userroleassignment"
 )
 
@@ -43,6 +46,8 @@ type Client struct {
 	Agent *AgentClient
 	// KBArticle is the client for interacting with the KBArticle builders.
 	KBArticle *KBArticleClient
+	// Macro is the client for interacting with the Macro builders.
+	Macro *MacroClient
 	// OutboxEvent is the client for interacting with the OutboxEvent builders.
 	OutboxEvent *OutboxEventClient
 	// RolePermission is the client for interacting with the RolePermission builders.
@@ -61,8 +66,12 @@ type Client struct {
 	TicketCategory *TicketCategoryClient
 	// TicketComment is the client for interacting with the TicketComment builders.
 	TicketComment *TicketCommentClient
+	// TicketLink is the client for interacting with the TicketLink builders.
+	TicketLink *TicketLinkClient
 	// TicketSequence is the client for interacting with the TicketSequence builders.
 	TicketSequence *TicketSequenceClient
+	// TicketView is the client for interacting with the TicketView builders.
+	TicketView *TicketViewClient
 	// TicketingPermission is the client for interacting with the TicketingPermission builders.
 	TicketingPermission *TicketingPermissionClient
 	// TicketingRole is the client for interacting with the TicketingRole builders.
@@ -84,6 +93,7 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Agent = NewAgentClient(c.config)
 	c.KBArticle = NewKBArticleClient(c.config)
+	c.Macro = NewMacroClient(c.config)
 	c.OutboxEvent = NewOutboxEventClient(c.config)
 	c.RolePermission = NewRolePermissionClient(c.config)
 	c.RoutingRule = NewRoutingRuleClient(c.config)
@@ -93,7 +103,9 @@ func (c *Client) init() {
 	c.TicketAttachment = NewTicketAttachmentClient(c.config)
 	c.TicketCategory = NewTicketCategoryClient(c.config)
 	c.TicketComment = NewTicketCommentClient(c.config)
+	c.TicketLink = NewTicketLinkClient(c.config)
 	c.TicketSequence = NewTicketSequenceClient(c.config)
+	c.TicketView = NewTicketViewClient(c.config)
 	c.TicketingPermission = NewTicketingPermissionClient(c.config)
 	c.TicketingRole = NewTicketingRoleClient(c.config)
 	c.TicketingUser = NewTicketingUserClient(c.config)
@@ -192,6 +204,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:              cfg,
 		Agent:               NewAgentClient(cfg),
 		KBArticle:           NewKBArticleClient(cfg),
+		Macro:               NewMacroClient(cfg),
 		OutboxEvent:         NewOutboxEventClient(cfg),
 		RolePermission:      NewRolePermissionClient(cfg),
 		RoutingRule:         NewRoutingRuleClient(cfg),
@@ -201,7 +214,9 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		TicketAttachment:    NewTicketAttachmentClient(cfg),
 		TicketCategory:      NewTicketCategoryClient(cfg),
 		TicketComment:       NewTicketCommentClient(cfg),
+		TicketLink:          NewTicketLinkClient(cfg),
 		TicketSequence:      NewTicketSequenceClient(cfg),
+		TicketView:          NewTicketViewClient(cfg),
 		TicketingPermission: NewTicketingPermissionClient(cfg),
 		TicketingRole:       NewTicketingRoleClient(cfg),
 		TicketingUser:       NewTicketingUserClient(cfg),
@@ -227,6 +242,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:              cfg,
 		Agent:               NewAgentClient(cfg),
 		KBArticle:           NewKBArticleClient(cfg),
+		Macro:               NewMacroClient(cfg),
 		OutboxEvent:         NewOutboxEventClient(cfg),
 		RolePermission:      NewRolePermissionClient(cfg),
 		RoutingRule:         NewRoutingRuleClient(cfg),
@@ -236,7 +252,9 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		TicketAttachment:    NewTicketAttachmentClient(cfg),
 		TicketCategory:      NewTicketCategoryClient(cfg),
 		TicketComment:       NewTicketCommentClient(cfg),
+		TicketLink:          NewTicketLinkClient(cfg),
 		TicketSequence:      NewTicketSequenceClient(cfg),
+		TicketView:          NewTicketViewClient(cfg),
 		TicketingPermission: NewTicketingPermissionClient(cfg),
 		TicketingRole:       NewTicketingRoleClient(cfg),
 		TicketingUser:       NewTicketingUserClient(cfg),
@@ -270,10 +288,10 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Agent, c.KBArticle, c.OutboxEvent, c.RolePermission, c.RoutingRule,
+		c.Agent, c.KBArticle, c.Macro, c.OutboxEvent, c.RolePermission, c.RoutingRule,
 		c.SLAPolicy, c.Team, c.Ticket, c.TicketAttachment, c.TicketCategory,
-		c.TicketComment, c.TicketSequence, c.TicketingPermission, c.TicketingRole,
-		c.TicketingUser, c.UserRoleAssignment,
+		c.TicketComment, c.TicketLink, c.TicketSequence, c.TicketView,
+		c.TicketingPermission, c.TicketingRole, c.TicketingUser, c.UserRoleAssignment,
 	} {
 		n.Use(hooks...)
 	}
@@ -283,10 +301,10 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Agent, c.KBArticle, c.OutboxEvent, c.RolePermission, c.RoutingRule,
+		c.Agent, c.KBArticle, c.Macro, c.OutboxEvent, c.RolePermission, c.RoutingRule,
 		c.SLAPolicy, c.Team, c.Ticket, c.TicketAttachment, c.TicketCategory,
-		c.TicketComment, c.TicketSequence, c.TicketingPermission, c.TicketingRole,
-		c.TicketingUser, c.UserRoleAssignment,
+		c.TicketComment, c.TicketLink, c.TicketSequence, c.TicketView,
+		c.TicketingPermission, c.TicketingRole, c.TicketingUser, c.UserRoleAssignment,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -299,6 +317,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Agent.mutate(ctx, m)
 	case *KBArticleMutation:
 		return c.KBArticle.mutate(ctx, m)
+	case *MacroMutation:
+		return c.Macro.mutate(ctx, m)
 	case *OutboxEventMutation:
 		return c.OutboxEvent.mutate(ctx, m)
 	case *RolePermissionMutation:
@@ -317,8 +337,12 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.TicketCategory.mutate(ctx, m)
 	case *TicketCommentMutation:
 		return c.TicketComment.mutate(ctx, m)
+	case *TicketLinkMutation:
+		return c.TicketLink.mutate(ctx, m)
 	case *TicketSequenceMutation:
 		return c.TicketSequence.mutate(ctx, m)
+	case *TicketViewMutation:
+		return c.TicketView.mutate(ctx, m)
 	case *TicketingPermissionMutation:
 		return c.TicketingPermission.mutate(ctx, m)
 	case *TicketingRoleMutation:
@@ -627,6 +651,139 @@ func (c *KBArticleClient) mutate(ctx context.Context, m *KBArticleMutation) (Val
 		return (&KBArticleDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown KBArticle mutation op: %q", m.Op())
+	}
+}
+
+// MacroClient is a client for the Macro schema.
+type MacroClient struct {
+	config
+}
+
+// NewMacroClient returns a client for the Macro from the given config.
+func NewMacroClient(c config) *MacroClient {
+	return &MacroClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `macro.Hooks(f(g(h())))`.
+func (c *MacroClient) Use(hooks ...Hook) {
+	c.hooks.Macro = append(c.hooks.Macro, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `macro.Intercept(f(g(h())))`.
+func (c *MacroClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Macro = append(c.inters.Macro, interceptors...)
+}
+
+// Create returns a builder for creating a Macro entity.
+func (c *MacroClient) Create() *MacroCreate {
+	mutation := newMacroMutation(c.config, OpCreate)
+	return &MacroCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Macro entities.
+func (c *MacroClient) CreateBulk(builders ...*MacroCreate) *MacroCreateBulk {
+	return &MacroCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MacroClient) MapCreateBulk(slice any, setFunc func(*MacroCreate, int)) *MacroCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MacroCreateBulk{err: fmt.Errorf("calling to MacroClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MacroCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MacroCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Macro.
+func (c *MacroClient) Update() *MacroUpdate {
+	mutation := newMacroMutation(c.config, OpUpdate)
+	return &MacroUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MacroClient) UpdateOne(_m *Macro) *MacroUpdateOne {
+	mutation := newMacroMutation(c.config, OpUpdateOne, withMacro(_m))
+	return &MacroUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MacroClient) UpdateOneID(id uuid.UUID) *MacroUpdateOne {
+	mutation := newMacroMutation(c.config, OpUpdateOne, withMacroID(id))
+	return &MacroUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Macro.
+func (c *MacroClient) Delete() *MacroDelete {
+	mutation := newMacroMutation(c.config, OpDelete)
+	return &MacroDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MacroClient) DeleteOne(_m *Macro) *MacroDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MacroClient) DeleteOneID(id uuid.UUID) *MacroDeleteOne {
+	builder := c.Delete().Where(macro.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MacroDeleteOne{builder}
+}
+
+// Query returns a query builder for Macro.
+func (c *MacroClient) Query() *MacroQuery {
+	return &MacroQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMacro},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Macro entity by its id.
+func (c *MacroClient) Get(ctx context.Context, id uuid.UUID) (*Macro, error) {
+	return c.Query().Where(macro.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MacroClient) GetX(ctx context.Context, id uuid.UUID) *Macro {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MacroClient) Hooks() []Hook {
+	return c.hooks.Macro
+}
+
+// Interceptors returns the client interceptors.
+func (c *MacroClient) Interceptors() []Interceptor {
+	return c.inters.Macro
+}
+
+func (c *MacroClient) mutate(ctx context.Context, m *MacroMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MacroCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MacroUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MacroUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MacroDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Macro mutation op: %q", m.Op())
 	}
 }
 
@@ -2019,6 +2176,139 @@ func (c *TicketCommentClient) mutate(ctx context.Context, m *TicketCommentMutati
 	}
 }
 
+// TicketLinkClient is a client for the TicketLink schema.
+type TicketLinkClient struct {
+	config
+}
+
+// NewTicketLinkClient returns a client for the TicketLink from the given config.
+func NewTicketLinkClient(c config) *TicketLinkClient {
+	return &TicketLinkClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `ticketlink.Hooks(f(g(h())))`.
+func (c *TicketLinkClient) Use(hooks ...Hook) {
+	c.hooks.TicketLink = append(c.hooks.TicketLink, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `ticketlink.Intercept(f(g(h())))`.
+func (c *TicketLinkClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TicketLink = append(c.inters.TicketLink, interceptors...)
+}
+
+// Create returns a builder for creating a TicketLink entity.
+func (c *TicketLinkClient) Create() *TicketLinkCreate {
+	mutation := newTicketLinkMutation(c.config, OpCreate)
+	return &TicketLinkCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TicketLink entities.
+func (c *TicketLinkClient) CreateBulk(builders ...*TicketLinkCreate) *TicketLinkCreateBulk {
+	return &TicketLinkCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TicketLinkClient) MapCreateBulk(slice any, setFunc func(*TicketLinkCreate, int)) *TicketLinkCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TicketLinkCreateBulk{err: fmt.Errorf("calling to TicketLinkClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TicketLinkCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TicketLinkCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TicketLink.
+func (c *TicketLinkClient) Update() *TicketLinkUpdate {
+	mutation := newTicketLinkMutation(c.config, OpUpdate)
+	return &TicketLinkUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TicketLinkClient) UpdateOne(_m *TicketLink) *TicketLinkUpdateOne {
+	mutation := newTicketLinkMutation(c.config, OpUpdateOne, withTicketLink(_m))
+	return &TicketLinkUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TicketLinkClient) UpdateOneID(id uuid.UUID) *TicketLinkUpdateOne {
+	mutation := newTicketLinkMutation(c.config, OpUpdateOne, withTicketLinkID(id))
+	return &TicketLinkUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TicketLink.
+func (c *TicketLinkClient) Delete() *TicketLinkDelete {
+	mutation := newTicketLinkMutation(c.config, OpDelete)
+	return &TicketLinkDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TicketLinkClient) DeleteOne(_m *TicketLink) *TicketLinkDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TicketLinkClient) DeleteOneID(id uuid.UUID) *TicketLinkDeleteOne {
+	builder := c.Delete().Where(ticketlink.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TicketLinkDeleteOne{builder}
+}
+
+// Query returns a query builder for TicketLink.
+func (c *TicketLinkClient) Query() *TicketLinkQuery {
+	return &TicketLinkQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTicketLink},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a TicketLink entity by its id.
+func (c *TicketLinkClient) Get(ctx context.Context, id uuid.UUID) (*TicketLink, error) {
+	return c.Query().Where(ticketlink.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TicketLinkClient) GetX(ctx context.Context, id uuid.UUID) *TicketLink {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *TicketLinkClient) Hooks() []Hook {
+	return c.hooks.TicketLink
+}
+
+// Interceptors returns the client interceptors.
+func (c *TicketLinkClient) Interceptors() []Interceptor {
+	return c.inters.TicketLink
+}
+
+func (c *TicketLinkClient) mutate(ctx context.Context, m *TicketLinkMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TicketLinkCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TicketLinkUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TicketLinkUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TicketLinkDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TicketLink mutation op: %q", m.Op())
+	}
+}
+
 // TicketSequenceClient is a client for the TicketSequence schema.
 type TicketSequenceClient struct {
 	config
@@ -2149,6 +2439,139 @@ func (c *TicketSequenceClient) mutate(ctx context.Context, m *TicketSequenceMuta
 		return (&TicketSequenceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown TicketSequence mutation op: %q", m.Op())
+	}
+}
+
+// TicketViewClient is a client for the TicketView schema.
+type TicketViewClient struct {
+	config
+}
+
+// NewTicketViewClient returns a client for the TicketView from the given config.
+func NewTicketViewClient(c config) *TicketViewClient {
+	return &TicketViewClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `ticketview.Hooks(f(g(h())))`.
+func (c *TicketViewClient) Use(hooks ...Hook) {
+	c.hooks.TicketView = append(c.hooks.TicketView, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `ticketview.Intercept(f(g(h())))`.
+func (c *TicketViewClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TicketView = append(c.inters.TicketView, interceptors...)
+}
+
+// Create returns a builder for creating a TicketView entity.
+func (c *TicketViewClient) Create() *TicketViewCreate {
+	mutation := newTicketViewMutation(c.config, OpCreate)
+	return &TicketViewCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TicketView entities.
+func (c *TicketViewClient) CreateBulk(builders ...*TicketViewCreate) *TicketViewCreateBulk {
+	return &TicketViewCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TicketViewClient) MapCreateBulk(slice any, setFunc func(*TicketViewCreate, int)) *TicketViewCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TicketViewCreateBulk{err: fmt.Errorf("calling to TicketViewClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TicketViewCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TicketViewCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TicketView.
+func (c *TicketViewClient) Update() *TicketViewUpdate {
+	mutation := newTicketViewMutation(c.config, OpUpdate)
+	return &TicketViewUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TicketViewClient) UpdateOne(_m *TicketView) *TicketViewUpdateOne {
+	mutation := newTicketViewMutation(c.config, OpUpdateOne, withTicketView(_m))
+	return &TicketViewUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TicketViewClient) UpdateOneID(id uuid.UUID) *TicketViewUpdateOne {
+	mutation := newTicketViewMutation(c.config, OpUpdateOne, withTicketViewID(id))
+	return &TicketViewUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TicketView.
+func (c *TicketViewClient) Delete() *TicketViewDelete {
+	mutation := newTicketViewMutation(c.config, OpDelete)
+	return &TicketViewDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TicketViewClient) DeleteOne(_m *TicketView) *TicketViewDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TicketViewClient) DeleteOneID(id uuid.UUID) *TicketViewDeleteOne {
+	builder := c.Delete().Where(ticketview.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TicketViewDeleteOne{builder}
+}
+
+// Query returns a query builder for TicketView.
+func (c *TicketViewClient) Query() *TicketViewQuery {
+	return &TicketViewQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTicketView},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a TicketView entity by its id.
+func (c *TicketViewClient) Get(ctx context.Context, id uuid.UUID) (*TicketView, error) {
+	return c.Query().Where(ticketview.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TicketViewClient) GetX(ctx context.Context, id uuid.UUID) *TicketView {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *TicketViewClient) Hooks() []Hook {
+	return c.hooks.TicketView
+}
+
+// Interceptors returns the client interceptors.
+func (c *TicketViewClient) Interceptors() []Interceptor {
+	return c.inters.TicketView
+}
+
+func (c *TicketViewClient) mutate(ctx context.Context, m *TicketViewMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TicketViewCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TicketViewUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TicketViewUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TicketViewDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TicketView mutation op: %q", m.Op())
 	}
 }
 
@@ -2815,15 +3238,15 @@ func (c *UserRoleAssignmentClient) mutate(ctx context.Context, m *UserRoleAssign
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Agent, KBArticle, OutboxEvent, RolePermission, RoutingRule, SLAPolicy, Team,
-		Ticket, TicketAttachment, TicketCategory, TicketComment, TicketSequence,
-		TicketingPermission, TicketingRole, TicketingUser,
+		Agent, KBArticle, Macro, OutboxEvent, RolePermission, RoutingRule, SLAPolicy,
+		Team, Ticket, TicketAttachment, TicketCategory, TicketComment, TicketLink,
+		TicketSequence, TicketView, TicketingPermission, TicketingRole, TicketingUser,
 		UserRoleAssignment []ent.Hook
 	}
 	inters struct {
-		Agent, KBArticle, OutboxEvent, RolePermission, RoutingRule, SLAPolicy, Team,
-		Ticket, TicketAttachment, TicketCategory, TicketComment, TicketSequence,
-		TicketingPermission, TicketingRole, TicketingUser,
+		Agent, KBArticle, Macro, OutboxEvent, RolePermission, RoutingRule, SLAPolicy,
+		Team, Ticket, TicketAttachment, TicketCategory, TicketComment, TicketLink,
+		TicketSequence, TicketView, TicketingPermission, TicketingRole, TicketingUser,
 		UserRoleAssignment []ent.Interceptor
 	}
 )

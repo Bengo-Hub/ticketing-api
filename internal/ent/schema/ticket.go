@@ -169,9 +169,19 @@ func (Ticket) Annotations() []schema.Annotation {
 func (Ticket) Indexes() []ent.Index {
 	// The internal-create idempotency key (tenant_id, metadata source, source_ref.type, source_ref.id) is a
 	// unique expression index that ent cannot declare; it lives in the versioned migration
-	// 20261116090100_phase0.sql as ticket_tenant_source_ref.
+	// 20261116090100_phase0.sql as ticket_tenant_source_ref. The requester search index
+	// ticket_requester_trgm is an expression index too and lives in 20261116100000_sprint9.sql.
 	return []ent.Index{
 		index.Fields("tenant_id", "ticket_number").Unique(),
+		// Keyset paging of the ticket list: (created_at, id) within the tenant.
+		index.Fields("tenant_id", "created_at", "id"),
+		index.Fields("tenant_id", "channel"),
+		index.Fields("tenant_id", "category_id"),
+		// The analytics trend counts resolutions by resolved_at.
+		index.Fields("tenant_id", "resolved_at"),
+		trgmIndex("subject", "ticket_subject_trgm"),
+		trgmIndex("description", "ticket_description_trgm"),
+		ginIndex("tags", "ticket_tags_gin"),
 		index.Fields("tenant_id", "status"),
 		index.Fields("tenant_id", "priority"),
 		index.Fields("tenant_id", "customer_id"),

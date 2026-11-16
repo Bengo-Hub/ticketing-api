@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/Bengo-Hub/httpware/richtext"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -37,6 +38,7 @@ type Service struct {
 	sla     SLAComputer
 	sse     SSEPublisher
 	routing RulesEvaluator
+	files   FileStore
 	now     func() time.Time
 }
 
@@ -62,6 +64,9 @@ func (s *Service) broadcast(tenantID uuid.UUID, eventType string, payload map[st
 
 // CreateTicket creates a ticket, numbered from the tenant's counter in the same transaction.
 func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*Ticket, error) {
+	// Every create path (signed in, public form, internal S2S) passes here, so the description is
+	// sanitised once, before routing reads it and before it is stored.
+	req.Description = richtext.Sanitize(req.Description)
 	if req.Priority == "" {
 		req.Priority = PriorityNormal
 	}
@@ -86,7 +91,7 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 		ExternalReference: req.ExternalReference,
 		CRMContactID:      req.CRMContactID,
 		CRMLeadID:         req.CRMLeadID,
-		Tags:              req.Tags,
+		Tags:              NormalizeTags(req.Tags),
 		// The requester's contact is stored the same way on every create path (requester_*).
 		Metadata: withRequester(req.Metadata, RequesterContact{
 			Name: req.RequesterName, Email: req.RequesterEmail, Phone: req.RequesterPhone,
@@ -163,60 +168,54 @@ func (s *Service) GetTicketByNumber(ctx context.Context, tenantID uuid.UUID, tic
 	return s.repo.GetTicketByNumber(ctx, tenantID, ticketNumber)
 }
 
-// ListTickets lists tickets with filtering.
-func (s *Service) ListTickets(ctx context.Context, tenantID uuid.UUID, filter TicketFilter) ([]*Ticket, int, error) {
+// ListTickets returns one keyset page of the tenant's tickets.
+func (s *Service) ListTickets(ctx context.Context, tenantID uuid.UUID, filter TicketFilter) (Page[*Ticket], error) {
 	filter.TenantID = tenantID
-	return s.repo.ListTickets(ctx, tenantID, filter)
+	if !ValidSort(filter.Sort) {
+		filter.Sort = SortCreatedDesc
+	}
+	if filter.Page.Limit <= 0 {
+		filter.Page.Limit = defaultPageLimit
+	}
+	rows, err := s.repo.ListTickets(ctx, tenantID, filter)
+	if err != nil {
+		return Page[*Ticket]{}, err
+	}
+	return pageFrom(rows, filter.Page.Limit, ticketKey), nil
 }
 
-// UpdateTicket updates a ticket.
+func ticketKey(t *Ticket) (time.Time, uuid.UUID) { return t.CreatedAt, t.ID }
+
+// ListTags returns the tenant's tags in use, most used first.
+func (s *Service) ListTags(ctx context.Context, tenantID uuid.UUID, prefix string, limit int) ([]TagCount, error) {
+	return s.repo.ListTags(ctx, tenantID, NormalizeTag(prefix), limit)
+}
+
+// UpdateTicket updates a ticket's fields. An agent or team named here must belong to the tenant.
 func (s *Service) UpdateTicket(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, req *UpdateTicketRequest) error {
-	if err := s.repo.UpdateTicket(ctx, tenantID, ticketID, req); err != nil {
-		s.logger.Error("failed to update ticket", zap.Error(err), zap.String("ticket_id", ticketID.String()))
+	req.Tags = NormalizeTags(req.Tags)
+	err := s.repo.InTx(ctx, tenantID, func(repo Repository, _ *Outbox) error {
+		if err := checkAssignees(ctx, repo, tenantID, req.AssignedAgentID, req.AssignedTeamID); err != nil {
+			return err
+		}
+		return repo.UpdateTicket(ctx, tenantID, ticketID, req)
+	})
+	if err != nil {
 		return err
 	}
+	s.broadcast(tenantID, "ticket.updated", map[string]any{"ticket_id": ticketID})
 	return nil
 }
 
 // UpdateTicketStatus moves a ticket to a new status and records the events for it.
 func (s *Service) UpdateTicketStatus(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, status TicketStatus) error {
-	var from TicketStatus
 	err := s.repo.InTx(ctx, tenantID, func(repo Repository, out *Outbox) error {
-		ticket, err := repo.GetTicket(ctx, tenantID, ticketID)
-		if err != nil {
-			return err
-		}
-		from = ticket.Status
-		if !isValidStatusTransition(from, status) {
-			return ErrInvalidTransition
-		}
-		if err := repo.UpdateTicketStatus(ctx, tenantID, ticketID, status); err != nil {
-			return err
-		}
-		if status != StatusResolved {
-			// Every other change tells the requester where their ticket stands.
-			if status != from {
-				out.Ticket(EventTicketStatusChanged, TicketStatusChangedPayload(ticket, from, status))
-			}
-			return nil
-		}
-		now := s.now()
-		if ticket.SLAResolutionDueAt != nil && !ticket.SLAResolutionBreached && now.After(*ticket.SLAResolutionDueAt) {
-			if _, err := repo.MarkSLABreached(ctx, tenantID, ticketID, false, true); err != nil {
-				return err
-			}
-		}
-		out.Ticket(EventTicketResolved, TicketResolvedPayload(ticket, from, now))
-		if ticket.CRMContactID != nil {
-			out.CRMActivity(crmActivity(ticket, "ticket_resolved"))
-		}
-		return nil
+		_, err := s.statusTx(ctx, repo, out, tenantID, ticketID, status)
+		return err
 	})
 	if err != nil {
 		return err
 	}
-	s.logger.Info("ticket status updated", zap.String("ticket_id", ticketID.String()),
-		zap.String("old_status", string(from)), zap.String("new_status", string(status)))
 	s.broadcast(tenantID, "ticket.updated", map[string]any{"ticket_id": ticketID, "status": string(status)})
 	return nil
 }
@@ -224,31 +223,9 @@ func (s *Service) UpdateTicketStatus(ctx context.Context, tenantID uuid.UUID, ti
 // AssignTicket assigns a ticket to an agent and/or team; a new ticket given an agent opens.
 func (s *Service) AssignTicket(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, req *AssignTicketRequest) error {
 	err := s.repo.InTx(ctx, tenantID, func(repo Repository, out *Outbox) error {
-		if err := repo.AssignTicket(ctx, tenantID, ticketID, req.AgentID, req.TeamID); err != nil {
-			return err
-		}
-		ticket, err := repo.GetTicket(ctx, tenantID, ticketID)
-		if err != nil {
-			return err
-		}
-		if ticket.Status == StatusNew && req.AgentID != nil {
-			if err := repo.UpdateTicketStatus(ctx, tenantID, ticketID, StatusOpen); err != nil {
-				return err
-			}
-			ticket.Status = StatusOpen
-		}
-		agentEmail := ""
-		if req.AgentID != nil {
-			// The assignee's email lets notifications-api email them directly.
-			if agentEmail, err = repo.GetAgentEmail(ctx, tenantID, *req.AgentID); err != nil {
-				return err
-			}
-		}
-		out.Ticket(EventTicketAssigned, TicketAssignedPayload(ticket, req.AgentID, agentEmail))
-		return nil
+		return s.assignTx(ctx, repo, out, tenantID, ticketID, req.AgentID, req.TeamID)
 	})
 	if err != nil {
-		s.logger.Error("failed to assign ticket", zap.Error(err), zap.String("ticket_id", ticketID.String()))
 		return err
 	}
 	s.broadcast(tenantID, "ticket.updated", map[string]any{"ticket_id": ticketID})
@@ -264,49 +241,17 @@ func (s *Service) DeleteTicket(ctx context.Context, tenantID uuid.UUID, ticketID
 	return nil
 }
 
-// AddComment adds a comment. An agent's first public reply records the first response, and a
-// public agent reply goes to the requester (internal notes and customer comments never do).
+// AddComment adds a comment. An agent's first public reply records the first response, a public
+// agent reply goes to the requester (internal notes and customer comments never do), and each
+// agent the comment @mentions is told.
 func (s *Service) AddComment(ctx context.Context, req *AddCommentRequest) (*TicketComment, error) {
-	if req.CommentType == "" {
-		req.CommentType = CommentPublic
-	}
-	comment := &TicketComment{
-		ID:          uuid.New(),
-		TenantID:    req.TenantID,
-		TicketID:    req.TicketID,
-		AuthorID:    req.AuthorID,
-		AuthorType:  req.AuthorType,
-		CommentType: req.CommentType,
-		Content:     req.Content,
-	}
+	var comment *TicketComment
 	err := s.repo.InTx(ctx, req.TenantID, func(repo Repository, out *Outbox) error {
-		if err := repo.CreateComment(ctx, req.TenantID, comment); err != nil {
-			return err
-		}
-		if req.AuthorType != AuthorAgent || req.CommentType != CommentPublic {
-			return nil
-		}
-		ticket, err := repo.GetTicket(ctx, req.TenantID, req.TicketID)
-		if err != nil {
-			return err
-		}
-		if err := repo.MarkFirstResponse(ctx, req.TenantID, req.TicketID); err != nil {
-			return err
-		}
-		if ticket.FirstResponseAt == nil && ticket.SLAResponseDueAt != nil && !ticket.SLAResponseBreached && s.now().After(*ticket.SLAResponseDueAt) {
-			if _, err := repo.MarkSLABreached(ctx, req.TenantID, req.TicketID, true, false); err != nil {
-				return err
-			}
-		}
-		agentEmail, err := repo.GetAgentEmailByUser(ctx, req.TenantID, req.AuthorID)
-		if err != nil {
-			return err
-		}
-		out.Ticket(EventTicketCommentAdded, TicketCommentAddedPayload(ticket, comment, agentEmail))
-		return nil
+		var err error
+		comment, err = s.commentTx(ctx, repo, out, req)
+		return err
 	})
 	if err != nil {
-		s.logger.Error("failed to add comment", zap.Error(err), zap.String("ticket_id", req.TicketID.String()))
 		return nil, err
 	}
 	s.broadcast(req.TenantID, "comment.created", map[string]any{"ticket_id": req.TicketID, "comment_id": comment.ID})
@@ -318,27 +263,39 @@ func (s *Service) GetComment(ctx context.Context, tenantID uuid.UUID, commentID 
 	return s.repo.GetComment(ctx, tenantID, commentID)
 }
 
-// ListComments lists comments for a ticket.
+// maxThreadComments bounds the whole-thread reads of the S2S and public ticket views.
+const maxThreadComments = 500
+
+// ListComments returns the ticket's thread without internal notes, oldest first, up to
+// maxThreadComments, for the S2S and public views.
 func (s *Service) ListComments(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID) ([]*TicketComment, error) {
-	return s.repo.ListComments(ctx, tenantID, ticketID)
+	rows, err := s.repo.ListComments(ctx, tenantID, ticketID, CommentQuery{
+		Page: PageParams{Limit: maxThreadComments}, PublicOnly: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) > maxThreadComments {
+		rows = rows[:maxThreadComments]
+	}
+	return rows, nil
+}
+
+// PageComments returns one keyset page of a ticket's comments, oldest first.
+func (s *Service) PageComments(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, q CommentQuery) (Page[*TicketComment], error) {
+	rows, err := s.repo.ListComments(ctx, tenantID, ticketID, q)
+	if err != nil {
+		return Page[*TicketComment]{}, err
+	}
+	return pageFrom(rows, q.Page.Limit, func(c *TicketComment) (time.Time, uuid.UUID) { return c.CreatedAt, c.ID }), nil
 }
 
 // UpdateComment updates a comment's content.
 func (s *Service) UpdateComment(ctx context.Context, tenantID uuid.UUID, commentID uuid.UUID, content string) error {
-	return s.repo.UpdateComment(ctx, tenantID, commentID, content)
+	return s.repo.UpdateComment(ctx, tenantID, commentID, richtext.Sanitize(content))
 }
 
 // DeleteComment soft-deletes a comment.
 func (s *Service) DeleteComment(ctx context.Context, tenantID uuid.UUID, commentID uuid.UUID) error {
 	return s.repo.DeleteComment(ctx, tenantID, commentID)
-}
-
-// ListAttachments lists attachments for a ticket.
-func (s *Service) ListAttachments(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID) ([]*TicketAttachment, error) {
-	return s.repo.ListAttachments(ctx, tenantID, ticketID)
-}
-
-// GetAttachment retrieves an attachment by ID.
-func (s *Service) GetAttachment(ctx context.Context, tenantID uuid.UUID, attachmentID uuid.UUID) (*TicketAttachment, error) {
-	return s.repo.GetAttachment(ctx, tenantID, attachmentID)
 }

@@ -19,6 +19,10 @@ const (
 	EventTicketStatusChanged = "ticket.status_changed"
 	EventTicketResolved      = "ticket.resolved"
 	EventCRMActivity         = "activity.log_requested"
+	// EventTicketMentioned goes to one agent a comment @mentions (one event per agent).
+	EventTicketMentioned = "ticket.mentioned"
+	// EventTicketMerged records a ticket merged into another; the source is closed.
+	EventTicketMerged = "ticket.merged"
 )
 
 // OutboxEvent is one event recorded during a domain change.

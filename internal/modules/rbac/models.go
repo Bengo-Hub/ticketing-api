@@ -76,7 +76,7 @@ var SystemRoles = []RoleDef{
 	{
 		Code: RoleSupervisor, Name: "Supervisor", Description: "Runs the desk: every ticket, the knowledge base and the reports",
 		Permissions: []string{
-			Code("tickets", "manage"), Code("comments", "manage"), Code("attachments", "view"),
+			Code("tickets", "manage"), Code("comments", "manage"), Code("attachments", "manage"),
 			Code("categories", "view"), Code("agents", "view"), Code("agents", "change_own"), Code("teams", "view"),
 			Code("sla", "view"), Code("routing", "view"), Code("analytics", "view"), Code("kb", "manage"),
 		},
@@ -86,6 +86,7 @@ var SystemRoles = []RoleDef{
 		Permissions: []string{
 			Code("tickets", "view"), Code("tickets", "add"), Code("tickets", "change"),
 			Code("comments", "add"), Code("comments", "change_own"), Code("attachments", "view"),
+			Code("attachments", "add"), Code("attachments", "delete_own"),
 			Code("categories", "view"), Code("agents", "view"), Code("agents", "change_own"),
 			Code("teams", "view"), Code("kb", "view"),
 		},
@@ -95,6 +96,7 @@ var SystemRoles = []RoleDef{
 		Permissions: []string{
 			Code("tickets", "add"), Code("tickets", "view_own"), Code("tickets", "change_own"),
 			Code("comments", "add"), Code("comments", "change_own"), Code("attachments", "view_own"),
+			Code("attachments", "add"), Code("attachments", "delete_own"),
 			Code("categories", "view"), Code("kb", "view"),
 		},
 	},

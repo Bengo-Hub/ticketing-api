@@ -127,11 +127,11 @@ func (r *EntRepository) Delete(ctx context.Context, tenantID, ruleID uuid.UUID) 
 	return r.client.RoutingRule.DeleteOneID(ruleID).Exec(ctx)
 }
 
-func (r *EntRepository) ListActive(ctx context.Context, tenantID uuid.UUID) ([]*RoutingRule, error) {
-	active := true
+func (r *EntRepository) ListActive(ctx context.Context, tenantID uuid.UUID, limit int) ([]*RoutingRule, error) {
 	rows, err := r.client.RoutingRule.Query().
-		Where(entpkg.TenantID(tenantID), entpkg.IsActive(active)).
-		Order(ent.Asc(entpkg.FieldSortOrder)).
+		Where(entpkg.TenantID(tenantID), entpkg.IsActive(true)).
+		Order(ent.Asc(entpkg.FieldSortOrder), ent.Asc(entpkg.FieldID)).
+		Limit(limit).
 		All(ctx)
 	if err != nil {
 		return nil, err

@@ -119,6 +119,39 @@ var (
 				Columns: []*schema.Column{KBArticlesColumns[1], KBArticlesColumns[10]},
 			},
 			{
+				Name:    "kbarticle_title_trgm",
+				Unique:  false,
+				Columns: []*schema.Column{KBArticlesColumns[3]},
+				Annotation: &entsql.IndexAnnotation{
+					OpClass: "gin_trgm_ops",
+					Types: map[string]string{
+						"postgres": "GIN",
+					},
+				},
+			},
+			{
+				Name:    "kbarticle_excerpt_trgm",
+				Unique:  false,
+				Columns: []*schema.Column{KBArticlesColumns[6]},
+				Annotation: &entsql.IndexAnnotation{
+					OpClass: "gin_trgm_ops",
+					Types: map[string]string{
+						"postgres": "GIN",
+					},
+				},
+			},
+			{
+				Name:    "kbarticle_content_trgm",
+				Unique:  false,
+				Columns: []*schema.Column{KBArticlesColumns[5]},
+				Annotation: &entsql.IndexAnnotation{
+					OpClass: "gin_trgm_ops",
+					Types: map[string]string{
+						"postgres": "GIN",
+					},
+				},
+			},
+			{
 				Name:    "kbarticle_author_id",
 				Unique:  false,
 				Columns: []*schema.Column{KBArticlesColumns[2]},
@@ -132,6 +165,31 @@ var (
 				Name:    "kbarticle_deleted_at",
 				Unique:  false,
 				Columns: []*schema.Column{KBArticlesColumns[18]},
+			},
+		},
+	}
+	// MacrosColumns holds the columns for the "macros" table.
+	MacrosColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString, Size: 100},
+		{Name: "body", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "actions", Type: field.TypeJSON, Nullable: true},
+		{Name: "is_active", Type: field.TypeBool, Default: true},
+		{Name: "created_by", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// MacrosTable holds the schema information for the "macros" table.
+	MacrosTable = &schema.Table{
+		Name:       "macros",
+		Columns:    MacrosColumns,
+		PrimaryKey: []*schema.Column{MacrosColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "macro_tenant_id_name",
+				Unique:  true,
+				Columns: []*schema.Column{MacrosColumns[1], MacrosColumns[2]},
 			},
 		},
 	}
@@ -379,6 +437,58 @@ var (
 				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[2]},
 			},
 			{
+				Name:    "ticket_tenant_id_created_at_id",
+				Unique:  false,
+				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[26], TicketsColumns[0]},
+			},
+			{
+				Name:    "ticket_tenant_id_channel",
+				Unique:  false,
+				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[9]},
+			},
+			{
+				Name:    "ticket_tenant_id_category_id",
+				Unique:  false,
+				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[30]},
+			},
+			{
+				Name:    "ticket_tenant_id_resolved_at",
+				Unique:  false,
+				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[19]},
+			},
+			{
+				Name:    "ticket_subject_trgm",
+				Unique:  false,
+				Columns: []*schema.Column{TicketsColumns[5]},
+				Annotation: &entsql.IndexAnnotation{
+					OpClass: "gin_trgm_ops",
+					Types: map[string]string{
+						"postgres": "GIN",
+					},
+				},
+			},
+			{
+				Name:    "ticket_description_trgm",
+				Unique:  false,
+				Columns: []*schema.Column{TicketsColumns[6]},
+				Annotation: &entsql.IndexAnnotation{
+					OpClass: "gin_trgm_ops",
+					Types: map[string]string{
+						"postgres": "GIN",
+					},
+				},
+			},
+			{
+				Name:    "ticket_tags_gin",
+				Unique:  false,
+				Columns: []*schema.Column{TicketsColumns[24]},
+				Annotation: &entsql.IndexAnnotation{
+					Types: map[string]string{
+						"postgres": "GIN",
+					},
+				},
+			},
+			{
 				Name:    "ticket_tenant_id_status",
 				Unique:  false,
 				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[7]},
@@ -617,6 +727,34 @@ var (
 			},
 		},
 	}
+	// TicketLinksColumns holds the columns for the "ticket_links" table.
+	TicketLinksColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "from_ticket_id", Type: field.TypeUUID},
+		{Name: "to_ticket_id", Type: field.TypeUUID},
+		{Name: "kind", Type: field.TypeEnum, Enums: []string{"parent", "related", "duplicate"}},
+		{Name: "created_by", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// TicketLinksTable holds the schema information for the "ticket_links" table.
+	TicketLinksTable = &schema.Table{
+		Name:       "ticket_links",
+		Columns:    TicketLinksColumns,
+		PrimaryKey: []*schema.Column{TicketLinksColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ticketlink_tenant_id_from_ticket_id_to_ticket_id_kind",
+				Unique:  true,
+				Columns: []*schema.Column{TicketLinksColumns[1], TicketLinksColumns[2], TicketLinksColumns[3], TicketLinksColumns[4]},
+			},
+			{
+				Name:    "ticketlink_tenant_id_to_ticket_id",
+				Unique:  false,
+				Columns: []*schema.Column{TicketLinksColumns[1], TicketLinksColumns[3]},
+			},
+		},
+	}
 	// TicketSequencesColumns holds the columns for the "ticket_sequences" table.
 	TicketSequencesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -629,6 +767,36 @@ var (
 		Name:       "ticket_sequences",
 		Columns:    TicketSequencesColumns,
 		PrimaryKey: []*schema.Column{TicketSequencesColumns[0]},
+	}
+	// TicketViewsColumns holds the columns for the "ticket_views" table.
+	TicketViewsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "owner_user_id", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString, Size: 100},
+		{Name: "filters", Type: field.TypeJSON, Nullable: true},
+		{Name: "sort", Type: field.TypeString, Size: 30, Default: "created_desc"},
+		{Name: "shared", Type: field.TypeBool, Default: false},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// TicketViewsTable holds the schema information for the "ticket_views" table.
+	TicketViewsTable = &schema.Table{
+		Name:       "ticket_views",
+		Columns:    TicketViewsColumns,
+		PrimaryKey: []*schema.Column{TicketViewsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ticketview_tenant_id_owner_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{TicketViewsColumns[1], TicketViewsColumns[2]},
+			},
+			{
+				Name:    "ticketview_tenant_id_shared",
+				Unique:  false,
+				Columns: []*schema.Column{TicketViewsColumns[1], TicketViewsColumns[6]},
+			},
+		},
 	}
 	// TicketingPermissionsColumns holds the columns for the "ticketing_permissions" table.
 	TicketingPermissionsColumns = []*schema.Column{
@@ -753,6 +921,7 @@ var (
 	Tables = []*schema.Table{
 		AgentsTable,
 		KBArticlesTable,
+		MacrosTable,
 		OutboxEventsTable,
 		RolePermissionsTable,
 		RoutingRulesTable,
@@ -762,7 +931,9 @@ var (
 		TicketAttachmentsTable,
 		TicketCategoriesTable,
 		TicketCommentsTable,
+		TicketLinksTable,
 		TicketSequencesTable,
+		TicketViewsTable,
 		TicketingPermissionsTable,
 		TicketingRolesTable,
 		TicketingUsersTable,
@@ -777,6 +948,9 @@ func init() {
 	}
 	KBArticlesTable.Annotation = &entsql.Annotation{
 		Table: "kb_articles",
+	}
+	MacrosTable.Annotation = &entsql.Annotation{
+		Table: "macros",
 	}
 	RolePermissionsTable.ForeignKeys[0].RefTable = TicketingRolesTable
 	RolePermissionsTable.ForeignKeys[1].RefTable = TicketingPermissionsTable
@@ -809,8 +983,14 @@ func init() {
 	TicketCommentsTable.Annotation = &entsql.Annotation{
 		Table: "ticket_comments",
 	}
+	TicketLinksTable.Annotation = &entsql.Annotation{
+		Table: "ticket_links",
+	}
 	TicketSequencesTable.Annotation = &entsql.Annotation{
 		Table: "ticket_sequences",
+	}
+	TicketViewsTable.Annotation = &entsql.Annotation{
+		Table: "ticket_views",
 	}
 	TicketingPermissionsTable.Annotation = &entsql.Annotation{
 		Table: "ticketing_permissions",

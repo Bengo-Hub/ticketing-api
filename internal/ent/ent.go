@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
 	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
+	"github.com/bengobox/ticketing-service/internal/ent/macro"
 	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
 	"github.com/bengobox/ticketing-service/internal/ent/rolepermission"
 	"github.com/bengobox/ticketing-service/internal/ent/routingrule"
@@ -26,7 +27,9 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/ticketingpermission"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketingrole"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketinguser"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketlink"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketsequence"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketview"
 	"github.com/bengobox/ticketing-service/internal/ent/userroleassignment"
 )
 
@@ -90,6 +93,7 @@ func checkColumn(t, c string) error {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			agent.Table:               agent.ValidColumn,
 			kbarticle.Table:           kbarticle.ValidColumn,
+			macro.Table:               macro.ValidColumn,
 			outboxevent.Table:         outboxevent.ValidColumn,
 			rolepermission.Table:      rolepermission.ValidColumn,
 			routingrule.Table:         routingrule.ValidColumn,
@@ -99,7 +103,9 @@ func checkColumn(t, c string) error {
 			ticketattachment.Table:    ticketattachment.ValidColumn,
 			ticketcategory.Table:      ticketcategory.ValidColumn,
 			ticketcomment.Table:       ticketcomment.ValidColumn,
+			ticketlink.Table:          ticketlink.ValidColumn,
 			ticketsequence.Table:      ticketsequence.ValidColumn,
+			ticketview.Table:          ticketview.ValidColumn,
 			ticketingpermission.Table: ticketingpermission.ValidColumn,
 			ticketingrole.Table:       ticketingrole.ValidColumn,
 			ticketinguser.Table:       ticketinguser.ValidColumn,

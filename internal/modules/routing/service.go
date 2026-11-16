@@ -3,15 +3,26 @@ package routing
 import (
 	"context"
 	"strings"
+	"time"
 
+	sharedcache "github.com/Bengo-Hub/cache"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+)
+
+const (
+	// maxActiveRules bounds the rules evaluated per ticket.
+	maxActiveRules = 200
+	// activeRulesTTL bounds how long another pod keeps evaluating a changed rule set; this pod
+	// drops its copy on every change.
+	activeRulesTTL = 60 * time.Second
 )
 
 // Service provides routing rule business logic.
 type Service struct {
 	repo   Repository
 	logger *zap.Logger
+	active *sharedcache.Local[uuid.UUID, []*RoutingRule]
 }
 
 // NewService creates a new routing service.
@@ -19,7 +30,15 @@ func NewService(repo Repository, logger *zap.Logger) *Service {
 	return &Service{
 		repo:   repo,
 		logger: logger.Named("routing"),
+		active: sharedcache.NewLocal[uuid.UUID, []*RoutingRule](5000, activeRulesTTL),
 	}
+}
+
+// activeRules returns the tenant's active rules, cached per tenant.
+func (s *Service) activeRules(ctx context.Context, tenantID uuid.UUID) ([]*RoutingRule, error) {
+	return s.active.GetOrLoad(tenantID, func() ([]*RoutingRule, error) {
+		return s.repo.ListActive(ctx, tenantID, maxActiveRules)
+	})
 }
 
 // CreateRule creates a new routing rule.
@@ -49,6 +68,7 @@ func (s *Service) CreateRule(ctx context.Context, req *CreateRuleRequest) (*Rout
 		s.logger.Error("failed to create routing rule", zap.Error(err))
 		return nil, err
 	}
+	s.active.Delete(req.TenantID)
 	return rule, nil
 }
 
@@ -67,18 +87,22 @@ func (s *Service) ListRules(ctx context.Context, filter RuleFilter) ([]*RoutingR
 
 // UpdateRule updates a routing rule.
 func (s *Service) UpdateRule(ctx context.Context, tenantID, ruleID uuid.UUID, req *UpdateRuleRequest) (*RoutingRule, error) {
-	return s.repo.Update(ctx, tenantID, ruleID, req)
+	rule, err := s.repo.Update(ctx, tenantID, ruleID, req)
+	s.active.Delete(tenantID)
+	return rule, err
 }
 
 // DeleteRule deletes a routing rule.
 func (s *Service) DeleteRule(ctx context.Context, tenantID, ruleID uuid.UUID) error {
-	return s.repo.Delete(ctx, tenantID, ruleID)
+	err := s.repo.Delete(ctx, tenantID, ruleID)
+	s.active.Delete(tenantID)
+	return err
 }
 
 // EvaluateRules evaluates all active routing rules against a ticket context.
 // Returns the first matching rule's applied action, or nil if no rule matches.
 func (s *Service) EvaluateRules(ctx context.Context, tc TicketContext) *AppliedAction {
-	rules, err := s.repo.ListActive(ctx, tc.TenantID)
+	rules, err := s.activeRules(ctx, tc.TenantID)
 	if err != nil {
 		s.logger.Warn("failed to load routing rules", zap.Error(err))
 		return nil

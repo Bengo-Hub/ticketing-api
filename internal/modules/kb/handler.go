@@ -177,7 +177,7 @@ func (h *Handler) ListArticles(w http.ResponseWriter, r *http.Request) {
 	p := pagination.Parse(r)
 	filter := ArticleFilter{
 		TenantID: tenantID,
-		Search:   r.URL.Query().Get("search"),
+		Search:   pagination.SearchTerm(r),
 		Category: r.URL.Query().Get("category"),
 		Limit:    p.Limit,
 		Offset:   p.Offset,
@@ -280,7 +280,7 @@ func (h *Handler) ListPublicArticles(w http.ResponseWriter, r *http.Request) {
 		TenantID: tenantID,
 		Status:   StatusPublished,
 		IsPublic: &isPublic,
-		Search:   r.URL.Query().Get("search"),
+		Search:   pagination.SearchTerm(r),
 		Category: r.URL.Query().Get("category"),
 		Limit:    p.Limit,
 		Offset:   p.Offset,

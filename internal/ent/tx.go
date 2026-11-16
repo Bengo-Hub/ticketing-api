@@ -16,6 +16,8 @@ type Tx struct {
 	Agent *AgentClient
 	// KBArticle is the client for interacting with the KBArticle builders.
 	KBArticle *KBArticleClient
+	// Macro is the client for interacting with the Macro builders.
+	Macro *MacroClient
 	// OutboxEvent is the client for interacting with the OutboxEvent builders.
 	OutboxEvent *OutboxEventClient
 	// RolePermission is the client for interacting with the RolePermission builders.
@@ -34,8 +36,12 @@ type Tx struct {
 	TicketCategory *TicketCategoryClient
 	// TicketComment is the client for interacting with the TicketComment builders.
 	TicketComment *TicketCommentClient
+	// TicketLink is the client for interacting with the TicketLink builders.
+	TicketLink *TicketLinkClient
 	// TicketSequence is the client for interacting with the TicketSequence builders.
 	TicketSequence *TicketSequenceClient
+	// TicketView is the client for interacting with the TicketView builders.
+	TicketView *TicketViewClient
 	// TicketingPermission is the client for interacting with the TicketingPermission builders.
 	TicketingPermission *TicketingPermissionClient
 	// TicketingRole is the client for interacting with the TicketingRole builders.
@@ -177,6 +183,7 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Agent = NewAgentClient(tx.config)
 	tx.KBArticle = NewKBArticleClient(tx.config)
+	tx.Macro = NewMacroClient(tx.config)
 	tx.OutboxEvent = NewOutboxEventClient(tx.config)
 	tx.RolePermission = NewRolePermissionClient(tx.config)
 	tx.RoutingRule = NewRoutingRuleClient(tx.config)
@@ -186,7 +193,9 @@ func (tx *Tx) init() {
 	tx.TicketAttachment = NewTicketAttachmentClient(tx.config)
 	tx.TicketCategory = NewTicketCategoryClient(tx.config)
 	tx.TicketComment = NewTicketCommentClient(tx.config)
+	tx.TicketLink = NewTicketLinkClient(tx.config)
 	tx.TicketSequence = NewTicketSequenceClient(tx.config)
+	tx.TicketView = NewTicketViewClient(tx.config)
 	tx.TicketingPermission = NewTicketingPermissionClient(tx.config)
 	tx.TicketingRole = NewTicketingRoleClient(tx.config)
 	tx.TicketingUser = NewTicketingUserClient(tx.config)

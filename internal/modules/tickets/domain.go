@@ -64,64 +64,70 @@ const (
 
 // Ticket represents a support ticket.
 type Ticket struct {
-	ID                   uuid.UUID       `json:"id"`
-	TenantID             uuid.UUID       `json:"tenant_id"`
-	TicketNumber         string          `json:"ticket_number"`
-	CustomerID           uuid.UUID       `json:"customer_id"`
-	CategoryID           *uuid.UUID      `json:"category_id,omitempty"`
-	AssignedAgentID      *uuid.UUID      `json:"assigned_agent_id,omitempty"`
-	AssignedTeamID       *uuid.UUID      `json:"assigned_team_id,omitempty"`
-	Subject              string          `json:"subject"`
-	Description          string          `json:"description"`
-	Status               TicketStatus    `json:"status"`
-	Priority             TicketPriority  `json:"priority"`
-	Channel              TicketChannel   `json:"channel"`
-	OrderID              *uuid.UUID      `json:"order_id,omitempty"`
-	ExternalReference    string          `json:"external_reference,omitempty"`
-	CRMContactID         *uuid.UUID      `json:"crm_contact_id,omitempty"`
-	CRMLeadID            *uuid.UUID      `json:"crm_lead_id,omitempty"`
-	SLAResponseDueAt     *time.Time      `json:"sla_response_due_at,omitempty"`
-	SLAResolutionDueAt   *time.Time      `json:"sla_resolution_due_at,omitempty"`
-	SLAResponseBreached  bool            `json:"sla_response_breached"`
+	ID                    uuid.UUID      `json:"id"`
+	TenantID              uuid.UUID      `json:"tenant_id"`
+	TicketNumber          string         `json:"ticket_number"`
+	CustomerID            uuid.UUID      `json:"customer_id"`
+	CategoryID            *uuid.UUID     `json:"category_id,omitempty"`
+	AssignedAgentID       *uuid.UUID     `json:"assigned_agent_id,omitempty"`
+	AssignedTeamID        *uuid.UUID     `json:"assigned_team_id,omitempty"`
+	Subject               string         `json:"subject"`
+	Description           string         `json:"description"`
+	Status                TicketStatus   `json:"status"`
+	Priority              TicketPriority `json:"priority"`
+	Channel               TicketChannel  `json:"channel"`
+	OrderID               *uuid.UUID     `json:"order_id,omitempty"`
+	ExternalReference     string         `json:"external_reference,omitempty"`
+	CRMContactID          *uuid.UUID     `json:"crm_contact_id,omitempty"`
+	CRMLeadID             *uuid.UUID     `json:"crm_lead_id,omitempty"`
+	SLAResponseDueAt      *time.Time     `json:"sla_response_due_at,omitempty"`
+	SLAResolutionDueAt    *time.Time     `json:"sla_resolution_due_at,omitempty"`
+	SLAResponseBreached   bool           `json:"sla_response_breached"`
 	SLAResolutionBreached bool           `json:"sla_resolution_breached"`
-	FirstResponseAt      *time.Time      `json:"first_response_at,omitempty"`
-	ResolvedAt           *time.Time      `json:"resolved_at,omitempty"`
-	ClosedAt             *time.Time      `json:"closed_at,omitempty"`
-	ReopenedAt           *time.Time      `json:"reopened_at,omitempty"`
-	EscalationLevel      int             `json:"escalation_level"`
-	EscalatedAt          *time.Time      `json:"escalated_at,omitempty"`
-	Tags                 []string        `json:"tags,omitempty"`
-	Metadata             map[string]any  `json:"metadata,omitempty"`
-	CreatedAt            time.Time       `json:"created_at"`
-	UpdatedAt            time.Time       `json:"updated_at"`
+	FirstResponseAt       *time.Time     `json:"first_response_at,omitempty"`
+	ResolvedAt            *time.Time     `json:"resolved_at,omitempty"`
+	ClosedAt              *time.Time     `json:"closed_at,omitempty"`
+	ReopenedAt            *time.Time     `json:"reopened_at,omitempty"`
+	EscalationLevel       int            `json:"escalation_level"`
+	EscalatedAt           *time.Time     `json:"escalated_at,omitempty"`
+	Tags                  []string       `json:"tags,omitempty"`
+	Metadata              map[string]any `json:"metadata,omitempty"`
+	CreatedAt             time.Time      `json:"created_at"`
+	UpdatedAt             time.Time      `json:"updated_at"`
 }
 
 // TicketComment represents a comment on a ticket.
 type TicketComment struct {
-	ID          uuid.UUID      `json:"id"`
-	TenantID    uuid.UUID      `json:"tenant_id"`
-	TicketID    uuid.UUID      `json:"ticket_id"`
-	AuthorID    uuid.UUID      `json:"author_id"`
-	AuthorType  AuthorType     `json:"author_type"`
-	CommentType CommentType    `json:"comment_type"`
-	Content     string         `json:"content"`
-	Metadata    map[string]any `json:"metadata,omitempty"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
+	ID          uuid.UUID   `json:"id"`
+	TenantID    uuid.UUID   `json:"tenant_id"`
+	TicketID    uuid.UUID   `json:"ticket_id"`
+	AuthorID    uuid.UUID   `json:"author_id"`
+	AuthorType  AuthorType  `json:"author_type"`
+	CommentType CommentType `json:"comment_type"`
+	Content     string      `json:"content"`
+	// Mentions are the agent ids the comment @mentions (staff comments only).
+	Mentions  []uuid.UUID    `json:"mentions,omitempty"`
+	Metadata  map[string]any `json:"metadata,omitempty"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }
 
-// TicketAttachment represents a file attachment on a ticket.
+// TicketAttachment represents a file attachment on a ticket. The storage key never leaves the
+// API; clients ask for a signed download link.
 type TicketAttachment struct {
-	ID           uuid.UUID `json:"id"`
-	TenantID     uuid.UUID `json:"tenant_id"`
-	TicketID     uuid.UUID `json:"ticket_id"`
+	ID           uuid.UUID  `json:"id"`
+	TenantID     uuid.UUID  `json:"tenant_id"`
+	TicketID     uuid.UUID  `json:"ticket_id"`
 	CommentID    *uuid.UUID `json:"comment_id,omitempty"`
-	Filename     string    `json:"filename"`
-	ContentType  string    `json:"content_type"`
-	Size         int64     `json:"size"`
-	StoragePath  string    `json:"storage_path"`
-	UploadedByID uuid.UUID `json:"uploaded_by_id"`
-	CreatedAt    time.Time `json:"created_at"`
+	Filename     string     `json:"filename"`
+	ContentType  string     `json:"content_type"`
+	Size         int64      `json:"size"`
+	StoragePath  string     `json:"-"`
+	UploadedByID uuid.UUID  `json:"uploaded_by_id"`
+	// Internal attachments belong to an internal note and are never shown to the customer.
+	Internal  bool           `json:"internal"`
+	Metadata  map[string]any `json:"metadata,omitempty"`
+	CreatedAt time.Time      `json:"created_at"`
 }
 
 // TicketCategory represents a ticket category.
@@ -143,37 +149,37 @@ type TicketCategory struct {
 
 // CreateTicketRequest represents a request to create a ticket.
 type CreateTicketRequest struct {
-	TenantID          uuid.UUID       `json:"-"`
-	CustomerID        uuid.UUID       `json:"customer_id"`
-	CategoryID        *uuid.UUID      `json:"category_id,omitempty"`
-	AssignedAgentID   *uuid.UUID      `json:"assigned_agent_id,omitempty"`
-	AssignedTeamID    *uuid.UUID      `json:"assigned_team_id,omitempty"`
-	Subject           string          `json:"subject"`
-	Description       string          `json:"description"`
-	Priority          TicketPriority  `json:"priority,omitempty"`
-	Channel           TicketChannel   `json:"channel,omitempty"`
-	OrderID           *uuid.UUID      `json:"order_id,omitempty"`
-	ExternalReference string          `json:"external_reference,omitempty"`
-	CRMContactID      *uuid.UUID      `json:"crm_contact_id,omitempty"`
-	CRMLeadID         *uuid.UUID      `json:"crm_lead_id,omitempty"`
-	Tags              []string        `json:"tags,omitempty"`
-	Metadata          map[string]any  `json:"metadata,omitempty"`
+	TenantID          uuid.UUID      `json:"-"`
+	CustomerID        uuid.UUID      `json:"customer_id"`
+	CategoryID        *uuid.UUID     `json:"category_id,omitempty"`
+	AssignedAgentID   *uuid.UUID     `json:"assigned_agent_id,omitempty"`
+	AssignedTeamID    *uuid.UUID     `json:"assigned_team_id,omitempty"`
+	Subject           string         `json:"subject"`
+	Description       string         `json:"description"`
+	Priority          TicketPriority `json:"priority,omitempty"`
+	Channel           TicketChannel  `json:"channel,omitempty"`
+	OrderID           *uuid.UUID     `json:"order_id,omitempty"`
+	ExternalReference string         `json:"external_reference,omitempty"`
+	CRMContactID      *uuid.UUID     `json:"crm_contact_id,omitempty"`
+	CRMLeadID         *uuid.UUID     `json:"crm_lead_id,omitempty"`
+	Tags              []string       `json:"tags,omitempty"`
+	Metadata          map[string]any `json:"metadata,omitempty"`
 	// Requester contact, stored in metadata as requester_name/requester_email/requester_phone on
 	// every create path. Ticket events carry it so the requester is told by email, WhatsApp or SMS.
-	RequesterName     string          `json:"requester_name,omitempty"`
-	RequesterEmail    string          `json:"requester_email,omitempty"`
-	RequesterPhone    string          `json:"requester_phone,omitempty"`
+	RequesterName  string `json:"requester_name,omitempty"`
+	RequesterEmail string `json:"requester_email,omitempty"`
+	RequesterPhone string `json:"requester_phone,omitempty"`
 }
 
 // UpdateTicketRequest represents a request to update a ticket.
 type UpdateTicketRequest struct {
-	CategoryID        *uuid.UUID      `json:"category_id,omitempty"`
-	AssignedAgentID   *uuid.UUID      `json:"assigned_agent_id,omitempty"`
-	AssignedTeamID    *uuid.UUID      `json:"assigned_team_id,omitempty"`
-	Subject           *string         `json:"subject,omitempty"`
-	Priority          *TicketPriority `json:"priority,omitempty"`
-	Tags              []string        `json:"tags,omitempty"`
-	Metadata          map[string]any  `json:"metadata,omitempty"`
+	CategoryID      *uuid.UUID      `json:"category_id,omitempty"`
+	AssignedAgentID *uuid.UUID      `json:"assigned_agent_id,omitempty"`
+	AssignedTeamID  *uuid.UUID      `json:"assigned_team_id,omitempty"`
+	Subject         *string         `json:"subject,omitempty"`
+	Priority        *TicketPriority `json:"priority,omitempty"`
+	Tags            []string        `json:"tags,omitempty"`
+	Metadata        map[string]any  `json:"metadata,omitempty"`
 }
 
 // AssignTicketRequest represents a request to assign a ticket.
@@ -184,13 +190,15 @@ type AssignTicketRequest struct {
 
 // AddCommentRequest represents a request to add a comment.
 type AddCommentRequest struct {
-	TenantID    uuid.UUID   `json:"-"`
-	TicketID    uuid.UUID   `json:"-"`
+	TenantID uuid.UUID `json:"-"`
+	TicketID uuid.UUID `json:"-"`
 	// AuthorID and AuthorType come from the signed-in caller, never from the body.
 	AuthorID    uuid.UUID   `json:"-"`
 	AuthorType  AuthorType  `json:"-"`
 	CommentType CommentType `json:"comment_type,omitempty"`
 	Content     string      `json:"content"`
+	// Metadata is set by the service (merge notes), never from the body.
+	Metadata map[string]any `json:"-"`
 }
 
 // CreateCategoryRequest represents a request to create a category.
@@ -217,14 +225,14 @@ type UpdateCategoryRequest struct {
 
 // CreatePublicTicketRequest is the payload for unauthenticated ticket creation.
 type CreatePublicTicketRequest struct {
-	TenantID    uuid.UUID      `json:"-"`
-	CustomerEmail string       `json:"email"`
-	CustomerName  string       `json:"name"`
-	Subject       string       `json:"subject"`
-	Description   string       `json:"description"`
-	CategoryID    *uuid.UUID   `json:"category_id,omitempty"`
+	TenantID      uuid.UUID     `json:"-"`
+	CustomerEmail string        `json:"email"`
+	CustomerName  string        `json:"name"`
+	Subject       string        `json:"subject"`
+	Description   string        `json:"description"`
+	CategoryID    *uuid.UUID    `json:"category_id,omitempty"`
 	Channel       TicketChannel `json:"channel,omitempty"`
-	OrderID       *uuid.UUID   `json:"order_id,omitempty"`
+	OrderID       *uuid.UUID    `json:"order_id,omitempty"`
 }
 
 // PublicTicketResponse is the slim response returned to unauthenticated callers.
@@ -256,11 +264,38 @@ type TicketFilter struct {
 	CategoryID      *uuid.UUID
 	OrderID         *uuid.UUID
 	Channel         *TicketChannel
-	Tags            []string
-	CreatedAfter    *time.Time
-	CreatedBefore   *time.Time
-	Offset          int
-	Limit           int
+	// Tags must all be on a ticket (jsonb containment).
+	Tags          []string
+	CreatedAfter  *time.Time
+	CreatedBefore *time.Time
+	// Search is the normalised search term (pagination.SearchTerm).
+	Search string
+	// Sort is SortCreatedDesc (default) or SortCreatedAsc.
+	Sort string
+	Page PageParams
+}
+
+// Ticket list orders. Both page by (created_at, id).
+const (
+	SortCreatedDesc = "created_desc"
+	SortCreatedAsc  = "created_asc"
+)
+
+// ValidSort reports whether s is a ticket list order.
+func ValidSort(s string) bool { return s == SortCreatedDesc || s == SortCreatedAsc }
+
+// CommentQuery pages a ticket's comments oldest first. PublicOnly leaves out internal notes.
+type CommentQuery struct {
+	Page       PageParams
+	PublicOnly bool
+	// Newest pages from the latest comment back, so a long thread opens at its end.
+	Newest bool
+}
+
+// AttachmentQuery pages a ticket's attachments oldest first. PublicOnly leaves out internal ones.
+type AttachmentQuery struct {
+	Page       PageParams
+	PublicOnly bool
 }
 
 // CategoryFilter represents filtering options for categories.
@@ -274,9 +309,9 @@ type CategoryFilter struct {
 
 // TrendPoint represents ticket counts for a single time bucket.
 type TrendPoint struct {
-	Date    string `json:"date"`
-	Created int    `json:"created"`
-	Resolved int   `json:"resolved"`
+	Date     string `json:"date"`
+	Created  int    `json:"created"`
+	Resolved int    `json:"resolved"`
 }
 
 // AnalyticsResponse is the response for the analytics endpoint.

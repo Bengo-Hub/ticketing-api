@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	entsql "entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
 
 	"github.com/bengobox/ticketing-service/internal/ent"
@@ -25,6 +26,9 @@ func (r *EntRepository) CreateComment(ctx context.Context, tenantID uuid.UUID, c
 		SetAuthorType(ticketcomment.AuthorType(c.AuthorType)).
 		SetCommentType(ticketcomment.CommentType(c.CommentType)).
 		SetContent(c.Content)
+	if len(c.Mentions) > 0 {
+		create = create.SetMentions(c.Mentions)
+	}
 	if c.Metadata != nil {
 		create = create.SetMetadata(c.Metadata)
 	}
@@ -51,13 +55,28 @@ func (r *EntRepository) GetComment(ctx context.Context, tenantID uuid.UUID, comm
 	return entCommentToModel(c), nil
 }
 
-func (r *EntRepository) ListComments(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID) ([]*TicketComment, error) {
+func (r *EntRepository) ListComments(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, q CommentQuery) ([]*TicketComment, error) {
 	if _, err := r.GetTicket(ctx, tenantID, ticketID); err != nil {
 		return nil, err
 	}
-	rows, err := r.client.TicketComment.Query().
-		Where(ticketcomment.TenantID(tenantID), ticketcomment.TicketID(ticketID), ticketcomment.DeletedAtIsNil()).
-		Order(ent.Asc(ticketcomment.FieldCreatedAt)).
+	query := r.client.TicketComment.Query().
+		Where(ticketcomment.TenantID(tenantID), ticketcomment.TicketID(ticketID), ticketcomment.DeletedAtIsNil())
+	if q.PublicOnly {
+		query = query.Where(ticketcomment.CommentTypeNEQ(ticketcomment.CommentTypeInternal))
+	}
+	asc := !q.Newest
+	if c := q.Page.After; c != nil {
+		query = query.Where(func(s *entsql.Selector) {
+			s.Where(afterRow(s, ticketcomment.FieldCreatedAt, ticketcomment.FieldID, c, asc))
+		})
+	}
+	order := []ticketcomment.OrderOption{ent.Asc(ticketcomment.FieldCreatedAt), ent.Asc(ticketcomment.FieldID)}
+	if !asc {
+		order = []ticketcomment.OrderOption{ent.Desc(ticketcomment.FieldCreatedAt), ent.Desc(ticketcomment.FieldID)}
+	}
+	rows, err := query.
+		Order(order...).
+		Limit(q.Page.Limit + 1).
 		All(ctx)
 	if err != nil {
 		return nil, err
@@ -99,73 +118,20 @@ func (r *EntRepository) DeleteComment(ctx context.Context, tenantID uuid.UUID, c
 	return nil
 }
 
-func (r *EntRepository) CreateAttachment(ctx context.Context, tenantID uuid.UUID, a *TicketAttachment) error {
-	if _, err := r.GetTicket(ctx, tenantID, a.TicketID); err != nil {
+// MoveThread re-parents the source ticket's comments and attachments (soft-deleted ones too, so
+// nothing stays behind on a closed ticket) to the target, within the tenant.
+func (r *EntRepository) MoveThread(ctx context.Context, tenantID uuid.UUID, fromTicketID, toTicketID uuid.UUID) error {
+	if _, err := r.client.TicketComment.Update().
+		Where(ticketcomment.TenantID(tenantID), ticketcomment.TicketID(fromTicketID)).
+		SetTicketID(toTicketID).
+		Save(ctx); err != nil {
 		return err
 	}
-	create := r.client.TicketAttachment.Create().
-		SetID(a.ID).
-		SetTenantID(tenantID).
-		SetTicketID(a.TicketID).
-		SetFilename(a.Filename).
-		SetContentType(a.ContentType).
-		SetFileSize(a.Size).
-		SetStorageKey(a.StoragePath).
-		SetUploadedBy(a.UploadedByID).
-		SetNillableCommentID(a.CommentID)
-	created, err := create.Save(ctx)
-	if err != nil {
-		return err
-	}
-	a.ID = created.ID
-	a.TenantID = tenantID
-	a.CreatedAt = created.CreatedAt
-	return nil
-}
-
-func (r *EntRepository) GetAttachment(ctx context.Context, tenantID uuid.UUID, attachmentID uuid.UUID) (*TicketAttachment, error) {
-	a, err := r.client.TicketAttachment.Query().
-		Where(ticketattachment.ID(attachmentID), ticketattachment.TenantID(tenantID), ticketattachment.DeletedAtIsNil()).
-		Only(ctx)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, ErrAttachmentNotFound
-		}
-		return nil, err
-	}
-	return entAttachmentToModel(a), nil
-}
-
-func (r *EntRepository) ListAttachments(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID) ([]*TicketAttachment, error) {
-	if _, err := r.GetTicket(ctx, tenantID, ticketID); err != nil {
-		return nil, err
-	}
-	rows, err := r.client.TicketAttachment.Query().
-		Where(ticketattachment.TenantID(tenantID), ticketattachment.TicketID(ticketID), ticketattachment.DeletedAtIsNil()).
-		Order(ent.Asc(ticketattachment.FieldCreatedAt)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	result := make([]*TicketAttachment, len(rows))
-	for i, a := range rows {
-		result[i] = entAttachmentToModel(a)
-	}
-	return result, nil
-}
-
-func (r *EntRepository) DeleteAttachment(ctx context.Context, tenantID uuid.UUID, attachmentID uuid.UUID) error {
-	n, err := r.client.TicketAttachment.Update().
-		Where(ticketattachment.ID(attachmentID), ticketattachment.TenantID(tenantID), ticketattachment.DeletedAtIsNil()).
-		SetDeletedAt(time.Now()).
+	_, err := r.client.TicketAttachment.Update().
+		Where(ticketattachment.TenantID(tenantID), ticketattachment.TicketID(fromTicketID)).
+		SetTicketID(toTicketID).
 		Save(ctx)
-	if err != nil {
-		return err
-	}
-	if n == 0 {
-		return ErrAttachmentNotFound
-	}
-	return nil
+	return err
 }
 
 func entCommentToModel(c *ent.TicketComment) *TicketComment {
@@ -181,22 +147,8 @@ func entCommentToModel(c *ent.TicketComment) *TicketComment {
 		AuthorType:  AuthorType(c.AuthorType),
 		CommentType: CommentType(c.CommentType),
 		Content:     c.Content,
+		Mentions:    c.Mentions,
 		Metadata:    c.Metadata,
 		CreatedAt:   c.CreatedAt,
-	}
-}
-
-func entAttachmentToModel(a *ent.TicketAttachment) *TicketAttachment {
-	return &TicketAttachment{
-		ID:           a.ID,
-		TenantID:     a.TenantID,
-		TicketID:     a.TicketID,
-		CommentID:    a.CommentID,
-		Filename:     a.Filename,
-		ContentType:  a.ContentType,
-		Size:         a.FileSize,
-		StoragePath:  a.StorageKey,
-		UploadedByID: a.UploadedBy,
-		CreatedAt:    a.CreatedAt,
 	}
 }

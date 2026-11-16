@@ -33,6 +33,18 @@ func (f KBArticleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, e
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KBArticleMutation", m)
 }
 
+// The MacroFunc type is an adapter to allow the use of ordinary
+// function as Macro mutator.
+type MacroFunc func(context.Context, *ent.MacroMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f MacroFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.MacroMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MacroMutation", m)
+}
+
 // The OutboxEventFunc type is an adapter to allow the use of ordinary
 // function as OutboxEvent mutator.
 type OutboxEventFunc func(context.Context, *ent.OutboxEventMutation) (ent.Value, error)
@@ -141,6 +153,18 @@ func (f TicketCommentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Valu
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketCommentMutation", m)
 }
 
+// The TicketLinkFunc type is an adapter to allow the use of ordinary
+// function as TicketLink mutator.
+type TicketLinkFunc func(context.Context, *ent.TicketLinkMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TicketLinkFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TicketLinkMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketLinkMutation", m)
+}
+
 // The TicketSequenceFunc type is an adapter to allow the use of ordinary
 // function as TicketSequence mutator.
 type TicketSequenceFunc func(context.Context, *ent.TicketSequenceMutation) (ent.Value, error)
@@ -151,6 +175,18 @@ func (f TicketSequenceFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Val
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketSequenceMutation", m)
+}
+
+// The TicketViewFunc type is an adapter to allow the use of ordinary
+// function as TicketView mutator.
+type TicketViewFunc func(context.Context, *ent.TicketViewMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TicketViewFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TicketViewMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketViewMutation", m)
 }
 
 // The TicketingPermissionFunc type is an adapter to allow the use of ordinary

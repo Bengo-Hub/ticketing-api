@@ -22,7 +22,12 @@ type Repository interface {
 	// FindTicketBySourceRef returns the ticket an internal caller created for (source,
 	// source_ref.type, source_ref.id), or ErrTicketNotFound.
 	FindTicketBySourceRef(ctx context.Context, tenantID uuid.UUID, source string, ref SourceRef) (*Ticket, error)
-	ListTickets(ctx context.Context, tenantID uuid.UUID, filter TicketFilter) ([]*Ticket, int, error)
+	// ListTickets returns up to filter.Page.Limit+1 tickets after the cursor, so the caller learns
+	// whether another page exists.
+	ListTickets(ctx context.Context, tenantID uuid.UUID, filter TicketFilter) ([]*Ticket, error)
+	// ListTags returns the tags of the tenant's recent tickets with their counts, most used
+	// first, optionally only those starting with prefix.
+	ListTags(ctx context.Context, tenantID uuid.UUID, prefix string, limit int) ([]TagCount, error)
 	UpdateTicket(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, updates *UpdateTicketRequest) error
 	UpdateTicketStatus(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, status TicketStatus) error
 	AssignTicket(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, agentID *uuid.UUID, teamID *uuid.UUID) error
@@ -36,15 +41,48 @@ type Repository interface {
 	// Comment operations
 	CreateComment(ctx context.Context, tenantID uuid.UUID, comment *TicketComment) error
 	GetComment(ctx context.Context, tenantID uuid.UUID, commentID uuid.UUID) (*TicketComment, error)
-	ListComments(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID) ([]*TicketComment, error)
+	// ListComments returns up to q.Page.Limit+1 comments after the cursor, oldest first.
+	ListComments(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, q CommentQuery) ([]*TicketComment, error)
 	UpdateComment(ctx context.Context, tenantID uuid.UUID, commentID uuid.UUID, content string) error
 	DeleteComment(ctx context.Context, tenantID uuid.UUID, commentID uuid.UUID) error
 
 	// Attachment operations
 	CreateAttachment(ctx context.Context, tenantID uuid.UUID, attachment *TicketAttachment) error
 	GetAttachment(ctx context.Context, tenantID uuid.UUID, attachmentID uuid.UUID) (*TicketAttachment, error)
-	ListAttachments(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID) ([]*TicketAttachment, error)
+	// ListAttachments returns up to q.Page.Limit+1 attachments after the cursor, oldest first.
+	ListAttachments(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, q AttachmentQuery) ([]*TicketAttachment, error)
 	DeleteAttachment(ctx context.Context, tenantID uuid.UUID, attachmentID uuid.UUID) error
+
+	// MoveThread moves every comment and attachment of one ticket to another (a merge).
+	MoveThread(ctx context.Context, tenantID uuid.UUID, fromTicketID, toTicketID uuid.UUID) error
+
+	// AgentEmails returns the email of each id that is an agent of the tenant; ids of other
+	// tenants or unknown ids are absent from the map.
+	AgentEmails(ctx context.Context, tenantID uuid.UUID, agentIDs []uuid.UUID) (map[uuid.UUID]string, error)
+	// TeamExists reports whether the team belongs to the tenant.
+	TeamExists(ctx context.Context, tenantID uuid.UUID, teamID uuid.UUID) (bool, error)
+
+	// Saved views
+	CreateView(ctx context.Context, tenantID uuid.UUID, v *TicketView) error
+	GetView(ctx context.Context, tenantID uuid.UUID, viewID uuid.UUID) (*TicketView, error)
+	// ListViews returns the user's own views and the tenant's shared views, by name.
+	ListViews(ctx context.Context, tenantID uuid.UUID, ownerUserID uuid.UUID, limit int) ([]*TicketView, error)
+	UpdateView(ctx context.Context, tenantID uuid.UUID, v *TicketView) error
+	DeleteView(ctx context.Context, tenantID uuid.UUID, viewID uuid.UUID) error
+
+	// Macros
+	CreateMacro(ctx context.Context, tenantID uuid.UUID, m *Macro) error
+	GetMacro(ctx context.Context, tenantID uuid.UUID, macroID uuid.UUID) (*Macro, error)
+	ListMacros(ctx context.Context, tenantID uuid.UUID, activeOnly bool, limit int) ([]*Macro, error)
+	UpdateMacro(ctx context.Context, tenantID uuid.UUID, m *Macro) error
+	DeleteMacro(ctx context.Context, tenantID uuid.UUID, macroID uuid.UUID) error
+
+	// Ticket links
+	CreateLink(ctx context.Context, tenantID uuid.UUID, l *TicketLink) error
+	// ListLinks returns the links in which the ticket is either end.
+	ListLinks(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, limit int) ([]*TicketLink, error)
+	// DeleteLink removes a link that has the ticket at either end.
+	DeleteLink(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, linkID uuid.UUID) error
 
 	// Category operations
 	CreateCategory(ctx context.Context, tenantID uuid.UUID, category *TicketCategory) error

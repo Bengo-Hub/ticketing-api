@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/Bengo-Hub/httpware/richtext"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -21,6 +22,8 @@ func (s *Service) CreateArticle(ctx context.Context, req CreateArticleRequest) (
 	if req.Slug == "" {
 		req.Slug = slugify(req.Title)
 	}
+	// Article bodies come from the shared rich text editor and are shown on public help pages.
+	req.Content = richtext.Sanitize(req.Content)
 	return s.repo.Create(ctx, req)
 }
 
@@ -48,6 +51,10 @@ func (s *Service) GetArticleBySlug(ctx context.Context, tenantID uuid.UUID, slug
 }
 
 func (s *Service) UpdateArticle(ctx context.Context, tenantID, id uuid.UUID, req UpdateArticleRequest) (*Article, error) {
+	if req.Content != nil {
+		clean := richtext.Sanitize(*req.Content)
+		req.Content = &clean
+	}
 	return s.repo.Update(ctx, tenantID, id, req)
 }
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
 	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
+	"github.com/bengobox/ticketing-service/internal/ent/macro"
 	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
 	"github.com/bengobox/ticketing-service/internal/ent/routingrule"
 	"github.com/bengobox/ticketing-service/internal/ent/schema"
@@ -19,7 +20,9 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/ticketingpermission"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketingrole"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketinguser"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketlink"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketsequence"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketview"
 	"github.com/bengobox/ticketing-service/internal/ent/userroleassignment"
 	"github.com/google/uuid"
 )
@@ -162,6 +165,44 @@ func init() {
 	kbarticleDescID := kbarticleFields[0].Descriptor()
 	// kbarticle.DefaultID holds the default value on creation for the id field.
 	kbarticle.DefaultID = kbarticleDescID.Default.(func() uuid.UUID)
+	macroFields := schema.Macro{}.Fields()
+	_ = macroFields
+	// macroDescName is the schema descriptor for name field.
+	macroDescName := macroFields[2].Descriptor()
+	// macro.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	macro.NameValidator = func() func(string) error {
+		validators := macroDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// macroDescIsActive is the schema descriptor for is_active field.
+	macroDescIsActive := macroFields[5].Descriptor()
+	// macro.DefaultIsActive holds the default value on creation for the is_active field.
+	macro.DefaultIsActive = macroDescIsActive.Default.(bool)
+	// macroDescCreatedAt is the schema descriptor for created_at field.
+	macroDescCreatedAt := macroFields[7].Descriptor()
+	// macro.DefaultCreatedAt holds the default value on creation for the created_at field.
+	macro.DefaultCreatedAt = macroDescCreatedAt.Default.(func() time.Time)
+	// macroDescUpdatedAt is the schema descriptor for updated_at field.
+	macroDescUpdatedAt := macroFields[8].Descriptor()
+	// macro.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	macro.DefaultUpdatedAt = macroDescUpdatedAt.Default.(func() time.Time)
+	// macro.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	macro.UpdateDefaultUpdatedAt = macroDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// macroDescID is the schema descriptor for id field.
+	macroDescID := macroFields[0].Descriptor()
+	// macro.DefaultID holds the default value on creation for the id field.
+	macro.DefaultID = macroDescID.Default.(func() uuid.UUID)
 	outboxeventFields := schema.OutboxEvent{}.Fields()
 	_ = outboxeventFields
 	// outboxeventDescAggregateType is the schema descriptor for aggregate_type field.
@@ -512,6 +553,16 @@ func init() {
 	ticketcommentDescID := ticketcommentFields[0].Descriptor()
 	// ticketcomment.DefaultID holds the default value on creation for the id field.
 	ticketcomment.DefaultID = ticketcommentDescID.Default.(func() uuid.UUID)
+	ticketlinkFields := schema.TicketLink{}.Fields()
+	_ = ticketlinkFields
+	// ticketlinkDescCreatedAt is the schema descriptor for created_at field.
+	ticketlinkDescCreatedAt := ticketlinkFields[6].Descriptor()
+	// ticketlink.DefaultCreatedAt holds the default value on creation for the created_at field.
+	ticketlink.DefaultCreatedAt = ticketlinkDescCreatedAt.Default.(func() time.Time)
+	// ticketlinkDescID is the schema descriptor for id field.
+	ticketlinkDescID := ticketlinkFields[0].Descriptor()
+	// ticketlink.DefaultID holds the default value on creation for the id field.
+	ticketlink.DefaultID = ticketlinkDescID.Default.(func() uuid.UUID)
 	ticketsequenceFields := schema.TicketSequence{}.Fields()
 	_ = ticketsequenceFields
 	// ticketsequenceDescNextValue is the schema descriptor for next_value field.
@@ -528,6 +579,50 @@ func init() {
 	ticketsequenceDescID := ticketsequenceFields[0].Descriptor()
 	// ticketsequence.DefaultID holds the default value on creation for the id field.
 	ticketsequence.DefaultID = ticketsequenceDescID.Default.(func() uuid.UUID)
+	ticketviewFields := schema.TicketView{}.Fields()
+	_ = ticketviewFields
+	// ticketviewDescName is the schema descriptor for name field.
+	ticketviewDescName := ticketviewFields[3].Descriptor()
+	// ticketview.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	ticketview.NameValidator = func() func(string) error {
+		validators := ticketviewDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// ticketviewDescSort is the schema descriptor for sort field.
+	ticketviewDescSort := ticketviewFields[5].Descriptor()
+	// ticketview.DefaultSort holds the default value on creation for the sort field.
+	ticketview.DefaultSort = ticketviewDescSort.Default.(string)
+	// ticketview.SortValidator is a validator for the "sort" field. It is called by the builders before save.
+	ticketview.SortValidator = ticketviewDescSort.Validators[0].(func(string) error)
+	// ticketviewDescShared is the schema descriptor for shared field.
+	ticketviewDescShared := ticketviewFields[6].Descriptor()
+	// ticketview.DefaultShared holds the default value on creation for the shared field.
+	ticketview.DefaultShared = ticketviewDescShared.Default.(bool)
+	// ticketviewDescCreatedAt is the schema descriptor for created_at field.
+	ticketviewDescCreatedAt := ticketviewFields[7].Descriptor()
+	// ticketview.DefaultCreatedAt holds the default value on creation for the created_at field.
+	ticketview.DefaultCreatedAt = ticketviewDescCreatedAt.Default.(func() time.Time)
+	// ticketviewDescUpdatedAt is the schema descriptor for updated_at field.
+	ticketviewDescUpdatedAt := ticketviewFields[8].Descriptor()
+	// ticketview.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	ticketview.DefaultUpdatedAt = ticketviewDescUpdatedAt.Default.(func() time.Time)
+	// ticketview.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	ticketview.UpdateDefaultUpdatedAt = ticketviewDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// ticketviewDescID is the schema descriptor for id field.
+	ticketviewDescID := ticketviewFields[0].Descriptor()
+	// ticketview.DefaultID holds the default value on creation for the id field.
+	ticketview.DefaultID = ticketviewDescID.Default.(func() uuid.UUID)
 	ticketingpermissionFields := schema.TicketingPermission{}.Fields()
 	_ = ticketingpermissionFields
 	// ticketingpermissionDescPermissionCode is the schema descriptor for permission_code field.

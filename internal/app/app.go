@@ -14,6 +14,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
 
+	"github.com/Bengo-Hub/httpware/objectstore"
 	authclient "github.com/Bengo-Hub/shared-auth-client"
 	eventslib "github.com/Bengo-Hub/shared-events"
 	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
@@ -245,8 +246,20 @@ func New(ctx context.Context) (*App, error) {
 	ticketsService.SetSLAService(&slaAdapter{svc: slaService})
 	ticketsService.SetRoutingService(&routingAdapter{svc: routingService})
 	ticketsService.SetSSEBroker(sseBroker)
+	// Attachments live in the private R2 bucket (OBJECT_STORAGE_*), or under MEDIA_ROOT locally.
+	if fileStore, storeErr := objectstore.New("ticketing", objectstore.FromEnv()); storeErr != nil {
+		log.Warn("app: object storage not configured, attachment uploads are disabled", zap.Error(storeErr))
+	} else {
+		ticketsService.SetFileStore(fileStore)
+	}
+	// Collision presence keeps short-lived Redis keys and broadcasts over the SSE relay.
+	var presenceStore tickets.PresenceStore
+	if redisClient != nil {
+		presenceStore = tickets.NewRedisPresenceStore(redisClient)
+	}
 	ticketsHandler := tickets.NewHandler(ticketsService, log,
 		tickets.WithServiceKey(cfg.Auth.InternalServiceKey),
+		tickets.WithPresence(tickets.NewPresence(presenceStore, sseBroker)),
 	)
 	publicTicketsHandler := tickets.NewPublicHandler(ticketsService, otpClient, rl, log)
 	publicTicketsHandler.SetTenantLookup(tenantResolver)

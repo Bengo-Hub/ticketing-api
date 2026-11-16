@@ -27,6 +27,6 @@ type Repository interface {
 	DeleteAgent(ctx context.Context, tenantID uuid.UUID, agentID uuid.UUID) error
 
 	// Availability
-	GetAvailableAgents(ctx context.Context, tenantID uuid.UUID, teamID *uuid.UUID) ([]*Agent, error)
+	GetAvailableAgents(ctx context.Context, tenantID uuid.UUID, teamID *uuid.UUID, limit int) ([]*Agent, error)
 	GetLeastLoadedAgent(ctx context.Context, tenantID uuid.UUID, teamID *uuid.UUID, skills []string) (*Agent, error)
 }
