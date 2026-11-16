@@ -117,6 +117,20 @@ jobs:
         if: needs.sync-secrets.outputs.result != 'synced'
         uses: actions/checkout@v4
 
+      - name: Set up Go
+        if: needs.sync-secrets.outputs.result != 'synced'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Go vet
+        if: needs.sync-secrets.outputs.result != 'synced'
+        run: go vet ./...
+
+      - name: Go test
+        if: needs.sync-secrets.outputs.result != 'synced'
+        run: go test -timeout 300s ./...
+
       - name: Set up Docker Buildx
         if: needs.sync-secrets.outputs.result != 'synced'
         uses: docker/setup-buildx-action@v3

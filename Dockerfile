@@ -28,7 +28,7 @@ COPY --from=builder /bin/ticketing-seed    /app/ticketing-seed
 COPY scripts/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-EXPOSE 4009
+EXPOSE 4009 9090
 
 USER nobody:nobody
 

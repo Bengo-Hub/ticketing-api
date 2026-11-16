@@ -9,7 +9,6 @@ import (
 )
 
 // SLAComputer computes SLA deadlines for new tickets.
-// Takes a string priority and optional category ID, returns the response and resolution due times.
 type SLAComputer interface {
 	ComputeDeadlines(ctx context.Context, tenantID uuid.UUID, priorityStr string, categoryID *uuid.UUID, createdAt time.Time) (*time.Time, *time.Time, error)
 }
@@ -30,92 +29,50 @@ type SSEPublisher interface {
 	Publish(tenantID uuid.UUID, eventType string, payload any)
 }
 
-// Service provides ticket business logic.
+// Service provides ticket business logic. Every change and the events it produces are written in
+// one transaction (Repository.InTx), so an event exists exactly when its change committed.
 type Service struct {
-	repo      Repository
-	logger    *zap.Logger
-	publisher EventPublisher
-	sla       SLAComputer
-	sse       SSEPublisher
-	routing   RulesEvaluator
+	repo    Repository
+	logger  *zap.Logger
+	sla     SLAComputer
+	sse     SSEPublisher
+	routing RulesEvaluator
+	now     func() time.Time
 }
 
 // NewService creates a new ticket service.
 func NewService(repo Repository, logger *zap.Logger) *Service {
-	return &Service{
-		repo:   repo,
-		logger: logger.Named("tickets"),
-	}
-}
-
-// SetPublisher sets the event publisher for ticket lifecycle events (events.Publisher). Customer and
-// agent notifications go out only through these events (notifications-api's ticketing consumer);
-// ticketing-api has no direct notifications client.
-func (s *Service) SetPublisher(p EventPublisher) {
-	s.publisher = p
+	return &Service{repo: repo, logger: logger.Named("tickets"), now: time.Now}
 }
 
 // SetSLAService wires in the SLA service for deadline computation.
-func (s *Service) SetSLAService(svc SLAComputer) {
-	s.sla = svc
-}
+func (s *Service) SetSLAService(svc SLAComputer) { s.sla = svc }
 
 // SetSSEBroker wires in the SSE broker for real-time client streaming.
-func (s *Service) SetSSEBroker(b SSEPublisher) {
-	s.sse = b
-}
+func (s *Service) SetSSEBroker(b SSEPublisher) { s.sse = b }
 
 // SetRoutingService wires in the routing rules evaluator.
-func (s *Service) SetRoutingService(re RulesEvaluator) {
-	s.routing = re
+func (s *Service) SetRoutingService(re RulesEvaluator) { s.routing = re }
+
+func (s *Service) broadcast(tenantID uuid.UUID, eventType string, payload map[string]any) {
+	if s.sse != nil {
+		s.sse.Publish(tenantID, eventType, payload)
+	}
 }
 
-// Ticket operations
-
-// CreateTicket creates a new ticket.
+// CreateTicket creates a ticket, numbered from the tenant's counter in the same transaction.
 func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*Ticket, error) {
-	// Generate ticket number
-	ticketNumber, err := s.repo.GenerateTicketNumber(ctx, req.TenantID)
-	if err != nil {
-		s.logger.Error("failed to generate ticket number", zap.Error(err))
-		return nil, err
-	}
-
-	// Set defaults
 	if req.Priority == "" {
 		req.Priority = PriorityNormal
 	}
 	if req.Channel == "" {
 		req.Channel = ChannelWeb
 	}
-
-	// Evaluate routing rules and apply the first matching action.
-	if s.routing != nil {
-		if action := s.routing.EvaluateRules(ctx, req.TenantID, string(req.Priority), string(req.Channel), req.Subject, req.Description, req.CategoryID); action != nil {
-			switch action.Type {
-			case "set_priority":
-				req.Priority = TicketPriority(action.Value)
-			case "assign_team":
-				if id, err := uuid.Parse(action.Value); err == nil {
-					req.AssignedTeamID = &id
-				}
-			case "assign_agent":
-				if id, err := uuid.Parse(action.Value); err == nil {
-					req.AssignedAgentID = &id
-				}
-			}
-		}
-	}
-
-	// The requester's contact is stored the same way on every create path (requester_*).
-	meta := withRequester(req.Metadata, RequesterContact{
-		Name: req.RequesterName, Email: req.RequesterEmail, Phone: req.RequesterPhone,
-	})
+	s.applyRouting(ctx, req)
 
 	ticket := &Ticket{
 		ID:                uuid.New(),
 		TenantID:          req.TenantID,
-		TicketNumber:      ticketNumber,
 		CustomerID:        req.CustomerID,
 		CategoryID:        req.CategoryID,
 		AssignedAgentID:   req.AssignedAgentID,
@@ -130,59 +87,70 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 		CRMContactID:      req.CRMContactID,
 		CRMLeadID:         req.CRMLeadID,
 		Tags:              req.Tags,
-		Metadata:          meta,
+		// The requester's contact is stored the same way on every create path (requester_*).
+		Metadata: withRequester(req.Metadata, RequesterContact{
+			Name: req.RequesterName, Email: req.RequesterEmail, Phone: req.RequesterPhone,
+		}),
+	}
+	if s.sla != nil {
+		responseDue, resolutionDue, err := s.sla.ComputeDeadlines(ctx, req.TenantID, string(ticket.Priority), ticket.CategoryID, s.now())
+		if err != nil {
+			s.logger.Warn("sla deadlines not computed", zap.Error(err))
+		} else {
+			ticket.SLAResponseDueAt, ticket.SLAResolutionDueAt = responseDue, resolutionDue
+		}
 	}
 
-	if err := s.repo.CreateTicket(ctx, req.TenantID, ticket); err != nil {
-		s.logger.Error("failed to create ticket",
-			zap.Error(err),
-			zap.String("subject", req.Subject),
-		)
+	err := s.repo.InTx(ctx, req.TenantID, func(repo Repository, out *Outbox) error {
+		number, err := repo.NextTicketNumber(ctx, req.TenantID)
+		if err != nil {
+			return err
+		}
+		ticket.TicketNumber = number
+		if err := repo.CreateTicket(ctx, req.TenantID, ticket); err != nil {
+			return err
+		}
+		if ticket.CRMContactID != nil {
+			out.CRMActivity(crmActivity(ticket, "ticket_opened"))
+		}
+		// The requester learns their ticket number; the tenant's helpdesk learns of a new ticket.
+		out.Ticket(EventTicketCreated, TicketCreatedPayload(ticket))
+		return nil
+	})
+	if err != nil {
+		if err != ErrDuplicateSourceRef {
+			s.logger.Error("failed to create ticket", zap.Error(err), zap.String("subject", req.Subject))
+		}
 		return nil, err
 	}
 
-	// Compute SLA deadlines if a policy matches this ticket's priority and category.
-	if s.sla != nil {
-		responseDue, resolutionDue, err := s.sla.ComputeDeadlines(ctx, req.TenantID, string(ticket.Priority), ticket.CategoryID, ticket.CreatedAt)
-		if err == nil && (responseDue != nil || resolutionDue != nil) {
-			if setErr := s.repo.SetSLADeadlines(ctx, req.TenantID, ticket.ID, responseDue, resolutionDue); setErr != nil {
-				s.logger.Warn("failed to set sla deadlines", zap.Error(setErr))
-			} else {
-				ticket.SLAResponseDueAt = responseDue
-				ticket.SLAResolutionDueAt = resolutionDue
-			}
-		}
-	}
-
-	// Publish CRM activity event if a CRM contact is linked.
-	if s.publisher != nil && ticket.CRMContactID != nil {
-		_ = s.publisher.PublishCRMActivityRequest(ctx, ticket.TenantID, map[string]any{
-			"entity_type":   "contact",
-			"entity_id":     ticket.CRMContactID.String(),
-			"activity_type": "ticket_opened",
-			"external_ref":  ticket.ID.String(),
-			"subject":       ticket.Subject,
-			"source":        "ticketing-api",
-		})
-	}
-
-	// The requester learns their ticket number; the tenant's helpdesk learns of a new ticket.
-	if s.publisher != nil {
-		if err := s.publisher.PublishTicketCreated(ctx, ticket.TenantID, TicketCreatedPayload(ticket)); err != nil {
-			s.logger.Warn("ticket.created not published", zap.String("ticket_id", ticket.ID.String()), zap.Error(err))
-		}
-	}
-
 	s.logger.Info("ticket created",
-		zap.String("ticket_id", ticket.ID.String()),
-		zap.String("ticket_number", ticket.TicketNumber),
-	)
-
-	if s.sse != nil {
-		s.sse.Publish(ticket.TenantID, "ticket.created", map[string]any{"ticket_id": ticket.ID, "ticket_number": ticket.TicketNumber})
-	}
-
+		zap.String("ticket_id", ticket.ID.String()), zap.String("ticket_number", ticket.TicketNumber))
+	s.broadcast(ticket.TenantID, "ticket.created", map[string]any{"ticket_id": ticket.ID, "ticket_number": ticket.TicketNumber})
 	return ticket, nil
+}
+
+// applyRouting applies the first matching routing rule to a new ticket.
+func (s *Service) applyRouting(ctx context.Context, req *CreateTicketRequest) {
+	if s.routing == nil {
+		return
+	}
+	action := s.routing.EvaluateRules(ctx, req.TenantID, string(req.Priority), string(req.Channel), req.Subject, req.Description, req.CategoryID)
+	if action == nil {
+		return
+	}
+	switch action.Type {
+	case "set_priority":
+		req.Priority = TicketPriority(action.Value)
+	case "assign_team":
+		if id, err := uuid.Parse(action.Value); err == nil {
+			req.AssignedTeamID = &id
+		}
+	case "assign_agent":
+		if id, err := uuid.Parse(action.Value); err == nil {
+			req.AssignedAgentID = &id
+		}
+	}
 }
 
 // GetTicket retrieves a ticket by ID.
@@ -204,154 +172,104 @@ func (s *Service) ListTickets(ctx context.Context, tenantID uuid.UUID, filter Ti
 // UpdateTicket updates a ticket.
 func (s *Service) UpdateTicket(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, req *UpdateTicketRequest) error {
 	if err := s.repo.UpdateTicket(ctx, tenantID, ticketID, req); err != nil {
-		s.logger.Error("failed to update ticket",
-			zap.Error(err),
-			zap.String("ticket_id", ticketID.String()),
-		)
+		s.logger.Error("failed to update ticket", zap.Error(err), zap.String("ticket_id", ticketID.String()))
 		return err
 	}
 	return nil
 }
 
-// UpdateTicketStatus updates a ticket's status.
+// UpdateTicketStatus moves a ticket to a new status and records the events for it.
 func (s *Service) UpdateTicketStatus(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, status TicketStatus) error {
-	// Get current ticket to validate transition
-	ticket, err := s.repo.GetTicket(ctx, tenantID, ticketID)
+	var from TicketStatus
+	err := s.repo.InTx(ctx, tenantID, func(repo Repository, out *Outbox) error {
+		ticket, err := repo.GetTicket(ctx, tenantID, ticketID)
+		if err != nil {
+			return err
+		}
+		from = ticket.Status
+		if !isValidStatusTransition(from, status) {
+			return ErrInvalidTransition
+		}
+		if err := repo.UpdateTicketStatus(ctx, tenantID, ticketID, status); err != nil {
+			return err
+		}
+		if status != StatusResolved {
+			// Every other change tells the requester where their ticket stands.
+			if status != from {
+				out.Ticket(EventTicketStatusChanged, TicketStatusChangedPayload(ticket, from, status))
+			}
+			return nil
+		}
+		now := s.now()
+		if ticket.SLAResolutionDueAt != nil && !ticket.SLAResolutionBreached && now.After(*ticket.SLAResolutionDueAt) {
+			if _, err := repo.MarkSLABreached(ctx, tenantID, ticketID, false, true); err != nil {
+				return err
+			}
+		}
+		out.Ticket(EventTicketResolved, TicketResolvedPayload(ticket, from, now))
+		if ticket.CRMContactID != nil {
+			out.CRMActivity(crmActivity(ticket, "ticket_resolved"))
+		}
+		return nil
+	})
 	if err != nil {
 		return err
 	}
-
-	// Validate status transition
-	if !s.isValidStatusTransition(ticket.Status, status) {
-		return ErrInvalidTransition
-	}
-
-	if err := s.repo.UpdateTicketStatus(ctx, tenantID, ticketID, status); err != nil {
-		s.logger.Error("failed to update ticket status",
-			zap.Error(err),
-			zap.String("ticket_id", ticketID.String()),
-			zap.String("status", string(status)),
-		)
-		return err
-	}
-
-	s.logger.Info("ticket status updated",
-		zap.String("ticket_id", ticketID.String()),
-		zap.String("old_status", string(ticket.Status)),
-		zap.String("new_status", string(status)),
-	)
-
-	if s.sse != nil {
-		s.sse.Publish(tenantID, "ticket.updated", map[string]any{"ticket_id": ticketID, "status": string(status)})
-	}
-
-	// Every other change tells the requester where their ticket stands; resolved has its own event.
-	if s.publisher != nil && status != StatusResolved && status != ticket.Status {
-		if err := s.publisher.PublishTicketStatusChanged(ctx, tenantID, TicketStatusChangedPayload(ticket, ticket.Status, status)); err != nil {
-			s.logger.Warn("ticket.status_changed not published", zap.String("ticket_id", ticketID.String()), zap.Error(err))
-		}
-	}
-
-	if status == StatusResolved {
-		// Check if resolution SLA was breached
-		if ticket.SLAResolutionDueAt != nil && !ticket.SLAResolutionBreached {
-			if time.Now().After(*ticket.SLAResolutionDueAt) {
-				if _, err := s.repo.MarkSLABreached(ctx, tenantID, ticketID, false, true); err != nil {
-					s.logger.Warn("failed to mark resolution sla breach", zap.Error(err))
-				}
-			}
-		}
-
-		// Publish resolved event, with the requester's contact so the customer is told.
-		if s.publisher != nil {
-			if err := s.publisher.PublishTicketResolved(ctx, tenantID, TicketResolvedPayload(ticket, ticket.Status, time.Now())); err != nil {
-				s.logger.Warn("ticket.resolved not published", zap.String("ticket_id", ticketID.String()), zap.Error(err))
-			}
-
-			// Publish CRM activity event if a CRM contact is linked.
-			if ticket.CRMContactID != nil {
-				_ = s.publisher.PublishCRMActivityRequest(ctx, tenantID, map[string]any{
-					"entity_type":   "contact",
-					"entity_id":     ticket.CRMContactID.String(),
-					"activity_type": "ticket_resolved",
-					"external_ref":  ticketID.String(),
-					"subject":       ticket.Subject,
-					"source":        "ticketing-api",
-				})
-			}
-		}
-	}
-
+	s.logger.Info("ticket status updated", zap.String("ticket_id", ticketID.String()),
+		zap.String("old_status", string(from)), zap.String("new_status", string(status)))
+	s.broadcast(tenantID, "ticket.updated", map[string]any{"ticket_id": ticketID, "status": string(status)})
 	return nil
 }
 
-// AssignTicket assigns a ticket to an agent and/or team.
+// AssignTicket assigns a ticket to an agent and/or team; a new ticket given an agent opens.
 func (s *Service) AssignTicket(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, req *AssignTicketRequest) error {
-	if err := s.repo.AssignTicket(ctx, tenantID, ticketID, req.AgentID, req.TeamID); err != nil {
-		s.logger.Error("failed to assign ticket",
-			zap.Error(err),
-			zap.String("ticket_id", ticketID.String()),
-		)
-		return err
-	}
-
-	// Update status to open if it's new
-	ticket, err := s.repo.GetTicket(ctx, tenantID, ticketID)
-	if err == nil && ticket.Status == StatusNew && req.AgentID != nil {
-		if s.repo.UpdateTicketStatus(ctx, tenantID, ticketID, StatusOpen) == nil {
+	err := s.repo.InTx(ctx, tenantID, func(repo Repository, out *Outbox) error {
+		if err := repo.AssignTicket(ctx, tenantID, ticketID, req.AgentID, req.TeamID); err != nil {
+			return err
+		}
+		ticket, err := repo.GetTicket(ctx, tenantID, ticketID)
+		if err != nil {
+			return err
+		}
+		if ticket.Status == StatusNew && req.AgentID != nil {
+			if err := repo.UpdateTicketStatus(ctx, tenantID, ticketID, StatusOpen); err != nil {
+				return err
+			}
 			ticket.Status = StatusOpen
 		}
-	}
-
-	s.logger.Info("ticket assigned",
-		zap.String("ticket_id", ticketID.String()),
-		zap.Any("agent_id", req.AgentID),
-		zap.Any("team_id", req.TeamID),
-	)
-
-	// Publish assigned event
-	if s.publisher != nil && ticket != nil {
 		agentEmail := ""
 		if req.AgentID != nil {
-			// Include the agent's email so notifications-api can email the assignee
-			// directly; without it the notification silently fell back to the tenant
-			// mailbox and the agent never learned they were assigned.
-			if email, err := s.repo.GetAgentEmail(ctx, tenantID, *req.AgentID); err == nil {
-				agentEmail = email
+			// The assignee's email lets notifications-api email them directly.
+			if agentEmail, err = repo.GetAgentEmail(ctx, tenantID, *req.AgentID); err != nil {
+				return err
 			}
 		}
-		_ = s.publisher.PublishTicketAssigned(ctx, tenantID, TicketAssignedPayload(ticket, req.AgentID, agentEmail))
+		out.Ticket(EventTicketAssigned, TicketAssignedPayload(ticket, req.AgentID, agentEmail))
+		return nil
+	})
+	if err != nil {
+		s.logger.Error("failed to assign ticket", zap.Error(err), zap.String("ticket_id", ticketID.String()))
+		return err
 	}
-
+	s.broadcast(tenantID, "ticket.updated", map[string]any{"ticket_id": ticketID})
 	return nil
 }
 
 // DeleteTicket soft-deletes a ticket.
 func (s *Service) DeleteTicket(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID) error {
 	if err := s.repo.DeleteTicket(ctx, tenantID, ticketID); err != nil {
-		s.logger.Error("failed to delete ticket",
-			zap.Error(err),
-			zap.String("ticket_id", ticketID.String()),
-		)
+		s.logger.Error("failed to delete ticket", zap.Error(err), zap.String("ticket_id", ticketID.String()))
 		return err
 	}
-
-	s.logger.Info("ticket deleted",
-		zap.String("ticket_id", ticketID.String()),
-	)
-
 	return nil
 }
 
-// Comment operations
-
-// AddComment adds a comment to a ticket.
+// AddComment adds a comment. An agent's first public reply records the first response, and a
+// public agent reply goes to the requester (internal notes and customer comments never do).
 func (s *Service) AddComment(ctx context.Context, req *AddCommentRequest) (*TicketComment, error) {
-	// Set default comment type
 	if req.CommentType == "" {
 		req.CommentType = CommentPublic
 	}
-
 	comment := &TicketComment{
 		ID:          uuid.New(),
 		TenantID:    req.TenantID,
@@ -361,47 +279,37 @@ func (s *Service) AddComment(ctx context.Context, req *AddCommentRequest) (*Tick
 		CommentType: req.CommentType,
 		Content:     req.Content,
 	}
-
-	if err := s.repo.CreateComment(ctx, req.TenantID, comment); err != nil {
-		s.logger.Error("failed to add comment",
-			zap.Error(err),
-			zap.String("ticket_id", req.TicketID.String()),
-		)
+	err := s.repo.InTx(ctx, req.TenantID, func(repo Repository, out *Outbox) error {
+		if err := repo.CreateComment(ctx, req.TenantID, comment); err != nil {
+			return err
+		}
+		if req.AuthorType != AuthorAgent || req.CommentType != CommentPublic {
+			return nil
+		}
+		ticket, err := repo.GetTicket(ctx, req.TenantID, req.TicketID)
+		if err != nil {
+			return err
+		}
+		if err := repo.MarkFirstResponse(ctx, req.TenantID, req.TicketID); err != nil {
+			return err
+		}
+		if ticket.FirstResponseAt == nil && ticket.SLAResponseDueAt != nil && !ticket.SLAResponseBreached && s.now().After(*ticket.SLAResponseDueAt) {
+			if _, err := repo.MarkSLABreached(ctx, req.TenantID, req.TicketID, true, false); err != nil {
+				return err
+			}
+		}
+		agentEmail, err := repo.GetAgentEmailByUser(ctx, req.TenantID, req.AuthorID)
+		if err != nil {
+			return err
+		}
+		out.Ticket(EventTicketCommentAdded, TicketCommentAddedPayload(ticket, comment, agentEmail))
+		return nil
+	})
+	if err != nil {
+		s.logger.Error("failed to add comment", zap.Error(err), zap.String("ticket_id", req.TicketID.String()))
 		return nil, err
 	}
-
-	// Mark first response if this is an agent's first public response
-	if req.AuthorType == AuthorAgent && req.CommentType == CommentPublic {
-		ticket, tErr := s.repo.GetTicket(ctx, req.TenantID, req.TicketID)
-		if err := s.repo.MarkFirstResponse(ctx, req.TenantID, req.TicketID); err != nil {
-			s.logger.Warn("failed to mark first response", zap.Error(err))
-		} else if tErr == nil && ticket.SLAResponseDueAt != nil && !ticket.SLAResponseBreached {
-			// Check if first-response SLA was breached
-			if time.Now().After(*ticket.SLAResponseDueAt) {
-				if _, bErr := s.repo.MarkSLABreached(ctx, req.TenantID, req.TicketID, true, false); bErr != nil {
-					s.logger.Warn("failed to mark response sla breach", zap.Error(bErr))
-				}
-			}
-		}
-
-		// A public agent reply goes to the requester (internal notes and customer comments never do).
-		if s.publisher != nil && tErr == nil {
-			agentEmail, _ := s.repo.GetAgentEmail(ctx, req.TenantID, req.AuthorID)
-			if err := s.publisher.PublishTicketCommentAdded(ctx, req.TenantID, TicketCommentAddedPayload(ticket, comment, agentEmail)); err != nil {
-				s.logger.Warn("ticket.comment_added not published", zap.String("ticket_id", req.TicketID.String()), zap.Error(err))
-			}
-		}
-	}
-
-	s.logger.Info("comment added",
-		zap.String("ticket_id", req.TicketID.String()),
-		zap.String("comment_id", comment.ID.String()),
-	)
-
-	if s.sse != nil {
-		s.sse.Publish(req.TenantID, "comment.created", map[string]any{"ticket_id": req.TicketID, "comment_id": comment.ID})
-	}
-
+	s.broadcast(req.TenantID, "comment.created", map[string]any{"ticket_id": req.TicketID, "comment_id": comment.ID})
 	return comment, nil
 }
 
@@ -425,8 +333,6 @@ func (s *Service) DeleteComment(ctx context.Context, tenantID uuid.UUID, comment
 	return s.repo.DeleteComment(ctx, tenantID, commentID)
 }
 
-// Attachment operations
-
 // ListAttachments lists attachments for a ticket.
 func (s *Service) ListAttachments(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID) ([]*TicketAttachment, error) {
 	return s.repo.ListAttachments(ctx, tenantID, ticketID)
@@ -435,161 +341,4 @@ func (s *Service) ListAttachments(ctx context.Context, tenantID uuid.UUID, ticke
 // GetAttachment retrieves an attachment by ID.
 func (s *Service) GetAttachment(ctx context.Context, tenantID uuid.UUID, attachmentID uuid.UUID) (*TicketAttachment, error) {
 	return s.repo.GetAttachment(ctx, tenantID, attachmentID)
-}
-
-// Category operations
-
-// CreateCategory creates a new category.
-func (s *Service) CreateCategory(ctx context.Context, req *CreateCategoryRequest) (*TicketCategory, error) {
-	category := &TicketCategory{
-		ID:          uuid.New(),
-		TenantID:    req.TenantID,
-		ParentID:    req.ParentID,
-		Name:        req.Name,
-		Description: req.Description,
-		Icon:        req.Icon,
-		SortOrder:   req.SortOrder,
-		IsActive:    true,
-		Metadata:    req.Metadata,
-	}
-
-	if err := s.repo.CreateCategory(ctx, req.TenantID, category); err != nil {
-		s.logger.Error("failed to create category",
-			zap.Error(err),
-			zap.String("name", req.Name),
-		)
-		return nil, err
-	}
-
-	s.logger.Info("category created",
-		zap.String("category_id", category.ID.String()),
-		zap.String("name", category.Name),
-	)
-
-	return category, nil
-}
-
-// GetCategory retrieves a category by ID.
-func (s *Service) GetCategory(ctx context.Context, tenantID uuid.UUID, categoryID uuid.UUID) (*TicketCategory, error) {
-	return s.repo.GetCategory(ctx, tenantID, categoryID)
-}
-
-// ListCategories lists categories with filtering.
-func (s *Service) ListCategories(ctx context.Context, tenantID uuid.UUID, filter CategoryFilter) ([]*TicketCategory, int, error) {
-	filter.TenantID = tenantID
-	return s.repo.ListCategories(ctx, tenantID, filter)
-}
-
-// UpdateCategory updates a category.
-func (s *Service) UpdateCategory(ctx context.Context, tenantID uuid.UUID, categoryID uuid.UUID, req *UpdateCategoryRequest) error {
-	if err := s.repo.UpdateCategory(ctx, tenantID, categoryID, req); err != nil {
-		s.logger.Error("failed to update category",
-			zap.Error(err),
-			zap.String("category_id", categoryID.String()),
-		)
-		return err
-	}
-	return nil
-}
-
-// DeleteCategory soft-deletes a category.
-func (s *Service) DeleteCategory(ctx context.Context, tenantID uuid.UUID, categoryID uuid.UUID) error {
-	// Check for children
-	childCount, err := s.repo.GetCategoryChildCount(ctx, tenantID, categoryID)
-	if err != nil {
-		return err
-	}
-	if childCount > 0 {
-		return ErrCategoryHasChildren
-	}
-
-	// Check for tickets
-	ticketCount, err := s.repo.GetCategoryTicketCount(ctx, tenantID, categoryID)
-	if err != nil {
-		return err
-	}
-	if ticketCount > 0 {
-		return ErrCategoryHasTickets
-	}
-
-	if err := s.repo.DeleteCategory(ctx, tenantID, categoryID); err != nil {
-		s.logger.Error("failed to delete category",
-			zap.Error(err),
-			zap.String("category_id", categoryID.String()),
-		)
-		return err
-	}
-
-	s.logger.Info("category deleted",
-		zap.String("category_id", categoryID.String()),
-	)
-
-	return nil
-}
-
-// Stats
-
-// GetTicketStats returns ticket statistics.
-func (s *Service) GetTicketStats(ctx context.Context, tenantID uuid.UUID) (map[TicketStatus]int, error) {
-	return s.repo.GetTicketCountsByStatus(ctx, tenantID)
-}
-
-// Helper methods
-
-func (s *Service) isValidStatusTransition(from, to TicketStatus) bool {
-	// Define valid transitions
-	validTransitions := map[TicketStatus][]TicketStatus{
-		StatusNew:             {StatusOpen, StatusInProgress, StatusCancelled},
-		StatusOpen:            {StatusInProgress, StatusPendingCustomer, StatusPendingInternal, StatusResolved, StatusClosed, StatusCancelled},
-		StatusInProgress:      {StatusOpen, StatusPendingCustomer, StatusPendingInternal, StatusResolved, StatusClosed, StatusCancelled},
-		StatusPendingCustomer: {StatusOpen, StatusInProgress, StatusResolved, StatusClosed, StatusCancelled},
-		StatusPendingInternal: {StatusOpen, StatusInProgress, StatusResolved, StatusClosed, StatusCancelled},
-		StatusResolved:        {StatusOpen, StatusClosed}, // Can reopen or close
-		StatusClosed:          {StatusOpen},               // Can only reopen
-		StatusCancelled:       {},                         // Terminal state
-	}
-
-	allowed, ok := validTransitions[from]
-	if !ok {
-		return false
-	}
-
-	for _, status := range allowed {
-		if status == to {
-			return true
-		}
-	}
-	return false
-}
-
-// GetAnalytics returns combined ticket analytics: by-status, by-priority, and trend.
-func (s *Service) GetAnalytics(ctx context.Context, tenantID uuid.UUID, days int) (*AnalyticsResponse, error) {
-	if days <= 0 || days > 365 {
-		days = 30
-	}
-	to := time.Now().UTC()
-	from := to.AddDate(0, 0, -days)
-	bucketDays := 1
-	if days > 90 {
-		bucketDays = 7
-	}
-
-	byStatus, err := s.repo.GetTicketCountsByStatus(ctx, tenantID)
-	if err != nil {
-		return nil, err
-	}
-	byPriority, err := s.repo.GetTicketCountsByPriority(ctx, tenantID)
-	if err != nil {
-		return nil, err
-	}
-	trend, err := s.repo.GetTicketTrend(ctx, tenantID, from, to, bucketDays)
-	if err != nil {
-		return nil, err
-	}
-
-	return &AnalyticsResponse{
-		ByStatus:   byStatus,
-		ByPriority: byPriority,
-		Trend:      trend,
-	}, nil
 }

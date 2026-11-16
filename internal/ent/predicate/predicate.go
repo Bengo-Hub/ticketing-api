@@ -15,6 +15,9 @@ type KBArticle func(*sql.Selector)
 // OutboxEvent is the predicate function for outboxevent builders.
 type OutboxEvent func(*sql.Selector)
 
+// RolePermission is the predicate function for rolepermission builders.
+type RolePermission func(*sql.Selector)
+
 // RoutingRule is the predicate function for routingrule builders.
 type RoutingRule func(*sql.Selector)
 
@@ -35,3 +38,18 @@ type TicketCategory func(*sql.Selector)
 
 // TicketComment is the predicate function for ticketcomment builders.
 type TicketComment func(*sql.Selector)
+
+// TicketSequence is the predicate function for ticketsequence builders.
+type TicketSequence func(*sql.Selector)
+
+// TicketingPermission is the predicate function for ticketingpermission builders.
+type TicketingPermission func(*sql.Selector)
+
+// TicketingRole is the predicate function for ticketingrole builders.
+type TicketingRole func(*sql.Selector)
+
+// TicketingUser is the predicate function for ticketinguser builders.
+type TicketingUser func(*sql.Selector)
+
+// UserRoleAssignment is the predicate function for userroleassignment builders.
+type UserRoleAssignment func(*sql.Selector)

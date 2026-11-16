@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
@@ -21,6 +23,7 @@ type AgentCreate struct {
 	config
 	mutation *AgentMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetTenantID sets the "tenant_id" field.
@@ -393,6 +396,7 @@ func (_c *AgentCreate) createSpec() (*Agent, *sqlgraph.CreateSpec) {
 		_node = &Agent{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(agent.Table, sqlgraph.NewFieldSpec(agent.FieldID, field.TypeUUID))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
@@ -493,11 +497,631 @@ func (_c *AgentCreate) createSpec() (*Agent, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Agent.Create().
+//		SetTenantID(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.AgentUpsert) {
+//			SetTenantID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *AgentCreate) OnConflict(opts ...sql.ConflictOption) *AgentUpsertOne {
+	_c.conflict = opts
+	return &AgentUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Agent.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *AgentCreate) OnConflictColumns(columns ...string) *AgentUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &AgentUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// AgentUpsertOne is the builder for "upsert"-ing
+	//  one Agent node.
+	AgentUpsertOne struct {
+		create *AgentCreate
+	}
+
+	// AgentUpsert is the "OnConflict" setter.
+	AgentUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetTenantID sets the "tenant_id" field.
+func (u *AgentUpsert) SetTenantID(v uuid.UUID) *AgentUpsert {
+	u.Set(agent.FieldTenantID, v)
+	return u
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *AgentUpsert) UpdateTenantID() *AgentUpsert {
+	u.SetExcluded(agent.FieldTenantID)
+	return u
+}
+
+// SetUserID sets the "user_id" field.
+func (u *AgentUpsert) SetUserID(v uuid.UUID) *AgentUpsert {
+	u.Set(agent.FieldUserID, v)
+	return u
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *AgentUpsert) UpdateUserID() *AgentUpsert {
+	u.SetExcluded(agent.FieldUserID)
+	return u
+}
+
+// SetTeamID sets the "team_id" field.
+func (u *AgentUpsert) SetTeamID(v uuid.UUID) *AgentUpsert {
+	u.Set(agent.FieldTeamID, v)
+	return u
+}
+
+// UpdateTeamID sets the "team_id" field to the value that was provided on create.
+func (u *AgentUpsert) UpdateTeamID() *AgentUpsert {
+	u.SetExcluded(agent.FieldTeamID)
+	return u
+}
+
+// ClearTeamID clears the value of the "team_id" field.
+func (u *AgentUpsert) ClearTeamID() *AgentUpsert {
+	u.SetNull(agent.FieldTeamID)
+	return u
+}
+
+// SetDisplayName sets the "display_name" field.
+func (u *AgentUpsert) SetDisplayName(v string) *AgentUpsert {
+	u.Set(agent.FieldDisplayName, v)
+	return u
+}
+
+// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
+func (u *AgentUpsert) UpdateDisplayName() *AgentUpsert {
+	u.SetExcluded(agent.FieldDisplayName)
+	return u
+}
+
+// SetEmail sets the "email" field.
+func (u *AgentUpsert) SetEmail(v string) *AgentUpsert {
+	u.Set(agent.FieldEmail, v)
+	return u
+}
+
+// UpdateEmail sets the "email" field to the value that was provided on create.
+func (u *AgentUpsert) UpdateEmail() *AgentUpsert {
+	u.SetExcluded(agent.FieldEmail)
+	return u
+}
+
+// SetAvatarURL sets the "avatar_url" field.
+func (u *AgentUpsert) SetAvatarURL(v string) *AgentUpsert {
+	u.Set(agent.FieldAvatarURL, v)
+	return u
+}
+
+// UpdateAvatarURL sets the "avatar_url" field to the value that was provided on create.
+func (u *AgentUpsert) UpdateAvatarURL() *AgentUpsert {
+	u.SetExcluded(agent.FieldAvatarURL)
+	return u
+}
+
+// ClearAvatarURL clears the value of the "avatar_url" field.
+func (u *AgentUpsert) ClearAvatarURL() *AgentUpsert {
+	u.SetNull(agent.FieldAvatarURL)
+	return u
+}
+
+// SetRole sets the "role" field.
+func (u *AgentUpsert) SetRole(v agent.Role) *AgentUpsert {
+	u.Set(agent.FieldRole, v)
+	return u
+}
+
+// UpdateRole sets the "role" field to the value that was provided on create.
+func (u *AgentUpsert) UpdateRole() *AgentUpsert {
+	u.SetExcluded(agent.FieldRole)
+	return u
+}
+
+// SetStatus sets the "status" field.
+func (u *AgentUpsert) SetStatus(v agent.Status) *AgentUpsert {
+	u.Set(agent.FieldStatus, v)
+	return u
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *AgentUpsert) UpdateStatus() *AgentUpsert {
+	u.SetExcluded(agent.FieldStatus)
+	return u
+}
+
+// SetMaxConcurrentTickets sets the "max_concurrent_tickets" field.
+func (u *AgentUpsert) SetMaxConcurrentTickets(v int) *AgentUpsert {
+	u.Set(agent.FieldMaxConcurrentTickets, v)
+	return u
+}
+
+// UpdateMaxConcurrentTickets sets the "max_concurrent_tickets" field to the value that was provided on create.
+func (u *AgentUpsert) UpdateMaxConcurrentTickets() *AgentUpsert {
+	u.SetExcluded(agent.FieldMaxConcurrentTickets)
+	return u
+}
+
+// AddMaxConcurrentTickets adds v to the "max_concurrent_tickets" field.
+func (u *AgentUpsert) AddMaxConcurrentTickets(v int) *AgentUpsert {
+	u.Add(agent.FieldMaxConcurrentTickets, v)
+	return u
+}
+
+// SetCurrentTicketCount sets the "current_ticket_count" field.
+func (u *AgentUpsert) SetCurrentTicketCount(v int) *AgentUpsert {
+	u.Set(agent.FieldCurrentTicketCount, v)
+	return u
+}
+
+// UpdateCurrentTicketCount sets the "current_ticket_count" field to the value that was provided on create.
+func (u *AgentUpsert) UpdateCurrentTicketCount() *AgentUpsert {
+	u.SetExcluded(agent.FieldCurrentTicketCount)
+	return u
+}
+
+// AddCurrentTicketCount adds v to the "current_ticket_count" field.
+func (u *AgentUpsert) AddCurrentTicketCount(v int) *AgentUpsert {
+	u.Add(agent.FieldCurrentTicketCount, v)
+	return u
+}
+
+// SetSkills sets the "skills" field.
+func (u *AgentUpsert) SetSkills(v []string) *AgentUpsert {
+	u.Set(agent.FieldSkills, v)
+	return u
+}
+
+// UpdateSkills sets the "skills" field to the value that was provided on create.
+func (u *AgentUpsert) UpdateSkills() *AgentUpsert {
+	u.SetExcluded(agent.FieldSkills)
+	return u
+}
+
+// ClearSkills clears the value of the "skills" field.
+func (u *AgentUpsert) ClearSkills() *AgentUpsert {
+	u.SetNull(agent.FieldSkills)
+	return u
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *AgentUpsert) SetMetadata(v map[string]interface{}) *AgentUpsert {
+	u.Set(agent.FieldMetadata, v)
+	return u
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *AgentUpsert) UpdateMetadata() *AgentUpsert {
+	u.SetExcluded(agent.FieldMetadata)
+	return u
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *AgentUpsert) ClearMetadata() *AgentUpsert {
+	u.SetNull(agent.FieldMetadata)
+	return u
+}
+
+// SetIsActive sets the "is_active" field.
+func (u *AgentUpsert) SetIsActive(v bool) *AgentUpsert {
+	u.Set(agent.FieldIsActive, v)
+	return u
+}
+
+// UpdateIsActive sets the "is_active" field to the value that was provided on create.
+func (u *AgentUpsert) UpdateIsActive() *AgentUpsert {
+	u.SetExcluded(agent.FieldIsActive)
+	return u
+}
+
+// SetLastActiveAt sets the "last_active_at" field.
+func (u *AgentUpsert) SetLastActiveAt(v time.Time) *AgentUpsert {
+	u.Set(agent.FieldLastActiveAt, v)
+	return u
+}
+
+// UpdateLastActiveAt sets the "last_active_at" field to the value that was provided on create.
+func (u *AgentUpsert) UpdateLastActiveAt() *AgentUpsert {
+	u.SetExcluded(agent.FieldLastActiveAt)
+	return u
+}
+
+// ClearLastActiveAt clears the value of the "last_active_at" field.
+func (u *AgentUpsert) ClearLastActiveAt() *AgentUpsert {
+	u.SetNull(agent.FieldLastActiveAt)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *AgentUpsert) SetUpdatedAt(v time.Time) *AgentUpsert {
+	u.Set(agent.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *AgentUpsert) UpdateUpdatedAt() *AgentUpsert {
+	u.SetExcluded(agent.FieldUpdatedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.Agent.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(agent.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *AgentUpsertOne) UpdateNewValues() *AgentUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(agent.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(agent.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Agent.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *AgentUpsertOne) Ignore() *AgentUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *AgentUpsertOne) DoNothing() *AgentUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the AgentCreate.OnConflict
+// documentation for more info.
+func (u *AgentUpsertOne) Update(set func(*AgentUpsert)) *AgentUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&AgentUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (u *AgentUpsertOne) SetTenantID(v uuid.UUID) *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetTenantID(v)
+	})
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *AgentUpsertOne) UpdateTenantID() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateTenantID()
+	})
+}
+
+// SetUserID sets the "user_id" field.
+func (u *AgentUpsertOne) SetUserID(v uuid.UUID) *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetUserID(v)
+	})
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *AgentUpsertOne) UpdateUserID() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateUserID()
+	})
+}
+
+// SetTeamID sets the "team_id" field.
+func (u *AgentUpsertOne) SetTeamID(v uuid.UUID) *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetTeamID(v)
+	})
+}
+
+// UpdateTeamID sets the "team_id" field to the value that was provided on create.
+func (u *AgentUpsertOne) UpdateTeamID() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateTeamID()
+	})
+}
+
+// ClearTeamID clears the value of the "team_id" field.
+func (u *AgentUpsertOne) ClearTeamID() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.ClearTeamID()
+	})
+}
+
+// SetDisplayName sets the "display_name" field.
+func (u *AgentUpsertOne) SetDisplayName(v string) *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetDisplayName(v)
+	})
+}
+
+// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
+func (u *AgentUpsertOne) UpdateDisplayName() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateDisplayName()
+	})
+}
+
+// SetEmail sets the "email" field.
+func (u *AgentUpsertOne) SetEmail(v string) *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetEmail(v)
+	})
+}
+
+// UpdateEmail sets the "email" field to the value that was provided on create.
+func (u *AgentUpsertOne) UpdateEmail() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateEmail()
+	})
+}
+
+// SetAvatarURL sets the "avatar_url" field.
+func (u *AgentUpsertOne) SetAvatarURL(v string) *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetAvatarURL(v)
+	})
+}
+
+// UpdateAvatarURL sets the "avatar_url" field to the value that was provided on create.
+func (u *AgentUpsertOne) UpdateAvatarURL() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateAvatarURL()
+	})
+}
+
+// ClearAvatarURL clears the value of the "avatar_url" field.
+func (u *AgentUpsertOne) ClearAvatarURL() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.ClearAvatarURL()
+	})
+}
+
+// SetRole sets the "role" field.
+func (u *AgentUpsertOne) SetRole(v agent.Role) *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetRole(v)
+	})
+}
+
+// UpdateRole sets the "role" field to the value that was provided on create.
+func (u *AgentUpsertOne) UpdateRole() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateRole()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *AgentUpsertOne) SetStatus(v agent.Status) *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *AgentUpsertOne) UpdateStatus() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetMaxConcurrentTickets sets the "max_concurrent_tickets" field.
+func (u *AgentUpsertOne) SetMaxConcurrentTickets(v int) *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetMaxConcurrentTickets(v)
+	})
+}
+
+// AddMaxConcurrentTickets adds v to the "max_concurrent_tickets" field.
+func (u *AgentUpsertOne) AddMaxConcurrentTickets(v int) *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.AddMaxConcurrentTickets(v)
+	})
+}
+
+// UpdateMaxConcurrentTickets sets the "max_concurrent_tickets" field to the value that was provided on create.
+func (u *AgentUpsertOne) UpdateMaxConcurrentTickets() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateMaxConcurrentTickets()
+	})
+}
+
+// SetCurrentTicketCount sets the "current_ticket_count" field.
+func (u *AgentUpsertOne) SetCurrentTicketCount(v int) *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetCurrentTicketCount(v)
+	})
+}
+
+// AddCurrentTicketCount adds v to the "current_ticket_count" field.
+func (u *AgentUpsertOne) AddCurrentTicketCount(v int) *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.AddCurrentTicketCount(v)
+	})
+}
+
+// UpdateCurrentTicketCount sets the "current_ticket_count" field to the value that was provided on create.
+func (u *AgentUpsertOne) UpdateCurrentTicketCount() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateCurrentTicketCount()
+	})
+}
+
+// SetSkills sets the "skills" field.
+func (u *AgentUpsertOne) SetSkills(v []string) *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetSkills(v)
+	})
+}
+
+// UpdateSkills sets the "skills" field to the value that was provided on create.
+func (u *AgentUpsertOne) UpdateSkills() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateSkills()
+	})
+}
+
+// ClearSkills clears the value of the "skills" field.
+func (u *AgentUpsertOne) ClearSkills() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.ClearSkills()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *AgentUpsertOne) SetMetadata(v map[string]interface{}) *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *AgentUpsertOne) UpdateMetadata() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *AgentUpsertOne) ClearMetadata() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.ClearMetadata()
+	})
+}
+
+// SetIsActive sets the "is_active" field.
+func (u *AgentUpsertOne) SetIsActive(v bool) *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetIsActive(v)
+	})
+}
+
+// UpdateIsActive sets the "is_active" field to the value that was provided on create.
+func (u *AgentUpsertOne) UpdateIsActive() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateIsActive()
+	})
+}
+
+// SetLastActiveAt sets the "last_active_at" field.
+func (u *AgentUpsertOne) SetLastActiveAt(v time.Time) *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetLastActiveAt(v)
+	})
+}
+
+// UpdateLastActiveAt sets the "last_active_at" field to the value that was provided on create.
+func (u *AgentUpsertOne) UpdateLastActiveAt() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateLastActiveAt()
+	})
+}
+
+// ClearLastActiveAt clears the value of the "last_active_at" field.
+func (u *AgentUpsertOne) ClearLastActiveAt() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.ClearLastActiveAt()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *AgentUpsertOne) SetUpdatedAt(v time.Time) *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *AgentUpsertOne) UpdateUpdatedAt() *AgentUpsertOne {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *AgentUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for AgentCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *AgentUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *AgentUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: AgentUpsertOne.ID is not supported by MySQL driver. Use AgentUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *AgentUpsertOne) IDX(ctx context.Context) uuid.UUID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // AgentCreateBulk is the builder for creating many Agent entities in bulk.
 type AgentCreateBulk struct {
 	config
 	err      error
 	builders []*AgentCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Agent entities in the database.
@@ -527,6 +1151,7 @@ func (_c *AgentCreateBulk) Save(ctx context.Context) ([]*Agent, error) {
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -573,6 +1198,382 @@ func (_c *AgentCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *AgentCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Agent.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.AgentUpsert) {
+//			SetTenantID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *AgentCreateBulk) OnConflict(opts ...sql.ConflictOption) *AgentUpsertBulk {
+	_c.conflict = opts
+	return &AgentUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Agent.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *AgentCreateBulk) OnConflictColumns(columns ...string) *AgentUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &AgentUpsertBulk{
+		create: _c,
+	}
+}
+
+// AgentUpsertBulk is the builder for "upsert"-ing
+// a bulk of Agent nodes.
+type AgentUpsertBulk struct {
+	create *AgentCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Agent.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(agent.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *AgentUpsertBulk) UpdateNewValues() *AgentUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(agent.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(agent.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Agent.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *AgentUpsertBulk) Ignore() *AgentUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *AgentUpsertBulk) DoNothing() *AgentUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the AgentCreateBulk.OnConflict
+// documentation for more info.
+func (u *AgentUpsertBulk) Update(set func(*AgentUpsert)) *AgentUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&AgentUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (u *AgentUpsertBulk) SetTenantID(v uuid.UUID) *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetTenantID(v)
+	})
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *AgentUpsertBulk) UpdateTenantID() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateTenantID()
+	})
+}
+
+// SetUserID sets the "user_id" field.
+func (u *AgentUpsertBulk) SetUserID(v uuid.UUID) *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetUserID(v)
+	})
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *AgentUpsertBulk) UpdateUserID() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateUserID()
+	})
+}
+
+// SetTeamID sets the "team_id" field.
+func (u *AgentUpsertBulk) SetTeamID(v uuid.UUID) *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetTeamID(v)
+	})
+}
+
+// UpdateTeamID sets the "team_id" field to the value that was provided on create.
+func (u *AgentUpsertBulk) UpdateTeamID() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateTeamID()
+	})
+}
+
+// ClearTeamID clears the value of the "team_id" field.
+func (u *AgentUpsertBulk) ClearTeamID() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.ClearTeamID()
+	})
+}
+
+// SetDisplayName sets the "display_name" field.
+func (u *AgentUpsertBulk) SetDisplayName(v string) *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetDisplayName(v)
+	})
+}
+
+// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
+func (u *AgentUpsertBulk) UpdateDisplayName() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateDisplayName()
+	})
+}
+
+// SetEmail sets the "email" field.
+func (u *AgentUpsertBulk) SetEmail(v string) *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetEmail(v)
+	})
+}
+
+// UpdateEmail sets the "email" field to the value that was provided on create.
+func (u *AgentUpsertBulk) UpdateEmail() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateEmail()
+	})
+}
+
+// SetAvatarURL sets the "avatar_url" field.
+func (u *AgentUpsertBulk) SetAvatarURL(v string) *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetAvatarURL(v)
+	})
+}
+
+// UpdateAvatarURL sets the "avatar_url" field to the value that was provided on create.
+func (u *AgentUpsertBulk) UpdateAvatarURL() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateAvatarURL()
+	})
+}
+
+// ClearAvatarURL clears the value of the "avatar_url" field.
+func (u *AgentUpsertBulk) ClearAvatarURL() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.ClearAvatarURL()
+	})
+}
+
+// SetRole sets the "role" field.
+func (u *AgentUpsertBulk) SetRole(v agent.Role) *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetRole(v)
+	})
+}
+
+// UpdateRole sets the "role" field to the value that was provided on create.
+func (u *AgentUpsertBulk) UpdateRole() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateRole()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *AgentUpsertBulk) SetStatus(v agent.Status) *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *AgentUpsertBulk) UpdateStatus() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetMaxConcurrentTickets sets the "max_concurrent_tickets" field.
+func (u *AgentUpsertBulk) SetMaxConcurrentTickets(v int) *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetMaxConcurrentTickets(v)
+	})
+}
+
+// AddMaxConcurrentTickets adds v to the "max_concurrent_tickets" field.
+func (u *AgentUpsertBulk) AddMaxConcurrentTickets(v int) *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.AddMaxConcurrentTickets(v)
+	})
+}
+
+// UpdateMaxConcurrentTickets sets the "max_concurrent_tickets" field to the value that was provided on create.
+func (u *AgentUpsertBulk) UpdateMaxConcurrentTickets() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateMaxConcurrentTickets()
+	})
+}
+
+// SetCurrentTicketCount sets the "current_ticket_count" field.
+func (u *AgentUpsertBulk) SetCurrentTicketCount(v int) *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetCurrentTicketCount(v)
+	})
+}
+
+// AddCurrentTicketCount adds v to the "current_ticket_count" field.
+func (u *AgentUpsertBulk) AddCurrentTicketCount(v int) *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.AddCurrentTicketCount(v)
+	})
+}
+
+// UpdateCurrentTicketCount sets the "current_ticket_count" field to the value that was provided on create.
+func (u *AgentUpsertBulk) UpdateCurrentTicketCount() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateCurrentTicketCount()
+	})
+}
+
+// SetSkills sets the "skills" field.
+func (u *AgentUpsertBulk) SetSkills(v []string) *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetSkills(v)
+	})
+}
+
+// UpdateSkills sets the "skills" field to the value that was provided on create.
+func (u *AgentUpsertBulk) UpdateSkills() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateSkills()
+	})
+}
+
+// ClearSkills clears the value of the "skills" field.
+func (u *AgentUpsertBulk) ClearSkills() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.ClearSkills()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *AgentUpsertBulk) SetMetadata(v map[string]interface{}) *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *AgentUpsertBulk) UpdateMetadata() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *AgentUpsertBulk) ClearMetadata() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.ClearMetadata()
+	})
+}
+
+// SetIsActive sets the "is_active" field.
+func (u *AgentUpsertBulk) SetIsActive(v bool) *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetIsActive(v)
+	})
+}
+
+// UpdateIsActive sets the "is_active" field to the value that was provided on create.
+func (u *AgentUpsertBulk) UpdateIsActive() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateIsActive()
+	})
+}
+
+// SetLastActiveAt sets the "last_active_at" field.
+func (u *AgentUpsertBulk) SetLastActiveAt(v time.Time) *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetLastActiveAt(v)
+	})
+}
+
+// UpdateLastActiveAt sets the "last_active_at" field to the value that was provided on create.
+func (u *AgentUpsertBulk) UpdateLastActiveAt() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateLastActiveAt()
+	})
+}
+
+// ClearLastActiveAt clears the value of the "last_active_at" field.
+func (u *AgentUpsertBulk) ClearLastActiveAt() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.ClearLastActiveAt()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *AgentUpsertBulk) SetUpdatedAt(v time.Time) *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *AgentUpsertBulk) UpdateUpdatedAt() *AgentUpsertBulk {
+	return u.Update(func(s *AgentUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *AgentUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the AgentCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for AgentCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *AgentUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

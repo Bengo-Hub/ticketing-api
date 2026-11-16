@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	pagination "github.com/Bengo-Hub/pagination"
-	authclient "github.com/Bengo-Hub/shared-auth-client"
+	"github.com/bengobox/ticketing-service/internal/platform/access"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -28,22 +28,24 @@ func NewHandler(service *Service, logger *zap.Logger) *Handler {
 // RegisterRoutes registers the identity routes.
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Route("/teams", func(teams chi.Router) {
-		teams.Post("/", h.CreateTeam)
-		teams.Get("/", h.ListTeams)
-		teams.Get("/{teamId}", h.GetTeam)
-		teams.Put("/{teamId}", h.UpdateTeam)
-		teams.Delete("/{teamId}", h.DeleteTeam)
+		teams.With(access.RequirePermission("ticketing.teams.add")).Post("/", h.CreateTeam)
+		teams.With(access.RequirePermission("ticketing.teams.view")).Get("/", h.ListTeams)
+		teams.With(access.RequirePermission("ticketing.teams.view")).Get("/{teamId}", h.GetTeam)
+		teams.With(access.RequirePermission("ticketing.teams.change")).Put("/{teamId}", h.UpdateTeam)
+		teams.With(access.RequirePermission("ticketing.teams.delete")).Delete("/{teamId}", h.DeleteTeam)
 	})
 
 	r.Route("/agents", func(agents chi.Router) {
-		agents.Post("/", h.CreateAgent)
-		agents.Get("/", h.ListAgents)
-		agents.Get("/available", h.GetAvailableAgents)
-		agents.Get("/{agentId}", h.GetAgent)
-		agents.Get("/user/{userId}", h.GetAgentByUserID)
-		agents.Put("/{agentId}", h.UpdateAgent)
-		agents.Put("/{agentId}/status", h.UpdateAgentStatus)
-		agents.Delete("/{agentId}", h.DeleteAgent)
+		agents.With(access.RequirePermission("ticketing.agents.add")).Post("/", h.CreateAgent)
+		agents.With(access.RequirePermission("ticketing.agents.view")).Get("/", h.ListAgents)
+		agents.With(access.RequirePermission("ticketing.agents.view")).Get("/available", h.GetAvailableAgents)
+		agents.With(access.RequirePermission("ticketing.agents.view")).Get("/{agentId}", h.GetAgent)
+		agents.With(access.RequirePermission("ticketing.agents.view")).Get("/user/{userId}", h.GetAgentByUserID)
+		agents.With(access.RequirePermission("ticketing.agents.change")).Put("/{agentId}", h.UpdateAgent)
+		// An agent sets their own availability; changing another agent's needs agents.change.
+		agents.With(access.RequireAnyPermission("ticketing.agents.change", "ticketing.agents.change_own")).
+			Put("/{agentId}/status", h.UpdateAgentStatus)
+		agents.With(access.RequirePermission("ticketing.agents.delete")).Delete("/{agentId}", h.DeleteAgent)
 	})
 }
 
@@ -63,15 +65,8 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 // @Security     BearerAuth
 // @Router       /{tenant}/teams [post]
 func (h *Handler) CreateTeam(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -93,15 +88,8 @@ func (h *Handler) CreateTeam(w http.ResponseWriter, r *http.Request) {
 
 // GetTeam retrieves a team by ID.
 func (h *Handler) GetTeam(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -135,15 +123,8 @@ func (h *Handler) GetTeam(w http.ResponseWriter, r *http.Request) {
 // @Security     BearerAuth
 // @Router       /{tenant}/teams [get]
 func (h *Handler) ListTeams(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -166,15 +147,8 @@ func (h *Handler) ListTeams(w http.ResponseWriter, r *http.Request) {
 
 // UpdateTeam updates a team.
 func (h *Handler) UpdateTeam(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -200,15 +174,8 @@ func (h *Handler) UpdateTeam(w http.ResponseWriter, r *http.Request) {
 
 // DeleteTeam soft-deletes a team.
 func (h *Handler) DeleteTeam(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -242,15 +209,8 @@ func (h *Handler) DeleteTeam(w http.ResponseWriter, r *http.Request) {
 // @Security     BearerAuth
 // @Router       /{tenant}/agents [post]
 func (h *Handler) CreateAgent(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -272,15 +232,8 @@ func (h *Handler) CreateAgent(w http.ResponseWriter, r *http.Request) {
 
 // GetAgent retrieves an agent by ID.
 func (h *Handler) GetAgent(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -301,15 +254,8 @@ func (h *Handler) GetAgent(w http.ResponseWriter, r *http.Request) {
 
 // GetAgentByUserID retrieves an agent by user ID.
 func (h *Handler) GetAgentByUserID(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -346,15 +292,8 @@ func (h *Handler) GetAgentByUserID(w http.ResponseWriter, r *http.Request) {
 // @Security     BearerAuth
 // @Router       /{tenant}/agents [get]
 func (h *Handler) ListAgents(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -391,15 +330,8 @@ func (h *Handler) ListAgents(w http.ResponseWriter, r *http.Request) {
 
 // UpdateAgent updates an agent.
 func (h *Handler) UpdateAgent(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -425,21 +357,19 @@ func (h *Handler) UpdateAgent(w http.ResponseWriter, r *http.Request) {
 
 // UpdateAgentStatus updates an agent's status.
 func (h *Handler) UpdateAgentStatus(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
 	agentID, err := uuid.Parse(chi.URLParam(r, "agentId"))
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "invalid agent ID")
+		return
+	}
+
+	if a := access.From(r.Context()); a == nil || (!a.Has("ticketing.agents.change") && (a.AgentID == nil || *a.AgentID != agentID)) {
+		respondError(w, http.StatusForbidden, "you can only set your own availability")
 		return
 	}
 
@@ -461,15 +391,8 @@ func (h *Handler) UpdateAgentStatus(w http.ResponseWriter, r *http.Request) {
 
 // DeleteAgent deactivates an agent.
 func (h *Handler) DeleteAgent(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -489,15 +412,8 @@ func (h *Handler) DeleteAgent(w http.ResponseWriter, r *http.Request) {
 
 // GetAvailableAgents returns agents available for assignment.
 func (h *Handler) GetAvailableAgents(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 

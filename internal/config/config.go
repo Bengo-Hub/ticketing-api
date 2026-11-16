@@ -35,6 +35,9 @@ type HTTPConfig struct {
 	WriteTimeout   time.Duration `envconfig:"HTTP_WRITE_TIMEOUT" default:"30s"`
 	IdleTimeout    time.Duration `envconfig:"HTTP_IDLE_TIMEOUT" default:"60s"`
 	AllowedOrigins []string      `envconfig:"HTTP_ALLOWED_ORIGINS" default:"https://accounts.codevertexafrica.com,https://ordering.codevertexafrica.com,https://pos.codevertexafrica.com"`
+	// MetricsPort serves /metrics on its own listener, the port the devops values point
+	// Prometheus at (9090), so metrics never go out through the ingress.
+	MetricsPort int `envconfig:"METRICS_PORT" default:"9090"`
 }
 
 // PostgresConfig holds database configuration.
@@ -74,7 +77,7 @@ type AuthConfig struct {
 	Audience            string        `envconfig:"AUTH_AUDIENCE" default:"codevertex"`
 	JWKSCacheTTL        time.Duration `envconfig:"AUTH_JWKS_CACHE_TTL" default:"1h"`
 	JWKSRefreshInterval time.Duration `envconfig:"AUTH_JWKS_REFRESH_INTERVAL" default:"15m"`
-	EnableAPIKeyAuth    bool          `envconfig:"AUTH_ENABLE_API_KEY" default:"false"`
+	EnableAPIKeyAuth    bool          `envconfig:"AUTH_ENABLE_API_KEY" default:"true"`
 	InternalServiceKey  string        `envconfig:"INTERNAL_SERVICE_KEY" default:""`
 }
 

@@ -45,6 +45,18 @@ func (f OutboxEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value,
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.OutboxEventMutation", m)
 }
 
+// The RolePermissionFunc type is an adapter to allow the use of ordinary
+// function as RolePermission mutator.
+type RolePermissionFunc func(context.Context, *ent.RolePermissionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RolePermissionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.RolePermissionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RolePermissionMutation", m)
+}
+
 // The RoutingRuleFunc type is an adapter to allow the use of ordinary
 // function as RoutingRule mutator.
 type RoutingRuleFunc func(context.Context, *ent.RoutingRuleMutation) (ent.Value, error)
@@ -127,6 +139,66 @@ func (f TicketCommentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Valu
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketCommentMutation", m)
+}
+
+// The TicketSequenceFunc type is an adapter to allow the use of ordinary
+// function as TicketSequence mutator.
+type TicketSequenceFunc func(context.Context, *ent.TicketSequenceMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TicketSequenceFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TicketSequenceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketSequenceMutation", m)
+}
+
+// The TicketingPermissionFunc type is an adapter to allow the use of ordinary
+// function as TicketingPermission mutator.
+type TicketingPermissionFunc func(context.Context, *ent.TicketingPermissionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TicketingPermissionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TicketingPermissionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketingPermissionMutation", m)
+}
+
+// The TicketingRoleFunc type is an adapter to allow the use of ordinary
+// function as TicketingRole mutator.
+type TicketingRoleFunc func(context.Context, *ent.TicketingRoleMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TicketingRoleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TicketingRoleMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketingRoleMutation", m)
+}
+
+// The TicketingUserFunc type is an adapter to allow the use of ordinary
+// function as TicketingUser mutator.
+type TicketingUserFunc func(context.Context, *ent.TicketingUserMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TicketingUserFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TicketingUserMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketingUserMutation", m)
+}
+
+// The UserRoleAssignmentFunc type is an adapter to allow the use of ordinary
+// function as UserRoleAssignment mutator.
+type UserRoleAssignmentFunc func(context.Context, *ent.UserRoleAssignmentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f UserRoleAssignmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.UserRoleAssignmentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserRoleAssignmentMutation", m)
 }
 
 // Condition is a hook condition function.

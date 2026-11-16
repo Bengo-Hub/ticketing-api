@@ -22,7 +22,7 @@ type Agent struct {
 	ID uuid.UUID `json:"id,omitempty"`
 	// Reference to tenant
 	TenantID uuid.UUID `json:"tenant_id,omitempty"`
-	// Reference to auth-service user
+	// auth-api user id, unique per tenant
 	UserID uuid.UUID `json:"user_id,omitempty"`
 	// Primary team assignment
 	TeamID *uuid.UUID `json:"team_id,omitempty"`

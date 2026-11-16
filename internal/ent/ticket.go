@@ -23,7 +23,7 @@ type Ticket struct {
 	ID uuid.UUID `json:"id,omitempty"`
 	// Reference to tenant
 	TenantID uuid.UUID `json:"tenant_id,omitempty"`
-	// Human-readable ticket number
+	// Human-readable ticket number, unique within the tenant
 	TicketNumber string `json:"ticket_number,omitempty"`
 	// Customer who created/owns the ticket
 	CustomerID uuid.UUID `json:"customer_id,omitempty"`

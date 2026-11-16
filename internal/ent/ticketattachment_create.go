@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/bengobox/ticketing-service/internal/ent/ticket"
@@ -20,6 +22,13 @@ type TicketAttachmentCreate struct {
 	config
 	mutation *TicketAttachmentMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (_c *TicketAttachmentCreate) SetTenantID(v uuid.UUID) *TicketAttachmentCreate {
+	_c.mutation.SetTenantID(v)
+	return _c
 }
 
 // SetTicketID sets the "ticket_id" field.
@@ -200,6 +209,9 @@ func (_c *TicketAttachmentCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *TicketAttachmentCreate) check() error {
+	if _, ok := _c.mutation.TenantID(); !ok {
+		return &ValidationError{Name: "tenant_id", err: errors.New(`ent: missing required field "TicketAttachment.tenant_id"`)}
+	}
 	if _, ok := _c.mutation.TicketID(); !ok {
 		return &ValidationError{Name: "ticket_id", err: errors.New(`ent: missing required field "TicketAttachment.ticket_id"`)}
 	}
@@ -275,9 +287,14 @@ func (_c *TicketAttachmentCreate) createSpec() (*TicketAttachment, *sqlgraph.Cre
 		_node = &TicketAttachment{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(ticketattachment.Table, sqlgraph.NewFieldSpec(ticketattachment.FieldID, field.TypeUUID))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
+	}
+	if value, ok := _c.mutation.TenantID(); ok {
+		_spec.SetField(ticketattachment.FieldTenantID, field.TypeUUID, value)
+		_node.TenantID = value
 	}
 	if value, ok := _c.mutation.CommentID(); ok {
 		_spec.SetField(ticketattachment.FieldCommentID, field.TypeUUID, value)
@@ -343,11 +360,540 @@ func (_c *TicketAttachmentCreate) createSpec() (*TicketAttachment, *sqlgraph.Cre
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.TicketAttachment.Create().
+//		SetTenantID(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.TicketAttachmentUpsert) {
+//			SetTenantID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *TicketAttachmentCreate) OnConflict(opts ...sql.ConflictOption) *TicketAttachmentUpsertOne {
+	_c.conflict = opts
+	return &TicketAttachmentUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.TicketAttachment.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *TicketAttachmentCreate) OnConflictColumns(columns ...string) *TicketAttachmentUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &TicketAttachmentUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// TicketAttachmentUpsertOne is the builder for "upsert"-ing
+	//  one TicketAttachment node.
+	TicketAttachmentUpsertOne struct {
+		create *TicketAttachmentCreate
+	}
+
+	// TicketAttachmentUpsert is the "OnConflict" setter.
+	TicketAttachmentUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetTenantID sets the "tenant_id" field.
+func (u *TicketAttachmentUpsert) SetTenantID(v uuid.UUID) *TicketAttachmentUpsert {
+	u.Set(ticketattachment.FieldTenantID, v)
+	return u
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *TicketAttachmentUpsert) UpdateTenantID() *TicketAttachmentUpsert {
+	u.SetExcluded(ticketattachment.FieldTenantID)
+	return u
+}
+
+// SetTicketID sets the "ticket_id" field.
+func (u *TicketAttachmentUpsert) SetTicketID(v uuid.UUID) *TicketAttachmentUpsert {
+	u.Set(ticketattachment.FieldTicketID, v)
+	return u
+}
+
+// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
+func (u *TicketAttachmentUpsert) UpdateTicketID() *TicketAttachmentUpsert {
+	u.SetExcluded(ticketattachment.FieldTicketID)
+	return u
+}
+
+// SetCommentID sets the "comment_id" field.
+func (u *TicketAttachmentUpsert) SetCommentID(v uuid.UUID) *TicketAttachmentUpsert {
+	u.Set(ticketattachment.FieldCommentID, v)
+	return u
+}
+
+// UpdateCommentID sets the "comment_id" field to the value that was provided on create.
+func (u *TicketAttachmentUpsert) UpdateCommentID() *TicketAttachmentUpsert {
+	u.SetExcluded(ticketattachment.FieldCommentID)
+	return u
+}
+
+// ClearCommentID clears the value of the "comment_id" field.
+func (u *TicketAttachmentUpsert) ClearCommentID() *TicketAttachmentUpsert {
+	u.SetNull(ticketattachment.FieldCommentID)
+	return u
+}
+
+// SetUploadedBy sets the "uploaded_by" field.
+func (u *TicketAttachmentUpsert) SetUploadedBy(v uuid.UUID) *TicketAttachmentUpsert {
+	u.Set(ticketattachment.FieldUploadedBy, v)
+	return u
+}
+
+// UpdateUploadedBy sets the "uploaded_by" field to the value that was provided on create.
+func (u *TicketAttachmentUpsert) UpdateUploadedBy() *TicketAttachmentUpsert {
+	u.SetExcluded(ticketattachment.FieldUploadedBy)
+	return u
+}
+
+// SetFilename sets the "filename" field.
+func (u *TicketAttachmentUpsert) SetFilename(v string) *TicketAttachmentUpsert {
+	u.Set(ticketattachment.FieldFilename, v)
+	return u
+}
+
+// UpdateFilename sets the "filename" field to the value that was provided on create.
+func (u *TicketAttachmentUpsert) UpdateFilename() *TicketAttachmentUpsert {
+	u.SetExcluded(ticketattachment.FieldFilename)
+	return u
+}
+
+// SetStorageKey sets the "storage_key" field.
+func (u *TicketAttachmentUpsert) SetStorageKey(v string) *TicketAttachmentUpsert {
+	u.Set(ticketattachment.FieldStorageKey, v)
+	return u
+}
+
+// UpdateStorageKey sets the "storage_key" field to the value that was provided on create.
+func (u *TicketAttachmentUpsert) UpdateStorageKey() *TicketAttachmentUpsert {
+	u.SetExcluded(ticketattachment.FieldStorageKey)
+	return u
+}
+
+// SetContentType sets the "content_type" field.
+func (u *TicketAttachmentUpsert) SetContentType(v string) *TicketAttachmentUpsert {
+	u.Set(ticketattachment.FieldContentType, v)
+	return u
+}
+
+// UpdateContentType sets the "content_type" field to the value that was provided on create.
+func (u *TicketAttachmentUpsert) UpdateContentType() *TicketAttachmentUpsert {
+	u.SetExcluded(ticketattachment.FieldContentType)
+	return u
+}
+
+// SetFileSize sets the "file_size" field.
+func (u *TicketAttachmentUpsert) SetFileSize(v int64) *TicketAttachmentUpsert {
+	u.Set(ticketattachment.FieldFileSize, v)
+	return u
+}
+
+// UpdateFileSize sets the "file_size" field to the value that was provided on create.
+func (u *TicketAttachmentUpsert) UpdateFileSize() *TicketAttachmentUpsert {
+	u.SetExcluded(ticketattachment.FieldFileSize)
+	return u
+}
+
+// AddFileSize adds v to the "file_size" field.
+func (u *TicketAttachmentUpsert) AddFileSize(v int64) *TicketAttachmentUpsert {
+	u.Add(ticketattachment.FieldFileSize, v)
+	return u
+}
+
+// SetURL sets the "url" field.
+func (u *TicketAttachmentUpsert) SetURL(v string) *TicketAttachmentUpsert {
+	u.Set(ticketattachment.FieldURL, v)
+	return u
+}
+
+// UpdateURL sets the "url" field to the value that was provided on create.
+func (u *TicketAttachmentUpsert) UpdateURL() *TicketAttachmentUpsert {
+	u.SetExcluded(ticketattachment.FieldURL)
+	return u
+}
+
+// ClearURL clears the value of the "url" field.
+func (u *TicketAttachmentUpsert) ClearURL() *TicketAttachmentUpsert {
+	u.SetNull(ticketattachment.FieldURL)
+	return u
+}
+
+// SetURLExpiresAt sets the "url_expires_at" field.
+func (u *TicketAttachmentUpsert) SetURLExpiresAt(v time.Time) *TicketAttachmentUpsert {
+	u.Set(ticketattachment.FieldURLExpiresAt, v)
+	return u
+}
+
+// UpdateURLExpiresAt sets the "url_expires_at" field to the value that was provided on create.
+func (u *TicketAttachmentUpsert) UpdateURLExpiresAt() *TicketAttachmentUpsert {
+	u.SetExcluded(ticketattachment.FieldURLExpiresAt)
+	return u
+}
+
+// ClearURLExpiresAt clears the value of the "url_expires_at" field.
+func (u *TicketAttachmentUpsert) ClearURLExpiresAt() *TicketAttachmentUpsert {
+	u.SetNull(ticketattachment.FieldURLExpiresAt)
+	return u
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *TicketAttachmentUpsert) SetMetadata(v map[string]interface{}) *TicketAttachmentUpsert {
+	u.Set(ticketattachment.FieldMetadata, v)
+	return u
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *TicketAttachmentUpsert) UpdateMetadata() *TicketAttachmentUpsert {
+	u.SetExcluded(ticketattachment.FieldMetadata)
+	return u
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *TicketAttachmentUpsert) ClearMetadata() *TicketAttachmentUpsert {
+	u.SetNull(ticketattachment.FieldMetadata)
+	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *TicketAttachmentUpsert) SetDeletedAt(v time.Time) *TicketAttachmentUpsert {
+	u.Set(ticketattachment.FieldDeletedAt, v)
+	return u
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *TicketAttachmentUpsert) UpdateDeletedAt() *TicketAttachmentUpsert {
+	u.SetExcluded(ticketattachment.FieldDeletedAt)
+	return u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *TicketAttachmentUpsert) ClearDeletedAt() *TicketAttachmentUpsert {
+	u.SetNull(ticketattachment.FieldDeletedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.TicketAttachment.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(ticketattachment.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *TicketAttachmentUpsertOne) UpdateNewValues() *TicketAttachmentUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(ticketattachment.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(ticketattachment.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.TicketAttachment.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *TicketAttachmentUpsertOne) Ignore() *TicketAttachmentUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *TicketAttachmentUpsertOne) DoNothing() *TicketAttachmentUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the TicketAttachmentCreate.OnConflict
+// documentation for more info.
+func (u *TicketAttachmentUpsertOne) Update(set func(*TicketAttachmentUpsert)) *TicketAttachmentUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&TicketAttachmentUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (u *TicketAttachmentUpsertOne) SetTenantID(v uuid.UUID) *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetTenantID(v)
+	})
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertOne) UpdateTenantID() *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateTenantID()
+	})
+}
+
+// SetTicketID sets the "ticket_id" field.
+func (u *TicketAttachmentUpsertOne) SetTicketID(v uuid.UUID) *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetTicketID(v)
+	})
+}
+
+// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertOne) UpdateTicketID() *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateTicketID()
+	})
+}
+
+// SetCommentID sets the "comment_id" field.
+func (u *TicketAttachmentUpsertOne) SetCommentID(v uuid.UUID) *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetCommentID(v)
+	})
+}
+
+// UpdateCommentID sets the "comment_id" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertOne) UpdateCommentID() *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateCommentID()
+	})
+}
+
+// ClearCommentID clears the value of the "comment_id" field.
+func (u *TicketAttachmentUpsertOne) ClearCommentID() *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.ClearCommentID()
+	})
+}
+
+// SetUploadedBy sets the "uploaded_by" field.
+func (u *TicketAttachmentUpsertOne) SetUploadedBy(v uuid.UUID) *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetUploadedBy(v)
+	})
+}
+
+// UpdateUploadedBy sets the "uploaded_by" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertOne) UpdateUploadedBy() *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateUploadedBy()
+	})
+}
+
+// SetFilename sets the "filename" field.
+func (u *TicketAttachmentUpsertOne) SetFilename(v string) *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetFilename(v)
+	})
+}
+
+// UpdateFilename sets the "filename" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertOne) UpdateFilename() *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateFilename()
+	})
+}
+
+// SetStorageKey sets the "storage_key" field.
+func (u *TicketAttachmentUpsertOne) SetStorageKey(v string) *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetStorageKey(v)
+	})
+}
+
+// UpdateStorageKey sets the "storage_key" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertOne) UpdateStorageKey() *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateStorageKey()
+	})
+}
+
+// SetContentType sets the "content_type" field.
+func (u *TicketAttachmentUpsertOne) SetContentType(v string) *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetContentType(v)
+	})
+}
+
+// UpdateContentType sets the "content_type" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertOne) UpdateContentType() *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateContentType()
+	})
+}
+
+// SetFileSize sets the "file_size" field.
+func (u *TicketAttachmentUpsertOne) SetFileSize(v int64) *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetFileSize(v)
+	})
+}
+
+// AddFileSize adds v to the "file_size" field.
+func (u *TicketAttachmentUpsertOne) AddFileSize(v int64) *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.AddFileSize(v)
+	})
+}
+
+// UpdateFileSize sets the "file_size" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertOne) UpdateFileSize() *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateFileSize()
+	})
+}
+
+// SetURL sets the "url" field.
+func (u *TicketAttachmentUpsertOne) SetURL(v string) *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetURL(v)
+	})
+}
+
+// UpdateURL sets the "url" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertOne) UpdateURL() *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateURL()
+	})
+}
+
+// ClearURL clears the value of the "url" field.
+func (u *TicketAttachmentUpsertOne) ClearURL() *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.ClearURL()
+	})
+}
+
+// SetURLExpiresAt sets the "url_expires_at" field.
+func (u *TicketAttachmentUpsertOne) SetURLExpiresAt(v time.Time) *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetURLExpiresAt(v)
+	})
+}
+
+// UpdateURLExpiresAt sets the "url_expires_at" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertOne) UpdateURLExpiresAt() *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateURLExpiresAt()
+	})
+}
+
+// ClearURLExpiresAt clears the value of the "url_expires_at" field.
+func (u *TicketAttachmentUpsertOne) ClearURLExpiresAt() *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.ClearURLExpiresAt()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *TicketAttachmentUpsertOne) SetMetadata(v map[string]interface{}) *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertOne) UpdateMetadata() *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *TicketAttachmentUpsertOne) ClearMetadata() *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.ClearMetadata()
+	})
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *TicketAttachmentUpsertOne) SetDeletedAt(v time.Time) *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertOne) UpdateDeletedAt() *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *TicketAttachmentUpsertOne) ClearDeletedAt() *TicketAttachmentUpsertOne {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.ClearDeletedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *TicketAttachmentUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for TicketAttachmentCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *TicketAttachmentUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *TicketAttachmentUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: TicketAttachmentUpsertOne.ID is not supported by MySQL driver. Use TicketAttachmentUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *TicketAttachmentUpsertOne) IDX(ctx context.Context) uuid.UUID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // TicketAttachmentCreateBulk is the builder for creating many TicketAttachment entities in bulk.
 type TicketAttachmentCreateBulk struct {
 	config
 	err      error
 	builders []*TicketAttachmentCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the TicketAttachment entities in the database.
@@ -377,6 +923,7 @@ func (_c *TicketAttachmentCreateBulk) Save(ctx context.Context) ([]*TicketAttach
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -423,6 +970,333 @@ func (_c *TicketAttachmentCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *TicketAttachmentCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.TicketAttachment.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.TicketAttachmentUpsert) {
+//			SetTenantID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *TicketAttachmentCreateBulk) OnConflict(opts ...sql.ConflictOption) *TicketAttachmentUpsertBulk {
+	_c.conflict = opts
+	return &TicketAttachmentUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.TicketAttachment.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *TicketAttachmentCreateBulk) OnConflictColumns(columns ...string) *TicketAttachmentUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &TicketAttachmentUpsertBulk{
+		create: _c,
+	}
+}
+
+// TicketAttachmentUpsertBulk is the builder for "upsert"-ing
+// a bulk of TicketAttachment nodes.
+type TicketAttachmentUpsertBulk struct {
+	create *TicketAttachmentCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.TicketAttachment.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(ticketattachment.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *TicketAttachmentUpsertBulk) UpdateNewValues() *TicketAttachmentUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(ticketattachment.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(ticketattachment.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.TicketAttachment.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *TicketAttachmentUpsertBulk) Ignore() *TicketAttachmentUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *TicketAttachmentUpsertBulk) DoNothing() *TicketAttachmentUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the TicketAttachmentCreateBulk.OnConflict
+// documentation for more info.
+func (u *TicketAttachmentUpsertBulk) Update(set func(*TicketAttachmentUpsert)) *TicketAttachmentUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&TicketAttachmentUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (u *TicketAttachmentUpsertBulk) SetTenantID(v uuid.UUID) *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetTenantID(v)
+	})
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertBulk) UpdateTenantID() *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateTenantID()
+	})
+}
+
+// SetTicketID sets the "ticket_id" field.
+func (u *TicketAttachmentUpsertBulk) SetTicketID(v uuid.UUID) *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetTicketID(v)
+	})
+}
+
+// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertBulk) UpdateTicketID() *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateTicketID()
+	})
+}
+
+// SetCommentID sets the "comment_id" field.
+func (u *TicketAttachmentUpsertBulk) SetCommentID(v uuid.UUID) *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetCommentID(v)
+	})
+}
+
+// UpdateCommentID sets the "comment_id" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertBulk) UpdateCommentID() *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateCommentID()
+	})
+}
+
+// ClearCommentID clears the value of the "comment_id" field.
+func (u *TicketAttachmentUpsertBulk) ClearCommentID() *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.ClearCommentID()
+	})
+}
+
+// SetUploadedBy sets the "uploaded_by" field.
+func (u *TicketAttachmentUpsertBulk) SetUploadedBy(v uuid.UUID) *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetUploadedBy(v)
+	})
+}
+
+// UpdateUploadedBy sets the "uploaded_by" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertBulk) UpdateUploadedBy() *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateUploadedBy()
+	})
+}
+
+// SetFilename sets the "filename" field.
+func (u *TicketAttachmentUpsertBulk) SetFilename(v string) *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetFilename(v)
+	})
+}
+
+// UpdateFilename sets the "filename" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertBulk) UpdateFilename() *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateFilename()
+	})
+}
+
+// SetStorageKey sets the "storage_key" field.
+func (u *TicketAttachmentUpsertBulk) SetStorageKey(v string) *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetStorageKey(v)
+	})
+}
+
+// UpdateStorageKey sets the "storage_key" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertBulk) UpdateStorageKey() *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateStorageKey()
+	})
+}
+
+// SetContentType sets the "content_type" field.
+func (u *TicketAttachmentUpsertBulk) SetContentType(v string) *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetContentType(v)
+	})
+}
+
+// UpdateContentType sets the "content_type" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertBulk) UpdateContentType() *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateContentType()
+	})
+}
+
+// SetFileSize sets the "file_size" field.
+func (u *TicketAttachmentUpsertBulk) SetFileSize(v int64) *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetFileSize(v)
+	})
+}
+
+// AddFileSize adds v to the "file_size" field.
+func (u *TicketAttachmentUpsertBulk) AddFileSize(v int64) *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.AddFileSize(v)
+	})
+}
+
+// UpdateFileSize sets the "file_size" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertBulk) UpdateFileSize() *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateFileSize()
+	})
+}
+
+// SetURL sets the "url" field.
+func (u *TicketAttachmentUpsertBulk) SetURL(v string) *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetURL(v)
+	})
+}
+
+// UpdateURL sets the "url" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertBulk) UpdateURL() *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateURL()
+	})
+}
+
+// ClearURL clears the value of the "url" field.
+func (u *TicketAttachmentUpsertBulk) ClearURL() *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.ClearURL()
+	})
+}
+
+// SetURLExpiresAt sets the "url_expires_at" field.
+func (u *TicketAttachmentUpsertBulk) SetURLExpiresAt(v time.Time) *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetURLExpiresAt(v)
+	})
+}
+
+// UpdateURLExpiresAt sets the "url_expires_at" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertBulk) UpdateURLExpiresAt() *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateURLExpiresAt()
+	})
+}
+
+// ClearURLExpiresAt clears the value of the "url_expires_at" field.
+func (u *TicketAttachmentUpsertBulk) ClearURLExpiresAt() *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.ClearURLExpiresAt()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *TicketAttachmentUpsertBulk) SetMetadata(v map[string]interface{}) *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertBulk) UpdateMetadata() *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *TicketAttachmentUpsertBulk) ClearMetadata() *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.ClearMetadata()
+	})
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *TicketAttachmentUpsertBulk) SetDeletedAt(v time.Time) *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *TicketAttachmentUpsertBulk) UpdateDeletedAt() *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *TicketAttachmentUpsertBulk) ClearDeletedAt() *TicketAttachmentUpsertBulk {
+	return u.Update(func(s *TicketAttachmentUpsert) {
+		s.ClearDeletedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *TicketAttachmentUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the TicketAttachmentCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for TicketAttachmentCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *TicketAttachmentUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

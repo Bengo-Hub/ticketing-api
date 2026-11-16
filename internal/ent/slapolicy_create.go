@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
@@ -19,6 +21,7 @@ type SLAPolicyCreate struct {
 	config
 	mutation *SLAPolicyMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetTenantID sets the "tenant_id" field.
@@ -330,6 +333,7 @@ func (_c *SLAPolicyCreate) createSpec() (*SLAPolicy, *sqlgraph.CreateSpec) {
 		_node = &SLAPolicy{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(slapolicy.Table, sqlgraph.NewFieldSpec(slapolicy.FieldID, field.TypeUUID))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
@@ -397,11 +401,605 @@ func (_c *SLAPolicyCreate) createSpec() (*SLAPolicy, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.SLAPolicy.Create().
+//		SetTenantID(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.SLAPolicyUpsert) {
+//			SetTenantID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *SLAPolicyCreate) OnConflict(opts ...sql.ConflictOption) *SLAPolicyUpsertOne {
+	_c.conflict = opts
+	return &SLAPolicyUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.SLAPolicy.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *SLAPolicyCreate) OnConflictColumns(columns ...string) *SLAPolicyUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &SLAPolicyUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// SLAPolicyUpsertOne is the builder for "upsert"-ing
+	//  one SLAPolicy node.
+	SLAPolicyUpsertOne struct {
+		create *SLAPolicyCreate
+	}
+
+	// SLAPolicyUpsert is the "OnConflict" setter.
+	SLAPolicyUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetTenantID sets the "tenant_id" field.
+func (u *SLAPolicyUpsert) SetTenantID(v uuid.UUID) *SLAPolicyUpsert {
+	u.Set(slapolicy.FieldTenantID, v)
+	return u
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *SLAPolicyUpsert) UpdateTenantID() *SLAPolicyUpsert {
+	u.SetExcluded(slapolicy.FieldTenantID)
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *SLAPolicyUpsert) SetName(v string) *SLAPolicyUpsert {
+	u.Set(slapolicy.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *SLAPolicyUpsert) UpdateName() *SLAPolicyUpsert {
+	u.SetExcluded(slapolicy.FieldName)
+	return u
+}
+
+// SetDescription sets the "description" field.
+func (u *SLAPolicyUpsert) SetDescription(v string) *SLAPolicyUpsert {
+	u.Set(slapolicy.FieldDescription, v)
+	return u
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *SLAPolicyUpsert) UpdateDescription() *SLAPolicyUpsert {
+	u.SetExcluded(slapolicy.FieldDescription)
+	return u
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *SLAPolicyUpsert) ClearDescription() *SLAPolicyUpsert {
+	u.SetNull(slapolicy.FieldDescription)
+	return u
+}
+
+// SetPriority sets the "priority" field.
+func (u *SLAPolicyUpsert) SetPriority(v slapolicy.Priority) *SLAPolicyUpsert {
+	u.Set(slapolicy.FieldPriority, v)
+	return u
+}
+
+// UpdatePriority sets the "priority" field to the value that was provided on create.
+func (u *SLAPolicyUpsert) UpdatePriority() *SLAPolicyUpsert {
+	u.SetExcluded(slapolicy.FieldPriority)
+	return u
+}
+
+// SetCategoryID sets the "category_id" field.
+func (u *SLAPolicyUpsert) SetCategoryID(v uuid.UUID) *SLAPolicyUpsert {
+	u.Set(slapolicy.FieldCategoryID, v)
+	return u
+}
+
+// UpdateCategoryID sets the "category_id" field to the value that was provided on create.
+func (u *SLAPolicyUpsert) UpdateCategoryID() *SLAPolicyUpsert {
+	u.SetExcluded(slapolicy.FieldCategoryID)
+	return u
+}
+
+// ClearCategoryID clears the value of the "category_id" field.
+func (u *SLAPolicyUpsert) ClearCategoryID() *SLAPolicyUpsert {
+	u.SetNull(slapolicy.FieldCategoryID)
+	return u
+}
+
+// SetFirstResponseMinutes sets the "first_response_minutes" field.
+func (u *SLAPolicyUpsert) SetFirstResponseMinutes(v int) *SLAPolicyUpsert {
+	u.Set(slapolicy.FieldFirstResponseMinutes, v)
+	return u
+}
+
+// UpdateFirstResponseMinutes sets the "first_response_minutes" field to the value that was provided on create.
+func (u *SLAPolicyUpsert) UpdateFirstResponseMinutes() *SLAPolicyUpsert {
+	u.SetExcluded(slapolicy.FieldFirstResponseMinutes)
+	return u
+}
+
+// AddFirstResponseMinutes adds v to the "first_response_minutes" field.
+func (u *SLAPolicyUpsert) AddFirstResponseMinutes(v int) *SLAPolicyUpsert {
+	u.Add(slapolicy.FieldFirstResponseMinutes, v)
+	return u
+}
+
+// SetFirstResponseBusinessHours sets the "first_response_business_hours" field.
+func (u *SLAPolicyUpsert) SetFirstResponseBusinessHours(v bool) *SLAPolicyUpsert {
+	u.Set(slapolicy.FieldFirstResponseBusinessHours, v)
+	return u
+}
+
+// UpdateFirstResponseBusinessHours sets the "first_response_business_hours" field to the value that was provided on create.
+func (u *SLAPolicyUpsert) UpdateFirstResponseBusinessHours() *SLAPolicyUpsert {
+	u.SetExcluded(slapolicy.FieldFirstResponseBusinessHours)
+	return u
+}
+
+// SetResolutionMinutes sets the "resolution_minutes" field.
+func (u *SLAPolicyUpsert) SetResolutionMinutes(v int) *SLAPolicyUpsert {
+	u.Set(slapolicy.FieldResolutionMinutes, v)
+	return u
+}
+
+// UpdateResolutionMinutes sets the "resolution_minutes" field to the value that was provided on create.
+func (u *SLAPolicyUpsert) UpdateResolutionMinutes() *SLAPolicyUpsert {
+	u.SetExcluded(slapolicy.FieldResolutionMinutes)
+	return u
+}
+
+// AddResolutionMinutes adds v to the "resolution_minutes" field.
+func (u *SLAPolicyUpsert) AddResolutionMinutes(v int) *SLAPolicyUpsert {
+	u.Add(slapolicy.FieldResolutionMinutes, v)
+	return u
+}
+
+// SetResolutionBusinessHours sets the "resolution_business_hours" field.
+func (u *SLAPolicyUpsert) SetResolutionBusinessHours(v bool) *SLAPolicyUpsert {
+	u.Set(slapolicy.FieldResolutionBusinessHours, v)
+	return u
+}
+
+// UpdateResolutionBusinessHours sets the "resolution_business_hours" field to the value that was provided on create.
+func (u *SLAPolicyUpsert) UpdateResolutionBusinessHours() *SLAPolicyUpsert {
+	u.SetExcluded(slapolicy.FieldResolutionBusinessHours)
+	return u
+}
+
+// SetIsActive sets the "is_active" field.
+func (u *SLAPolicyUpsert) SetIsActive(v bool) *SLAPolicyUpsert {
+	u.Set(slapolicy.FieldIsActive, v)
+	return u
+}
+
+// UpdateIsActive sets the "is_active" field to the value that was provided on create.
+func (u *SLAPolicyUpsert) UpdateIsActive() *SLAPolicyUpsert {
+	u.SetExcluded(slapolicy.FieldIsActive)
+	return u
+}
+
+// SetSortOrder sets the "sort_order" field.
+func (u *SLAPolicyUpsert) SetSortOrder(v int) *SLAPolicyUpsert {
+	u.Set(slapolicy.FieldSortOrder, v)
+	return u
+}
+
+// UpdateSortOrder sets the "sort_order" field to the value that was provided on create.
+func (u *SLAPolicyUpsert) UpdateSortOrder() *SLAPolicyUpsert {
+	u.SetExcluded(slapolicy.FieldSortOrder)
+	return u
+}
+
+// AddSortOrder adds v to the "sort_order" field.
+func (u *SLAPolicyUpsert) AddSortOrder(v int) *SLAPolicyUpsert {
+	u.Add(slapolicy.FieldSortOrder, v)
+	return u
+}
+
+// SetBusinessHours sets the "business_hours" field.
+func (u *SLAPolicyUpsert) SetBusinessHours(v map[string]interface{}) *SLAPolicyUpsert {
+	u.Set(slapolicy.FieldBusinessHours, v)
+	return u
+}
+
+// UpdateBusinessHours sets the "business_hours" field to the value that was provided on create.
+func (u *SLAPolicyUpsert) UpdateBusinessHours() *SLAPolicyUpsert {
+	u.SetExcluded(slapolicy.FieldBusinessHours)
+	return u
+}
+
+// ClearBusinessHours clears the value of the "business_hours" field.
+func (u *SLAPolicyUpsert) ClearBusinessHours() *SLAPolicyUpsert {
+	u.SetNull(slapolicy.FieldBusinessHours)
+	return u
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *SLAPolicyUpsert) SetMetadata(v map[string]interface{}) *SLAPolicyUpsert {
+	u.Set(slapolicy.FieldMetadata, v)
+	return u
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *SLAPolicyUpsert) UpdateMetadata() *SLAPolicyUpsert {
+	u.SetExcluded(slapolicy.FieldMetadata)
+	return u
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *SLAPolicyUpsert) ClearMetadata() *SLAPolicyUpsert {
+	u.SetNull(slapolicy.FieldMetadata)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SLAPolicyUpsert) SetUpdatedAt(v time.Time) *SLAPolicyUpsert {
+	u.Set(slapolicy.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SLAPolicyUpsert) UpdateUpdatedAt() *SLAPolicyUpsert {
+	u.SetExcluded(slapolicy.FieldUpdatedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.SLAPolicy.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(slapolicy.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *SLAPolicyUpsertOne) UpdateNewValues() *SLAPolicyUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(slapolicy.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(slapolicy.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.SLAPolicy.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *SLAPolicyUpsertOne) Ignore() *SLAPolicyUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *SLAPolicyUpsertOne) DoNothing() *SLAPolicyUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the SLAPolicyCreate.OnConflict
+// documentation for more info.
+func (u *SLAPolicyUpsertOne) Update(set func(*SLAPolicyUpsert)) *SLAPolicyUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&SLAPolicyUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (u *SLAPolicyUpsertOne) SetTenantID(v uuid.UUID) *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetTenantID(v)
+	})
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *SLAPolicyUpsertOne) UpdateTenantID() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateTenantID()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *SLAPolicyUpsertOne) SetName(v string) *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *SLAPolicyUpsertOne) UpdateName() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *SLAPolicyUpsertOne) SetDescription(v string) *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *SLAPolicyUpsertOne) UpdateDescription() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *SLAPolicyUpsertOne) ClearDescription() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.ClearDescription()
+	})
+}
+
+// SetPriority sets the "priority" field.
+func (u *SLAPolicyUpsertOne) SetPriority(v slapolicy.Priority) *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetPriority(v)
+	})
+}
+
+// UpdatePriority sets the "priority" field to the value that was provided on create.
+func (u *SLAPolicyUpsertOne) UpdatePriority() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdatePriority()
+	})
+}
+
+// SetCategoryID sets the "category_id" field.
+func (u *SLAPolicyUpsertOne) SetCategoryID(v uuid.UUID) *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetCategoryID(v)
+	})
+}
+
+// UpdateCategoryID sets the "category_id" field to the value that was provided on create.
+func (u *SLAPolicyUpsertOne) UpdateCategoryID() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateCategoryID()
+	})
+}
+
+// ClearCategoryID clears the value of the "category_id" field.
+func (u *SLAPolicyUpsertOne) ClearCategoryID() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.ClearCategoryID()
+	})
+}
+
+// SetFirstResponseMinutes sets the "first_response_minutes" field.
+func (u *SLAPolicyUpsertOne) SetFirstResponseMinutes(v int) *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetFirstResponseMinutes(v)
+	})
+}
+
+// AddFirstResponseMinutes adds v to the "first_response_minutes" field.
+func (u *SLAPolicyUpsertOne) AddFirstResponseMinutes(v int) *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.AddFirstResponseMinutes(v)
+	})
+}
+
+// UpdateFirstResponseMinutes sets the "first_response_minutes" field to the value that was provided on create.
+func (u *SLAPolicyUpsertOne) UpdateFirstResponseMinutes() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateFirstResponseMinutes()
+	})
+}
+
+// SetFirstResponseBusinessHours sets the "first_response_business_hours" field.
+func (u *SLAPolicyUpsertOne) SetFirstResponseBusinessHours(v bool) *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetFirstResponseBusinessHours(v)
+	})
+}
+
+// UpdateFirstResponseBusinessHours sets the "first_response_business_hours" field to the value that was provided on create.
+func (u *SLAPolicyUpsertOne) UpdateFirstResponseBusinessHours() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateFirstResponseBusinessHours()
+	})
+}
+
+// SetResolutionMinutes sets the "resolution_minutes" field.
+func (u *SLAPolicyUpsertOne) SetResolutionMinutes(v int) *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetResolutionMinutes(v)
+	})
+}
+
+// AddResolutionMinutes adds v to the "resolution_minutes" field.
+func (u *SLAPolicyUpsertOne) AddResolutionMinutes(v int) *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.AddResolutionMinutes(v)
+	})
+}
+
+// UpdateResolutionMinutes sets the "resolution_minutes" field to the value that was provided on create.
+func (u *SLAPolicyUpsertOne) UpdateResolutionMinutes() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateResolutionMinutes()
+	})
+}
+
+// SetResolutionBusinessHours sets the "resolution_business_hours" field.
+func (u *SLAPolicyUpsertOne) SetResolutionBusinessHours(v bool) *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetResolutionBusinessHours(v)
+	})
+}
+
+// UpdateResolutionBusinessHours sets the "resolution_business_hours" field to the value that was provided on create.
+func (u *SLAPolicyUpsertOne) UpdateResolutionBusinessHours() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateResolutionBusinessHours()
+	})
+}
+
+// SetIsActive sets the "is_active" field.
+func (u *SLAPolicyUpsertOne) SetIsActive(v bool) *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetIsActive(v)
+	})
+}
+
+// UpdateIsActive sets the "is_active" field to the value that was provided on create.
+func (u *SLAPolicyUpsertOne) UpdateIsActive() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateIsActive()
+	})
+}
+
+// SetSortOrder sets the "sort_order" field.
+func (u *SLAPolicyUpsertOne) SetSortOrder(v int) *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetSortOrder(v)
+	})
+}
+
+// AddSortOrder adds v to the "sort_order" field.
+func (u *SLAPolicyUpsertOne) AddSortOrder(v int) *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.AddSortOrder(v)
+	})
+}
+
+// UpdateSortOrder sets the "sort_order" field to the value that was provided on create.
+func (u *SLAPolicyUpsertOne) UpdateSortOrder() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateSortOrder()
+	})
+}
+
+// SetBusinessHours sets the "business_hours" field.
+func (u *SLAPolicyUpsertOne) SetBusinessHours(v map[string]interface{}) *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetBusinessHours(v)
+	})
+}
+
+// UpdateBusinessHours sets the "business_hours" field to the value that was provided on create.
+func (u *SLAPolicyUpsertOne) UpdateBusinessHours() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateBusinessHours()
+	})
+}
+
+// ClearBusinessHours clears the value of the "business_hours" field.
+func (u *SLAPolicyUpsertOne) ClearBusinessHours() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.ClearBusinessHours()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *SLAPolicyUpsertOne) SetMetadata(v map[string]interface{}) *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *SLAPolicyUpsertOne) UpdateMetadata() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *SLAPolicyUpsertOne) ClearMetadata() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.ClearMetadata()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SLAPolicyUpsertOne) SetUpdatedAt(v time.Time) *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SLAPolicyUpsertOne) UpdateUpdatedAt() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *SLAPolicyUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for SLAPolicyCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *SLAPolicyUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *SLAPolicyUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: SLAPolicyUpsertOne.ID is not supported by MySQL driver. Use SLAPolicyUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *SLAPolicyUpsertOne) IDX(ctx context.Context) uuid.UUID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // SLAPolicyCreateBulk is the builder for creating many SLAPolicy entities in bulk.
 type SLAPolicyCreateBulk struct {
 	config
 	err      error
 	builders []*SLAPolicyCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the SLAPolicy entities in the database.
@@ -431,6 +1029,7 @@ func (_c *SLAPolicyCreateBulk) Save(ctx context.Context) ([]*SLAPolicy, error) {
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -477,6 +1076,368 @@ func (_c *SLAPolicyCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *SLAPolicyCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.SLAPolicy.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.SLAPolicyUpsert) {
+//			SetTenantID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *SLAPolicyCreateBulk) OnConflict(opts ...sql.ConflictOption) *SLAPolicyUpsertBulk {
+	_c.conflict = opts
+	return &SLAPolicyUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.SLAPolicy.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *SLAPolicyCreateBulk) OnConflictColumns(columns ...string) *SLAPolicyUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &SLAPolicyUpsertBulk{
+		create: _c,
+	}
+}
+
+// SLAPolicyUpsertBulk is the builder for "upsert"-ing
+// a bulk of SLAPolicy nodes.
+type SLAPolicyUpsertBulk struct {
+	create *SLAPolicyCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.SLAPolicy.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(slapolicy.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *SLAPolicyUpsertBulk) UpdateNewValues() *SLAPolicyUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(slapolicy.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(slapolicy.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.SLAPolicy.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *SLAPolicyUpsertBulk) Ignore() *SLAPolicyUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *SLAPolicyUpsertBulk) DoNothing() *SLAPolicyUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the SLAPolicyCreateBulk.OnConflict
+// documentation for more info.
+func (u *SLAPolicyUpsertBulk) Update(set func(*SLAPolicyUpsert)) *SLAPolicyUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&SLAPolicyUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (u *SLAPolicyUpsertBulk) SetTenantID(v uuid.UUID) *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetTenantID(v)
+	})
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *SLAPolicyUpsertBulk) UpdateTenantID() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateTenantID()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *SLAPolicyUpsertBulk) SetName(v string) *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *SLAPolicyUpsertBulk) UpdateName() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *SLAPolicyUpsertBulk) SetDescription(v string) *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *SLAPolicyUpsertBulk) UpdateDescription() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *SLAPolicyUpsertBulk) ClearDescription() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.ClearDescription()
+	})
+}
+
+// SetPriority sets the "priority" field.
+func (u *SLAPolicyUpsertBulk) SetPriority(v slapolicy.Priority) *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetPriority(v)
+	})
+}
+
+// UpdatePriority sets the "priority" field to the value that was provided on create.
+func (u *SLAPolicyUpsertBulk) UpdatePriority() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdatePriority()
+	})
+}
+
+// SetCategoryID sets the "category_id" field.
+func (u *SLAPolicyUpsertBulk) SetCategoryID(v uuid.UUID) *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetCategoryID(v)
+	})
+}
+
+// UpdateCategoryID sets the "category_id" field to the value that was provided on create.
+func (u *SLAPolicyUpsertBulk) UpdateCategoryID() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateCategoryID()
+	})
+}
+
+// ClearCategoryID clears the value of the "category_id" field.
+func (u *SLAPolicyUpsertBulk) ClearCategoryID() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.ClearCategoryID()
+	})
+}
+
+// SetFirstResponseMinutes sets the "first_response_minutes" field.
+func (u *SLAPolicyUpsertBulk) SetFirstResponseMinutes(v int) *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetFirstResponseMinutes(v)
+	})
+}
+
+// AddFirstResponseMinutes adds v to the "first_response_minutes" field.
+func (u *SLAPolicyUpsertBulk) AddFirstResponseMinutes(v int) *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.AddFirstResponseMinutes(v)
+	})
+}
+
+// UpdateFirstResponseMinutes sets the "first_response_minutes" field to the value that was provided on create.
+func (u *SLAPolicyUpsertBulk) UpdateFirstResponseMinutes() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateFirstResponseMinutes()
+	})
+}
+
+// SetFirstResponseBusinessHours sets the "first_response_business_hours" field.
+func (u *SLAPolicyUpsertBulk) SetFirstResponseBusinessHours(v bool) *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetFirstResponseBusinessHours(v)
+	})
+}
+
+// UpdateFirstResponseBusinessHours sets the "first_response_business_hours" field to the value that was provided on create.
+func (u *SLAPolicyUpsertBulk) UpdateFirstResponseBusinessHours() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateFirstResponseBusinessHours()
+	})
+}
+
+// SetResolutionMinutes sets the "resolution_minutes" field.
+func (u *SLAPolicyUpsertBulk) SetResolutionMinutes(v int) *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetResolutionMinutes(v)
+	})
+}
+
+// AddResolutionMinutes adds v to the "resolution_minutes" field.
+func (u *SLAPolicyUpsertBulk) AddResolutionMinutes(v int) *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.AddResolutionMinutes(v)
+	})
+}
+
+// UpdateResolutionMinutes sets the "resolution_minutes" field to the value that was provided on create.
+func (u *SLAPolicyUpsertBulk) UpdateResolutionMinutes() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateResolutionMinutes()
+	})
+}
+
+// SetResolutionBusinessHours sets the "resolution_business_hours" field.
+func (u *SLAPolicyUpsertBulk) SetResolutionBusinessHours(v bool) *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetResolutionBusinessHours(v)
+	})
+}
+
+// UpdateResolutionBusinessHours sets the "resolution_business_hours" field to the value that was provided on create.
+func (u *SLAPolicyUpsertBulk) UpdateResolutionBusinessHours() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateResolutionBusinessHours()
+	})
+}
+
+// SetIsActive sets the "is_active" field.
+func (u *SLAPolicyUpsertBulk) SetIsActive(v bool) *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetIsActive(v)
+	})
+}
+
+// UpdateIsActive sets the "is_active" field to the value that was provided on create.
+func (u *SLAPolicyUpsertBulk) UpdateIsActive() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateIsActive()
+	})
+}
+
+// SetSortOrder sets the "sort_order" field.
+func (u *SLAPolicyUpsertBulk) SetSortOrder(v int) *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetSortOrder(v)
+	})
+}
+
+// AddSortOrder adds v to the "sort_order" field.
+func (u *SLAPolicyUpsertBulk) AddSortOrder(v int) *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.AddSortOrder(v)
+	})
+}
+
+// UpdateSortOrder sets the "sort_order" field to the value that was provided on create.
+func (u *SLAPolicyUpsertBulk) UpdateSortOrder() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateSortOrder()
+	})
+}
+
+// SetBusinessHours sets the "business_hours" field.
+func (u *SLAPolicyUpsertBulk) SetBusinessHours(v map[string]interface{}) *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetBusinessHours(v)
+	})
+}
+
+// UpdateBusinessHours sets the "business_hours" field to the value that was provided on create.
+func (u *SLAPolicyUpsertBulk) UpdateBusinessHours() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateBusinessHours()
+	})
+}
+
+// ClearBusinessHours clears the value of the "business_hours" field.
+func (u *SLAPolicyUpsertBulk) ClearBusinessHours() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.ClearBusinessHours()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *SLAPolicyUpsertBulk) SetMetadata(v map[string]interface{}) *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *SLAPolicyUpsertBulk) UpdateMetadata() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *SLAPolicyUpsertBulk) ClearMetadata() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.ClearMetadata()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SLAPolicyUpsertBulk) SetUpdatedAt(v time.Time) *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SLAPolicyUpsertBulk) UpdateUpdatedAt() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *SLAPolicyUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the SLAPolicyCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for SLAPolicyCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *SLAPolicyUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

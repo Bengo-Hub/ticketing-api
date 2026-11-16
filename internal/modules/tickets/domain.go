@@ -186,8 +186,9 @@ type AssignTicketRequest struct {
 type AddCommentRequest struct {
 	TenantID    uuid.UUID   `json:"-"`
 	TicketID    uuid.UUID   `json:"-"`
-	AuthorID    uuid.UUID   `json:"author_id"`
-	AuthorType  AuthorType  `json:"author_type"`
+	// AuthorID and AuthorType come from the signed-in caller, never from the body.
+	AuthorID    uuid.UUID   `json:"-"`
+	AuthorType  AuthorType  `json:"-"`
 	CommentType CommentType `json:"comment_type,omitempty"`
 	Content     string      `json:"content"`
 }

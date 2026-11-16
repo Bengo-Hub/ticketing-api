@@ -1,22 +1,22 @@
 #!/bin/sh
-# Entrypoint script for Ticketing-API service
+# Entrypoint for the ticketing-api container: apply the versioned migrations, then start the API.
+#
+# Migrations run here on every pod start, as in every fleet service. ticketing-migrate takes a
+# Postgres advisory lock, so two pods starting together apply each file once, and a pod that finds
+# nothing pending starts at once. The SLA breach scan runs only in the ticketing-worker
+# Deployment, never inside API pods. Seeding is a manual step (ticketing-seed needs a tenant).
 
 set -e
 
-# Use direct PostgreSQL URL for migrate/seed to bypass PgBouncer transaction mode.
+# The direct PostgreSQL URL bypasses PgBouncer transaction mode, which drops the advisory lock.
 MIGRATE_URL="${POSTGRES_MIGRATE_URL:-$POSTGRES_URL}"
 
-echo "=========================================="
-echo "Ticketing-API Service Startup"
-echo "=========================================="
-
-echo "Waiting for database and running migrations..."
+echo "Applying migrations..."
 MAX_RETRIES=60
 RETRY_COUNT=0
 
-# Captured (not swallowed) so a real migration failure is visible on every attempt -- the
-# liveness probe usually kills this container long before MAX_RETRIES is ever reached.
-until MIGRATE_OUTPUT=$(POSTGRES_URL="$MIGRATE_URL" /app/ticketing-migrate 2>&1) || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
+# Captured, not swallowed, so a real migration failure is visible on every attempt.
+until MIGRATE_OUTPUT=$(POSTGRES_MIGRATE_URL="$MIGRATE_URL" /app/ticketing-migrate 2>&1) || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
   RETRY_COUNT=$((RETRY_COUNT+1))
   echo "Migration attempt $RETRY_COUNT/$MAX_RETRIES failed:"
   echo "$MIGRATE_OUTPUT"
@@ -29,26 +29,6 @@ if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
   exit 1
 fi
 
-echo "Migrations applied successfully"
-
-echo ""
-echo "=========================================="
-echo "Running seed (idempotent)"
-echo "=========================================="
-POSTGRES_URL="$MIGRATE_URL" /app/ticketing-seed || echo "Seed completed with warnings (non-fatal)"
-
-echo ""
-echo "=========================================="
-echo "Starting Ticketing Worker (background)"
-echo "=========================================="
-/app/ticketing-worker &
-WORKER_PID=$!
-echo "Worker started (PID: $WORKER_PID)"
-
-echo ""
-echo "=========================================="
-echo "Starting Ticketing-API server"
-echo "=========================================="
-echo ""
-
+echo "$MIGRATE_OUTPUT"
+echo "Starting ticketing-api"
 exec /app/ticketing-api

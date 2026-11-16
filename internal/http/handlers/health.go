@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/nats-io/nats.go"
 	"github.com/redis/go-redis/v9"
@@ -87,9 +89,32 @@ func (h *HealthHandler) Status(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(status)
 }
 
-// Metrics returns Prometheus metrics endpoint (placeholder).
-func (h *HealthHandler) Metrics(w http.ResponseWriter, r *http.Request) {
-	// Prometheus metrics will be handled by the prometheus/promhttp handler
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("# Metrics endpoint"))
+// Readiness pings Postgres, Redis and NATS. Postgres is required: without it the pod answers 503
+// and leaves the load balancer. Redis and NATS are reported but do not take the pod out, because
+// the service degrades without them (per-pod rate limits and caches, events held in the outbox).
+func (h *HealthHandler) Readiness(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
+	checks := map[string]string{"postgres": "ok", "redis": "ok", "nats": "ok"}
+	status := http.StatusOK
+	if h.db == nil {
+		checks["postgres"] = "not configured"
+		status = http.StatusServiceUnavailable
+	} else if err := h.db.Ping(ctx); err != nil {
+		checks["postgres"] = err.Error()
+		status = http.StatusServiceUnavailable
+	}
+	if h.cache == nil {
+		checks["redis"] = "not configured"
+	} else if err := h.cache.Ping(ctx).Err(); err != nil {
+		checks["redis"] = err.Error()
+	}
+	if h.events == nil {
+		checks["nats"] = "not configured"
+	} else if !h.events.IsConnected() {
+		checks["nats"] = "not connected"
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(map[string]any{"status": http.StatusText(status), "checks": checks})
 }

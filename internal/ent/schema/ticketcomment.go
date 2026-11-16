@@ -24,6 +24,8 @@ func (TicketComment) Fields() []ent.Field {
 		field.UUID("id", uuid.UUID{}).
 			Default(uuid.New).
 			Immutable(),
+		field.UUID("tenant_id", uuid.UUID{}).
+			Comment("Tenant of the parent ticket; every read filters on it"),
 		field.UUID("ticket_id", uuid.UUID{}).
 			Comment("Reference to ticket"),
 		field.UUID("author_id", uuid.UUID{}).
@@ -90,6 +92,7 @@ func (TicketComment) Annotations() []schema.Annotation {
 // Indexes of the TicketComment.
 func (TicketComment) Indexes() []ent.Index {
 	return []ent.Index{
+		index.Fields("tenant_id", "ticket_id"),
 		index.Fields("ticket_id", "created_at"),
 		index.Fields("ticket_id", "comment_type"),
 		index.Fields("author_id"),

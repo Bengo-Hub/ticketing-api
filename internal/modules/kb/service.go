@@ -40,7 +40,7 @@ func (s *Service) GetArticleBySlug(ctx context.Context, tenantID uuid.UUID, slug
 	}
 	// Fire-and-forget view count increment
 	go func() {
-		if ierr := s.repo.IncrementViewCount(context.Background(), article.ID); ierr != nil {
+		if ierr := s.repo.IncrementViewCount(context.Background(), tenantID, article.ID); ierr != nil {
 			s.log.Warn("failed to increment view count", zap.Error(ierr))
 		}
 	}()
@@ -69,7 +69,7 @@ func (s *Service) VoteArticle(ctx context.Context, tenantID, id uuid.UUID, helpf
 	if !publiclyVisible(article) {
 		return ErrArticleNotFound
 	}
-	return s.repo.Vote(ctx, id, helpful)
+	return s.repo.Vote(ctx, tenantID, id, helpful)
 }
 
 // publiclyVisible is what the public routes may show: public and published.

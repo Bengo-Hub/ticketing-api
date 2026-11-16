@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/bengobox/ticketing-service/internal/ent/ticket"
@@ -20,6 +22,13 @@ type TicketCommentCreate struct {
 	config
 	mutation *TicketCommentMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (_c *TicketCommentCreate) SetTenantID(v uuid.UUID) *TicketCommentCreate {
+	_c.mutation.SetTenantID(v)
+	return _c
 }
 
 // SetTicketID sets the "ticket_id" field.
@@ -236,6 +245,9 @@ func (_c *TicketCommentCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *TicketCommentCreate) check() error {
+	if _, ok := _c.mutation.TenantID(); !ok {
+		return &ValidationError{Name: "tenant_id", err: errors.New(`ent: missing required field "TicketComment.tenant_id"`)}
+	}
 	if _, ok := _c.mutation.TicketID(); !ok {
 		return &ValidationError{Name: "ticket_id", err: errors.New(`ent: missing required field "TicketComment.ticket_id"`)}
 	}
@@ -303,9 +315,14 @@ func (_c *TicketCommentCreate) createSpec() (*TicketComment, *sqlgraph.CreateSpe
 		_node = &TicketComment{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(ticketcomment.Table, sqlgraph.NewFieldSpec(ticketcomment.FieldID, field.TypeUUID))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
+	}
+	if value, ok := _c.mutation.TenantID(); ok {
+		_spec.SetField(ticketcomment.FieldTenantID, field.TypeUUID, value)
+		_node.TenantID = value
 	}
 	if value, ok := _c.mutation.AuthorID(); ok {
 		_spec.SetField(ticketcomment.FieldAuthorID, field.TypeUUID, value)
@@ -371,11 +388,540 @@ func (_c *TicketCommentCreate) createSpec() (*TicketComment, *sqlgraph.CreateSpe
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.TicketComment.Create().
+//		SetTenantID(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.TicketCommentUpsert) {
+//			SetTenantID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *TicketCommentCreate) OnConflict(opts ...sql.ConflictOption) *TicketCommentUpsertOne {
+	_c.conflict = opts
+	return &TicketCommentUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.TicketComment.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *TicketCommentCreate) OnConflictColumns(columns ...string) *TicketCommentUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &TicketCommentUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// TicketCommentUpsertOne is the builder for "upsert"-ing
+	//  one TicketComment node.
+	TicketCommentUpsertOne struct {
+		create *TicketCommentCreate
+	}
+
+	// TicketCommentUpsert is the "OnConflict" setter.
+	TicketCommentUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetTenantID sets the "tenant_id" field.
+func (u *TicketCommentUpsert) SetTenantID(v uuid.UUID) *TicketCommentUpsert {
+	u.Set(ticketcomment.FieldTenantID, v)
+	return u
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *TicketCommentUpsert) UpdateTenantID() *TicketCommentUpsert {
+	u.SetExcluded(ticketcomment.FieldTenantID)
+	return u
+}
+
+// SetTicketID sets the "ticket_id" field.
+func (u *TicketCommentUpsert) SetTicketID(v uuid.UUID) *TicketCommentUpsert {
+	u.Set(ticketcomment.FieldTicketID, v)
+	return u
+}
+
+// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
+func (u *TicketCommentUpsert) UpdateTicketID() *TicketCommentUpsert {
+	u.SetExcluded(ticketcomment.FieldTicketID)
+	return u
+}
+
+// SetAuthorID sets the "author_id" field.
+func (u *TicketCommentUpsert) SetAuthorID(v uuid.UUID) *TicketCommentUpsert {
+	u.Set(ticketcomment.FieldAuthorID, v)
+	return u
+}
+
+// UpdateAuthorID sets the "author_id" field to the value that was provided on create.
+func (u *TicketCommentUpsert) UpdateAuthorID() *TicketCommentUpsert {
+	u.SetExcluded(ticketcomment.FieldAuthorID)
+	return u
+}
+
+// ClearAuthorID clears the value of the "author_id" field.
+func (u *TicketCommentUpsert) ClearAuthorID() *TicketCommentUpsert {
+	u.SetNull(ticketcomment.FieldAuthorID)
+	return u
+}
+
+// SetAuthorType sets the "author_type" field.
+func (u *TicketCommentUpsert) SetAuthorType(v ticketcomment.AuthorType) *TicketCommentUpsert {
+	u.Set(ticketcomment.FieldAuthorType, v)
+	return u
+}
+
+// UpdateAuthorType sets the "author_type" field to the value that was provided on create.
+func (u *TicketCommentUpsert) UpdateAuthorType() *TicketCommentUpsert {
+	u.SetExcluded(ticketcomment.FieldAuthorType)
+	return u
+}
+
+// SetCommentType sets the "comment_type" field.
+func (u *TicketCommentUpsert) SetCommentType(v ticketcomment.CommentType) *TicketCommentUpsert {
+	u.Set(ticketcomment.FieldCommentType, v)
+	return u
+}
+
+// UpdateCommentType sets the "comment_type" field to the value that was provided on create.
+func (u *TicketCommentUpsert) UpdateCommentType() *TicketCommentUpsert {
+	u.SetExcluded(ticketcomment.FieldCommentType)
+	return u
+}
+
+// SetContent sets the "content" field.
+func (u *TicketCommentUpsert) SetContent(v string) *TicketCommentUpsert {
+	u.Set(ticketcomment.FieldContent, v)
+	return u
+}
+
+// UpdateContent sets the "content" field to the value that was provided on create.
+func (u *TicketCommentUpsert) UpdateContent() *TicketCommentUpsert {
+	u.SetExcluded(ticketcomment.FieldContent)
+	return u
+}
+
+// SetContentHTML sets the "content_html" field.
+func (u *TicketCommentUpsert) SetContentHTML(v string) *TicketCommentUpsert {
+	u.Set(ticketcomment.FieldContentHTML, v)
+	return u
+}
+
+// UpdateContentHTML sets the "content_html" field to the value that was provided on create.
+func (u *TicketCommentUpsert) UpdateContentHTML() *TicketCommentUpsert {
+	u.SetExcluded(ticketcomment.FieldContentHTML)
+	return u
+}
+
+// ClearContentHTML clears the value of the "content_html" field.
+func (u *TicketCommentUpsert) ClearContentHTML() *TicketCommentUpsert {
+	u.SetNull(ticketcomment.FieldContentHTML)
+	return u
+}
+
+// SetIsEdited sets the "is_edited" field.
+func (u *TicketCommentUpsert) SetIsEdited(v bool) *TicketCommentUpsert {
+	u.Set(ticketcomment.FieldIsEdited, v)
+	return u
+}
+
+// UpdateIsEdited sets the "is_edited" field to the value that was provided on create.
+func (u *TicketCommentUpsert) UpdateIsEdited() *TicketCommentUpsert {
+	u.SetExcluded(ticketcomment.FieldIsEdited)
+	return u
+}
+
+// SetEditedAt sets the "edited_at" field.
+func (u *TicketCommentUpsert) SetEditedAt(v time.Time) *TicketCommentUpsert {
+	u.Set(ticketcomment.FieldEditedAt, v)
+	return u
+}
+
+// UpdateEditedAt sets the "edited_at" field to the value that was provided on create.
+func (u *TicketCommentUpsert) UpdateEditedAt() *TicketCommentUpsert {
+	u.SetExcluded(ticketcomment.FieldEditedAt)
+	return u
+}
+
+// ClearEditedAt clears the value of the "edited_at" field.
+func (u *TicketCommentUpsert) ClearEditedAt() *TicketCommentUpsert {
+	u.SetNull(ticketcomment.FieldEditedAt)
+	return u
+}
+
+// SetMentions sets the "mentions" field.
+func (u *TicketCommentUpsert) SetMentions(v []uuid.UUID) *TicketCommentUpsert {
+	u.Set(ticketcomment.FieldMentions, v)
+	return u
+}
+
+// UpdateMentions sets the "mentions" field to the value that was provided on create.
+func (u *TicketCommentUpsert) UpdateMentions() *TicketCommentUpsert {
+	u.SetExcluded(ticketcomment.FieldMentions)
+	return u
+}
+
+// ClearMentions clears the value of the "mentions" field.
+func (u *TicketCommentUpsert) ClearMentions() *TicketCommentUpsert {
+	u.SetNull(ticketcomment.FieldMentions)
+	return u
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *TicketCommentUpsert) SetMetadata(v map[string]interface{}) *TicketCommentUpsert {
+	u.Set(ticketcomment.FieldMetadata, v)
+	return u
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *TicketCommentUpsert) UpdateMetadata() *TicketCommentUpsert {
+	u.SetExcluded(ticketcomment.FieldMetadata)
+	return u
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *TicketCommentUpsert) ClearMetadata() *TicketCommentUpsert {
+	u.SetNull(ticketcomment.FieldMetadata)
+	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *TicketCommentUpsert) SetDeletedAt(v time.Time) *TicketCommentUpsert {
+	u.Set(ticketcomment.FieldDeletedAt, v)
+	return u
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *TicketCommentUpsert) UpdateDeletedAt() *TicketCommentUpsert {
+	u.SetExcluded(ticketcomment.FieldDeletedAt)
+	return u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *TicketCommentUpsert) ClearDeletedAt() *TicketCommentUpsert {
+	u.SetNull(ticketcomment.FieldDeletedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.TicketComment.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(ticketcomment.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *TicketCommentUpsertOne) UpdateNewValues() *TicketCommentUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(ticketcomment.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(ticketcomment.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.TicketComment.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *TicketCommentUpsertOne) Ignore() *TicketCommentUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *TicketCommentUpsertOne) DoNothing() *TicketCommentUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the TicketCommentCreate.OnConflict
+// documentation for more info.
+func (u *TicketCommentUpsertOne) Update(set func(*TicketCommentUpsert)) *TicketCommentUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&TicketCommentUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (u *TicketCommentUpsertOne) SetTenantID(v uuid.UUID) *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetTenantID(v)
+	})
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *TicketCommentUpsertOne) UpdateTenantID() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateTenantID()
+	})
+}
+
+// SetTicketID sets the "ticket_id" field.
+func (u *TicketCommentUpsertOne) SetTicketID(v uuid.UUID) *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetTicketID(v)
+	})
+}
+
+// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
+func (u *TicketCommentUpsertOne) UpdateTicketID() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateTicketID()
+	})
+}
+
+// SetAuthorID sets the "author_id" field.
+func (u *TicketCommentUpsertOne) SetAuthorID(v uuid.UUID) *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetAuthorID(v)
+	})
+}
+
+// UpdateAuthorID sets the "author_id" field to the value that was provided on create.
+func (u *TicketCommentUpsertOne) UpdateAuthorID() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateAuthorID()
+	})
+}
+
+// ClearAuthorID clears the value of the "author_id" field.
+func (u *TicketCommentUpsertOne) ClearAuthorID() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.ClearAuthorID()
+	})
+}
+
+// SetAuthorType sets the "author_type" field.
+func (u *TicketCommentUpsertOne) SetAuthorType(v ticketcomment.AuthorType) *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetAuthorType(v)
+	})
+}
+
+// UpdateAuthorType sets the "author_type" field to the value that was provided on create.
+func (u *TicketCommentUpsertOne) UpdateAuthorType() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateAuthorType()
+	})
+}
+
+// SetCommentType sets the "comment_type" field.
+func (u *TicketCommentUpsertOne) SetCommentType(v ticketcomment.CommentType) *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetCommentType(v)
+	})
+}
+
+// UpdateCommentType sets the "comment_type" field to the value that was provided on create.
+func (u *TicketCommentUpsertOne) UpdateCommentType() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateCommentType()
+	})
+}
+
+// SetContent sets the "content" field.
+func (u *TicketCommentUpsertOne) SetContent(v string) *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetContent(v)
+	})
+}
+
+// UpdateContent sets the "content" field to the value that was provided on create.
+func (u *TicketCommentUpsertOne) UpdateContent() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateContent()
+	})
+}
+
+// SetContentHTML sets the "content_html" field.
+func (u *TicketCommentUpsertOne) SetContentHTML(v string) *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetContentHTML(v)
+	})
+}
+
+// UpdateContentHTML sets the "content_html" field to the value that was provided on create.
+func (u *TicketCommentUpsertOne) UpdateContentHTML() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateContentHTML()
+	})
+}
+
+// ClearContentHTML clears the value of the "content_html" field.
+func (u *TicketCommentUpsertOne) ClearContentHTML() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.ClearContentHTML()
+	})
+}
+
+// SetIsEdited sets the "is_edited" field.
+func (u *TicketCommentUpsertOne) SetIsEdited(v bool) *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetIsEdited(v)
+	})
+}
+
+// UpdateIsEdited sets the "is_edited" field to the value that was provided on create.
+func (u *TicketCommentUpsertOne) UpdateIsEdited() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateIsEdited()
+	})
+}
+
+// SetEditedAt sets the "edited_at" field.
+func (u *TicketCommentUpsertOne) SetEditedAt(v time.Time) *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetEditedAt(v)
+	})
+}
+
+// UpdateEditedAt sets the "edited_at" field to the value that was provided on create.
+func (u *TicketCommentUpsertOne) UpdateEditedAt() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateEditedAt()
+	})
+}
+
+// ClearEditedAt clears the value of the "edited_at" field.
+func (u *TicketCommentUpsertOne) ClearEditedAt() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.ClearEditedAt()
+	})
+}
+
+// SetMentions sets the "mentions" field.
+func (u *TicketCommentUpsertOne) SetMentions(v []uuid.UUID) *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetMentions(v)
+	})
+}
+
+// UpdateMentions sets the "mentions" field to the value that was provided on create.
+func (u *TicketCommentUpsertOne) UpdateMentions() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateMentions()
+	})
+}
+
+// ClearMentions clears the value of the "mentions" field.
+func (u *TicketCommentUpsertOne) ClearMentions() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.ClearMentions()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *TicketCommentUpsertOne) SetMetadata(v map[string]interface{}) *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *TicketCommentUpsertOne) UpdateMetadata() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *TicketCommentUpsertOne) ClearMetadata() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.ClearMetadata()
+	})
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *TicketCommentUpsertOne) SetDeletedAt(v time.Time) *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *TicketCommentUpsertOne) UpdateDeletedAt() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *TicketCommentUpsertOne) ClearDeletedAt() *TicketCommentUpsertOne {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.ClearDeletedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *TicketCommentUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for TicketCommentCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *TicketCommentUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *TicketCommentUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: TicketCommentUpsertOne.ID is not supported by MySQL driver. Use TicketCommentUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *TicketCommentUpsertOne) IDX(ctx context.Context) uuid.UUID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // TicketCommentCreateBulk is the builder for creating many TicketComment entities in bulk.
 type TicketCommentCreateBulk struct {
 	config
 	err      error
 	builders []*TicketCommentCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the TicketComment entities in the database.
@@ -405,6 +951,7 @@ func (_c *TicketCommentCreateBulk) Save(ctx context.Context) ([]*TicketComment, 
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -451,6 +998,333 @@ func (_c *TicketCommentCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *TicketCommentCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.TicketComment.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.TicketCommentUpsert) {
+//			SetTenantID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *TicketCommentCreateBulk) OnConflict(opts ...sql.ConflictOption) *TicketCommentUpsertBulk {
+	_c.conflict = opts
+	return &TicketCommentUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.TicketComment.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *TicketCommentCreateBulk) OnConflictColumns(columns ...string) *TicketCommentUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &TicketCommentUpsertBulk{
+		create: _c,
+	}
+}
+
+// TicketCommentUpsertBulk is the builder for "upsert"-ing
+// a bulk of TicketComment nodes.
+type TicketCommentUpsertBulk struct {
+	create *TicketCommentCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.TicketComment.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(ticketcomment.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *TicketCommentUpsertBulk) UpdateNewValues() *TicketCommentUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(ticketcomment.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(ticketcomment.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.TicketComment.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *TicketCommentUpsertBulk) Ignore() *TicketCommentUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *TicketCommentUpsertBulk) DoNothing() *TicketCommentUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the TicketCommentCreateBulk.OnConflict
+// documentation for more info.
+func (u *TicketCommentUpsertBulk) Update(set func(*TicketCommentUpsert)) *TicketCommentUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&TicketCommentUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (u *TicketCommentUpsertBulk) SetTenantID(v uuid.UUID) *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetTenantID(v)
+	})
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *TicketCommentUpsertBulk) UpdateTenantID() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateTenantID()
+	})
+}
+
+// SetTicketID sets the "ticket_id" field.
+func (u *TicketCommentUpsertBulk) SetTicketID(v uuid.UUID) *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetTicketID(v)
+	})
+}
+
+// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
+func (u *TicketCommentUpsertBulk) UpdateTicketID() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateTicketID()
+	})
+}
+
+// SetAuthorID sets the "author_id" field.
+func (u *TicketCommentUpsertBulk) SetAuthorID(v uuid.UUID) *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetAuthorID(v)
+	})
+}
+
+// UpdateAuthorID sets the "author_id" field to the value that was provided on create.
+func (u *TicketCommentUpsertBulk) UpdateAuthorID() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateAuthorID()
+	})
+}
+
+// ClearAuthorID clears the value of the "author_id" field.
+func (u *TicketCommentUpsertBulk) ClearAuthorID() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.ClearAuthorID()
+	})
+}
+
+// SetAuthorType sets the "author_type" field.
+func (u *TicketCommentUpsertBulk) SetAuthorType(v ticketcomment.AuthorType) *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetAuthorType(v)
+	})
+}
+
+// UpdateAuthorType sets the "author_type" field to the value that was provided on create.
+func (u *TicketCommentUpsertBulk) UpdateAuthorType() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateAuthorType()
+	})
+}
+
+// SetCommentType sets the "comment_type" field.
+func (u *TicketCommentUpsertBulk) SetCommentType(v ticketcomment.CommentType) *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetCommentType(v)
+	})
+}
+
+// UpdateCommentType sets the "comment_type" field to the value that was provided on create.
+func (u *TicketCommentUpsertBulk) UpdateCommentType() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateCommentType()
+	})
+}
+
+// SetContent sets the "content" field.
+func (u *TicketCommentUpsertBulk) SetContent(v string) *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetContent(v)
+	})
+}
+
+// UpdateContent sets the "content" field to the value that was provided on create.
+func (u *TicketCommentUpsertBulk) UpdateContent() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateContent()
+	})
+}
+
+// SetContentHTML sets the "content_html" field.
+func (u *TicketCommentUpsertBulk) SetContentHTML(v string) *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetContentHTML(v)
+	})
+}
+
+// UpdateContentHTML sets the "content_html" field to the value that was provided on create.
+func (u *TicketCommentUpsertBulk) UpdateContentHTML() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateContentHTML()
+	})
+}
+
+// ClearContentHTML clears the value of the "content_html" field.
+func (u *TicketCommentUpsertBulk) ClearContentHTML() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.ClearContentHTML()
+	})
+}
+
+// SetIsEdited sets the "is_edited" field.
+func (u *TicketCommentUpsertBulk) SetIsEdited(v bool) *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetIsEdited(v)
+	})
+}
+
+// UpdateIsEdited sets the "is_edited" field to the value that was provided on create.
+func (u *TicketCommentUpsertBulk) UpdateIsEdited() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateIsEdited()
+	})
+}
+
+// SetEditedAt sets the "edited_at" field.
+func (u *TicketCommentUpsertBulk) SetEditedAt(v time.Time) *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetEditedAt(v)
+	})
+}
+
+// UpdateEditedAt sets the "edited_at" field to the value that was provided on create.
+func (u *TicketCommentUpsertBulk) UpdateEditedAt() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateEditedAt()
+	})
+}
+
+// ClearEditedAt clears the value of the "edited_at" field.
+func (u *TicketCommentUpsertBulk) ClearEditedAt() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.ClearEditedAt()
+	})
+}
+
+// SetMentions sets the "mentions" field.
+func (u *TicketCommentUpsertBulk) SetMentions(v []uuid.UUID) *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetMentions(v)
+	})
+}
+
+// UpdateMentions sets the "mentions" field to the value that was provided on create.
+func (u *TicketCommentUpsertBulk) UpdateMentions() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateMentions()
+	})
+}
+
+// ClearMentions clears the value of the "mentions" field.
+func (u *TicketCommentUpsertBulk) ClearMentions() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.ClearMentions()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *TicketCommentUpsertBulk) SetMetadata(v map[string]interface{}) *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *TicketCommentUpsertBulk) UpdateMetadata() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *TicketCommentUpsertBulk) ClearMetadata() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.ClearMetadata()
+	})
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *TicketCommentUpsertBulk) SetDeletedAt(v time.Time) *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *TicketCommentUpsertBulk) UpdateDeletedAt() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *TicketCommentUpsertBulk) ClearDeletedAt() *TicketCommentUpsertBulk {
+	return u.Update(func(s *TicketCommentUpsert) {
+		s.ClearDeletedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *TicketCommentUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the TicketCommentCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for TicketCommentCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *TicketCommentUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

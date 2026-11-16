@@ -14,14 +14,33 @@ type fakeRepo struct {
 	Repository
 	tickets map[uuid.UUID]*Ticket
 	agents  map[uuid.UUID]string
+	pub     *fakePublisher
 }
 
 func newFakeRepo() *fakeRepo {
 	return &fakeRepo{tickets: map[uuid.UUID]*Ticket{}, agents: map[uuid.UUID]string{}}
 }
 
-func (r *fakeRepo) GenerateTicketNumber(context.Context, uuid.UUID) (string, error) {
+// InTx runs fn against the fake itself and keeps the events only when fn succeeds, as a commit would.
+func (r *fakeRepo) InTx(_ context.Context, _ uuid.UUID, fn func(Repository, *Outbox) error) error {
+	out := &Outbox{}
+	if err := fn(r, out); err != nil {
+		return err
+	}
+	if r.pub != nil {
+		for _, e := range out.Events {
+			_ = r.pub.add(e.Type, e.Data)
+		}
+	}
+	return nil
+}
+
+func (r *fakeRepo) NextTicketNumber(context.Context, uuid.UUID) (string, error) {
 	return "TKT-0001", nil
+}
+
+func (r *fakeRepo) GetAgentEmailByUser(_ context.Context, _ uuid.UUID, id uuid.UUID) (string, error) {
+	return r.agents[id], nil
 }
 
 func (r *fakeRepo) CreateTicket(_ context.Context, _ uuid.UUID, t *Ticket) error {
@@ -46,7 +65,7 @@ func (r *fakeRepo) UpdateTicketStatus(_ context.Context, _ uuid.UUID, id uuid.UU
 }
 
 func (r *fakeRepo) CreateComment(context.Context, uuid.UUID, *TicketComment) error { return nil }
-func (r *fakeRepo) MarkFirstResponse(context.Context, uuid.UUID, uuid.UUID) error { return nil }
+func (r *fakeRepo) MarkFirstResponse(context.Context, uuid.UUID, uuid.UUID) error  { return nil }
 func (r *fakeRepo) MarkSLABreached(context.Context, uuid.UUID, uuid.UUID, bool, bool) (bool, error) {
 	return true, nil
 }
@@ -60,30 +79,12 @@ type sentEvent struct {
 	data      map[string]any
 }
 
-// fakePublisher records events in order.
+// fakePublisher records the committed outbox events in order.
 type fakePublisher struct{ sent []sentEvent }
 
 func (p *fakePublisher) add(t string, d map[string]any) error {
 	p.sent = append(p.sent, sentEvent{t, d})
 	return nil
-}
-func (p *fakePublisher) PublishTicketCreated(_ context.Context, _ uuid.UUID, d map[string]any) error {
-	return p.add("ticket.created", d)
-}
-func (p *fakePublisher) PublishTicketAssigned(_ context.Context, _ uuid.UUID, d map[string]any) error {
-	return p.add("ticket.assigned", d)
-}
-func (p *fakePublisher) PublishTicketCommentAdded(_ context.Context, _ uuid.UUID, d map[string]any) error {
-	return p.add("ticket.comment_added", d)
-}
-func (p *fakePublisher) PublishTicketStatusChanged(_ context.Context, _ uuid.UUID, d map[string]any) error {
-	return p.add("ticket.status_changed", d)
-}
-func (p *fakePublisher) PublishTicketResolved(_ context.Context, _ uuid.UUID, d map[string]any) error {
-	return p.add("ticket.resolved", d)
-}
-func (p *fakePublisher) PublishCRMActivityRequest(_ context.Context, _ uuid.UUID, d map[string]any) error {
-	return p.add("crm.activity.log_requested", d)
 }
 
 func (p *fakePublisher) only(t *testing.T, eventType string) map[string]any {
@@ -103,9 +104,8 @@ func (p *fakePublisher) only(t *testing.T, eventType string) map[string]any {
 func newTestService() (*Service, *fakeRepo, *fakePublisher) {
 	repo := newFakeRepo()
 	pub := &fakePublisher{}
-	s := NewService(repo, zap.NewNop())
-	s.SetPublisher(pub)
-	return s, repo, pub
+	repo.pub = pub
+	return NewService(repo, zap.NewNop()), repo, pub
 }
 
 func wantKeys(t *testing.T, name string, got map[string]any, want map[string]any) {

@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/bengobox/ticketing-service/internal/ent/routingrule"
@@ -19,6 +21,7 @@ type RoutingRuleCreate struct {
 	config
 	mutation *RoutingRuleMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetTenantID sets the "tenant_id" field.
@@ -248,6 +251,7 @@ func (_c *RoutingRuleCreate) createSpec() (*RoutingRule, *sqlgraph.CreateSpec) {
 		_node = &RoutingRule{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(routingrule.Table, sqlgraph.NewFieldSpec(routingrule.FieldID, field.TypeUUID))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
@@ -291,11 +295,384 @@ func (_c *RoutingRuleCreate) createSpec() (*RoutingRule, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.RoutingRule.Create().
+//		SetTenantID(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.RoutingRuleUpsert) {
+//			SetTenantID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *RoutingRuleCreate) OnConflict(opts ...sql.ConflictOption) *RoutingRuleUpsertOne {
+	_c.conflict = opts
+	return &RoutingRuleUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.RoutingRule.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *RoutingRuleCreate) OnConflictColumns(columns ...string) *RoutingRuleUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &RoutingRuleUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// RoutingRuleUpsertOne is the builder for "upsert"-ing
+	//  one RoutingRule node.
+	RoutingRuleUpsertOne struct {
+		create *RoutingRuleCreate
+	}
+
+	// RoutingRuleUpsert is the "OnConflict" setter.
+	RoutingRuleUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetTenantID sets the "tenant_id" field.
+func (u *RoutingRuleUpsert) SetTenantID(v uuid.UUID) *RoutingRuleUpsert {
+	u.Set(routingrule.FieldTenantID, v)
+	return u
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *RoutingRuleUpsert) UpdateTenantID() *RoutingRuleUpsert {
+	u.SetExcluded(routingrule.FieldTenantID)
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *RoutingRuleUpsert) SetName(v string) *RoutingRuleUpsert {
+	u.Set(routingrule.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *RoutingRuleUpsert) UpdateName() *RoutingRuleUpsert {
+	u.SetExcluded(routingrule.FieldName)
+	return u
+}
+
+// SetDescription sets the "description" field.
+func (u *RoutingRuleUpsert) SetDescription(v string) *RoutingRuleUpsert {
+	u.Set(routingrule.FieldDescription, v)
+	return u
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *RoutingRuleUpsert) UpdateDescription() *RoutingRuleUpsert {
+	u.SetExcluded(routingrule.FieldDescription)
+	return u
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *RoutingRuleUpsert) ClearDescription() *RoutingRuleUpsert {
+	u.SetNull(routingrule.FieldDescription)
+	return u
+}
+
+// SetIsActive sets the "is_active" field.
+func (u *RoutingRuleUpsert) SetIsActive(v bool) *RoutingRuleUpsert {
+	u.Set(routingrule.FieldIsActive, v)
+	return u
+}
+
+// UpdateIsActive sets the "is_active" field to the value that was provided on create.
+func (u *RoutingRuleUpsert) UpdateIsActive() *RoutingRuleUpsert {
+	u.SetExcluded(routingrule.FieldIsActive)
+	return u
+}
+
+// SetSortOrder sets the "sort_order" field.
+func (u *RoutingRuleUpsert) SetSortOrder(v int) *RoutingRuleUpsert {
+	u.Set(routingrule.FieldSortOrder, v)
+	return u
+}
+
+// UpdateSortOrder sets the "sort_order" field to the value that was provided on create.
+func (u *RoutingRuleUpsert) UpdateSortOrder() *RoutingRuleUpsert {
+	u.SetExcluded(routingrule.FieldSortOrder)
+	return u
+}
+
+// AddSortOrder adds v to the "sort_order" field.
+func (u *RoutingRuleUpsert) AddSortOrder(v int) *RoutingRuleUpsert {
+	u.Add(routingrule.FieldSortOrder, v)
+	return u
+}
+
+// SetConditions sets the "conditions" field.
+func (u *RoutingRuleUpsert) SetConditions(v []map[string]interface{}) *RoutingRuleUpsert {
+	u.Set(routingrule.FieldConditions, v)
+	return u
+}
+
+// UpdateConditions sets the "conditions" field to the value that was provided on create.
+func (u *RoutingRuleUpsert) UpdateConditions() *RoutingRuleUpsert {
+	u.SetExcluded(routingrule.FieldConditions)
+	return u
+}
+
+// SetAction sets the "action" field.
+func (u *RoutingRuleUpsert) SetAction(v map[string]interface{}) *RoutingRuleUpsert {
+	u.Set(routingrule.FieldAction, v)
+	return u
+}
+
+// UpdateAction sets the "action" field to the value that was provided on create.
+func (u *RoutingRuleUpsert) UpdateAction() *RoutingRuleUpsert {
+	u.SetExcluded(routingrule.FieldAction)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *RoutingRuleUpsert) SetUpdatedAt(v time.Time) *RoutingRuleUpsert {
+	u.Set(routingrule.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *RoutingRuleUpsert) UpdateUpdatedAt() *RoutingRuleUpsert {
+	u.SetExcluded(routingrule.FieldUpdatedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.RoutingRule.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(routingrule.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *RoutingRuleUpsertOne) UpdateNewValues() *RoutingRuleUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(routingrule.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(routingrule.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.RoutingRule.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *RoutingRuleUpsertOne) Ignore() *RoutingRuleUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *RoutingRuleUpsertOne) DoNothing() *RoutingRuleUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the RoutingRuleCreate.OnConflict
+// documentation for more info.
+func (u *RoutingRuleUpsertOne) Update(set func(*RoutingRuleUpsert)) *RoutingRuleUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&RoutingRuleUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (u *RoutingRuleUpsertOne) SetTenantID(v uuid.UUID) *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.SetTenantID(v)
+	})
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *RoutingRuleUpsertOne) UpdateTenantID() *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.UpdateTenantID()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *RoutingRuleUpsertOne) SetName(v string) *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *RoutingRuleUpsertOne) UpdateName() *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *RoutingRuleUpsertOne) SetDescription(v string) *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *RoutingRuleUpsertOne) UpdateDescription() *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *RoutingRuleUpsertOne) ClearDescription() *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.ClearDescription()
+	})
+}
+
+// SetIsActive sets the "is_active" field.
+func (u *RoutingRuleUpsertOne) SetIsActive(v bool) *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.SetIsActive(v)
+	})
+}
+
+// UpdateIsActive sets the "is_active" field to the value that was provided on create.
+func (u *RoutingRuleUpsertOne) UpdateIsActive() *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.UpdateIsActive()
+	})
+}
+
+// SetSortOrder sets the "sort_order" field.
+func (u *RoutingRuleUpsertOne) SetSortOrder(v int) *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.SetSortOrder(v)
+	})
+}
+
+// AddSortOrder adds v to the "sort_order" field.
+func (u *RoutingRuleUpsertOne) AddSortOrder(v int) *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.AddSortOrder(v)
+	})
+}
+
+// UpdateSortOrder sets the "sort_order" field to the value that was provided on create.
+func (u *RoutingRuleUpsertOne) UpdateSortOrder() *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.UpdateSortOrder()
+	})
+}
+
+// SetConditions sets the "conditions" field.
+func (u *RoutingRuleUpsertOne) SetConditions(v []map[string]interface{}) *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.SetConditions(v)
+	})
+}
+
+// UpdateConditions sets the "conditions" field to the value that was provided on create.
+func (u *RoutingRuleUpsertOne) UpdateConditions() *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.UpdateConditions()
+	})
+}
+
+// SetAction sets the "action" field.
+func (u *RoutingRuleUpsertOne) SetAction(v map[string]interface{}) *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.SetAction(v)
+	})
+}
+
+// UpdateAction sets the "action" field to the value that was provided on create.
+func (u *RoutingRuleUpsertOne) UpdateAction() *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.UpdateAction()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *RoutingRuleUpsertOne) SetUpdatedAt(v time.Time) *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *RoutingRuleUpsertOne) UpdateUpdatedAt() *RoutingRuleUpsertOne {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *RoutingRuleUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for RoutingRuleCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *RoutingRuleUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *RoutingRuleUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: RoutingRuleUpsertOne.ID is not supported by MySQL driver. Use RoutingRuleUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *RoutingRuleUpsertOne) IDX(ctx context.Context) uuid.UUID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // RoutingRuleCreateBulk is the builder for creating many RoutingRule entities in bulk.
 type RoutingRuleCreateBulk struct {
 	config
 	err      error
 	builders []*RoutingRuleCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the RoutingRule entities in the database.
@@ -325,6 +702,7 @@ func (_c *RoutingRuleCreateBulk) Save(ctx context.Context) ([]*RoutingRule, erro
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -371,6 +749,249 @@ func (_c *RoutingRuleCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *RoutingRuleCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.RoutingRule.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.RoutingRuleUpsert) {
+//			SetTenantID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *RoutingRuleCreateBulk) OnConflict(opts ...sql.ConflictOption) *RoutingRuleUpsertBulk {
+	_c.conflict = opts
+	return &RoutingRuleUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.RoutingRule.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *RoutingRuleCreateBulk) OnConflictColumns(columns ...string) *RoutingRuleUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &RoutingRuleUpsertBulk{
+		create: _c,
+	}
+}
+
+// RoutingRuleUpsertBulk is the builder for "upsert"-ing
+// a bulk of RoutingRule nodes.
+type RoutingRuleUpsertBulk struct {
+	create *RoutingRuleCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.RoutingRule.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(routingrule.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *RoutingRuleUpsertBulk) UpdateNewValues() *RoutingRuleUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(routingrule.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(routingrule.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.RoutingRule.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *RoutingRuleUpsertBulk) Ignore() *RoutingRuleUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *RoutingRuleUpsertBulk) DoNothing() *RoutingRuleUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the RoutingRuleCreateBulk.OnConflict
+// documentation for more info.
+func (u *RoutingRuleUpsertBulk) Update(set func(*RoutingRuleUpsert)) *RoutingRuleUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&RoutingRuleUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (u *RoutingRuleUpsertBulk) SetTenantID(v uuid.UUID) *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.SetTenantID(v)
+	})
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *RoutingRuleUpsertBulk) UpdateTenantID() *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.UpdateTenantID()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *RoutingRuleUpsertBulk) SetName(v string) *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *RoutingRuleUpsertBulk) UpdateName() *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *RoutingRuleUpsertBulk) SetDescription(v string) *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *RoutingRuleUpsertBulk) UpdateDescription() *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *RoutingRuleUpsertBulk) ClearDescription() *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.ClearDescription()
+	})
+}
+
+// SetIsActive sets the "is_active" field.
+func (u *RoutingRuleUpsertBulk) SetIsActive(v bool) *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.SetIsActive(v)
+	})
+}
+
+// UpdateIsActive sets the "is_active" field to the value that was provided on create.
+func (u *RoutingRuleUpsertBulk) UpdateIsActive() *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.UpdateIsActive()
+	})
+}
+
+// SetSortOrder sets the "sort_order" field.
+func (u *RoutingRuleUpsertBulk) SetSortOrder(v int) *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.SetSortOrder(v)
+	})
+}
+
+// AddSortOrder adds v to the "sort_order" field.
+func (u *RoutingRuleUpsertBulk) AddSortOrder(v int) *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.AddSortOrder(v)
+	})
+}
+
+// UpdateSortOrder sets the "sort_order" field to the value that was provided on create.
+func (u *RoutingRuleUpsertBulk) UpdateSortOrder() *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.UpdateSortOrder()
+	})
+}
+
+// SetConditions sets the "conditions" field.
+func (u *RoutingRuleUpsertBulk) SetConditions(v []map[string]interface{}) *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.SetConditions(v)
+	})
+}
+
+// UpdateConditions sets the "conditions" field to the value that was provided on create.
+func (u *RoutingRuleUpsertBulk) UpdateConditions() *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.UpdateConditions()
+	})
+}
+
+// SetAction sets the "action" field.
+func (u *RoutingRuleUpsertBulk) SetAction(v map[string]interface{}) *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.SetAction(v)
+	})
+}
+
+// UpdateAction sets the "action" field to the value that was provided on create.
+func (u *RoutingRuleUpsertBulk) UpdateAction() *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.UpdateAction()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *RoutingRuleUpsertBulk) SetUpdatedAt(v time.Time) *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *RoutingRuleUpsertBulk) UpdateUpdatedAt() *RoutingRuleUpsertBulk {
+	return u.Update(func(s *RoutingRuleUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *RoutingRuleUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the RoutingRuleCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for RoutingRuleCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *RoutingRuleUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

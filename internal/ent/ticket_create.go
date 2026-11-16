@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
@@ -23,6 +25,7 @@ type TicketCreate struct {
 	config
 	mutation *TicketMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetTenantID sets the "tenant_id" field.
@@ -623,6 +626,7 @@ func (_c *TicketCreate) createSpec() (*Ticket, *sqlgraph.CreateSpec) {
 		_node = &Ticket{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(ticket.Table, sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeUUID))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
@@ -808,11 +812,1138 @@ func (_c *TicketCreate) createSpec() (*Ticket, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Ticket.Create().
+//		SetTenantID(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.TicketUpsert) {
+//			SetTenantID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *TicketCreate) OnConflict(opts ...sql.ConflictOption) *TicketUpsertOne {
+	_c.conflict = opts
+	return &TicketUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Ticket.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *TicketCreate) OnConflictColumns(columns ...string) *TicketUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &TicketUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// TicketUpsertOne is the builder for "upsert"-ing
+	//  one Ticket node.
+	TicketUpsertOne struct {
+		create *TicketCreate
+	}
+
+	// TicketUpsert is the "OnConflict" setter.
+	TicketUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetTenantID sets the "tenant_id" field.
+func (u *TicketUpsert) SetTenantID(v uuid.UUID) *TicketUpsert {
+	u.Set(ticket.FieldTenantID, v)
+	return u
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateTenantID() *TicketUpsert {
+	u.SetExcluded(ticket.FieldTenantID)
+	return u
+}
+
+// SetTicketNumber sets the "ticket_number" field.
+func (u *TicketUpsert) SetTicketNumber(v string) *TicketUpsert {
+	u.Set(ticket.FieldTicketNumber, v)
+	return u
+}
+
+// UpdateTicketNumber sets the "ticket_number" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateTicketNumber() *TicketUpsert {
+	u.SetExcluded(ticket.FieldTicketNumber)
+	return u
+}
+
+// SetCustomerID sets the "customer_id" field.
+func (u *TicketUpsert) SetCustomerID(v uuid.UUID) *TicketUpsert {
+	u.Set(ticket.FieldCustomerID, v)
+	return u
+}
+
+// UpdateCustomerID sets the "customer_id" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateCustomerID() *TicketUpsert {
+	u.SetExcluded(ticket.FieldCustomerID)
+	return u
+}
+
+// SetCategoryID sets the "category_id" field.
+func (u *TicketUpsert) SetCategoryID(v uuid.UUID) *TicketUpsert {
+	u.Set(ticket.FieldCategoryID, v)
+	return u
+}
+
+// UpdateCategoryID sets the "category_id" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateCategoryID() *TicketUpsert {
+	u.SetExcluded(ticket.FieldCategoryID)
+	return u
+}
+
+// ClearCategoryID clears the value of the "category_id" field.
+func (u *TicketUpsert) ClearCategoryID() *TicketUpsert {
+	u.SetNull(ticket.FieldCategoryID)
+	return u
+}
+
+// SetAssignedAgentID sets the "assigned_agent_id" field.
+func (u *TicketUpsert) SetAssignedAgentID(v uuid.UUID) *TicketUpsert {
+	u.Set(ticket.FieldAssignedAgentID, v)
+	return u
+}
+
+// UpdateAssignedAgentID sets the "assigned_agent_id" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateAssignedAgentID() *TicketUpsert {
+	u.SetExcluded(ticket.FieldAssignedAgentID)
+	return u
+}
+
+// ClearAssignedAgentID clears the value of the "assigned_agent_id" field.
+func (u *TicketUpsert) ClearAssignedAgentID() *TicketUpsert {
+	u.SetNull(ticket.FieldAssignedAgentID)
+	return u
+}
+
+// SetAssignedTeamID sets the "assigned_team_id" field.
+func (u *TicketUpsert) SetAssignedTeamID(v uuid.UUID) *TicketUpsert {
+	u.Set(ticket.FieldAssignedTeamID, v)
+	return u
+}
+
+// UpdateAssignedTeamID sets the "assigned_team_id" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateAssignedTeamID() *TicketUpsert {
+	u.SetExcluded(ticket.FieldAssignedTeamID)
+	return u
+}
+
+// ClearAssignedTeamID clears the value of the "assigned_team_id" field.
+func (u *TicketUpsert) ClearAssignedTeamID() *TicketUpsert {
+	u.SetNull(ticket.FieldAssignedTeamID)
+	return u
+}
+
+// SetSubject sets the "subject" field.
+func (u *TicketUpsert) SetSubject(v string) *TicketUpsert {
+	u.Set(ticket.FieldSubject, v)
+	return u
+}
+
+// UpdateSubject sets the "subject" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateSubject() *TicketUpsert {
+	u.SetExcluded(ticket.FieldSubject)
+	return u
+}
+
+// SetDescription sets the "description" field.
+func (u *TicketUpsert) SetDescription(v string) *TicketUpsert {
+	u.Set(ticket.FieldDescription, v)
+	return u
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateDescription() *TicketUpsert {
+	u.SetExcluded(ticket.FieldDescription)
+	return u
+}
+
+// SetStatus sets the "status" field.
+func (u *TicketUpsert) SetStatus(v ticket.Status) *TicketUpsert {
+	u.Set(ticket.FieldStatus, v)
+	return u
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateStatus() *TicketUpsert {
+	u.SetExcluded(ticket.FieldStatus)
+	return u
+}
+
+// SetPriority sets the "priority" field.
+func (u *TicketUpsert) SetPriority(v ticket.Priority) *TicketUpsert {
+	u.Set(ticket.FieldPriority, v)
+	return u
+}
+
+// UpdatePriority sets the "priority" field to the value that was provided on create.
+func (u *TicketUpsert) UpdatePriority() *TicketUpsert {
+	u.SetExcluded(ticket.FieldPriority)
+	return u
+}
+
+// SetChannel sets the "channel" field.
+func (u *TicketUpsert) SetChannel(v ticket.Channel) *TicketUpsert {
+	u.Set(ticket.FieldChannel, v)
+	return u
+}
+
+// UpdateChannel sets the "channel" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateChannel() *TicketUpsert {
+	u.SetExcluded(ticket.FieldChannel)
+	return u
+}
+
+// SetOrderID sets the "order_id" field.
+func (u *TicketUpsert) SetOrderID(v uuid.UUID) *TicketUpsert {
+	u.Set(ticket.FieldOrderID, v)
+	return u
+}
+
+// UpdateOrderID sets the "order_id" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateOrderID() *TicketUpsert {
+	u.SetExcluded(ticket.FieldOrderID)
+	return u
+}
+
+// ClearOrderID clears the value of the "order_id" field.
+func (u *TicketUpsert) ClearOrderID() *TicketUpsert {
+	u.SetNull(ticket.FieldOrderID)
+	return u
+}
+
+// SetExternalReference sets the "external_reference" field.
+func (u *TicketUpsert) SetExternalReference(v string) *TicketUpsert {
+	u.Set(ticket.FieldExternalReference, v)
+	return u
+}
+
+// UpdateExternalReference sets the "external_reference" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateExternalReference() *TicketUpsert {
+	u.SetExcluded(ticket.FieldExternalReference)
+	return u
+}
+
+// ClearExternalReference clears the value of the "external_reference" field.
+func (u *TicketUpsert) ClearExternalReference() *TicketUpsert {
+	u.SetNull(ticket.FieldExternalReference)
+	return u
+}
+
+// SetCrmContactID sets the "crm_contact_id" field.
+func (u *TicketUpsert) SetCrmContactID(v uuid.UUID) *TicketUpsert {
+	u.Set(ticket.FieldCrmContactID, v)
+	return u
+}
+
+// UpdateCrmContactID sets the "crm_contact_id" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateCrmContactID() *TicketUpsert {
+	u.SetExcluded(ticket.FieldCrmContactID)
+	return u
+}
+
+// ClearCrmContactID clears the value of the "crm_contact_id" field.
+func (u *TicketUpsert) ClearCrmContactID() *TicketUpsert {
+	u.SetNull(ticket.FieldCrmContactID)
+	return u
+}
+
+// SetCrmLeadID sets the "crm_lead_id" field.
+func (u *TicketUpsert) SetCrmLeadID(v uuid.UUID) *TicketUpsert {
+	u.Set(ticket.FieldCrmLeadID, v)
+	return u
+}
+
+// UpdateCrmLeadID sets the "crm_lead_id" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateCrmLeadID() *TicketUpsert {
+	u.SetExcluded(ticket.FieldCrmLeadID)
+	return u
+}
+
+// ClearCrmLeadID clears the value of the "crm_lead_id" field.
+func (u *TicketUpsert) ClearCrmLeadID() *TicketUpsert {
+	u.SetNull(ticket.FieldCrmLeadID)
+	return u
+}
+
+// SetSLAResponseDueAt sets the "sla_response_due_at" field.
+func (u *TicketUpsert) SetSLAResponseDueAt(v time.Time) *TicketUpsert {
+	u.Set(ticket.FieldSLAResponseDueAt, v)
+	return u
+}
+
+// UpdateSLAResponseDueAt sets the "sla_response_due_at" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateSLAResponseDueAt() *TicketUpsert {
+	u.SetExcluded(ticket.FieldSLAResponseDueAt)
+	return u
+}
+
+// ClearSLAResponseDueAt clears the value of the "sla_response_due_at" field.
+func (u *TicketUpsert) ClearSLAResponseDueAt() *TicketUpsert {
+	u.SetNull(ticket.FieldSLAResponseDueAt)
+	return u
+}
+
+// SetSLAResolutionDueAt sets the "sla_resolution_due_at" field.
+func (u *TicketUpsert) SetSLAResolutionDueAt(v time.Time) *TicketUpsert {
+	u.Set(ticket.FieldSLAResolutionDueAt, v)
+	return u
+}
+
+// UpdateSLAResolutionDueAt sets the "sla_resolution_due_at" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateSLAResolutionDueAt() *TicketUpsert {
+	u.SetExcluded(ticket.FieldSLAResolutionDueAt)
+	return u
+}
+
+// ClearSLAResolutionDueAt clears the value of the "sla_resolution_due_at" field.
+func (u *TicketUpsert) ClearSLAResolutionDueAt() *TicketUpsert {
+	u.SetNull(ticket.FieldSLAResolutionDueAt)
+	return u
+}
+
+// SetSLAResponseBreached sets the "sla_response_breached" field.
+func (u *TicketUpsert) SetSLAResponseBreached(v bool) *TicketUpsert {
+	u.Set(ticket.FieldSLAResponseBreached, v)
+	return u
+}
+
+// UpdateSLAResponseBreached sets the "sla_response_breached" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateSLAResponseBreached() *TicketUpsert {
+	u.SetExcluded(ticket.FieldSLAResponseBreached)
+	return u
+}
+
+// SetSLAResolutionBreached sets the "sla_resolution_breached" field.
+func (u *TicketUpsert) SetSLAResolutionBreached(v bool) *TicketUpsert {
+	u.Set(ticket.FieldSLAResolutionBreached, v)
+	return u
+}
+
+// UpdateSLAResolutionBreached sets the "sla_resolution_breached" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateSLAResolutionBreached() *TicketUpsert {
+	u.SetExcluded(ticket.FieldSLAResolutionBreached)
+	return u
+}
+
+// SetFirstResponseAt sets the "first_response_at" field.
+func (u *TicketUpsert) SetFirstResponseAt(v time.Time) *TicketUpsert {
+	u.Set(ticket.FieldFirstResponseAt, v)
+	return u
+}
+
+// UpdateFirstResponseAt sets the "first_response_at" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateFirstResponseAt() *TicketUpsert {
+	u.SetExcluded(ticket.FieldFirstResponseAt)
+	return u
+}
+
+// ClearFirstResponseAt clears the value of the "first_response_at" field.
+func (u *TicketUpsert) ClearFirstResponseAt() *TicketUpsert {
+	u.SetNull(ticket.FieldFirstResponseAt)
+	return u
+}
+
+// SetResolvedAt sets the "resolved_at" field.
+func (u *TicketUpsert) SetResolvedAt(v time.Time) *TicketUpsert {
+	u.Set(ticket.FieldResolvedAt, v)
+	return u
+}
+
+// UpdateResolvedAt sets the "resolved_at" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateResolvedAt() *TicketUpsert {
+	u.SetExcluded(ticket.FieldResolvedAt)
+	return u
+}
+
+// ClearResolvedAt clears the value of the "resolved_at" field.
+func (u *TicketUpsert) ClearResolvedAt() *TicketUpsert {
+	u.SetNull(ticket.FieldResolvedAt)
+	return u
+}
+
+// SetClosedAt sets the "closed_at" field.
+func (u *TicketUpsert) SetClosedAt(v time.Time) *TicketUpsert {
+	u.Set(ticket.FieldClosedAt, v)
+	return u
+}
+
+// UpdateClosedAt sets the "closed_at" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateClosedAt() *TicketUpsert {
+	u.SetExcluded(ticket.FieldClosedAt)
+	return u
+}
+
+// ClearClosedAt clears the value of the "closed_at" field.
+func (u *TicketUpsert) ClearClosedAt() *TicketUpsert {
+	u.SetNull(ticket.FieldClosedAt)
+	return u
+}
+
+// SetReopenedAt sets the "reopened_at" field.
+func (u *TicketUpsert) SetReopenedAt(v time.Time) *TicketUpsert {
+	u.Set(ticket.FieldReopenedAt, v)
+	return u
+}
+
+// UpdateReopenedAt sets the "reopened_at" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateReopenedAt() *TicketUpsert {
+	u.SetExcluded(ticket.FieldReopenedAt)
+	return u
+}
+
+// ClearReopenedAt clears the value of the "reopened_at" field.
+func (u *TicketUpsert) ClearReopenedAt() *TicketUpsert {
+	u.SetNull(ticket.FieldReopenedAt)
+	return u
+}
+
+// SetEscalationLevel sets the "escalation_level" field.
+func (u *TicketUpsert) SetEscalationLevel(v int) *TicketUpsert {
+	u.Set(ticket.FieldEscalationLevel, v)
+	return u
+}
+
+// UpdateEscalationLevel sets the "escalation_level" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateEscalationLevel() *TicketUpsert {
+	u.SetExcluded(ticket.FieldEscalationLevel)
+	return u
+}
+
+// AddEscalationLevel adds v to the "escalation_level" field.
+func (u *TicketUpsert) AddEscalationLevel(v int) *TicketUpsert {
+	u.Add(ticket.FieldEscalationLevel, v)
+	return u
+}
+
+// SetEscalatedAt sets the "escalated_at" field.
+func (u *TicketUpsert) SetEscalatedAt(v time.Time) *TicketUpsert {
+	u.Set(ticket.FieldEscalatedAt, v)
+	return u
+}
+
+// UpdateEscalatedAt sets the "escalated_at" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateEscalatedAt() *TicketUpsert {
+	u.SetExcluded(ticket.FieldEscalatedAt)
+	return u
+}
+
+// ClearEscalatedAt clears the value of the "escalated_at" field.
+func (u *TicketUpsert) ClearEscalatedAt() *TicketUpsert {
+	u.SetNull(ticket.FieldEscalatedAt)
+	return u
+}
+
+// SetTags sets the "tags" field.
+func (u *TicketUpsert) SetTags(v []string) *TicketUpsert {
+	u.Set(ticket.FieldTags, v)
+	return u
+}
+
+// UpdateTags sets the "tags" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateTags() *TicketUpsert {
+	u.SetExcluded(ticket.FieldTags)
+	return u
+}
+
+// ClearTags clears the value of the "tags" field.
+func (u *TicketUpsert) ClearTags() *TicketUpsert {
+	u.SetNull(ticket.FieldTags)
+	return u
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *TicketUpsert) SetMetadata(v map[string]interface{}) *TicketUpsert {
+	u.Set(ticket.FieldMetadata, v)
+	return u
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateMetadata() *TicketUpsert {
+	u.SetExcluded(ticket.FieldMetadata)
+	return u
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *TicketUpsert) ClearMetadata() *TicketUpsert {
+	u.SetNull(ticket.FieldMetadata)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *TicketUpsert) SetUpdatedAt(v time.Time) *TicketUpsert {
+	u.Set(ticket.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateUpdatedAt() *TicketUpsert {
+	u.SetExcluded(ticket.FieldUpdatedAt)
+	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *TicketUpsert) SetDeletedAt(v time.Time) *TicketUpsert {
+	u.Set(ticket.FieldDeletedAt, v)
+	return u
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateDeletedAt() *TicketUpsert {
+	u.SetExcluded(ticket.FieldDeletedAt)
+	return u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *TicketUpsert) ClearDeletedAt() *TicketUpsert {
+	u.SetNull(ticket.FieldDeletedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.Ticket.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(ticket.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *TicketUpsertOne) UpdateNewValues() *TicketUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(ticket.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(ticket.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Ticket.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *TicketUpsertOne) Ignore() *TicketUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *TicketUpsertOne) DoNothing() *TicketUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the TicketCreate.OnConflict
+// documentation for more info.
+func (u *TicketUpsertOne) Update(set func(*TicketUpsert)) *TicketUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&TicketUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (u *TicketUpsertOne) SetTenantID(v uuid.UUID) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetTenantID(v)
+	})
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateTenantID() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateTenantID()
+	})
+}
+
+// SetTicketNumber sets the "ticket_number" field.
+func (u *TicketUpsertOne) SetTicketNumber(v string) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetTicketNumber(v)
+	})
+}
+
+// UpdateTicketNumber sets the "ticket_number" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateTicketNumber() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateTicketNumber()
+	})
+}
+
+// SetCustomerID sets the "customer_id" field.
+func (u *TicketUpsertOne) SetCustomerID(v uuid.UUID) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetCustomerID(v)
+	})
+}
+
+// UpdateCustomerID sets the "customer_id" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateCustomerID() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateCustomerID()
+	})
+}
+
+// SetCategoryID sets the "category_id" field.
+func (u *TicketUpsertOne) SetCategoryID(v uuid.UUID) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetCategoryID(v)
+	})
+}
+
+// UpdateCategoryID sets the "category_id" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateCategoryID() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateCategoryID()
+	})
+}
+
+// ClearCategoryID clears the value of the "category_id" field.
+func (u *TicketUpsertOne) ClearCategoryID() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearCategoryID()
+	})
+}
+
+// SetAssignedAgentID sets the "assigned_agent_id" field.
+func (u *TicketUpsertOne) SetAssignedAgentID(v uuid.UUID) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetAssignedAgentID(v)
+	})
+}
+
+// UpdateAssignedAgentID sets the "assigned_agent_id" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateAssignedAgentID() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateAssignedAgentID()
+	})
+}
+
+// ClearAssignedAgentID clears the value of the "assigned_agent_id" field.
+func (u *TicketUpsertOne) ClearAssignedAgentID() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearAssignedAgentID()
+	})
+}
+
+// SetAssignedTeamID sets the "assigned_team_id" field.
+func (u *TicketUpsertOne) SetAssignedTeamID(v uuid.UUID) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetAssignedTeamID(v)
+	})
+}
+
+// UpdateAssignedTeamID sets the "assigned_team_id" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateAssignedTeamID() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateAssignedTeamID()
+	})
+}
+
+// ClearAssignedTeamID clears the value of the "assigned_team_id" field.
+func (u *TicketUpsertOne) ClearAssignedTeamID() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearAssignedTeamID()
+	})
+}
+
+// SetSubject sets the "subject" field.
+func (u *TicketUpsertOne) SetSubject(v string) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSubject(v)
+	})
+}
+
+// UpdateSubject sets the "subject" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateSubject() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSubject()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *TicketUpsertOne) SetDescription(v string) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateDescription() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *TicketUpsertOne) SetStatus(v ticket.Status) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateStatus() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetPriority sets the "priority" field.
+func (u *TicketUpsertOne) SetPriority(v ticket.Priority) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetPriority(v)
+	})
+}
+
+// UpdatePriority sets the "priority" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdatePriority() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdatePriority()
+	})
+}
+
+// SetChannel sets the "channel" field.
+func (u *TicketUpsertOne) SetChannel(v ticket.Channel) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetChannel(v)
+	})
+}
+
+// UpdateChannel sets the "channel" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateChannel() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateChannel()
+	})
+}
+
+// SetOrderID sets the "order_id" field.
+func (u *TicketUpsertOne) SetOrderID(v uuid.UUID) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetOrderID(v)
+	})
+}
+
+// UpdateOrderID sets the "order_id" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateOrderID() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateOrderID()
+	})
+}
+
+// ClearOrderID clears the value of the "order_id" field.
+func (u *TicketUpsertOne) ClearOrderID() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearOrderID()
+	})
+}
+
+// SetExternalReference sets the "external_reference" field.
+func (u *TicketUpsertOne) SetExternalReference(v string) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetExternalReference(v)
+	})
+}
+
+// UpdateExternalReference sets the "external_reference" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateExternalReference() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateExternalReference()
+	})
+}
+
+// ClearExternalReference clears the value of the "external_reference" field.
+func (u *TicketUpsertOne) ClearExternalReference() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearExternalReference()
+	})
+}
+
+// SetCrmContactID sets the "crm_contact_id" field.
+func (u *TicketUpsertOne) SetCrmContactID(v uuid.UUID) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetCrmContactID(v)
+	})
+}
+
+// UpdateCrmContactID sets the "crm_contact_id" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateCrmContactID() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateCrmContactID()
+	})
+}
+
+// ClearCrmContactID clears the value of the "crm_contact_id" field.
+func (u *TicketUpsertOne) ClearCrmContactID() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearCrmContactID()
+	})
+}
+
+// SetCrmLeadID sets the "crm_lead_id" field.
+func (u *TicketUpsertOne) SetCrmLeadID(v uuid.UUID) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetCrmLeadID(v)
+	})
+}
+
+// UpdateCrmLeadID sets the "crm_lead_id" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateCrmLeadID() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateCrmLeadID()
+	})
+}
+
+// ClearCrmLeadID clears the value of the "crm_lead_id" field.
+func (u *TicketUpsertOne) ClearCrmLeadID() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearCrmLeadID()
+	})
+}
+
+// SetSLAResponseDueAt sets the "sla_response_due_at" field.
+func (u *TicketUpsertOne) SetSLAResponseDueAt(v time.Time) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAResponseDueAt(v)
+	})
+}
+
+// UpdateSLAResponseDueAt sets the "sla_response_due_at" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateSLAResponseDueAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAResponseDueAt()
+	})
+}
+
+// ClearSLAResponseDueAt clears the value of the "sla_response_due_at" field.
+func (u *TicketUpsertOne) ClearSLAResponseDueAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearSLAResponseDueAt()
+	})
+}
+
+// SetSLAResolutionDueAt sets the "sla_resolution_due_at" field.
+func (u *TicketUpsertOne) SetSLAResolutionDueAt(v time.Time) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAResolutionDueAt(v)
+	})
+}
+
+// UpdateSLAResolutionDueAt sets the "sla_resolution_due_at" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateSLAResolutionDueAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAResolutionDueAt()
+	})
+}
+
+// ClearSLAResolutionDueAt clears the value of the "sla_resolution_due_at" field.
+func (u *TicketUpsertOne) ClearSLAResolutionDueAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearSLAResolutionDueAt()
+	})
+}
+
+// SetSLAResponseBreached sets the "sla_response_breached" field.
+func (u *TicketUpsertOne) SetSLAResponseBreached(v bool) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAResponseBreached(v)
+	})
+}
+
+// UpdateSLAResponseBreached sets the "sla_response_breached" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateSLAResponseBreached() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAResponseBreached()
+	})
+}
+
+// SetSLAResolutionBreached sets the "sla_resolution_breached" field.
+func (u *TicketUpsertOne) SetSLAResolutionBreached(v bool) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAResolutionBreached(v)
+	})
+}
+
+// UpdateSLAResolutionBreached sets the "sla_resolution_breached" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateSLAResolutionBreached() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAResolutionBreached()
+	})
+}
+
+// SetFirstResponseAt sets the "first_response_at" field.
+func (u *TicketUpsertOne) SetFirstResponseAt(v time.Time) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetFirstResponseAt(v)
+	})
+}
+
+// UpdateFirstResponseAt sets the "first_response_at" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateFirstResponseAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateFirstResponseAt()
+	})
+}
+
+// ClearFirstResponseAt clears the value of the "first_response_at" field.
+func (u *TicketUpsertOne) ClearFirstResponseAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearFirstResponseAt()
+	})
+}
+
+// SetResolvedAt sets the "resolved_at" field.
+func (u *TicketUpsertOne) SetResolvedAt(v time.Time) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetResolvedAt(v)
+	})
+}
+
+// UpdateResolvedAt sets the "resolved_at" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateResolvedAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateResolvedAt()
+	})
+}
+
+// ClearResolvedAt clears the value of the "resolved_at" field.
+func (u *TicketUpsertOne) ClearResolvedAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearResolvedAt()
+	})
+}
+
+// SetClosedAt sets the "closed_at" field.
+func (u *TicketUpsertOne) SetClosedAt(v time.Time) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetClosedAt(v)
+	})
+}
+
+// UpdateClosedAt sets the "closed_at" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateClosedAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateClosedAt()
+	})
+}
+
+// ClearClosedAt clears the value of the "closed_at" field.
+func (u *TicketUpsertOne) ClearClosedAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearClosedAt()
+	})
+}
+
+// SetReopenedAt sets the "reopened_at" field.
+func (u *TicketUpsertOne) SetReopenedAt(v time.Time) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetReopenedAt(v)
+	})
+}
+
+// UpdateReopenedAt sets the "reopened_at" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateReopenedAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateReopenedAt()
+	})
+}
+
+// ClearReopenedAt clears the value of the "reopened_at" field.
+func (u *TicketUpsertOne) ClearReopenedAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearReopenedAt()
+	})
+}
+
+// SetEscalationLevel sets the "escalation_level" field.
+func (u *TicketUpsertOne) SetEscalationLevel(v int) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetEscalationLevel(v)
+	})
+}
+
+// AddEscalationLevel adds v to the "escalation_level" field.
+func (u *TicketUpsertOne) AddEscalationLevel(v int) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.AddEscalationLevel(v)
+	})
+}
+
+// UpdateEscalationLevel sets the "escalation_level" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateEscalationLevel() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateEscalationLevel()
+	})
+}
+
+// SetEscalatedAt sets the "escalated_at" field.
+func (u *TicketUpsertOne) SetEscalatedAt(v time.Time) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetEscalatedAt(v)
+	})
+}
+
+// UpdateEscalatedAt sets the "escalated_at" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateEscalatedAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateEscalatedAt()
+	})
+}
+
+// ClearEscalatedAt clears the value of the "escalated_at" field.
+func (u *TicketUpsertOne) ClearEscalatedAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearEscalatedAt()
+	})
+}
+
+// SetTags sets the "tags" field.
+func (u *TicketUpsertOne) SetTags(v []string) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetTags(v)
+	})
+}
+
+// UpdateTags sets the "tags" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateTags() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateTags()
+	})
+}
+
+// ClearTags clears the value of the "tags" field.
+func (u *TicketUpsertOne) ClearTags() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearTags()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *TicketUpsertOne) SetMetadata(v map[string]interface{}) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateMetadata() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *TicketUpsertOne) ClearMetadata() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearMetadata()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *TicketUpsertOne) SetUpdatedAt(v time.Time) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateUpdatedAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *TicketUpsertOne) SetDeletedAt(v time.Time) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateDeletedAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *TicketUpsertOne) ClearDeletedAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearDeletedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *TicketUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for TicketCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *TicketUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *TicketUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: TicketUpsertOne.ID is not supported by MySQL driver. Use TicketUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *TicketUpsertOne) IDX(ctx context.Context) uuid.UUID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // TicketCreateBulk is the builder for creating many Ticket entities in bulk.
 type TicketCreateBulk struct {
 	config
 	err      error
 	builders []*TicketCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Ticket entities in the database.
@@ -842,6 +1973,7 @@ func (_c *TicketCreateBulk) Save(ctx context.Context) ([]*Ticket, error) {
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -888,6 +2020,655 @@ func (_c *TicketCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *TicketCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Ticket.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.TicketUpsert) {
+//			SetTenantID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *TicketCreateBulk) OnConflict(opts ...sql.ConflictOption) *TicketUpsertBulk {
+	_c.conflict = opts
+	return &TicketUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Ticket.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *TicketCreateBulk) OnConflictColumns(columns ...string) *TicketUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &TicketUpsertBulk{
+		create: _c,
+	}
+}
+
+// TicketUpsertBulk is the builder for "upsert"-ing
+// a bulk of Ticket nodes.
+type TicketUpsertBulk struct {
+	create *TicketCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Ticket.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(ticket.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *TicketUpsertBulk) UpdateNewValues() *TicketUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(ticket.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(ticket.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Ticket.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *TicketUpsertBulk) Ignore() *TicketUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *TicketUpsertBulk) DoNothing() *TicketUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the TicketCreateBulk.OnConflict
+// documentation for more info.
+func (u *TicketUpsertBulk) Update(set func(*TicketUpsert)) *TicketUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&TicketUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (u *TicketUpsertBulk) SetTenantID(v uuid.UUID) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetTenantID(v)
+	})
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateTenantID() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateTenantID()
+	})
+}
+
+// SetTicketNumber sets the "ticket_number" field.
+func (u *TicketUpsertBulk) SetTicketNumber(v string) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetTicketNumber(v)
+	})
+}
+
+// UpdateTicketNumber sets the "ticket_number" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateTicketNumber() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateTicketNumber()
+	})
+}
+
+// SetCustomerID sets the "customer_id" field.
+func (u *TicketUpsertBulk) SetCustomerID(v uuid.UUID) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetCustomerID(v)
+	})
+}
+
+// UpdateCustomerID sets the "customer_id" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateCustomerID() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateCustomerID()
+	})
+}
+
+// SetCategoryID sets the "category_id" field.
+func (u *TicketUpsertBulk) SetCategoryID(v uuid.UUID) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetCategoryID(v)
+	})
+}
+
+// UpdateCategoryID sets the "category_id" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateCategoryID() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateCategoryID()
+	})
+}
+
+// ClearCategoryID clears the value of the "category_id" field.
+func (u *TicketUpsertBulk) ClearCategoryID() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearCategoryID()
+	})
+}
+
+// SetAssignedAgentID sets the "assigned_agent_id" field.
+func (u *TicketUpsertBulk) SetAssignedAgentID(v uuid.UUID) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetAssignedAgentID(v)
+	})
+}
+
+// UpdateAssignedAgentID sets the "assigned_agent_id" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateAssignedAgentID() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateAssignedAgentID()
+	})
+}
+
+// ClearAssignedAgentID clears the value of the "assigned_agent_id" field.
+func (u *TicketUpsertBulk) ClearAssignedAgentID() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearAssignedAgentID()
+	})
+}
+
+// SetAssignedTeamID sets the "assigned_team_id" field.
+func (u *TicketUpsertBulk) SetAssignedTeamID(v uuid.UUID) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetAssignedTeamID(v)
+	})
+}
+
+// UpdateAssignedTeamID sets the "assigned_team_id" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateAssignedTeamID() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateAssignedTeamID()
+	})
+}
+
+// ClearAssignedTeamID clears the value of the "assigned_team_id" field.
+func (u *TicketUpsertBulk) ClearAssignedTeamID() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearAssignedTeamID()
+	})
+}
+
+// SetSubject sets the "subject" field.
+func (u *TicketUpsertBulk) SetSubject(v string) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSubject(v)
+	})
+}
+
+// UpdateSubject sets the "subject" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateSubject() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSubject()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *TicketUpsertBulk) SetDescription(v string) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateDescription() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *TicketUpsertBulk) SetStatus(v ticket.Status) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateStatus() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetPriority sets the "priority" field.
+func (u *TicketUpsertBulk) SetPriority(v ticket.Priority) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetPriority(v)
+	})
+}
+
+// UpdatePriority sets the "priority" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdatePriority() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdatePriority()
+	})
+}
+
+// SetChannel sets the "channel" field.
+func (u *TicketUpsertBulk) SetChannel(v ticket.Channel) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetChannel(v)
+	})
+}
+
+// UpdateChannel sets the "channel" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateChannel() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateChannel()
+	})
+}
+
+// SetOrderID sets the "order_id" field.
+func (u *TicketUpsertBulk) SetOrderID(v uuid.UUID) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetOrderID(v)
+	})
+}
+
+// UpdateOrderID sets the "order_id" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateOrderID() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateOrderID()
+	})
+}
+
+// ClearOrderID clears the value of the "order_id" field.
+func (u *TicketUpsertBulk) ClearOrderID() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearOrderID()
+	})
+}
+
+// SetExternalReference sets the "external_reference" field.
+func (u *TicketUpsertBulk) SetExternalReference(v string) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetExternalReference(v)
+	})
+}
+
+// UpdateExternalReference sets the "external_reference" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateExternalReference() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateExternalReference()
+	})
+}
+
+// ClearExternalReference clears the value of the "external_reference" field.
+func (u *TicketUpsertBulk) ClearExternalReference() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearExternalReference()
+	})
+}
+
+// SetCrmContactID sets the "crm_contact_id" field.
+func (u *TicketUpsertBulk) SetCrmContactID(v uuid.UUID) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetCrmContactID(v)
+	})
+}
+
+// UpdateCrmContactID sets the "crm_contact_id" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateCrmContactID() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateCrmContactID()
+	})
+}
+
+// ClearCrmContactID clears the value of the "crm_contact_id" field.
+func (u *TicketUpsertBulk) ClearCrmContactID() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearCrmContactID()
+	})
+}
+
+// SetCrmLeadID sets the "crm_lead_id" field.
+func (u *TicketUpsertBulk) SetCrmLeadID(v uuid.UUID) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetCrmLeadID(v)
+	})
+}
+
+// UpdateCrmLeadID sets the "crm_lead_id" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateCrmLeadID() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateCrmLeadID()
+	})
+}
+
+// ClearCrmLeadID clears the value of the "crm_lead_id" field.
+func (u *TicketUpsertBulk) ClearCrmLeadID() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearCrmLeadID()
+	})
+}
+
+// SetSLAResponseDueAt sets the "sla_response_due_at" field.
+func (u *TicketUpsertBulk) SetSLAResponseDueAt(v time.Time) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAResponseDueAt(v)
+	})
+}
+
+// UpdateSLAResponseDueAt sets the "sla_response_due_at" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateSLAResponseDueAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAResponseDueAt()
+	})
+}
+
+// ClearSLAResponseDueAt clears the value of the "sla_response_due_at" field.
+func (u *TicketUpsertBulk) ClearSLAResponseDueAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearSLAResponseDueAt()
+	})
+}
+
+// SetSLAResolutionDueAt sets the "sla_resolution_due_at" field.
+func (u *TicketUpsertBulk) SetSLAResolutionDueAt(v time.Time) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAResolutionDueAt(v)
+	})
+}
+
+// UpdateSLAResolutionDueAt sets the "sla_resolution_due_at" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateSLAResolutionDueAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAResolutionDueAt()
+	})
+}
+
+// ClearSLAResolutionDueAt clears the value of the "sla_resolution_due_at" field.
+func (u *TicketUpsertBulk) ClearSLAResolutionDueAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearSLAResolutionDueAt()
+	})
+}
+
+// SetSLAResponseBreached sets the "sla_response_breached" field.
+func (u *TicketUpsertBulk) SetSLAResponseBreached(v bool) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAResponseBreached(v)
+	})
+}
+
+// UpdateSLAResponseBreached sets the "sla_response_breached" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateSLAResponseBreached() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAResponseBreached()
+	})
+}
+
+// SetSLAResolutionBreached sets the "sla_resolution_breached" field.
+func (u *TicketUpsertBulk) SetSLAResolutionBreached(v bool) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAResolutionBreached(v)
+	})
+}
+
+// UpdateSLAResolutionBreached sets the "sla_resolution_breached" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateSLAResolutionBreached() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAResolutionBreached()
+	})
+}
+
+// SetFirstResponseAt sets the "first_response_at" field.
+func (u *TicketUpsertBulk) SetFirstResponseAt(v time.Time) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetFirstResponseAt(v)
+	})
+}
+
+// UpdateFirstResponseAt sets the "first_response_at" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateFirstResponseAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateFirstResponseAt()
+	})
+}
+
+// ClearFirstResponseAt clears the value of the "first_response_at" field.
+func (u *TicketUpsertBulk) ClearFirstResponseAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearFirstResponseAt()
+	})
+}
+
+// SetResolvedAt sets the "resolved_at" field.
+func (u *TicketUpsertBulk) SetResolvedAt(v time.Time) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetResolvedAt(v)
+	})
+}
+
+// UpdateResolvedAt sets the "resolved_at" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateResolvedAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateResolvedAt()
+	})
+}
+
+// ClearResolvedAt clears the value of the "resolved_at" field.
+func (u *TicketUpsertBulk) ClearResolvedAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearResolvedAt()
+	})
+}
+
+// SetClosedAt sets the "closed_at" field.
+func (u *TicketUpsertBulk) SetClosedAt(v time.Time) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetClosedAt(v)
+	})
+}
+
+// UpdateClosedAt sets the "closed_at" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateClosedAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateClosedAt()
+	})
+}
+
+// ClearClosedAt clears the value of the "closed_at" field.
+func (u *TicketUpsertBulk) ClearClosedAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearClosedAt()
+	})
+}
+
+// SetReopenedAt sets the "reopened_at" field.
+func (u *TicketUpsertBulk) SetReopenedAt(v time.Time) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetReopenedAt(v)
+	})
+}
+
+// UpdateReopenedAt sets the "reopened_at" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateReopenedAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateReopenedAt()
+	})
+}
+
+// ClearReopenedAt clears the value of the "reopened_at" field.
+func (u *TicketUpsertBulk) ClearReopenedAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearReopenedAt()
+	})
+}
+
+// SetEscalationLevel sets the "escalation_level" field.
+func (u *TicketUpsertBulk) SetEscalationLevel(v int) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetEscalationLevel(v)
+	})
+}
+
+// AddEscalationLevel adds v to the "escalation_level" field.
+func (u *TicketUpsertBulk) AddEscalationLevel(v int) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.AddEscalationLevel(v)
+	})
+}
+
+// UpdateEscalationLevel sets the "escalation_level" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateEscalationLevel() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateEscalationLevel()
+	})
+}
+
+// SetEscalatedAt sets the "escalated_at" field.
+func (u *TicketUpsertBulk) SetEscalatedAt(v time.Time) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetEscalatedAt(v)
+	})
+}
+
+// UpdateEscalatedAt sets the "escalated_at" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateEscalatedAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateEscalatedAt()
+	})
+}
+
+// ClearEscalatedAt clears the value of the "escalated_at" field.
+func (u *TicketUpsertBulk) ClearEscalatedAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearEscalatedAt()
+	})
+}
+
+// SetTags sets the "tags" field.
+func (u *TicketUpsertBulk) SetTags(v []string) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetTags(v)
+	})
+}
+
+// UpdateTags sets the "tags" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateTags() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateTags()
+	})
+}
+
+// ClearTags clears the value of the "tags" field.
+func (u *TicketUpsertBulk) ClearTags() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearTags()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *TicketUpsertBulk) SetMetadata(v map[string]interface{}) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateMetadata() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *TicketUpsertBulk) ClearMetadata() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearMetadata()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *TicketUpsertBulk) SetUpdatedAt(v time.Time) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateUpdatedAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *TicketUpsertBulk) SetDeletedAt(v time.Time) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateDeletedAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *TicketUpsertBulk) ClearDeletedAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearDeletedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *TicketUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the TicketCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for TicketCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *TicketUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

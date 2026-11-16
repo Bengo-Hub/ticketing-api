@@ -31,6 +31,20 @@ func (_u *TicketCommentUpdate) Where(ps ...predicate.TicketComment) *TicketComme
 	return _u
 }
 
+// SetTenantID sets the "tenant_id" field.
+func (_u *TicketCommentUpdate) SetTenantID(v uuid.UUID) *TicketCommentUpdate {
+	_u.mutation.SetTenantID(v)
+	return _u
+}
+
+// SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
+func (_u *TicketCommentUpdate) SetNillableTenantID(v *uuid.UUID) *TicketCommentUpdate {
+	if v != nil {
+		_u.SetTenantID(*v)
+	}
+	return _u
+}
+
 // SetTicketID sets the "ticket_id" field.
 func (_u *TicketCommentUpdate) SetTicketID(v uuid.UUID) *TicketCommentUpdate {
 	_u.mutation.SetTicketID(v)
@@ -289,6 +303,9 @@ func (_u *TicketCommentUpdate) sqlSave(ctx context.Context) (_node int, err erro
 			}
 		}
 	}
+	if value, ok := _u.mutation.TenantID(); ok {
+		_spec.SetField(ticketcomment.FieldTenantID, field.TypeUUID, value)
+	}
 	if value, ok := _u.mutation.AuthorID(); ok {
 		_spec.SetField(ticketcomment.FieldAuthorID, field.TypeUUID, value)
 	}
@@ -389,6 +406,20 @@ type TicketCommentUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *TicketCommentMutation
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (_u *TicketCommentUpdateOne) SetTenantID(v uuid.UUID) *TicketCommentUpdateOne {
+	_u.mutation.SetTenantID(v)
+	return _u
+}
+
+// SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
+func (_u *TicketCommentUpdateOne) SetNillableTenantID(v *uuid.UUID) *TicketCommentUpdateOne {
+	if v != nil {
+		_u.SetTenantID(*v)
+	}
+	return _u
 }
 
 // SetTicketID sets the "ticket_id" field.
@@ -678,6 +709,9 @@ func (_u *TicketCommentUpdateOne) sqlSave(ctx context.Context) (_node *TicketCom
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.TenantID(); ok {
+		_spec.SetField(ticketcomment.FieldTenantID, field.TypeUUID, value)
 	}
 	if value, ok := _u.mutation.AuthorID(); ok {
 		_spec.SetField(ticketcomment.FieldAuthorID, field.TypeUUID, value)

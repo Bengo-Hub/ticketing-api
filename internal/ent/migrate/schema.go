@@ -13,7 +13,7 @@ var (
 	AgentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "tenant_id", Type: field.TypeUUID},
-		{Name: "user_id", Type: field.TypeUUID, Unique: true},
+		{Name: "user_id", Type: field.TypeUUID},
 		{Name: "display_name", Type: field.TypeString, Size: 100},
 		{Name: "email", Type: field.TypeString, Size: 255},
 		{Name: "avatar_url", Type: field.TypeString, Nullable: true, Size: 500},
@@ -168,6 +168,44 @@ var (
 			},
 		},
 	}
+	// RolePermissionsColumns holds the columns for the "role_permissions" table.
+	RolePermissionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "role_id", Type: field.TypeUUID},
+		{Name: "permission_id", Type: field.TypeUUID},
+	}
+	// RolePermissionsTable holds the schema information for the "role_permissions" table.
+	RolePermissionsTable = &schema.Table{
+		Name:       "role_permissions",
+		Columns:    RolePermissionsColumns,
+		PrimaryKey: []*schema.Column{RolePermissionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "role_permissions_ticketing_roles_role",
+				Columns:    []*schema.Column{RolePermissionsColumns[1]},
+				RefColumns: []*schema.Column{TicketingRolesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "role_permissions_ticketing_permissions_permission",
+				Columns:    []*schema.Column{RolePermissionsColumns[2]},
+				RefColumns: []*schema.Column{TicketingPermissionsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "rolepermission_role_id_permission_id",
+				Unique:  true,
+				Columns: []*schema.Column{RolePermissionsColumns[1], RolePermissionsColumns[2]},
+			},
+			{
+				Name:    "rolepermission_permission_id",
+				Unique:  false,
+				Columns: []*schema.Column{RolePermissionsColumns[2]},
+			},
+		},
+	}
 	// RoutingRulesColumns holds the columns for the "routing_rules" table.
 	RoutingRulesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -285,7 +323,7 @@ var (
 	TicketsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "tenant_id", Type: field.TypeUUID},
-		{Name: "ticket_number", Type: field.TypeString, Unique: true, Size: 20},
+		{Name: "ticket_number", Type: field.TypeString, Size: 20},
 		{Name: "customer_id", Type: field.TypeUUID},
 		{Name: "assigned_team_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "subject", Type: field.TypeString, Size: 255},
@@ -335,6 +373,11 @@ var (
 			},
 		},
 		Indexes: []*schema.Index{
+			{
+				Name:    "ticket_tenant_id_ticket_number",
+				Unique:  true,
+				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[2]},
+			},
 			{
 				Name:    "ticket_tenant_id_status",
 				Unique:  false,
@@ -410,6 +453,7 @@ var (
 	// TicketAttachmentsColumns holds the columns for the "ticket_attachments" table.
 	TicketAttachmentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
 		{Name: "comment_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "uploaded_by", Type: field.TypeUUID},
 		{Name: "filename", Type: field.TypeString, Size: 255},
@@ -431,31 +475,36 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "ticket_attachments_tickets_attachments",
-				Columns:    []*schema.Column{TicketAttachmentsColumns[12]},
+				Columns:    []*schema.Column{TicketAttachmentsColumns[13]},
 				RefColumns: []*schema.Column{TicketsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 		},
 		Indexes: []*schema.Index{
 			{
+				Name:    "ticketattachment_tenant_id_ticket_id",
+				Unique:  false,
+				Columns: []*schema.Column{TicketAttachmentsColumns[1], TicketAttachmentsColumns[13]},
+			},
+			{
 				Name:    "ticketattachment_ticket_id",
 				Unique:  false,
-				Columns: []*schema.Column{TicketAttachmentsColumns[12]},
+				Columns: []*schema.Column{TicketAttachmentsColumns[13]},
 			},
 			{
 				Name:    "ticketattachment_comment_id",
 				Unique:  false,
-				Columns: []*schema.Column{TicketAttachmentsColumns[1]},
+				Columns: []*schema.Column{TicketAttachmentsColumns[2]},
 			},
 			{
 				Name:    "ticketattachment_uploaded_by",
 				Unique:  false,
-				Columns: []*schema.Column{TicketAttachmentsColumns[2]},
+				Columns: []*schema.Column{TicketAttachmentsColumns[3]},
 			},
 			{
 				Name:    "ticketattachment_deleted_at",
 				Unique:  false,
-				Columns: []*schema.Column{TicketAttachmentsColumns[11]},
+				Columns: []*schema.Column{TicketAttachmentsColumns[12]},
 			},
 		},
 	}
@@ -513,6 +562,7 @@ var (
 	// TicketCommentsColumns holds the columns for the "ticket_comments" table.
 	TicketCommentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
 		{Name: "author_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "author_type", Type: field.TypeEnum, Enums: []string{"customer", "agent", "system"}, Default: "agent"},
 		{Name: "comment_type", Type: field.TypeEnum, Enums: []string{"public", "internal", "system"}, Default: "public"},
@@ -534,31 +584,168 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "ticket_comments_tickets_comments",
-				Columns:    []*schema.Column{TicketCommentsColumns[12]},
+				Columns:    []*schema.Column{TicketCommentsColumns[13]},
 				RefColumns: []*schema.Column{TicketsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 		},
 		Indexes: []*schema.Index{
 			{
+				Name:    "ticketcomment_tenant_id_ticket_id",
+				Unique:  false,
+				Columns: []*schema.Column{TicketCommentsColumns[1], TicketCommentsColumns[13]},
+			},
+			{
 				Name:    "ticketcomment_ticket_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{TicketCommentsColumns[12], TicketCommentsColumns[10]},
+				Columns: []*schema.Column{TicketCommentsColumns[13], TicketCommentsColumns[11]},
 			},
 			{
 				Name:    "ticketcomment_ticket_id_comment_type",
 				Unique:  false,
-				Columns: []*schema.Column{TicketCommentsColumns[12], TicketCommentsColumns[3]},
+				Columns: []*schema.Column{TicketCommentsColumns[13], TicketCommentsColumns[4]},
 			},
 			{
 				Name:    "ticketcomment_author_id",
 				Unique:  false,
-				Columns: []*schema.Column{TicketCommentsColumns[1]},
+				Columns: []*schema.Column{TicketCommentsColumns[2]},
 			},
 			{
 				Name:    "ticketcomment_deleted_at",
 				Unique:  false,
-				Columns: []*schema.Column{TicketCommentsColumns[11]},
+				Columns: []*schema.Column{TicketCommentsColumns[12]},
+			},
+		},
+	}
+	// TicketSequencesColumns holds the columns for the "ticket_sequences" table.
+	TicketSequencesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID, Unique: true},
+		{Name: "next_value", Type: field.TypeInt64, Default: 0},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// TicketSequencesTable holds the schema information for the "ticket_sequences" table.
+	TicketSequencesTable = &schema.Table{
+		Name:       "ticket_sequences",
+		Columns:    TicketSequencesColumns,
+		PrimaryKey: []*schema.Column{TicketSequencesColumns[0]},
+	}
+	// TicketingPermissionsColumns holds the columns for the "ticketing_permissions" table.
+	TicketingPermissionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "permission_code", Type: field.TypeString, Unique: true},
+		{Name: "module", Type: field.TypeString},
+		{Name: "action", Type: field.TypeString},
+		{Name: "resource", Type: field.TypeString, Nullable: true},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// TicketingPermissionsTable holds the schema information for the "ticketing_permissions" table.
+	TicketingPermissionsTable = &schema.Table{
+		Name:       "ticketing_permissions",
+		Columns:    TicketingPermissionsColumns,
+		PrimaryKey: []*schema.Column{TicketingPermissionsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ticketingpermission_module_action",
+				Unique:  false,
+				Columns: []*schema.Column{TicketingPermissionsColumns[2], TicketingPermissionsColumns[3]},
+			},
+		},
+	}
+	// TicketingRolesColumns holds the columns for the "ticketing_roles" table.
+	TicketingRolesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "role_code", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "is_system_role", Type: field.TypeBool, Default: false},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// TicketingRolesTable holds the schema information for the "ticketing_roles" table.
+	TicketingRolesTable = &schema.Table{
+		Name:       "ticketing_roles",
+		Columns:    TicketingRolesColumns,
+		PrimaryKey: []*schema.Column{TicketingRolesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ticketingrole_tenant_id_role_code",
+				Unique:  true,
+				Columns: []*schema.Column{TicketingRolesColumns[1], TicketingRolesColumns[2]},
+			},
+		},
+	}
+	// TicketingUsersColumns holds the columns for the "ticketing_users" table.
+	TicketingUsersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "auth_service_user_id", Type: field.TypeUUID},
+		{Name: "email", Type: field.TypeString, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "sync_status", Type: field.TypeString, Default: "synced"},
+		{Name: "last_sync_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// TicketingUsersTable holds the schema information for the "ticketing_users" table.
+	TicketingUsersTable = &schema.Table{
+		Name:       "ticketing_users",
+		Columns:    TicketingUsersColumns,
+		PrimaryKey: []*schema.Column{TicketingUsersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ticketinguser_tenant_id_auth_service_user_id",
+				Unique:  true,
+				Columns: []*schema.Column{TicketingUsersColumns[1], TicketingUsersColumns[2]},
+			},
+			{
+				Name:    "ticketinguser_auth_service_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{TicketingUsersColumns[2]},
+			},
+		},
+	}
+	// UserRoleAssignmentsColumns holds the columns for the "user_role_assignments" table.
+	UserRoleAssignmentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "assigned_by", Type: field.TypeUUID},
+		{Name: "assigned_at", Type: field.TypeTime},
+		{Name: "expires_at", Type: field.TypeTime, Nullable: true},
+		{Name: "user_id", Type: field.TypeUUID},
+		{Name: "role_id", Type: field.TypeUUID},
+	}
+	// UserRoleAssignmentsTable holds the schema information for the "user_role_assignments" table.
+	UserRoleAssignmentsTable = &schema.Table{
+		Name:       "user_role_assignments",
+		Columns:    UserRoleAssignmentsColumns,
+		PrimaryKey: []*schema.Column{UserRoleAssignmentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_role_assignments_ticketing_users_user",
+				Columns:    []*schema.Column{UserRoleAssignmentsColumns[5]},
+				RefColumns: []*schema.Column{TicketingUsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "user_role_assignments_ticketing_roles_role",
+				Columns:    []*schema.Column{UserRoleAssignmentsColumns[6]},
+				RefColumns: []*schema.Column{TicketingRolesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "userroleassignment_tenant_id_user_id_role_id",
+				Unique:  true,
+				Columns: []*schema.Column{UserRoleAssignmentsColumns[1], UserRoleAssignmentsColumns[5], UserRoleAssignmentsColumns[6]},
+			},
+			{
+				Name:    "userroleassignment_role_id",
+				Unique:  false,
+				Columns: []*schema.Column{UserRoleAssignmentsColumns[6]},
 			},
 		},
 	}
@@ -567,6 +754,7 @@ var (
 		AgentsTable,
 		KBArticlesTable,
 		OutboxEventsTable,
+		RolePermissionsTable,
 		RoutingRulesTable,
 		SLAPoliciesTable,
 		TeamsTable,
@@ -574,6 +762,11 @@ var (
 		TicketAttachmentsTable,
 		TicketCategoriesTable,
 		TicketCommentsTable,
+		TicketSequencesTable,
+		TicketingPermissionsTable,
+		TicketingRolesTable,
+		TicketingUsersTable,
+		UserRoleAssignmentsTable,
 	}
 )
 
@@ -584,6 +777,11 @@ func init() {
 	}
 	KBArticlesTable.Annotation = &entsql.Annotation{
 		Table: "kb_articles",
+	}
+	RolePermissionsTable.ForeignKeys[0].RefTable = TicketingRolesTable
+	RolePermissionsTable.ForeignKeys[1].RefTable = TicketingPermissionsTable
+	RolePermissionsTable.Annotation = &entsql.Annotation{
+		Table: "role_permissions",
 	}
 	RoutingRulesTable.Annotation = &entsql.Annotation{
 		Table: "routing_rules",
@@ -610,5 +808,22 @@ func init() {
 	TicketCommentsTable.ForeignKeys[0].RefTable = TicketsTable
 	TicketCommentsTable.Annotation = &entsql.Annotation{
 		Table: "ticket_comments",
+	}
+	TicketSequencesTable.Annotation = &entsql.Annotation{
+		Table: "ticket_sequences",
+	}
+	TicketingPermissionsTable.Annotation = &entsql.Annotation{
+		Table: "ticketing_permissions",
+	}
+	TicketingRolesTable.Annotation = &entsql.Annotation{
+		Table: "ticketing_roles",
+	}
+	TicketingUsersTable.Annotation = &entsql.Annotation{
+		Table: "ticketing_users",
+	}
+	UserRoleAssignmentsTable.ForeignKeys[0].RefTable = TicketingUsersTable
+	UserRoleAssignmentsTable.ForeignKeys[1].RefTable = TicketingRolesTable
+	UserRoleAssignmentsTable.Annotation = &entsql.Annotation{
+		Table: "user_role_assignments",
 	}
 }

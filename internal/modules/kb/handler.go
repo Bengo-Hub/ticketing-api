@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	pagination "github.com/Bengo-Hub/pagination"
-	authclient "github.com/Bengo-Hub/shared-auth-client"
+	"github.com/bengobox/ticketing-service/internal/platform/access"
 	"github.com/bengobox/ticketing-service/internal/platform/tenantcache"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -43,11 +43,11 @@ func NewHandler(service *Service, logger *zap.Logger) *Handler {
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Route("/kb/admin", func(kb chi.Router) {
 		kb.Route("/articles", func(articles chi.Router) {
-			articles.Post("/", h.CreateArticle)
-			articles.Get("/", h.ListArticles)
-			articles.Get("/{articleId}", h.GetArticle)
-			articles.Put("/{articleId}", h.UpdateArticle)
-			articles.Delete("/{articleId}", h.DeleteArticle)
+			articles.With(access.RequirePermission("ticketing.kb.add")).Post("/", h.CreateArticle)
+			articles.With(access.RequirePermission("ticketing.kb.view")).Get("/", h.ListArticles)
+			articles.With(access.RequirePermission("ticketing.kb.view")).Get("/{articleId}", h.GetArticle)
+			articles.With(access.RequirePermission("ticketing.kb.change")).Put("/{articleId}", h.UpdateArticle)
+			articles.With(access.RequirePermission("ticketing.kb.delete")).Delete("/{articleId}", h.DeleteArticle)
 		})
 	})
 }
@@ -77,14 +77,8 @@ func (h *Handler) RegisterPublicRoutes(r chi.Router) {
 // @Security     BearerAuth
 // @Router       /{tenant}/kb/articles [post]
 func (h *Handler) CreateArticle(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -107,7 +101,7 @@ func (h *Handler) CreateArticle(w http.ResponseWriter, r *http.Request) {
 	if body.IsPublic != nil {
 		isPublic = *body.IsPublic
 	}
-	agentID := uuid.MustParse(claims.Subject)
+	agentID := access.From(r.Context()).AuthUserID
 
 	article, err := h.service.CreateArticle(r.Context(), CreateArticleRequest{
 		TenantID: *tenantID,
@@ -352,17 +346,22 @@ func (h *Handler) VotePublicArticle(w http.ResponseWriter, r *http.Request) {
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
 func (h *Handler) requireTenantID(w http.ResponseWriter, r *http.Request) uuid.UUID {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return uuid.Nil
-	}
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return uuid.Nil
 	}
 	return *tenantID
+}
+
+// requestTenant returns the tenant the access middleware resolved for the request.
+func requestTenant(w http.ResponseWriter, r *http.Request) (*uuid.UUID, bool) {
+	a := access.From(r.Context())
+	if a == nil || a.TenantID == uuid.Nil {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return nil, false
+	}
+	id := a.TenantID
+	return &id, true
 }
 
 // publicTenant resolves the {tenant} path segment (a slug or a UUID) to the tenant's real id.

@@ -15,6 +15,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
 	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
 	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
+	"github.com/bengobox/ticketing-service/internal/ent/rolepermission"
 	"github.com/bengobox/ticketing-service/internal/ent/routingrule"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
 	"github.com/bengobox/ticketing-service/internal/ent/team"
@@ -22,6 +23,11 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/ticketattachment"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketcategory"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketcomment"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketingpermission"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketingrole"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketinguser"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketsequence"
+	"github.com/bengobox/ticketing-service/internal/ent/userroleassignment"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -82,16 +88,22 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			agent.Table:            agent.ValidColumn,
-			kbarticle.Table:        kbarticle.ValidColumn,
-			outboxevent.Table:      outboxevent.ValidColumn,
-			routingrule.Table:      routingrule.ValidColumn,
-			slapolicy.Table:        slapolicy.ValidColumn,
-			team.Table:             team.ValidColumn,
-			ticket.Table:           ticket.ValidColumn,
-			ticketattachment.Table: ticketattachment.ValidColumn,
-			ticketcategory.Table:   ticketcategory.ValidColumn,
-			ticketcomment.Table:    ticketcomment.ValidColumn,
+			agent.Table:               agent.ValidColumn,
+			kbarticle.Table:           kbarticle.ValidColumn,
+			outboxevent.Table:         outboxevent.ValidColumn,
+			rolepermission.Table:      rolepermission.ValidColumn,
+			routingrule.Table:         routingrule.ValidColumn,
+			slapolicy.Table:           slapolicy.ValidColumn,
+			team.Table:                team.ValidColumn,
+			ticket.Table:              ticket.ValidColumn,
+			ticketattachment.Table:    ticketattachment.ValidColumn,
+			ticketcategory.Table:      ticketcategory.ValidColumn,
+			ticketcomment.Table:       ticketcomment.ValidColumn,
+			ticketsequence.Table:      ticketsequence.ValidColumn,
+			ticketingpermission.Table: ticketingpermission.ValidColumn,
+			ticketingrole.Table:       ticketingrole.ValidColumn,
+			ticketinguser.Table:       ticketinguser.ValidColumn,
+			userroleassignment.Table:  userroleassignment.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

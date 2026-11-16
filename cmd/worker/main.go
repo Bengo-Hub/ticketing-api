@@ -1,3 +1,6 @@
+// Command worker runs the SLA breach scan. It is the only process that runs it (the API pods do
+// not), and every tick is claimed fleet-wide through the shared cache, so a second worker replica
+// or a restart inside a period never repeats a scan.
 package main
 
 import (
@@ -10,79 +13,82 @@ import (
 
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
+	sharedcache "github.com/Bengo-Hub/cache"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 
+	"github.com/bengobox/ticketing-service/internal/config"
 	"github.com/bengobox/ticketing-service/internal/ent"
 	"github.com/bengobox/ticketing-service/internal/modules/tickets"
 	"github.com/bengobox/ticketing-service/internal/platform/events"
 	"github.com/bengobox/ticketing-service/internal/shared/logger"
-	"github.com/nats-io/nats.go"
 )
 
 const (
 	pollInterval = 5 * time.Minute
 	breachBatch  = 200
+	runOnceKey   = "ticketing:sla-breach-scan"
 )
 
 func main() {
-	_ = godotenv.Load()
-
-	log, err := logger.New(os.Getenv("APP_ENV"))
+	cfg, err := config.Load()
+	if err != nil {
+		zap.NewExample().Fatal("load config", zap.Error(err))
+	}
+	log, err := logger.New(cfg.App.Env)
 	if err != nil {
 		log, _ = zap.NewProduction()
 	}
 
-	dbURL := os.Getenv("POSTGRES_URL")
-	if dbURL == "" {
-		log.Fatal("POSTGRES_URL is required")
-	}
-
-	db, err := sql.Open("pgx", dbURL)
+	db, err := sql.Open("pgx", cfg.Postgres.URL)
 	if err != nil {
 		log.Fatal("failed to open database", zap.Error(err))
 	}
 	defer db.Close()
+	db.SetMaxOpenConns(cfg.Postgres.MaxOpenConns)
+	db.SetMaxIdleConns(cfg.Postgres.MaxIdleConns)
 
-	drv := entsql.OpenDB(dialect.Postgres, db)
-	ormClient := ent.NewClient(ent.Driver(drv))
+	ormClient := ent.NewClient(ent.Driver(entsql.OpenDB(dialect.Postgres, db)))
 	defer ormClient.Close()
-
-	natsURL := os.Getenv("EVENTS_NATS_URL")
-	if natsURL == "" {
-		natsURL = "nats://localhost:4222"
-	}
-
-	var publisher *events.Publisher
-	nc, err := nats.Connect(natsURL,
-		nats.Name("ticketing-sla-worker"),
-		nats.MaxReconnects(-1),
-	)
-	if err != nil {
-		log.Warn("worker: nats connect failed — breach events will not be published", zap.Error(err))
-	} else {
-		publisher = events.NewPublisher(db, log)
-		defer nc.Close()
-	}
-
-	ticketsRepo := tickets.NewEntRepository(ormClient)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	rdb, redisErr := sharedcache.NewRedis(ctx, sharedcache.RedisConfig{
+		URL: cfg.Redis.URL, Addr: cfg.Redis.Addr, Password: cfg.Redis.Password, DB: cfg.Redis.DB,
+	})
+	if redisErr != nil {
+		log.Warn("worker: redis not reachable at startup; scans wait until it is", zap.Error(redisErr))
+	}
+
+	// Breach events go to the outbox in the breach's own transaction; the API pods relay them.
+	repo := tickets.NewEntRepository(ormClient, db, events.NewOutbox(db))
+	svc := tickets.NewService(repo, log)
+
 	log.Info("sla breach worker started", zap.Duration("poll_interval", pollInterval))
+	tick := func() {
+		if rdb == nil {
+			// No Redis configured (local development): a single worker runs every tick.
+			runBreachCheck(ctx, repo, svc, log)
+			return
+		}
+		key := sharedcache.PeriodKey(runOnceKey, pollInterval)
+		ran, err := sharedcache.RunOnce(ctx, rdb, log, key, pollInterval, func(jobCtx context.Context) error {
+			runBreachCheck(jobCtx, repo, svc, log)
+			return nil
+		})
+		if err != nil {
+			log.Warn("sla breach scan skipped", zap.Bool("ran", ran), zap.Error(err))
+		}
+	}
 
 	ticker := time.NewTicker(pollInterval)
 	defer ticker.Stop()
-
-	// Run once immediately at startup
-	runBreachCheck(ctx, ticketsRepo, publisher, log)
-
+	tick()
 	for {
 		select {
 		case <-ticker.C:
-			runBreachCheck(ctx, ticketsRepo, publisher, log)
+			tick()
 		case <-ctx.Done():
 			log.Info("sla breach worker stopping")
 			return
@@ -90,58 +96,22 @@ func main() {
 	}
 }
 
-func runBreachCheck(ctx context.Context, repo tickets.Repository, publisher *events.Publisher, log *zap.Logger) {
+// runBreachCheck records each due breach once, with its event, in one transaction per ticket.
+func runBreachCheck(ctx context.Context, repo tickets.Repository, svc *tickets.Service, log *zap.Logger) {
 	now := time.Now()
-	breached, err := repo.ListTicketsPendingBreach(ctx, now, breachBatch)
+	due, err := repo.ListTicketsPendingBreach(ctx, now, breachBatch)
 	if err != nil {
 		log.Error("breach check: failed to list pending breaches", zap.Error(err))
 		return
 	}
-
-	if len(breached) == 0 {
-		return
-	}
-
-	log.Info("breach check: processing breaches", zap.Int("count", len(breached)))
-
-	for _, t := range breached {
-		responseBreached := t.SLAResponseDueAt != nil && now.After(*t.SLAResponseDueAt) &&
-			!t.SLAResponseBreached && t.FirstResponseAt == nil
-		resolutionBreached := t.SLAResolutionDueAt != nil && now.After(*t.SLAResolutionDueAt) &&
-			!t.SLAResolutionBreached
-
-		if !responseBreached && !resolutionBreached {
-			continue
-		}
-
-		changed, err := repo.MarkSLABreached(ctx, t.TenantID, t.ID, responseBreached, resolutionBreached)
+	for _, t := range due {
+		changed, err := svc.RecordSLABreach(ctx, t, now)
 		if err != nil {
-			log.Error("breach check: failed to mark breach",
-				zap.String("ticket_id", t.ID.String()),
-				zap.Error(err),
-			)
+			log.Error("breach check: failed to record breach", zap.String("ticket_id", t.ID.String()), zap.Error(err))
 			continue
 		}
-		if !changed {
-			continue // another replica (or a status change) already recorded this breach
+		if changed {
+			log.Info("breach recorded", zap.String("ticket_id", t.ID.String()))
 		}
-
-		// Publish breach event for notifications-api to consume. The assigned agent's email lets it
-		// alert the agent directly; without one it alerts the tenant's support contact.
-		if publisher != nil {
-			agentEmail := ""
-			if t.AssignedAgentID != nil {
-				if email, err := repo.GetAgentEmail(ctx, t.TenantID, *t.AssignedAgentID); err == nil {
-					agentEmail = email
-				}
-			}
-			_ = publisher.PublishSLABreach(ctx, t.TenantID, tickets.SLABreachPayload(t, agentEmail, responseBreached, resolutionBreached))
-		}
-
-		log.Info("breach marked",
-			zap.String("ticket_id", t.ID.String()),
-			zap.Bool("response_breached", responseBreached),
-			zap.Bool("resolution_breached", resolutionBreached),
-		)
 	}
 }

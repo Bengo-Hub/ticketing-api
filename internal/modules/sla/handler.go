@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	pagination "github.com/Bengo-Hub/pagination"
-	authclient "github.com/Bengo-Hub/shared-auth-client"
+	"github.com/bengobox/ticketing-service/internal/platform/access"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -30,11 +30,11 @@ func NewHandler(service *Service, logger *zap.Logger) *Handler {
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Route("/sla", func(sla chi.Router) {
 		sla.Route("/policies", func(policies chi.Router) {
-			policies.Post("/", h.CreatePolicy)
-			policies.Get("/", h.ListPolicies)
-			policies.Get("/{policyId}", h.GetPolicy)
-			policies.Put("/{policyId}", h.UpdatePolicy)
-			policies.Delete("/{policyId}", h.DeletePolicy)
+			policies.With(access.RequirePermission("ticketing.sla.add")).Post("/", h.CreatePolicy)
+			policies.With(access.RequirePermission("ticketing.sla.view")).Get("/", h.ListPolicies)
+			policies.With(access.RequirePermission("ticketing.sla.view")).Get("/{policyId}", h.GetPolicy)
+			policies.With(access.RequirePermission("ticketing.sla.change")).Put("/{policyId}", h.UpdatePolicy)
+			policies.With(access.RequirePermission("ticketing.sla.delete")).Delete("/{policyId}", h.DeletePolicy)
 		})
 	})
 }
@@ -53,14 +53,8 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 // @Security     BearerAuth
 // @Router       /{tenant}/sla/policies [post]
 func (h *Handler) CreatePolicy(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -93,14 +87,8 @@ func (h *Handler) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 // @Security     BearerAuth
 // @Router       /{tenant}/sla/policies/{policyId} [get]
 func (h *Handler) GetPolicy(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -134,14 +122,8 @@ func (h *Handler) GetPolicy(w http.ResponseWriter, r *http.Request) {
 // @Security     BearerAuth
 // @Router       /{tenant}/sla/policies [get]
 func (h *Handler) ListPolicies(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -173,14 +155,8 @@ func (h *Handler) ListPolicies(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdatePolicy(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -204,14 +180,8 @@ func (h *Handler) UpdatePolicy(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeletePolicy(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 

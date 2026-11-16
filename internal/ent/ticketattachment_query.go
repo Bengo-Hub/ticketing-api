@@ -299,12 +299,12 @@ func (_q *TicketAttachmentQuery) WithTicket(opts ...func(*TicketQuery)) *TicketA
 // Example:
 //
 //	var v []struct {
-//		TicketID uuid.UUID `json:"ticket_id,omitempty"`
+//		TenantID uuid.UUID `json:"tenant_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.TicketAttachment.Query().
-//		GroupBy(ticketattachment.FieldTicketID).
+//		GroupBy(ticketattachment.FieldTenantID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *TicketAttachmentQuery) GroupBy(field string, fields ...string) *TicketAttachmentGroupBy {
@@ -322,11 +322,11 @@ func (_q *TicketAttachmentQuery) GroupBy(field string, fields ...string) *Ticket
 // Example:
 //
 //	var v []struct {
-//		TicketID uuid.UUID `json:"ticket_id,omitempty"`
+//		TenantID uuid.UUID `json:"tenant_id,omitempty"`
 //	}
 //
 //	client.TicketAttachment.Query().
-//		Select(ticketattachment.FieldTicketID).
+//		Select(ticketattachment.FieldTenantID).
 //		Scan(ctx, &v)
 func (_q *TicketAttachmentQuery) Select(fields ...string) *TicketAttachmentSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

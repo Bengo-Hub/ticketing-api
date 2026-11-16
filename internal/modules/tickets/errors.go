@@ -8,6 +8,8 @@ var (
 	ErrTicketAlreadyClosed = errors.New("tickets: ticket is already closed")
 	ErrTicketCancelled     = errors.New("tickets: ticket is cancelled")
 	ErrInvalidTransition   = errors.New("tickets: invalid status transition")
+	// ErrDuplicateSourceRef means another create for the same internal source record won the race.
+	ErrDuplicateSourceRef = errors.New("tickets: a ticket already exists for this source record")
 
 	// Comment errors
 	ErrCommentNotFound = errors.New("tickets: comment not found")

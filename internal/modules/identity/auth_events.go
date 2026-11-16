@@ -10,218 +10,128 @@ import (
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 
-	"github.com/bengobox/ticketing-service/internal/ent"
-	"github.com/bengobox/ticketing-service/internal/ent/agent"
+	"github.com/bengobox/ticketing-service/internal/modules/rbac"
 )
 
-// AuthEventHandler subscribes to auth-service user events for JIT agent provisioning.
-// When a user with a support role (agent/supervisor/admin) registers, an agent record
-// is automatically created so they can be assigned tickets immediately after first login.
+// UserProvisioner is the part of rbac.Service the auth event consumer needs.
+type UserProvisioner interface {
+	SyncFromEvent(ctx context.Context, id rbac.Identity) error
+	FindUser(ctx context.Context, tenantID, authUserID uuid.UUID) (*rbac.User, error)
+}
+
+// AuthEventHandler keeps ticketing users and agent profiles in step with auth-api user events.
+// A new user whose global roles map to a staff role is provisioned (ticketing user, role and agent
+// profile) before their first sign-in; an update refreshes a user ticketing already knows. Every
+// lookup is scoped to the event's tenant.
 type AuthEventHandler struct {
-	client *ent.Client
+	users  UserProvisioner
 	logger *zap.Logger
 }
 
 // NewAuthEventHandler creates a new auth event handler.
-func NewAuthEventHandler(client *ent.Client, logger *zap.Logger) *AuthEventHandler {
-	return &AuthEventHandler{
-		client: client,
-		logger: logger.Named("identity.auth_events"),
-	}
+func NewAuthEventHandler(users UserProvisioner, logger *zap.Logger) *AuthEventHandler {
+	return &AuthEventHandler{users: users, logger: logger.Named("identity.auth_events")}
 }
 
 // authUserEvent represents the shared-events envelope for auth user events.
 type authUserEvent struct {
-	EventType     string                 `json:"event_type"`
-	AggregateType string                 `json:"aggregate_type"`
-	TenantID      uuid.UUID              `json:"tenant_id"`
-	Payload       map[string]interface{} `json:"payload"`
+	EventType     string         `json:"event_type"`
+	AggregateType string         `json:"aggregate_type"`
+	TenantID      uuid.UUID      `json:"tenant_id"`
+	Payload       map[string]any `json:"payload"`
 }
 
-// authJITQueue is the core-NATS deliver-group shared by both auth.user.* JIT
-// subscriptions. Using a queue group ensures each event is processed by exactly
-// one replica (no double-provisioning) instead of fanned out to every pod as
-// plain nc.Subscribe would do. The two subjects are non-overlapping so they can
-// safely share one group.
+// authJITQueue is the core-NATS deliver group shared by both subscriptions, so each event is
+// handled by one replica.
 const authJITQueue = "ticketing-auth-jit"
 
-// SubscribeToAuthEvents subscribes to auth.user.created via plain NATS (not JetStream).
+// SubscribeToAuthEvents subscribes to auth.user.created and auth.user.updated via core NATS.
 func (h *AuthEventHandler) SubscribeToAuthEvents(nc *nats.Conn) error {
 	if nc == nil {
 		h.logger.Warn("NATS not available, skipping auth event subscription")
 		return nil
 	}
-
-	_, err := eventslib.QueueSubscribe(h.logger, nc, "auth.user.created", authJITQueue, func(msg *nats.Msg) {
-		var evt authUserEvent
-		if err := json.Unmarshal(msg.Data, &evt); err != nil {
-			h.logger.Error("failed to unmarshal auth.user.created", zap.Error(err))
-			return
+	for subject, handle := range map[string]func(context.Context, *authUserEvent) error{
+		"auth.user.created": h.handleUserCreated,
+		"auth.user.updated": h.handleUserUpdated,
+	} {
+		subject, handle := subject, handle
+		if _, err := eventslib.QueueSubscribe(h.logger, nc, subject, authJITQueue, func(msg *nats.Msg) {
+			var evt authUserEvent
+			if err := json.Unmarshal(msg.Data, &evt); err != nil {
+				h.logger.Error("failed to unmarshal auth user event", zap.String("subject", subject), zap.Error(err))
+				return
+			}
+			if err := handle(context.Background(), &evt); err != nil {
+				h.logger.Error("failed to handle auth user event", zap.String("subject", subject), zap.Error(err))
+			}
+		}); err != nil {
+			return fmt.Errorf("subscribe %s: %w", subject, err)
 		}
-		if err := h.handleUserCreated(context.Background(), &evt); err != nil {
-			h.logger.Error("failed to handle auth.user.created", zap.Error(err))
-		}
-	})
-	if err != nil {
-		return fmt.Errorf("subscribe auth.user.created: %w", err)
 	}
-
-	_, err = eventslib.QueueSubscribe(h.logger, nc, "auth.user.updated", authJITQueue, func(msg *nats.Msg) {
-		var evt authUserEvent
-		if err := json.Unmarshal(msg.Data, &evt); err != nil {
-			h.logger.Error("failed to unmarshal auth.user.updated", zap.Error(err))
-			return
-		}
-		if err := h.handleUserUpdated(context.Background(), &evt); err != nil {
-			h.logger.Error("failed to handle auth.user.updated", zap.Error(err))
-		}
-	})
-	if err != nil {
-		return fmt.Errorf("subscribe auth.user.updated: %w", err)
-	}
-
 	h.logger.Info("auth event subscriptions active",
 		zap.Strings("subjects", []string{"auth.user.created", "auth.user.updated"}))
 	return nil
 }
 
-func (h *AuthEventHandler) handleUserCreated(ctx context.Context, evt *authUserEvent) error {
+// identityFromEvent reads the user and tenant an auth user event is about.
+func identityFromEvent(evt *authUserEvent) (rbac.Identity, error) {
 	userIDStr, _ := evt.Payload["user_id"].(string)
-	email, _ := evt.Payload["email"].(string)
-	fullName, _ := evt.Payload["full_name"].(string)
-
-	// auth publishes `roles` as a []string under payload (never a singular `role`);
-	// reading `role` left this empty so isSupportRole was always false and NO agent was
-	// ever JIT-provisioned. Pick the first support role from the array.
-	roleStr := ""
-	for _, r := range rolesFromPayload(evt.Payload) {
-		if isSupportRole(r) {
-			roleStr = r
-			break
-		}
-	}
-
-	// Only provision agents for support staff roles; customers do not get agent records.
-	if roleStr == "" {
-		return nil
-	}
-
 	authUserID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		return fmt.Errorf("invalid user_id %q: %w", userIDStr, err)
+		return rbac.Identity{}, fmt.Errorf("invalid user_id %q: %w", userIDStr, err)
 	}
-
-	tenantID := evt.TenantID
-	if tenantID == uuid.Nil {
-		return fmt.Errorf("missing tenant_id for user %s", userIDStr)
+	if evt.TenantID == uuid.Nil {
+		return rbac.Identity{}, fmt.Errorf("missing tenant_id for user %s", userIDStr)
 	}
+	email, _ := evt.Payload["email"].(string)
+	name, _ := evt.Payload["full_name"].(string)
+	return rbac.Identity{
+		TenantID: evt.TenantID, AuthUserID: authUserID, Email: email, Name: name,
+		GlobalRoles: rolesFromPayload(evt.Payload),
+	}, nil
+}
 
-	// Idempotency: skip if agent already exists.
-	exists, _ := h.client.Agent.Query().
-		Where(agent.UserIDEQ(authUserID)).
-		Exist(ctx)
-	if exists {
-		h.logger.Debug("agent already provisioned, skipping JIT", zap.String("user_id", userIDStr))
+func (h *AuthEventHandler) handleUserCreated(ctx context.Context, evt *authUserEvent) error {
+	id, err := identityFromEvent(evt)
+	if err != nil {
+		return err
+	}
+	// Customers are provisioned on their first sign-in; only staff get a profile ahead of it.
+	if !rbac.IsStaffRole(rbac.MapGlobalRoles(id.GlobalRoles)) {
 		return nil
 	}
-
-	agentRole := mapRole(roleStr)
-	displayName := fullName
-	if displayName == "" {
-		displayName = email
+	if err := h.users.SyncFromEvent(ctx, id); err != nil {
+		return fmt.Errorf("provision user %s: %w", id.AuthUserID, err)
 	}
-
-	_, err = h.client.Agent.Create().
-		SetUserID(authUserID).
-		SetTenantID(tenantID).
-		SetEmail(email).
-		SetDisplayName(displayName).
-		SetRole(agentRole).
-		SetStatus("offline").
-		SetIsActive(true).
-		SetMaxConcurrentTickets(10).
-		SetCurrentTicketCount(0).
-		Save(ctx)
-	if err != nil {
-		return fmt.Errorf("JIT create agent for user %s: %w", userIDStr, err)
-	}
-
-	h.logger.Info("JIT agent provisioned from auth.user.created",
-		zap.String("user_id", userIDStr),
-		zap.String("tenant_id", tenantID.String()),
-		zap.String("role", roleStr))
+	h.logger.Info("ticketing user provisioned from auth.user.created",
+		zap.String("user_id", id.AuthUserID.String()), zap.String("tenant_id", id.TenantID.String()))
 	return nil
 }
 
 func (h *AuthEventHandler) handleUserUpdated(ctx context.Context, evt *authUserEvent) error {
-	userIDStr, _ := evt.Payload["user_id"].(string)
-	email, _ := evt.Payload["email"].(string)
-	fullName, _ := evt.Payload["full_name"].(string)
-
-	authUserID, err := uuid.Parse(userIDStr)
+	id, err := identityFromEvent(evt)
 	if err != nil {
-		return fmt.Errorf("invalid user_id %q: %w", userIDStr, err)
+		return err
 	}
-
-	a, err := h.client.Agent.Query().
-		Where(agent.UserIDEQ(authUserID)).
-		Only(ctx)
+	u, err := h.users.FindUser(ctx, id.TenantID, id.AuthUserID)
 	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil // not a tracked support agent
-		}
-		return fmt.Errorf("query agent for update: %w", err)
+		return fmt.Errorf("find ticketing user: %w", err)
 	}
-
-	update := h.client.Agent.UpdateOne(a)
-	if email != "" {
-		update = update.SetEmail(email)
+	if u == nil {
+		return nil
 	}
-	if fullName != "" {
-		update = update.SetDisplayName(fullName)
-	}
-	if _, err := update.Save(ctx); err != nil {
-		return fmt.Errorf("update agent from auth event: %w", err)
-	}
-
-	h.logger.Info("agent synced from auth.user.updated",
-		zap.String("user_id", userIDStr))
-	return nil
+	return h.users.SyncFromEvent(ctx, id)
 }
 
-// rolesFromPayload extracts the auth `roles` array from an event payload, tolerating a
-// legacy singular `role` string for backward compatibility.
+// rolesFromPayload reads the auth `roles` array from an event payload.
 func rolesFromPayload(payload map[string]any) []string {
-	if raw, ok := payload["roles"].([]interface{}); ok {
-		out := make([]string, 0, len(raw))
-		for _, v := range raw {
-			if s, ok := v.(string); ok {
-				out = append(out, s)
-			}
+	raw, _ := payload["roles"].([]any)
+	out := make([]string, 0, len(raw))
+	for _, v := range raw {
+		if s, ok := v.(string); ok {
+			out = append(out, s)
 		}
-		return out
 	}
-	if s, ok := payload["role"].(string); ok && s != "" {
-		return []string{s}
-	}
-	return nil
-}
-
-func isSupportRole(role string) bool {
-	switch role {
-	case "agent", "supervisor", "admin":
-		return true
-	}
-	return false
-}
-
-func mapRole(role string) agent.Role {
-	switch role {
-	case "supervisor":
-		return agent.RoleSupervisor
-	case "admin":
-		return agent.RoleAdmin
-	default:
-		return agent.RoleAgent
-	}
+	return out
 }

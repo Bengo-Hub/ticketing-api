@@ -28,8 +28,7 @@ func (Ticket) Fields() []ent.Field {
 			Comment("Reference to tenant"),
 		field.String("ticket_number").
 			MaxLen(20).
-			Unique().
-			Comment("Human-readable ticket number"),
+			Comment("Human-readable ticket number, unique within the tenant"),
 		field.UUID("customer_id", uuid.UUID{}).
 			Comment("Customer who created/owns the ticket"),
 		field.UUID("category_id", uuid.UUID{}).
@@ -168,7 +167,11 @@ func (Ticket) Annotations() []schema.Annotation {
 
 // Indexes of the Ticket.
 func (Ticket) Indexes() []ent.Index {
+	// The internal-create idempotency key (tenant_id, metadata source, source_ref.type, source_ref.id) is a
+	// unique expression index that ent cannot declare; it lives in the versioned migration
+	// 20261116090100_phase0.sql as ticket_tenant_source_ref.
 	return []ent.Index{
+		index.Fields("tenant_id", "ticket_number").Unique(),
 		index.Fields("tenant_id", "status"),
 		index.Fields("tenant_id", "priority"),
 		index.Fields("tenant_id", "customer_id"),

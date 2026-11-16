@@ -21,9 +21,11 @@ import (
 	"github.com/bengobox/ticketing-service/internal/config"
 	"github.com/bengobox/ticketing-service/internal/ent"
 	"github.com/bengobox/ticketing-service/internal/http/handlers"
+	"github.com/bengobox/ticketing-service/internal/http/metrics"
 	httprouter "github.com/bengobox/ticketing-service/internal/http/router"
 	"github.com/bengobox/ticketing-service/internal/modules/identity"
 	"github.com/bengobox/ticketing-service/internal/modules/kb"
+	"github.com/bengobox/ticketing-service/internal/modules/rbac"
 	"github.com/bengobox/ticketing-service/internal/modules/routing"
 	"github.com/bengobox/ticketing-service/internal/modules/sla"
 	"github.com/bengobox/ticketing-service/internal/modules/tickets"
@@ -40,6 +42,7 @@ type App struct {
 	cfg             *config.Config
 	log             *zap.Logger
 	httpServer      *http.Server
+	metricsServer   *http.Server
 	db              dbCloser
 	cache           cacheCloser
 	events          eventCloser
@@ -157,31 +160,37 @@ func New(ctx context.Context) (*App, error) {
 	// advisory-locked, versioned migrations). The ent auto-diff that used to run here on every
 	// pod start was unlocked, ran through PgBouncer, and bypassed the versioned migrations.
 
-	// Initialize auth-service JWT validator
-	var authMiddleware *authclient.AuthMiddleware
-	if cfg.Auth.ServiceURL != "" {
-		jwksURL := fmt.Sprintf("%s/api/v1/.well-known/jwks.json", cfg.Auth.ServiceURL)
-		authConfig := authclient.DefaultConfig(
-			jwksURL,
-			cfg.Auth.Issuer,
-			cfg.Auth.Audience,
-		)
-		authConfig.CacheTTL = cfg.Auth.JWKSCacheTTL
-		authConfig.RefreshInterval = cfg.Auth.JWKSRefreshInterval
-		authConfig.RedisClient = redisClient
-
-		validator, err := authclient.NewValidator(authConfig)
-		if err != nil {
-			return nil, fmt.Errorf("auth validator init: %w", err)
-		}
-
-		if cfg.Auth.EnableAPIKeyAuth {
-			apiKeyValidator := authclient.NewAPIKeyValidator(cfg.Auth.ServiceURL, nil)
-			authMiddleware = authclient.NewAuthMiddlewareWithAPIKey(validator, apiKeyValidator)
-		} else {
-			authMiddleware = authclient.NewAuthMiddleware(validator)
-		}
+	// Layer 1: auth-api JWT validator, with API keys accepted unless turned off in config.
+	if cfg.Auth.ServiceURL == "" {
+		return nil, errors.New("app: AUTH_SERVICE_URL is required")
 	}
+	authConfig := authclient.DefaultConfig(
+		fmt.Sprintf("%s/api/v1/.well-known/jwks.json", cfg.Auth.ServiceURL),
+		cfg.Auth.Issuer,
+		cfg.Auth.Audience,
+	)
+	authConfig.CacheTTL = cfg.Auth.JWKSCacheTTL
+	authConfig.RefreshInterval = cfg.Auth.JWKSRefreshInterval
+	authConfig.RedisClient = redisClient
+	validator, err := authclient.NewValidator(authConfig)
+	if err != nil {
+		return nil, fmt.Errorf("auth validator init: %w", err)
+	}
+	authMiddleware := authclient.NewAuthMiddleware(validator)
+	if cfg.Auth.EnableAPIKeyAuth {
+		authMiddleware = authclient.NewAuthMiddlewareWithAPIKey(validator, authclient.NewAPIKeyValidator(cfg.Auth.ServiceURL, nil))
+	}
+
+	// Layer 3: the ticketing permission catalogue is seeded on every start (idempotent); each
+	// tenant's system roles are seeded the first time one of its users signs in.
+	rbacService := rbac.NewService(rbac.NewEntRepository(ormClient), log)
+	seedCtx, seedCancel := context.WithTimeout(ctx, 30*time.Second)
+	seedErr := rbacService.Seed(seedCtx)
+	seedCancel()
+	if seedErr != nil {
+		return nil, fmt.Errorf("app: seed ticketing permissions: %w", seedErr)
+	}
+	rbacHandler := rbac.NewHandler(rbacService, log)
 
 	// Notifications go out only through ticket events (ticketing.>, notifications-api's ticketing
 	// consumer); there is no direct notifications client.
@@ -197,8 +206,8 @@ func New(ctx context.Context) (*App, error) {
 	identityService := identity.NewService(identityRepo, log)
 	identityHandler := identity.NewHandler(identityService, log)
 
-	// Wire JIT agent provisioning from auth.user.created events
-	authEventHandler := identity.NewAuthEventHandler(ormClient, log)
+	// auth.user.created and auth.user.updated provision staff ahead of sign-in and refresh agents.
+	authEventHandler := identity.NewAuthEventHandler(rbacService, log)
 	if natsConn != nil {
 		if err := authEventHandler.SubscribeToAuthEvents(natsConn); err != nil {
 			log.Warn("failed to subscribe to auth events", zap.Error(err))
@@ -228,7 +237,10 @@ func New(ctx context.Context) (*App, error) {
 	routingHandler := routing.NewHandler(routingService, log)
 
 	// Initialize tickets module (tickets, comments, categories)
-	ticketsRepo := tickets.NewEntRepository(ormClient)
+	// Ticket changes and their events commit together: the repository writes outbox rows in the
+	// change's own transaction, whether or not NATS is up. The relay below drains them.
+	outbox := events.NewOutbox(sqlDB)
+	ticketsRepo := tickets.NewEntRepository(ormClient, sqlDB, outbox)
 	ticketsService := tickets.NewService(ticketsRepo, log)
 	ticketsService.SetSLAService(&slaAdapter{svc: slaService})
 	ticketsService.SetRoutingService(&routingAdapter{svc: routingService})
@@ -245,17 +257,14 @@ func New(ctx context.Context) (*App, error) {
 		log.Warn("INTERNAL_SERVICE_KEY is empty: public ticket reads are disabled")
 	}
 
-	// Wire event publisher for ticket lifecycle events (shared-events outbox pattern)
+	// The shared-events background publisher relays outbox rows to JetStream.
 	var outboxPub *eventslib.Publisher
 	if natsConn != nil {
-		eventPub := events.NewPublisher(sqlDB, log)
-		ticketsService.SetPublisher(eventPub)
-
 		js, jsErr := natsConn.JetStream()
 		if jsErr != nil {
 			log.Warn("jetstream init for outbox publisher", zap.Error(jsErr))
 		} else {
-			pubCfg := eventslib.DefaultPublisherConfig(js, eventPub.OutboxRepo(), log)
+			pubCfg := eventslib.DefaultPublisherConfig(js, outbox.OutboxRepo(), log)
 			outboxPub = eventslib.NewPublisher(pubCfg)
 			// tenant.purge (dormancy, a deleted tenant, a declined registration): delete every row
 			// this service holds for the tenant, by the shared schema-driven purger.
@@ -270,6 +279,9 @@ func New(ctx context.Context) (*App, error) {
 		Log:                  log,
 		HealthHandler:        healthHandler,
 		AuthMiddleware:       authMiddleware,
+		Limiter:              rl,
+		RBACHandler:          rbacHandler,
+		AccessResolver:       rbacService,
 		AllowedOrigins:       cfg.HTTP.AllowedOrigins,
 		IdentityHandler:      identityHandler,
 		TicketsHandler:       ticketsHandler,
@@ -291,10 +303,19 @@ func New(ctx context.Context) (*App, error) {
 		IdleTimeout:       cfg.HTTP.IdleTimeout,
 	}
 
+	metricsMux := http.NewServeMux()
+	metricsMux.Handle("/metrics", metrics.Handler())
+	metricsServer := &http.Server{
+		Addr:              fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.MetricsPort),
+		Handler:           metricsMux,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
 	return &App{
 		cfg:             cfg,
 		log:             log,
 		httpServer:      httpServer,
+		metricsServer:   metricsServer,
 		db:              dbPool,
 		cache:           redisClient,
 		events:          natsConn,
@@ -315,6 +336,13 @@ func (a *App) Run(ctx context.Context) error {
 		a.log.Info("outbox background publisher started")
 	}
 
+	go func() {
+		a.log.Info("starting metrics server", zap.String("addr", a.metricsServer.Addr))
+		if err := a.metricsServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			a.log.Error("metrics server stopped", zap.Error(err))
+		}
+	}()
+
 	a.log.Info("starting http server", zap.String("addr", a.httpServer.Addr))
 
 	errCh := make(chan error, 1)
@@ -326,6 +354,7 @@ func (a *App) Run(ctx context.Context) error {
 	case <-ctx.Done():
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
+		_ = a.metricsServer.Shutdown(shutdownCtx)
 
 		if err := a.httpServer.Shutdown(shutdownCtx); err != nil {
 			return fmt.Errorf("app: http shutdown: %w", err)

@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	pagination "github.com/Bengo-Hub/pagination"
-	authclient "github.com/Bengo-Hub/shared-auth-client"
+	"github.com/bengobox/ticketing-service/internal/platform/access"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -29,11 +29,11 @@ func NewHandler(service *Service, logger *zap.Logger) *Handler {
 // RegisterRoutes registers routing rule routes on the given router.
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Route("/routing/rules", func(rules chi.Router) {
-		rules.Post("/", h.CreateRule)
-		rules.Get("/", h.ListRules)
-		rules.Get("/{ruleId}", h.GetRule)
-		rules.Put("/{ruleId}", h.UpdateRule)
-		rules.Delete("/{ruleId}", h.DeleteRule)
+		rules.With(access.RequirePermission("ticketing.routing.add")).Post("/", h.CreateRule)
+		rules.With(access.RequirePermission("ticketing.routing.view")).Get("/", h.ListRules)
+		rules.With(access.RequirePermission("ticketing.routing.view")).Get("/{ruleId}", h.GetRule)
+		rules.With(access.RequirePermission("ticketing.routing.change")).Put("/{ruleId}", h.UpdateRule)
+		rules.With(access.RequirePermission("ticketing.routing.delete")).Delete("/{ruleId}", h.DeleteRule)
 	})
 }
 
@@ -51,14 +51,8 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 // @Security     BearerAuth
 // @Router       /{tenant}/routing/rules [post]
 func (h *Handler) CreateRule(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -89,14 +83,8 @@ func (h *Handler) CreateRule(w http.ResponseWriter, r *http.Request) {
 // @Security     BearerAuth
 // @Router       /{tenant}/routing/rules/{ruleId} [get]
 func (h *Handler) GetRule(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 	ruleID, err := uuid.Parse(chi.URLParam(r, "ruleId"))
@@ -123,14 +111,8 @@ func (h *Handler) GetRule(w http.ResponseWriter, r *http.Request) {
 // @Security     BearerAuth
 // @Router       /{tenant}/routing/rules [get]
 func (h *Handler) ListRules(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 
@@ -162,14 +144,8 @@ func (h *Handler) ListRules(w http.ResponseWriter, r *http.Request) {
 // @Security     BearerAuth
 // @Router       /{tenant}/routing/rules/{ruleId} [put]
 func (h *Handler) UpdateRule(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 	ruleID, err := uuid.Parse(chi.URLParam(r, "ruleId"))
@@ -203,14 +179,8 @@ func (h *Handler) UpdateRule(w http.ResponseWriter, r *http.Request) {
 // @Security     BearerAuth
 // @Router       /{tenant}/routing/rules/{ruleId} [delete]
 func (h *Handler) DeleteRule(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authclient.ClaimsFromContext(r.Context())
+	tenantID, ok := requestTenant(w, r)
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	tenantID, err := claims.TenantUUID()
-	if err != nil || tenantID == nil {
-		respondError(w, http.StatusBadRequest, "tenant ID required")
 		return
 	}
 	ruleID, err := uuid.Parse(chi.URLParam(r, "ruleId"))

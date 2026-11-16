@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
@@ -19,6 +21,7 @@ type KBArticleCreate struct {
 	config
 	mutation *KBArticleMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetTenantID sets the "tenant_id" field.
@@ -399,6 +402,7 @@ func (_c *KBArticleCreate) createSpec() (*KBArticle, *sqlgraph.CreateSpec) {
 		_node = &KBArticle{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(kbarticle.Table, sqlgraph.NewFieldSpec(kbarticle.FieldID, field.TypeUUID))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
@@ -478,11 +482,709 @@ func (_c *KBArticleCreate) createSpec() (*KBArticle, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.KBArticle.Create().
+//		SetTenantID(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.KBArticleUpsert) {
+//			SetTenantID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *KBArticleCreate) OnConflict(opts ...sql.ConflictOption) *KBArticleUpsertOne {
+	_c.conflict = opts
+	return &KBArticleUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.KBArticle.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *KBArticleCreate) OnConflictColumns(columns ...string) *KBArticleUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &KBArticleUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// KBArticleUpsertOne is the builder for "upsert"-ing
+	//  one KBArticle node.
+	KBArticleUpsertOne struct {
+		create *KBArticleCreate
+	}
+
+	// KBArticleUpsert is the "OnConflict" setter.
+	KBArticleUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetTenantID sets the "tenant_id" field.
+func (u *KBArticleUpsert) SetTenantID(v uuid.UUID) *KBArticleUpsert {
+	u.Set(kbarticle.FieldTenantID, v)
+	return u
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *KBArticleUpsert) UpdateTenantID() *KBArticleUpsert {
+	u.SetExcluded(kbarticle.FieldTenantID)
+	return u
+}
+
+// SetAuthorID sets the "author_id" field.
+func (u *KBArticleUpsert) SetAuthorID(v uuid.UUID) *KBArticleUpsert {
+	u.Set(kbarticle.FieldAuthorID, v)
+	return u
+}
+
+// UpdateAuthorID sets the "author_id" field to the value that was provided on create.
+func (u *KBArticleUpsert) UpdateAuthorID() *KBArticleUpsert {
+	u.SetExcluded(kbarticle.FieldAuthorID)
+	return u
+}
+
+// SetTitle sets the "title" field.
+func (u *KBArticleUpsert) SetTitle(v string) *KBArticleUpsert {
+	u.Set(kbarticle.FieldTitle, v)
+	return u
+}
+
+// UpdateTitle sets the "title" field to the value that was provided on create.
+func (u *KBArticleUpsert) UpdateTitle() *KBArticleUpsert {
+	u.SetExcluded(kbarticle.FieldTitle)
+	return u
+}
+
+// SetSlug sets the "slug" field.
+func (u *KBArticleUpsert) SetSlug(v string) *KBArticleUpsert {
+	u.Set(kbarticle.FieldSlug, v)
+	return u
+}
+
+// UpdateSlug sets the "slug" field to the value that was provided on create.
+func (u *KBArticleUpsert) UpdateSlug() *KBArticleUpsert {
+	u.SetExcluded(kbarticle.FieldSlug)
+	return u
+}
+
+// SetContent sets the "content" field.
+func (u *KBArticleUpsert) SetContent(v string) *KBArticleUpsert {
+	u.Set(kbarticle.FieldContent, v)
+	return u
+}
+
+// UpdateContent sets the "content" field to the value that was provided on create.
+func (u *KBArticleUpsert) UpdateContent() *KBArticleUpsert {
+	u.SetExcluded(kbarticle.FieldContent)
+	return u
+}
+
+// SetExcerpt sets the "excerpt" field.
+func (u *KBArticleUpsert) SetExcerpt(v string) *KBArticleUpsert {
+	u.Set(kbarticle.FieldExcerpt, v)
+	return u
+}
+
+// UpdateExcerpt sets the "excerpt" field to the value that was provided on create.
+func (u *KBArticleUpsert) UpdateExcerpt() *KBArticleUpsert {
+	u.SetExcluded(kbarticle.FieldExcerpt)
+	return u
+}
+
+// ClearExcerpt clears the value of the "excerpt" field.
+func (u *KBArticleUpsert) ClearExcerpt() *KBArticleUpsert {
+	u.SetNull(kbarticle.FieldExcerpt)
+	return u
+}
+
+// SetCategory sets the "category" field.
+func (u *KBArticleUpsert) SetCategory(v string) *KBArticleUpsert {
+	u.Set(kbarticle.FieldCategory, v)
+	return u
+}
+
+// UpdateCategory sets the "category" field to the value that was provided on create.
+func (u *KBArticleUpsert) UpdateCategory() *KBArticleUpsert {
+	u.SetExcluded(kbarticle.FieldCategory)
+	return u
+}
+
+// ClearCategory clears the value of the "category" field.
+func (u *KBArticleUpsert) ClearCategory() *KBArticleUpsert {
+	u.SetNull(kbarticle.FieldCategory)
+	return u
+}
+
+// SetTags sets the "tags" field.
+func (u *KBArticleUpsert) SetTags(v []string) *KBArticleUpsert {
+	u.Set(kbarticle.FieldTags, v)
+	return u
+}
+
+// UpdateTags sets the "tags" field to the value that was provided on create.
+func (u *KBArticleUpsert) UpdateTags() *KBArticleUpsert {
+	u.SetExcluded(kbarticle.FieldTags)
+	return u
+}
+
+// ClearTags clears the value of the "tags" field.
+func (u *KBArticleUpsert) ClearTags() *KBArticleUpsert {
+	u.SetNull(kbarticle.FieldTags)
+	return u
+}
+
+// SetStatus sets the "status" field.
+func (u *KBArticleUpsert) SetStatus(v kbarticle.Status) *KBArticleUpsert {
+	u.Set(kbarticle.FieldStatus, v)
+	return u
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *KBArticleUpsert) UpdateStatus() *KBArticleUpsert {
+	u.SetExcluded(kbarticle.FieldStatus)
+	return u
+}
+
+// SetIsPublic sets the "is_public" field.
+func (u *KBArticleUpsert) SetIsPublic(v bool) *KBArticleUpsert {
+	u.Set(kbarticle.FieldIsPublic, v)
+	return u
+}
+
+// UpdateIsPublic sets the "is_public" field to the value that was provided on create.
+func (u *KBArticleUpsert) UpdateIsPublic() *KBArticleUpsert {
+	u.SetExcluded(kbarticle.FieldIsPublic)
+	return u
+}
+
+// SetViewCount sets the "view_count" field.
+func (u *KBArticleUpsert) SetViewCount(v int) *KBArticleUpsert {
+	u.Set(kbarticle.FieldViewCount, v)
+	return u
+}
+
+// UpdateViewCount sets the "view_count" field to the value that was provided on create.
+func (u *KBArticleUpsert) UpdateViewCount() *KBArticleUpsert {
+	u.SetExcluded(kbarticle.FieldViewCount)
+	return u
+}
+
+// AddViewCount adds v to the "view_count" field.
+func (u *KBArticleUpsert) AddViewCount(v int) *KBArticleUpsert {
+	u.Add(kbarticle.FieldViewCount, v)
+	return u
+}
+
+// SetHelpfulCount sets the "helpful_count" field.
+func (u *KBArticleUpsert) SetHelpfulCount(v int) *KBArticleUpsert {
+	u.Set(kbarticle.FieldHelpfulCount, v)
+	return u
+}
+
+// UpdateHelpfulCount sets the "helpful_count" field to the value that was provided on create.
+func (u *KBArticleUpsert) UpdateHelpfulCount() *KBArticleUpsert {
+	u.SetExcluded(kbarticle.FieldHelpfulCount)
+	return u
+}
+
+// AddHelpfulCount adds v to the "helpful_count" field.
+func (u *KBArticleUpsert) AddHelpfulCount(v int) *KBArticleUpsert {
+	u.Add(kbarticle.FieldHelpfulCount, v)
+	return u
+}
+
+// SetNotHelpfulCount sets the "not_helpful_count" field.
+func (u *KBArticleUpsert) SetNotHelpfulCount(v int) *KBArticleUpsert {
+	u.Set(kbarticle.FieldNotHelpfulCount, v)
+	return u
+}
+
+// UpdateNotHelpfulCount sets the "not_helpful_count" field to the value that was provided on create.
+func (u *KBArticleUpsert) UpdateNotHelpfulCount() *KBArticleUpsert {
+	u.SetExcluded(kbarticle.FieldNotHelpfulCount)
+	return u
+}
+
+// AddNotHelpfulCount adds v to the "not_helpful_count" field.
+func (u *KBArticleUpsert) AddNotHelpfulCount(v int) *KBArticleUpsert {
+	u.Add(kbarticle.FieldNotHelpfulCount, v)
+	return u
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *KBArticleUpsert) SetMetadata(v map[string]interface{}) *KBArticleUpsert {
+	u.Set(kbarticle.FieldMetadata, v)
+	return u
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *KBArticleUpsert) UpdateMetadata() *KBArticleUpsert {
+	u.SetExcluded(kbarticle.FieldMetadata)
+	return u
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *KBArticleUpsert) ClearMetadata() *KBArticleUpsert {
+	u.SetNull(kbarticle.FieldMetadata)
+	return u
+}
+
+// SetPublishedAt sets the "published_at" field.
+func (u *KBArticleUpsert) SetPublishedAt(v time.Time) *KBArticleUpsert {
+	u.Set(kbarticle.FieldPublishedAt, v)
+	return u
+}
+
+// UpdatePublishedAt sets the "published_at" field to the value that was provided on create.
+func (u *KBArticleUpsert) UpdatePublishedAt() *KBArticleUpsert {
+	u.SetExcluded(kbarticle.FieldPublishedAt)
+	return u
+}
+
+// ClearPublishedAt clears the value of the "published_at" field.
+func (u *KBArticleUpsert) ClearPublishedAt() *KBArticleUpsert {
+	u.SetNull(kbarticle.FieldPublishedAt)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *KBArticleUpsert) SetUpdatedAt(v time.Time) *KBArticleUpsert {
+	u.Set(kbarticle.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *KBArticleUpsert) UpdateUpdatedAt() *KBArticleUpsert {
+	u.SetExcluded(kbarticle.FieldUpdatedAt)
+	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *KBArticleUpsert) SetDeletedAt(v time.Time) *KBArticleUpsert {
+	u.Set(kbarticle.FieldDeletedAt, v)
+	return u
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *KBArticleUpsert) UpdateDeletedAt() *KBArticleUpsert {
+	u.SetExcluded(kbarticle.FieldDeletedAt)
+	return u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *KBArticleUpsert) ClearDeletedAt() *KBArticleUpsert {
+	u.SetNull(kbarticle.FieldDeletedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.KBArticle.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(kbarticle.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *KBArticleUpsertOne) UpdateNewValues() *KBArticleUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(kbarticle.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(kbarticle.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.KBArticle.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *KBArticleUpsertOne) Ignore() *KBArticleUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *KBArticleUpsertOne) DoNothing() *KBArticleUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the KBArticleCreate.OnConflict
+// documentation for more info.
+func (u *KBArticleUpsertOne) Update(set func(*KBArticleUpsert)) *KBArticleUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&KBArticleUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (u *KBArticleUpsertOne) SetTenantID(v uuid.UUID) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetTenantID(v)
+	})
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *KBArticleUpsertOne) UpdateTenantID() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateTenantID()
+	})
+}
+
+// SetAuthorID sets the "author_id" field.
+func (u *KBArticleUpsertOne) SetAuthorID(v uuid.UUID) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetAuthorID(v)
+	})
+}
+
+// UpdateAuthorID sets the "author_id" field to the value that was provided on create.
+func (u *KBArticleUpsertOne) UpdateAuthorID() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateAuthorID()
+	})
+}
+
+// SetTitle sets the "title" field.
+func (u *KBArticleUpsertOne) SetTitle(v string) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetTitle(v)
+	})
+}
+
+// UpdateTitle sets the "title" field to the value that was provided on create.
+func (u *KBArticleUpsertOne) UpdateTitle() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateTitle()
+	})
+}
+
+// SetSlug sets the "slug" field.
+func (u *KBArticleUpsertOne) SetSlug(v string) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetSlug(v)
+	})
+}
+
+// UpdateSlug sets the "slug" field to the value that was provided on create.
+func (u *KBArticleUpsertOne) UpdateSlug() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateSlug()
+	})
+}
+
+// SetContent sets the "content" field.
+func (u *KBArticleUpsertOne) SetContent(v string) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetContent(v)
+	})
+}
+
+// UpdateContent sets the "content" field to the value that was provided on create.
+func (u *KBArticleUpsertOne) UpdateContent() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateContent()
+	})
+}
+
+// SetExcerpt sets the "excerpt" field.
+func (u *KBArticleUpsertOne) SetExcerpt(v string) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetExcerpt(v)
+	})
+}
+
+// UpdateExcerpt sets the "excerpt" field to the value that was provided on create.
+func (u *KBArticleUpsertOne) UpdateExcerpt() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateExcerpt()
+	})
+}
+
+// ClearExcerpt clears the value of the "excerpt" field.
+func (u *KBArticleUpsertOne) ClearExcerpt() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.ClearExcerpt()
+	})
+}
+
+// SetCategory sets the "category" field.
+func (u *KBArticleUpsertOne) SetCategory(v string) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetCategory(v)
+	})
+}
+
+// UpdateCategory sets the "category" field to the value that was provided on create.
+func (u *KBArticleUpsertOne) UpdateCategory() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateCategory()
+	})
+}
+
+// ClearCategory clears the value of the "category" field.
+func (u *KBArticleUpsertOne) ClearCategory() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.ClearCategory()
+	})
+}
+
+// SetTags sets the "tags" field.
+func (u *KBArticleUpsertOne) SetTags(v []string) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetTags(v)
+	})
+}
+
+// UpdateTags sets the "tags" field to the value that was provided on create.
+func (u *KBArticleUpsertOne) UpdateTags() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateTags()
+	})
+}
+
+// ClearTags clears the value of the "tags" field.
+func (u *KBArticleUpsertOne) ClearTags() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.ClearTags()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *KBArticleUpsertOne) SetStatus(v kbarticle.Status) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *KBArticleUpsertOne) UpdateStatus() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetIsPublic sets the "is_public" field.
+func (u *KBArticleUpsertOne) SetIsPublic(v bool) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetIsPublic(v)
+	})
+}
+
+// UpdateIsPublic sets the "is_public" field to the value that was provided on create.
+func (u *KBArticleUpsertOne) UpdateIsPublic() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateIsPublic()
+	})
+}
+
+// SetViewCount sets the "view_count" field.
+func (u *KBArticleUpsertOne) SetViewCount(v int) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetViewCount(v)
+	})
+}
+
+// AddViewCount adds v to the "view_count" field.
+func (u *KBArticleUpsertOne) AddViewCount(v int) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.AddViewCount(v)
+	})
+}
+
+// UpdateViewCount sets the "view_count" field to the value that was provided on create.
+func (u *KBArticleUpsertOne) UpdateViewCount() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateViewCount()
+	})
+}
+
+// SetHelpfulCount sets the "helpful_count" field.
+func (u *KBArticleUpsertOne) SetHelpfulCount(v int) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetHelpfulCount(v)
+	})
+}
+
+// AddHelpfulCount adds v to the "helpful_count" field.
+func (u *KBArticleUpsertOne) AddHelpfulCount(v int) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.AddHelpfulCount(v)
+	})
+}
+
+// UpdateHelpfulCount sets the "helpful_count" field to the value that was provided on create.
+func (u *KBArticleUpsertOne) UpdateHelpfulCount() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateHelpfulCount()
+	})
+}
+
+// SetNotHelpfulCount sets the "not_helpful_count" field.
+func (u *KBArticleUpsertOne) SetNotHelpfulCount(v int) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetNotHelpfulCount(v)
+	})
+}
+
+// AddNotHelpfulCount adds v to the "not_helpful_count" field.
+func (u *KBArticleUpsertOne) AddNotHelpfulCount(v int) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.AddNotHelpfulCount(v)
+	})
+}
+
+// UpdateNotHelpfulCount sets the "not_helpful_count" field to the value that was provided on create.
+func (u *KBArticleUpsertOne) UpdateNotHelpfulCount() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateNotHelpfulCount()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *KBArticleUpsertOne) SetMetadata(v map[string]interface{}) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *KBArticleUpsertOne) UpdateMetadata() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *KBArticleUpsertOne) ClearMetadata() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.ClearMetadata()
+	})
+}
+
+// SetPublishedAt sets the "published_at" field.
+func (u *KBArticleUpsertOne) SetPublishedAt(v time.Time) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetPublishedAt(v)
+	})
+}
+
+// UpdatePublishedAt sets the "published_at" field to the value that was provided on create.
+func (u *KBArticleUpsertOne) UpdatePublishedAt() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdatePublishedAt()
+	})
+}
+
+// ClearPublishedAt clears the value of the "published_at" field.
+func (u *KBArticleUpsertOne) ClearPublishedAt() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.ClearPublishedAt()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *KBArticleUpsertOne) SetUpdatedAt(v time.Time) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *KBArticleUpsertOne) UpdateUpdatedAt() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *KBArticleUpsertOne) SetDeletedAt(v time.Time) *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *KBArticleUpsertOne) UpdateDeletedAt() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *KBArticleUpsertOne) ClearDeletedAt() *KBArticleUpsertOne {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.ClearDeletedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *KBArticleUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for KBArticleCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *KBArticleUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *KBArticleUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: KBArticleUpsertOne.ID is not supported by MySQL driver. Use KBArticleUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *KBArticleUpsertOne) IDX(ctx context.Context) uuid.UUID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // KBArticleCreateBulk is the builder for creating many KBArticle entities in bulk.
 type KBArticleCreateBulk struct {
 	config
 	err      error
 	builders []*KBArticleCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the KBArticle entities in the database.
@@ -512,6 +1214,7 @@ func (_c *KBArticleCreateBulk) Save(ctx context.Context) ([]*KBArticle, error) {
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -558,6 +1261,424 @@ func (_c *KBArticleCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *KBArticleCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.KBArticle.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.KBArticleUpsert) {
+//			SetTenantID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *KBArticleCreateBulk) OnConflict(opts ...sql.ConflictOption) *KBArticleUpsertBulk {
+	_c.conflict = opts
+	return &KBArticleUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.KBArticle.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *KBArticleCreateBulk) OnConflictColumns(columns ...string) *KBArticleUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &KBArticleUpsertBulk{
+		create: _c,
+	}
+}
+
+// KBArticleUpsertBulk is the builder for "upsert"-ing
+// a bulk of KBArticle nodes.
+type KBArticleUpsertBulk struct {
+	create *KBArticleCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.KBArticle.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(kbarticle.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *KBArticleUpsertBulk) UpdateNewValues() *KBArticleUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(kbarticle.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(kbarticle.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.KBArticle.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *KBArticleUpsertBulk) Ignore() *KBArticleUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *KBArticleUpsertBulk) DoNothing() *KBArticleUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the KBArticleCreateBulk.OnConflict
+// documentation for more info.
+func (u *KBArticleUpsertBulk) Update(set func(*KBArticleUpsert)) *KBArticleUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&KBArticleUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (u *KBArticleUpsertBulk) SetTenantID(v uuid.UUID) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetTenantID(v)
+	})
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *KBArticleUpsertBulk) UpdateTenantID() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateTenantID()
+	})
+}
+
+// SetAuthorID sets the "author_id" field.
+func (u *KBArticleUpsertBulk) SetAuthorID(v uuid.UUID) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetAuthorID(v)
+	})
+}
+
+// UpdateAuthorID sets the "author_id" field to the value that was provided on create.
+func (u *KBArticleUpsertBulk) UpdateAuthorID() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateAuthorID()
+	})
+}
+
+// SetTitle sets the "title" field.
+func (u *KBArticleUpsertBulk) SetTitle(v string) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetTitle(v)
+	})
+}
+
+// UpdateTitle sets the "title" field to the value that was provided on create.
+func (u *KBArticleUpsertBulk) UpdateTitle() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateTitle()
+	})
+}
+
+// SetSlug sets the "slug" field.
+func (u *KBArticleUpsertBulk) SetSlug(v string) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetSlug(v)
+	})
+}
+
+// UpdateSlug sets the "slug" field to the value that was provided on create.
+func (u *KBArticleUpsertBulk) UpdateSlug() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateSlug()
+	})
+}
+
+// SetContent sets the "content" field.
+func (u *KBArticleUpsertBulk) SetContent(v string) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetContent(v)
+	})
+}
+
+// UpdateContent sets the "content" field to the value that was provided on create.
+func (u *KBArticleUpsertBulk) UpdateContent() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateContent()
+	})
+}
+
+// SetExcerpt sets the "excerpt" field.
+func (u *KBArticleUpsertBulk) SetExcerpt(v string) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetExcerpt(v)
+	})
+}
+
+// UpdateExcerpt sets the "excerpt" field to the value that was provided on create.
+func (u *KBArticleUpsertBulk) UpdateExcerpt() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateExcerpt()
+	})
+}
+
+// ClearExcerpt clears the value of the "excerpt" field.
+func (u *KBArticleUpsertBulk) ClearExcerpt() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.ClearExcerpt()
+	})
+}
+
+// SetCategory sets the "category" field.
+func (u *KBArticleUpsertBulk) SetCategory(v string) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetCategory(v)
+	})
+}
+
+// UpdateCategory sets the "category" field to the value that was provided on create.
+func (u *KBArticleUpsertBulk) UpdateCategory() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateCategory()
+	})
+}
+
+// ClearCategory clears the value of the "category" field.
+func (u *KBArticleUpsertBulk) ClearCategory() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.ClearCategory()
+	})
+}
+
+// SetTags sets the "tags" field.
+func (u *KBArticleUpsertBulk) SetTags(v []string) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetTags(v)
+	})
+}
+
+// UpdateTags sets the "tags" field to the value that was provided on create.
+func (u *KBArticleUpsertBulk) UpdateTags() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateTags()
+	})
+}
+
+// ClearTags clears the value of the "tags" field.
+func (u *KBArticleUpsertBulk) ClearTags() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.ClearTags()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *KBArticleUpsertBulk) SetStatus(v kbarticle.Status) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *KBArticleUpsertBulk) UpdateStatus() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetIsPublic sets the "is_public" field.
+func (u *KBArticleUpsertBulk) SetIsPublic(v bool) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetIsPublic(v)
+	})
+}
+
+// UpdateIsPublic sets the "is_public" field to the value that was provided on create.
+func (u *KBArticleUpsertBulk) UpdateIsPublic() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateIsPublic()
+	})
+}
+
+// SetViewCount sets the "view_count" field.
+func (u *KBArticleUpsertBulk) SetViewCount(v int) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetViewCount(v)
+	})
+}
+
+// AddViewCount adds v to the "view_count" field.
+func (u *KBArticleUpsertBulk) AddViewCount(v int) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.AddViewCount(v)
+	})
+}
+
+// UpdateViewCount sets the "view_count" field to the value that was provided on create.
+func (u *KBArticleUpsertBulk) UpdateViewCount() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateViewCount()
+	})
+}
+
+// SetHelpfulCount sets the "helpful_count" field.
+func (u *KBArticleUpsertBulk) SetHelpfulCount(v int) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetHelpfulCount(v)
+	})
+}
+
+// AddHelpfulCount adds v to the "helpful_count" field.
+func (u *KBArticleUpsertBulk) AddHelpfulCount(v int) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.AddHelpfulCount(v)
+	})
+}
+
+// UpdateHelpfulCount sets the "helpful_count" field to the value that was provided on create.
+func (u *KBArticleUpsertBulk) UpdateHelpfulCount() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateHelpfulCount()
+	})
+}
+
+// SetNotHelpfulCount sets the "not_helpful_count" field.
+func (u *KBArticleUpsertBulk) SetNotHelpfulCount(v int) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetNotHelpfulCount(v)
+	})
+}
+
+// AddNotHelpfulCount adds v to the "not_helpful_count" field.
+func (u *KBArticleUpsertBulk) AddNotHelpfulCount(v int) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.AddNotHelpfulCount(v)
+	})
+}
+
+// UpdateNotHelpfulCount sets the "not_helpful_count" field to the value that was provided on create.
+func (u *KBArticleUpsertBulk) UpdateNotHelpfulCount() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateNotHelpfulCount()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *KBArticleUpsertBulk) SetMetadata(v map[string]interface{}) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *KBArticleUpsertBulk) UpdateMetadata() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *KBArticleUpsertBulk) ClearMetadata() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.ClearMetadata()
+	})
+}
+
+// SetPublishedAt sets the "published_at" field.
+func (u *KBArticleUpsertBulk) SetPublishedAt(v time.Time) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetPublishedAt(v)
+	})
+}
+
+// UpdatePublishedAt sets the "published_at" field to the value that was provided on create.
+func (u *KBArticleUpsertBulk) UpdatePublishedAt() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdatePublishedAt()
+	})
+}
+
+// ClearPublishedAt clears the value of the "published_at" field.
+func (u *KBArticleUpsertBulk) ClearPublishedAt() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.ClearPublishedAt()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *KBArticleUpsertBulk) SetUpdatedAt(v time.Time) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *KBArticleUpsertBulk) UpdateUpdatedAt() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *KBArticleUpsertBulk) SetDeletedAt(v time.Time) *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *KBArticleUpsertBulk) UpdateDeletedAt() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *KBArticleUpsertBulk) ClearDeletedAt() *KBArticleUpsertBulk {
+	return u.Update(func(s *KBArticleUpsert) {
+		s.ClearDeletedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *KBArticleUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the KBArticleCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for KBArticleCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *KBArticleUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

@@ -154,6 +154,10 @@ func publicRouterWithRepo(t *testing.T, otp fakeOTP, tickets ...*Ticket) (http.H
 	return r, tenant, repo
 }
 
+func (r *byNumberRepo) InTx(_ context.Context, _ uuid.UUID, fn func(Repository, *Outbox) error) error {
+	return fn(r, &Outbox{})
+}
+
 func (r *byNumberRepo) CreateComment(context.Context, uuid.UUID, *TicketComment) error {
 	r.comments++
 	return nil

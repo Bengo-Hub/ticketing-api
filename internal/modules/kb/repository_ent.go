@@ -200,18 +200,27 @@ func (r *EntRepository) List(ctx context.Context, filter ArticleFilter) (*Articl
 	return &ArticleList{Articles: articles, Total: total}, nil
 }
 
-func (r *EntRepository) IncrementViewCount(ctx context.Context, id uuid.UUID) error {
-	return r.client.KBArticle.UpdateOneID(id).
+func (r *EntRepository) IncrementViewCount(ctx context.Context, tenantID, id uuid.UUID) error {
+	_, err := r.client.KBArticle.Update().
+		Where(entpkg.ID(id), entpkg.TenantID(tenantID)).
 		AddViewCount(1).
-		Exec(ctx)
+		Save(ctx)
+	return err
 }
 
-func (r *EntRepository) Vote(ctx context.Context, id uuid.UUID, helpful bool) error {
-	u := r.client.KBArticle.UpdateOneID(id)
+func (r *EntRepository) Vote(ctx context.Context, tenantID, id uuid.UUID, helpful bool) error {
+	u := r.client.KBArticle.Update().Where(entpkg.ID(id), entpkg.TenantID(tenantID))
 	if helpful {
 		u = u.AddHelpfulCount(1)
 	} else {
 		u = u.AddNotHelpfulCount(1)
 	}
-	return u.Exec(ctx)
+	n, err := u.Save(ctx)
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrArticleNotFound
+	}
+	return nil
 }

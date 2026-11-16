@@ -20,6 +20,8 @@ type TicketComment struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
+	// Tenant of the parent ticket; every read filters on it
+	TenantID uuid.UUID `json:"tenant_id,omitempty"`
 	// Reference to ticket
 	TicketID uuid.UUID `json:"ticket_id,omitempty"`
 	// Author user ID (null for system comments)
@@ -85,7 +87,7 @@ func (*TicketComment) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case ticketcomment.FieldEditedAt, ticketcomment.FieldCreatedAt, ticketcomment.FieldDeletedAt:
 			values[i] = new(sql.NullTime)
-		case ticketcomment.FieldID, ticketcomment.FieldTicketID:
+		case ticketcomment.FieldID, ticketcomment.FieldTenantID, ticketcomment.FieldTicketID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -107,6 +109,12 @@ func (_m *TicketComment) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
+			}
+		case ticketcomment.FieldTenantID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field tenant_id", values[i])
+			} else if value != nil {
+				_m.TenantID = *value
 			}
 		case ticketcomment.FieldTicketID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
@@ -228,6 +236,9 @@ func (_m *TicketComment) String() string {
 	var builder strings.Builder
 	builder.WriteString("TicketComment(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("tenant_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.TenantID))
+	builder.WriteString(", ")
 	builder.WriteString("ticket_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.TicketID))
 	builder.WriteString(", ")

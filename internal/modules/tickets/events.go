@@ -1,24 +1,11 @@
 package tickets
 
 import (
-	"context"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 )
-
-// EventPublisher is the outbox sink for ticket lifecycle events (events.Publisher). Every event goes
-// out on the ticketing stream as ticketing.<event type>; notifications-api's ticketing consumer turns
-// them into email, WhatsApp and SMS for the requester or the agent.
-type EventPublisher interface {
-	PublishTicketCreated(ctx context.Context, tenantID uuid.UUID, data map[string]any) error
-	PublishTicketAssigned(ctx context.Context, tenantID uuid.UUID, data map[string]any) error
-	PublishTicketCommentAdded(ctx context.Context, tenantID uuid.UUID, data map[string]any) error
-	PublishTicketStatusChanged(ctx context.Context, tenantID uuid.UUID, data map[string]any) error
-	PublishTicketResolved(ctx context.Context, tenantID uuid.UUID, data map[string]any) error
-	PublishCRMActivityRequest(ctx context.Context, tenantID uuid.UUID, data map[string]any) error
-}
 
 // Requester contact keys in ticket metadata. Every create path stores the requester the same way
 // (the public form, the S2S route and the signed-in route), so events and readers look in one place.

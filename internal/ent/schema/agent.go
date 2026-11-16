@@ -13,7 +13,10 @@ import (
 )
 
 // Agent holds the schema definition for the Agent entity.
-// Agents are support staff who handle tickets.
+// An agent is the support-desk profile (skills, capacity, status, team) of a ticketing user who
+// holds the agent, supervisor or ticketing_admin role. It links to TicketingUser through
+// (tenant_id, user_id), where user_id is the auth-api user id the TicketingUser row carries as
+// auth_service_user_id. A user can be an agent in several tenants.
 type Agent struct {
 	ent.Schema
 }
@@ -27,8 +30,7 @@ func (Agent) Fields() []ent.Field {
 		field.UUID("tenant_id", uuid.UUID{}).
 			Comment("Reference to tenant"),
 		field.UUID("user_id", uuid.UUID{}).
-			Unique().
-			Comment("Reference to auth-service user"),
+			Comment("auth-api user id, unique per tenant"),
 		field.UUID("team_id", uuid.UUID{}).
 			Optional().
 			Nillable().

@@ -15,6 +15,8 @@ const (
 	Label = "ticket_attachment"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldTenantID holds the string denoting the tenant_id field in the database.
+	FieldTenantID = "tenant_id"
 	// FieldTicketID holds the string denoting the ticket_id field in the database.
 	FieldTicketID = "ticket_id"
 	// FieldCommentID holds the string denoting the comment_id field in the database.
@@ -55,6 +57,7 @@ const (
 // Columns holds all SQL columns for ticketattachment fields.
 var Columns = []string{
 	FieldID,
+	FieldTenantID,
 	FieldTicketID,
 	FieldCommentID,
 	FieldUploadedBy,
@@ -100,6 +103,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByTenantID orders the results by the tenant_id field.
+func ByTenantID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTenantID, opts...).ToFunc()
 }
 
 // ByTicketID orders the results by the ticket_id field.

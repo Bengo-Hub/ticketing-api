@@ -2,30 +2,113 @@ package tickets
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
-	"github.com/bengobox/ticketing-service/internal/ent/predicate"
+	"strings"
 	"time"
 
-	"github.com/bengobox/ticketing-service/internal/ent"
-	entagent "github.com/bengobox/ticketing-service/internal/ent/agent"
-	"github.com/bengobox/ticketing-service/internal/ent/ticket"
-	"github.com/bengobox/ticketing-service/internal/ent/ticketattachment"
-	"github.com/bengobox/ticketing-service/internal/ent/ticketcategory"
-	"github.com/bengobox/ticketing-service/internal/ent/ticketcomment"
+	"entgo.io/ent/dialect"
+	entsql "entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
+
+	"github.com/bengobox/ticketing-service/internal/ent"
+	"github.com/bengobox/ticketing-service/internal/ent/predicate"
+	"github.com/bengobox/ticketing-service/internal/ent/ticket"
 )
 
-// EntRepository implements Repository using Ent ORM.
+// OutboxWriter stores an event in the caller's transaction (events.Outbox).
+type OutboxWriter interface {
+	WriteInTx(ctx context.Context, tx *sql.Tx, tenantID uuid.UUID, aggregate, eventType string, data map[string]any) error
+}
+
+// rowQuerier is the part of *sql.DB and *sql.Tx the sequence allocation needs.
+type rowQuerier interface {
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+}
+
+// EntRepository implements Repository using Ent. A repository bound to a transaction (tx set)
+// runs every statement, the ticket-number allocation and the outbox writes in that transaction.
 type EntRepository struct {
 	client *ent.Client
+	db     *sql.DB
+	outbox OutboxWriter
+	tx     *sql.Tx
 }
 
-// NewEntRepository creates a new EntRepository.
-func NewEntRepository(client *ent.Client) *EntRepository {
-	return &EntRepository{client: client}
+// NewEntRepository creates a new EntRepository. client and db share one connection pool.
+func NewEntRepository(client *ent.Client, db *sql.DB, outbox OutboxWriter) *EntRepository {
+	return &EntRepository{client: client, db: db, outbox: outbox}
 }
 
-// Ticket operations
+// InTx implements Repository.InTx. Called on a repository already in a transaction, fn joins it.
+func (r *EntRepository) InTx(ctx context.Context, tenantID uuid.UUID, fn func(repo Repository, out *Outbox) error) error {
+	if r.tx != nil {
+		out := &Outbox{}
+		if err := fn(r, out); err != nil {
+			return err
+		}
+		return r.writeOutbox(ctx, r.tx, tenantID, out)
+	}
+	sqlTx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	bound := &EntRepository{
+		client: ent.NewClient(ent.Driver(entsql.NewDriver(dialect.Postgres, entsql.Conn{ExecQuerier: sqlTx}))),
+		db:     r.db,
+		outbox: r.outbox,
+		tx:     sqlTx,
+	}
+	out := &Outbox{}
+	if err := fn(bound, out); err != nil {
+		_ = sqlTx.Rollback()
+		return err
+	}
+	if err := r.writeOutbox(ctx, sqlTx, tenantID, out); err != nil {
+		_ = sqlTx.Rollback()
+		return err
+	}
+	return sqlTx.Commit()
+}
+
+func (r *EntRepository) writeOutbox(ctx context.Context, tx *sql.Tx, tenantID uuid.UUID, out *Outbox) error {
+	if r.outbox == nil {
+		if len(out.Events) > 0 {
+			return errors.New("outbox writer not configured")
+		}
+		return nil
+	}
+	for _, e := range out.Events {
+		if err := r.outbox.WriteInTx(ctx, tx, tenantID, e.Aggregate, e.Type, e.Data); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// allocateTicketNumberSQL claims the tenant's next number in one statement. The row lock it takes
+// is held until the surrounding transaction ends, so concurrent creates queue on it and never
+// read the same value. A rolled-back create leaves a gap, never a duplicate.
+const allocateTicketNumberSQL = `INSERT INTO ticket_sequences (id, tenant_id, next_value, updated_at)
+VALUES ($1, $2, 1, now())
+ON CONFLICT (tenant_id) DO UPDATE SET next_value = ticket_sequences.next_value + 1, updated_at = now()
+RETURNING next_value`
+
+// FormatTicketNumber renders a sequence value as a ticket number (TKT-000042).
+func FormatTicketNumber(n int64) string { return fmt.Sprintf("TKT-%06d", n) }
+
+func (r *EntRepository) NextTicketNumber(ctx context.Context, tenantID uuid.UUID) (string, error) {
+	var q rowQuerier = r.db
+	if r.tx != nil {
+		q = r.tx
+	}
+	var n int64
+	if err := q.QueryRowContext(ctx, allocateTicketNumberSQL, uuid.New(), tenantID).Scan(&n); err != nil {
+		return "", fmt.Errorf("allocate ticket number: %w", err)
+	}
+	return FormatTicketNumber(n), nil
+}
 
 func (r *EntRepository) CreateTicket(ctx context.Context, tenantID uuid.UUID, t *Ticket) error {
 	create := r.client.Ticket.Create().
@@ -37,28 +120,17 @@ func (r *EntRepository) CreateTicket(ctx context.Context, tenantID uuid.UUID, t 
 		SetDescription(t.Description).
 		SetStatus(ticket.Status(t.Status)).
 		SetPriority(ticket.Priority(t.Priority)).
-		SetChannel(ticket.Channel(t.Channel))
-
-	if t.CategoryID != nil {
-		create = create.SetCategoryID(*t.CategoryID)
-	}
-	if t.AssignedAgentID != nil {
-		create = create.SetAssignedAgentID(*t.AssignedAgentID)
-	}
-	if t.AssignedTeamID != nil {
-		create = create.SetAssignedTeamID(*t.AssignedTeamID)
-	}
-	if t.OrderID != nil {
-		create = create.SetOrderID(*t.OrderID)
-	}
+		SetChannel(ticket.Channel(t.Channel)).
+		SetNillableCategoryID(t.CategoryID).
+		SetNillableAssignedAgentID(t.AssignedAgentID).
+		SetNillableAssignedTeamID(t.AssignedTeamID).
+		SetNillableOrderID(t.OrderID).
+		SetNillableCrmContactID(t.CRMContactID).
+		SetNillableCrmLeadID(t.CRMLeadID).
+		SetNillableSLAResponseDueAt(t.SLAResponseDueAt).
+		SetNillableSLAResolutionDueAt(t.SLAResolutionDueAt)
 	if t.ExternalReference != "" {
 		create = create.SetExternalReference(t.ExternalReference)
-	}
-	if t.CRMContactID != nil {
-		create = create.SetNillableCrmContactID(t.CRMContactID)
-	}
-	if t.CRMLeadID != nil {
-		create = create.SetNillableCrmLeadID(t.CRMLeadID)
 	}
 	if t.Tags != nil {
 		create = create.SetTags(t.Tags)
@@ -66,9 +138,11 @@ func (r *EntRepository) CreateTicket(ctx context.Context, tenantID uuid.UUID, t 
 	if t.Metadata != nil {
 		create = create.SetMetadata(t.Metadata)
 	}
-
 	created, err := create.Save(ctx)
 	if err != nil {
+		if ent.IsConstraintError(err) && strings.Contains(err.Error(), "ticket_tenant_source_ref") {
+			return ErrDuplicateSourceRef
+		}
 		return err
 	}
 	t.ID = created.ID
@@ -78,30 +152,37 @@ func (r *EntRepository) CreateTicket(ctx context.Context, tenantID uuid.UUID, t 
 }
 
 func (r *EntRepository) GetTicket(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID) (*Ticket, error) {
-	t, err := r.client.Ticket.Query().
-		Where(
-			ticket.ID(ticketID),
-			ticket.TenantID(tenantID),
-			ticket.DeletedAtIsNil(),
-		).
-		Only(ctx)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, ErrTicketNotFound
-		}
-		return nil, err
-	}
-	return entTicketToModel(t), nil
+	return r.oneTicket(ctx, ticket.ID(ticketID), ticket.TenantID(tenantID), ticket.DeletedAtIsNil())
 }
 
 func (r *EntRepository) GetTicketByNumber(ctx context.Context, tenantID uuid.UUID, ticketNumber string) (*Ticket, error) {
-	t, err := r.client.Ticket.Query().
-		Where(
-			ticket.TenantID(tenantID),
-			ticket.TicketNumber(ticketNumber),
-			ticket.DeletedAtIsNil(),
-		).
-		Only(ctx)
+	return r.oneTicket(ctx, ticket.TenantID(tenantID), ticket.TicketNumber(ticketNumber), ticket.DeletedAtIsNil())
+}
+
+// FindTicketBySourceRef matches the ticket_tenant_source_ref expression index. A soft-deleted
+// ticket still counts, so a repeat never creates a second ticket for the same source record.
+func (r *EntRepository) FindTicketBySourceRef(ctx context.Context, tenantID uuid.UUID, source string, ref SourceRef) (*Ticket, error) {
+	return r.oneTicket(ctx,
+		ticket.TenantID(tenantID),
+		metadataTextEQ("->> 'source'", source),
+		metadataTextEQ("-> 'source_ref' ->> 'type'", ref.Type),
+		metadataTextEQ("-> 'source_ref' ->> 'id'", ref.ID),
+	)
+}
+
+// metadataTextEQ compares one text value inside tickets.metadata. It is written in the same form
+// as the ticket_tenant_source_ref expression index (metadata ->> ... as text) so Postgres can use
+// that index; sqljson.ValueEQ compares jsonb values and would not.
+func metadataTextEQ(path, value string) predicate.Ticket {
+	return func(s *entsql.Selector) {
+		s.Where(entsql.P(func(b *entsql.Builder) {
+			b.WriteString("(").WriteString(s.C(ticket.FieldMetadata)).WriteString(" " + path + ") = ").Arg(value)
+		}))
+	}
+}
+
+func (r *EntRepository) oneTicket(ctx context.Context, where ...predicate.Ticket) (*Ticket, error) {
+	t, err := r.client.Ticket.Query().Where(where...).Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return nil, ErrTicketNotFound
@@ -112,12 +193,7 @@ func (r *EntRepository) GetTicketByNumber(ctx context.Context, tenantID uuid.UUI
 }
 
 func (r *EntRepository) ListTickets(ctx context.Context, tenantID uuid.UUID, filter TicketFilter) ([]*Ticket, int, error) {
-	query := r.client.Ticket.Query().
-		Where(
-			ticket.TenantID(tenantID),
-			ticket.DeletedAtIsNil(),
-		)
-
+	query := r.client.Ticket.Query().Where(ticket.TenantID(tenantID), ticket.DeletedAtIsNil())
 	if filter.Status != nil {
 		query = query.Where(ticket.StatusEQ(ticket.Status(*filter.Status)))
 	}
@@ -160,34 +236,40 @@ func (r *EntRepository) ListTickets(ctx context.Context, tenantID uuid.UUID, fil
 	if err != nil {
 		return nil, 0, err
 	}
-
 	if filter.Offset > 0 {
 		query = query.Offset(filter.Offset)
 	}
 	if filter.Limit > 0 {
 		query = query.Limit(filter.Limit)
 	}
-
-	tickets, err := query.Order(ent.Desc(ticket.FieldCreatedAt)).All(ctx)
+	rows, err := query.Order(ent.Desc(ticket.FieldCreatedAt)).All(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
-
-	result := make([]*Ticket, len(tickets))
-	for i, t := range tickets {
+	result := make([]*Ticket, len(rows))
+	for i, t := range rows {
 		result[i] = entTicketToModel(t)
 	}
 	return result, total, nil
 }
 
-func (r *EntRepository) UpdateTicket(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, updates *UpdateTicketRequest) error {
-	update := r.client.Ticket.Update().
-		Where(
-			ticket.ID(ticketID),
-			ticket.TenantID(tenantID),
-			ticket.DeletedAtIsNil(),
-		)
+// updateOpen starts an update of one live ticket in the tenant.
+func (r *EntRepository) updateOpen(tenantID, ticketID uuid.UUID) *ent.TicketUpdate {
+	return r.client.Ticket.Update().Where(ticket.ID(ticketID), ticket.TenantID(tenantID), ticket.DeletedAtIsNil())
+}
 
+func savedOne(n int, err error) error {
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrTicketNotFound
+	}
+	return nil
+}
+
+func (r *EntRepository) UpdateTicket(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, updates *UpdateTicketRequest) error {
+	update := r.updateOpen(tenantID, ticketID)
 	if updates.CategoryID != nil {
 		update = update.SetCategoryID(*updates.CategoryID)
 	}
@@ -209,150 +291,57 @@ func (r *EntRepository) UpdateTicket(ctx context.Context, tenantID uuid.UUID, ti
 	if updates.Metadata != nil {
 		update = update.SetMetadata(updates.Metadata)
 	}
-
-	n, err := update.Save(ctx)
-	if err != nil {
-		return err
-	}
-	if n == 0 {
-		return ErrTicketNotFound
-	}
-	return nil
+	return savedOne(update.Save(ctx))
 }
 
 func (r *EntRepository) UpdateTicketStatus(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, status TicketStatus) error {
 	now := time.Now()
-	update := r.client.Ticket.Update().
-		Where(
-			ticket.ID(ticketID),
-			ticket.TenantID(tenantID),
-			ticket.DeletedAtIsNil(),
-		).
-		SetStatus(ticket.Status(status))
-
-	// Set timestamps based on status
+	update := r.updateOpen(tenantID, ticketID).SetStatus(ticket.Status(status))
 	switch status {
 	case StatusResolved:
 		update = update.SetResolvedAt(now)
 	case StatusClosed:
 		update = update.SetClosedAt(now)
 	case StatusOpen, StatusInProgress:
-		// If reopening from resolved/closed, set reopened_at
-		t, err := r.GetTicket(ctx, tenantID, ticketID)
-		if err == nil && (t.Status == StatusResolved || t.Status == StatusClosed) {
+		// Reopening a resolved or closed ticket records when.
+		if t, err := r.GetTicket(ctx, tenantID, ticketID); err == nil && (t.Status == StatusResolved || t.Status == StatusClosed) {
 			update = update.SetReopenedAt(now)
 		}
 	}
-
-	n, err := update.Save(ctx)
-	if err != nil {
-		return err
-	}
-	if n == 0 {
-		return ErrTicketNotFound
-	}
-	return nil
+	return savedOne(update.Save(ctx))
 }
 
 func (r *EntRepository) AssignTicket(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, agentID *uuid.UUID, teamID *uuid.UUID) error {
-	update := r.client.Ticket.Update().
-		Where(
-			ticket.ID(ticketID),
-			ticket.TenantID(tenantID),
-			ticket.DeletedAtIsNil(),
-		)
-
+	update := r.updateOpen(tenantID, ticketID)
 	if agentID != nil {
 		update = update.SetAssignedAgentID(*agentID)
 	} else {
 		update = update.ClearAssignedAgentID()
 	}
-
 	if teamID != nil {
 		update = update.SetAssignedTeamID(*teamID)
 	} else {
 		update = update.ClearAssignedTeamID()
 	}
-
-	n, err := update.Save(ctx)
-	if err != nil {
-		return err
-	}
-	if n == 0 {
-		return ErrTicketNotFound
-	}
-	return nil
+	return savedOne(update.Save(ctx))
 }
 
 func (r *EntRepository) DeleteTicket(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID) error {
-	now := time.Now()
-	n, err := r.client.Ticket.Update().
-		Where(
-			ticket.ID(ticketID),
-			ticket.TenantID(tenantID),
-			ticket.DeletedAtIsNil(),
-		).
-		SetDeletedAt(now).
-		Save(ctx)
-	if err != nil {
-		return err
-	}
-	if n == 0 {
-		return ErrTicketNotFound
-	}
-	return nil
-}
-
-// SLA tracking
-
-func (r *EntRepository) SetSLADeadlines(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, responseDue, resolutionDue *time.Time) error {
-	update := r.client.Ticket.Update().
-		Where(
-			ticket.ID(ticketID),
-			ticket.TenantID(tenantID),
-		)
-
-	if responseDue != nil {
-		update = update.SetSLAResponseDueAt(*responseDue)
-	}
-	if resolutionDue != nil {
-		update = update.SetSLAResolutionDueAt(*resolutionDue)
-	}
-
-	n, err := update.Save(ctx)
-	if err != nil {
-		return err
-	}
-	if n == 0 {
-		return ErrTicketNotFound
-	}
-	return nil
+	return savedOne(r.updateOpen(tenantID, ticketID).SetDeletedAt(time.Now()).Save(ctx))
 }
 
 func (r *EntRepository) MarkFirstResponse(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID) error {
-	now := time.Now()
-	n, err := r.client.Ticket.Update().
-		Where(
-			ticket.ID(ticketID),
-			ticket.TenantID(tenantID),
-			ticket.FirstResponseAtIsNil(),
-		).
-		SetFirstResponseAt(now).
+	// A ticket that already has a first response is left unchanged.
+	_, err := r.client.Ticket.Update().
+		Where(ticket.ID(ticketID), ticket.TenantID(tenantID), ticket.FirstResponseAtIsNil()).
+		SetFirstResponseAt(time.Now()).
 		Save(ctx)
-	if err != nil {
-		return err
-	}
-	if n == 0 {
-		// Already has first response or ticket not found
-		return nil
-	}
-	return nil
+	return err
 }
 
 func (r *EntRepository) MarkSLABreached(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, responseBreached, resolutionBreached bool) (bool, error) {
-	// Only flip a flag that is still false, and report whether this call did it, so the
-	// breach is acted on (event published) once even when the SLA worker on every replica,
-	// and the status-change paths, all detect it.
+	// Only a flag that is still false flips, and changed reports whether this call did it, so a
+	// breach is acted on once even when the worker and the status-change paths both detect it.
 	var unmarked []predicate.Ticket
 	if responseBreached {
 		unmarked = append(unmarked, ticket.SLAResponseBreached(false))
@@ -364,11 +353,7 @@ func (r *EntRepository) MarkSLABreached(ctx context.Context, tenantID uuid.UUID,
 		return false, nil
 	}
 	update := r.client.Ticket.Update().
-		Where(
-			ticket.ID(ticketID),
-			ticket.TenantID(tenantID),
-			ticket.Or(unmarked...),
-		)
+		Where(ticket.ID(ticketID), ticket.TenantID(tenantID), ticket.Or(unmarked...))
 	if responseBreached {
 		update = update.SetSLAResponseBreached(true)
 	}
@@ -380,654 +365,4 @@ func (r *EntRepository) MarkSLABreached(ctx context.Context, tenantID uuid.UUID,
 		return false, err
 	}
 	return n > 0, nil
-}
-
-// Comment operations
-// Note: Comments don't have tenant_id directly - they inherit tenant through ticket relation
-
-func (r *EntRepository) CreateComment(ctx context.Context, tenantID uuid.UUID, c *TicketComment) error {
-	// Verify ticket belongs to tenant
-	_, err := r.GetTicket(ctx, tenantID, c.TicketID)
-	if err != nil {
-		return err
-	}
-
-	create := r.client.TicketComment.Create().
-		SetID(c.ID).
-		SetTicketID(c.TicketID).
-		SetAuthorID(c.AuthorID).
-		SetAuthorType(ticketcomment.AuthorType(c.AuthorType)).
-		SetCommentType(ticketcomment.CommentType(c.CommentType)).
-		SetContent(c.Content)
-
-	if c.Metadata != nil {
-		create = create.SetMetadata(c.Metadata)
-	}
-
-	created, err := create.Save(ctx)
-	if err != nil {
-		return err
-	}
-	c.ID = created.ID
-	c.CreatedAt = created.CreatedAt
-	return nil
-}
-
-func (r *EntRepository) GetComment(ctx context.Context, tenantID uuid.UUID, commentID uuid.UUID) (*TicketComment, error) {
-	c, err := r.client.TicketComment.Query().
-		Where(
-			ticketcomment.ID(commentID),
-			ticketcomment.DeletedAtIsNil(),
-		).
-		WithTicket().
-		Only(ctx)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, ErrCommentNotFound
-		}
-		return nil, err
-	}
-
-	// Verify tenant through ticket
-	if c.Edges.Ticket != nil && c.Edges.Ticket.TenantID != tenantID {
-		return nil, ErrCommentNotFound
-	}
-
-	return entCommentToModel(c, tenantID), nil
-}
-
-func (r *EntRepository) ListComments(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID) ([]*TicketComment, error) {
-	// Verify ticket belongs to tenant
-	_, err := r.GetTicket(ctx, tenantID, ticketID)
-	if err != nil {
-		return nil, err
-	}
-
-	comments, err := r.client.TicketComment.Query().
-		Where(
-			ticketcomment.TicketID(ticketID),
-			ticketcomment.DeletedAtIsNil(),
-		).
-		Order(ent.Asc(ticketcomment.FieldCreatedAt)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([]*TicketComment, len(comments))
-	for i, c := range comments {
-		result[i] = entCommentToModel(c, tenantID)
-	}
-	return result, nil
-}
-
-func (r *EntRepository) UpdateComment(ctx context.Context, tenantID uuid.UUID, commentID uuid.UUID, content string) error {
-	// First verify the comment exists and belongs to tenant
-	_, err := r.GetComment(ctx, tenantID, commentID)
-	if err != nil {
-		return err
-	}
-
-	n, err := r.client.TicketComment.Update().
-		Where(
-			ticketcomment.ID(commentID),
-			ticketcomment.DeletedAtIsNil(),
-		).
-		SetContent(content).
-		SetIsEdited(true).
-		Save(ctx)
-	if err != nil {
-		return err
-	}
-	if n == 0 {
-		return ErrCommentNotFound
-	}
-	return nil
-}
-
-func (r *EntRepository) DeleteComment(ctx context.Context, tenantID uuid.UUID, commentID uuid.UUID) error {
-	// First verify the comment exists and belongs to tenant
-	_, err := r.GetComment(ctx, tenantID, commentID)
-	if err != nil {
-		return err
-	}
-
-	now := time.Now()
-	n, err := r.client.TicketComment.Update().
-		Where(
-			ticketcomment.ID(commentID),
-			ticketcomment.DeletedAtIsNil(),
-		).
-		SetDeletedAt(now).
-		Save(ctx)
-	if err != nil {
-		return err
-	}
-	if n == 0 {
-		return ErrCommentNotFound
-	}
-	return nil
-}
-
-// Attachment operations
-// Note: Attachments don't have tenant_id directly - they inherit tenant through ticket relation
-
-func (r *EntRepository) CreateAttachment(ctx context.Context, tenantID uuid.UUID, a *TicketAttachment) error {
-	// Verify ticket belongs to tenant
-	_, err := r.GetTicket(ctx, tenantID, a.TicketID)
-	if err != nil {
-		return err
-	}
-
-	create := r.client.TicketAttachment.Create().
-		SetID(a.ID).
-		SetTicketID(a.TicketID).
-		SetFilename(a.Filename).
-		SetContentType(a.ContentType).
-		SetFileSize(a.Size).
-		SetStorageKey(a.StoragePath).
-		SetUploadedBy(a.UploadedByID)
-
-	if a.CommentID != nil {
-		create = create.SetCommentID(*a.CommentID)
-	}
-
-	created, err := create.Save(ctx)
-	if err != nil {
-		return err
-	}
-	a.ID = created.ID
-	a.CreatedAt = created.CreatedAt
-	return nil
-}
-
-func (r *EntRepository) GetAttachment(ctx context.Context, tenantID uuid.UUID, attachmentID uuid.UUID) (*TicketAttachment, error) {
-	a, err := r.client.TicketAttachment.Query().
-		Where(
-			ticketattachment.ID(attachmentID),
-		).
-		WithTicket().
-		Only(ctx)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, ErrAttachmentNotFound
-		}
-		return nil, err
-	}
-
-	// Verify tenant through ticket
-	if a.Edges.Ticket != nil && a.Edges.Ticket.TenantID != tenantID {
-		return nil, ErrAttachmentNotFound
-	}
-
-	return entAttachmentToModel(a, tenantID), nil
-}
-
-func (r *EntRepository) ListAttachments(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID) ([]*TicketAttachment, error) {
-	// Verify ticket belongs to tenant
-	_, err := r.GetTicket(ctx, tenantID, ticketID)
-	if err != nil {
-		return nil, err
-	}
-
-	attachments, err := r.client.TicketAttachment.Query().
-		Where(
-			ticketattachment.TicketID(ticketID),
-		).
-		Order(ent.Asc(ticketattachment.FieldCreatedAt)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([]*TicketAttachment, len(attachments))
-	for i, a := range attachments {
-		result[i] = entAttachmentToModel(a, tenantID)
-	}
-	return result, nil
-}
-
-func (r *EntRepository) DeleteAttachment(ctx context.Context, tenantID uuid.UUID, attachmentID uuid.UUID) error {
-	// First verify the attachment exists and belongs to tenant
-	_, err := r.GetAttachment(ctx, tenantID, attachmentID)
-	if err != nil {
-		return err
-	}
-
-	n, err := r.client.TicketAttachment.Delete().
-		Where(
-			ticketattachment.ID(attachmentID),
-		).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-	if n == 0 {
-		return ErrAttachmentNotFound
-	}
-	return nil
-}
-
-// Category operations
-
-func (r *EntRepository) CreateCategory(ctx context.Context, tenantID uuid.UUID, c *TicketCategory) error {
-	// Generate slug from name
-	slug := generateSlug(c.Name)
-
-	create := r.client.TicketCategory.Create().
-		SetID(c.ID).
-		SetTenantID(tenantID).
-		SetName(c.Name).
-		SetSlug(slug).
-		SetSortOrder(c.SortOrder).
-		SetIsActive(true)
-
-	if c.Description != "" {
-		create = create.SetDescription(c.Description)
-	}
-	if c.ParentID != nil {
-		create = create.SetParentID(*c.ParentID)
-	}
-	if c.Icon != "" {
-		create = create.SetIcon(c.Icon)
-	}
-
-	created, err := create.Save(ctx)
-	if err != nil {
-		if ent.IsConstraintError(err) {
-			return ErrCategoryExists
-		}
-		return err
-	}
-	c.ID = created.ID
-	c.CreatedAt = created.CreatedAt
-	c.UpdatedAt = created.UpdatedAt
-	return nil
-}
-
-// generateSlug creates a URL-friendly slug from a name
-func generateSlug(name string) string {
-	// Simple slug generation - lowercase and replace spaces with dashes
-	slug := ""
-	for _, r := range name {
-		if r >= 'a' && r <= 'z' {
-			slug += string(r)
-		} else if r >= 'A' && r <= 'Z' {
-			slug += string(r + 32) // lowercase
-		} else if r >= '0' && r <= '9' {
-			slug += string(r)
-		} else if r == ' ' || r == '-' || r == '_' {
-			if len(slug) > 0 && slug[len(slug)-1] != '-' {
-				slug += "-"
-			}
-		}
-	}
-	return slug
-}
-
-func (r *EntRepository) GetCategory(ctx context.Context, tenantID uuid.UUID, categoryID uuid.UUID) (*TicketCategory, error) {
-	c, err := r.client.TicketCategory.Query().
-		Where(
-			ticketcategory.ID(categoryID),
-			ticketcategory.TenantID(tenantID),
-		).
-		Only(ctx)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, ErrCategoryNotFound
-		}
-		return nil, err
-	}
-	return entCategoryToModel(c), nil
-}
-
-func (r *EntRepository) ListCategories(ctx context.Context, tenantID uuid.UUID, filter CategoryFilter) ([]*TicketCategory, int, error) {
-	query := r.client.TicketCategory.Query().
-		Where(ticketcategory.TenantID(tenantID))
-
-	if filter.ParentID != nil {
-		query = query.Where(ticketcategory.ParentID(*filter.ParentID))
-	}
-	if filter.IsActive != nil {
-		query = query.Where(ticketcategory.IsActive(*filter.IsActive))
-	}
-
-	total, err := query.Clone().Count(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	if filter.Offset > 0 {
-		query = query.Offset(filter.Offset)
-	}
-	if filter.Limit > 0 {
-		query = query.Limit(filter.Limit)
-	}
-
-	categories, err := query.Order(ent.Asc(ticketcategory.FieldSortOrder)).All(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	result := make([]*TicketCategory, len(categories))
-	for i, c := range categories {
-		result[i] = entCategoryToModel(c)
-	}
-	return result, total, nil
-}
-
-func (r *EntRepository) UpdateCategory(ctx context.Context, tenantID uuid.UUID, categoryID uuid.UUID, updates *UpdateCategoryRequest) error {
-	update := r.client.TicketCategory.Update().
-		Where(
-			ticketcategory.ID(categoryID),
-			ticketcategory.TenantID(tenantID),
-		)
-
-	if updates.ParentID != nil {
-		update = update.SetParentID(*updates.ParentID)
-	}
-	if updates.Name != nil {
-		update = update.SetName(*updates.Name)
-		update = update.SetSlug(generateSlug(*updates.Name))
-	}
-	if updates.Description != nil {
-		update = update.SetDescription(*updates.Description)
-	}
-	if updates.Icon != nil {
-		update = update.SetIcon(*updates.Icon)
-	}
-	if updates.SortOrder != nil {
-		update = update.SetSortOrder(*updates.SortOrder)
-	}
-	if updates.IsActive != nil {
-		update = update.SetIsActive(*updates.IsActive)
-	}
-
-	n, err := update.Save(ctx)
-	if err != nil {
-		return err
-	}
-	if n == 0 {
-		return ErrCategoryNotFound
-	}
-	return nil
-}
-
-func (r *EntRepository) DeleteCategory(ctx context.Context, tenantID uuid.UUID, categoryID uuid.UUID) error {
-	// Soft delete by setting is_active to false
-	n, err := r.client.TicketCategory.Update().
-		Where(
-			ticketcategory.ID(categoryID),
-			ticketcategory.TenantID(tenantID),
-		).
-		SetIsActive(false).
-		Save(ctx)
-	if err != nil {
-		return err
-	}
-	if n == 0 {
-		return ErrCategoryNotFound
-	}
-	return nil
-}
-
-func (r *EntRepository) GetCategoryTicketCount(ctx context.Context, tenantID uuid.UUID, categoryID uuid.UUID) (int, error) {
-	return r.client.Ticket.Query().
-		Where(
-			ticket.TenantID(tenantID),
-			ticket.CategoryID(categoryID),
-			ticket.DeletedAtIsNil(),
-		).
-		Count(ctx)
-}
-
-func (r *EntRepository) GetCategoryChildCount(ctx context.Context, tenantID uuid.UUID, categoryID uuid.UUID) (int, error) {
-	return r.client.TicketCategory.Query().
-		Where(
-			ticketcategory.TenantID(tenantID),
-			ticketcategory.ParentID(categoryID),
-			ticketcategory.IsActive(true),
-		).
-		Count(ctx)
-}
-
-// Stats
-
-func (r *EntRepository) GetTicketCountsByStatus(ctx context.Context, tenantID uuid.UUID) (map[TicketStatus]int, error) {
-	// Get all active tickets
-	tickets, err := r.client.Ticket.Query().
-		Where(
-			ticket.TenantID(tenantID),
-			ticket.DeletedAtIsNil(),
-		).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	counts := make(map[TicketStatus]int)
-	for _, t := range tickets {
-		counts[TicketStatus(t.Status)]++
-	}
-	return counts, nil
-}
-
-func (r *EntRepository) GetTicketCountsByPriority(ctx context.Context, tenantID uuid.UUID) (map[TicketPriority]int, error) {
-	tickets, err := r.client.Ticket.Query().
-		Where(
-			ticket.TenantID(tenantID),
-			ticket.DeletedAtIsNil(),
-		).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	counts := make(map[TicketPriority]int)
-	for _, t := range tickets {
-		counts[TicketPriority(t.Priority)]++
-	}
-	return counts, nil
-}
-
-func (r *EntRepository) GetTicketTrend(ctx context.Context, tenantID uuid.UUID, from, to time.Time, bucketDays int) ([]TrendPoint, error) {
-	tickets, err := r.client.Ticket.Query().
-		Where(
-			ticket.TenantID(tenantID),
-			ticket.DeletedAtIsNil(),
-			ticket.CreatedAtGTE(from),
-			ticket.CreatedAtLTE(to),
-		).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	type bucket struct{ created, resolved int }
-	buckets := make(map[string]*bucket)
-
-	// Pre-fill buckets so chart shows zeros for empty days
-	for d := from; !d.After(to); d = d.AddDate(0, 0, bucketDays) {
-		key := d.Format("2006-01-02")
-		buckets[key] = &bucket{}
-	}
-
-	bucketKey := func(t time.Time) string {
-		// Round down to nearest bucket boundary from `from`
-		diff := int(t.Sub(from).Hours() / 24)
-		slot := (diff / bucketDays) * bucketDays
-		return from.AddDate(0, 0, slot).Format("2006-01-02")
-	}
-
-	for _, t := range tickets {
-		key := bucketKey(t.CreatedAt)
-		if b, ok := buckets[key]; ok {
-			b.created++
-			if t.Status == ticket.StatusResolved || t.Status == ticket.StatusClosed {
-				b.resolved++
-			}
-		}
-	}
-
-	// Return sorted slice
-	var points []TrendPoint
-	for d := from; !d.After(to); d = d.AddDate(0, 0, bucketDays) {
-		key := d.Format("2006-01-02")
-		b := buckets[key]
-		points = append(points, TrendPoint{Date: key, Created: b.created, Resolved: b.resolved})
-	}
-	return points, nil
-}
-
-func (r *EntRepository) GetAgentTicketCount(ctx context.Context, tenantID uuid.UUID, agentID uuid.UUID) (int, error) {
-	return r.client.Ticket.Query().
-		Where(
-			ticket.TenantID(tenantID),
-			ticket.AssignedAgentID(agentID),
-			ticket.DeletedAtIsNil(),
-			ticket.StatusNotIn(ticket.StatusClosed, ticket.StatusCancelled, ticket.StatusResolved),
-		).
-		Count(ctx)
-}
-
-// GetAgentEmail returns the assigned agent's email so ticket.assigned events can reach the
-// agent directly (notifications-api reads payload.agent_email). Returns "" if not found.
-func (r *EntRepository) GetAgentEmail(ctx context.Context, tenantID uuid.UUID, agentID uuid.UUID) (string, error) {
-	a, err := r.client.Agent.Query().
-		Where(entagent.TenantID(tenantID), entagent.ID(agentID)).
-		Only(ctx)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return "", nil
-		}
-		return "", err
-	}
-	return a.Email, nil
-}
-
-func (r *EntRepository) ListTicketsPendingBreach(ctx context.Context, now time.Time, limit int) ([]*Ticket, error) {
-	tickets, err := r.client.Ticket.Query().
-		Where(
-			ticket.DeletedAtIsNil(),
-			ticket.StatusNotIn(ticket.StatusResolved, ticket.StatusClosed, ticket.StatusCancelled),
-			ticket.Or(
-				ticket.And(
-					ticket.SLAResponseDueAtLTE(now),
-					ticket.SLAResponseBreached(false),
-					ticket.FirstResponseAtIsNil(),
-				),
-				ticket.And(
-					ticket.SLAResolutionDueAtLTE(now),
-					ticket.SLAResolutionBreached(false),
-				),
-			),
-		).
-		Limit(limit).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	result := make([]*Ticket, len(tickets))
-	for i, t := range tickets {
-		result[i] = entTicketToModel(t)
-	}
-	return result, nil
-}
-
-func (r *EntRepository) GenerateTicketNumber(ctx context.Context, tenantID uuid.UUID) (string, error) {
-	// Get the current count of tickets for this tenant
-	count, err := r.client.Ticket.Query().
-		Where(ticket.TenantID(tenantID)).
-		Count(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	// Generate ticket number: TKT-XXXXXX (padded to 6 digits)
-	return fmt.Sprintf("TKT-%06d", count+1), nil
-}
-
-// Converters
-
-func entTicketToModel(t *ent.Ticket) *Ticket {
-	return &Ticket{
-		ID:                    t.ID,
-		TenantID:              t.TenantID,
-		TicketNumber:          t.TicketNumber,
-		CustomerID:            t.CustomerID,
-		CategoryID:            t.CategoryID,
-		AssignedAgentID:       t.AssignedAgentID,
-		AssignedTeamID:        t.AssignedTeamID,
-		Subject:               t.Subject,
-		Description:           t.Description,
-		Status:                TicketStatus(t.Status),
-		Priority:              TicketPriority(t.Priority),
-		Channel:               TicketChannel(t.Channel),
-		OrderID:               t.OrderID,
-		ExternalReference:     t.ExternalReference,
-		CRMContactID:          t.CrmContactID,
-		CRMLeadID:             t.CrmLeadID,
-		SLAResponseDueAt:      t.SLAResponseDueAt,
-		SLAResolutionDueAt:    t.SLAResolutionDueAt,
-		SLAResponseBreached:   t.SLAResponseBreached,
-		SLAResolutionBreached: t.SLAResolutionBreached,
-		FirstResponseAt:       t.FirstResponseAt,
-		ResolvedAt:            t.ResolvedAt,
-		ClosedAt:              t.ClosedAt,
-		ReopenedAt:            t.ReopenedAt,
-		EscalationLevel:       t.EscalationLevel,
-		EscalatedAt:           t.EscalatedAt,
-		Tags:                  t.Tags,
-		Metadata:              t.Metadata,
-		CreatedAt:             t.CreatedAt,
-		UpdatedAt:             t.UpdatedAt,
-	}
-}
-
-func entCommentToModel(c *ent.TicketComment, tenantID uuid.UUID) *TicketComment {
-	var authorID uuid.UUID
-	if c.AuthorID != nil {
-		authorID = *c.AuthorID
-	}
-	return &TicketComment{
-		ID:          c.ID,
-		TenantID:    tenantID,
-		TicketID:    c.TicketID,
-		AuthorID:    authorID,
-		AuthorType:  AuthorType(c.AuthorType),
-		CommentType: CommentType(c.CommentType),
-		Content:     c.Content,
-		Metadata:    c.Metadata,
-		CreatedAt:   c.CreatedAt,
-	}
-}
-
-func entAttachmentToModel(a *ent.TicketAttachment, tenantID uuid.UUID) *TicketAttachment {
-	return &TicketAttachment{
-		ID:           a.ID,
-		TenantID:     tenantID,
-		TicketID:     a.TicketID,
-		CommentID:    a.CommentID,
-		Filename:     a.Filename,
-		ContentType:  a.ContentType,
-		Size:         a.FileSize,
-		StoragePath:  a.StorageKey,
-		UploadedByID: a.UploadedBy,
-		CreatedAt:    a.CreatedAt,
-	}
-}
-
-func entCategoryToModel(c *ent.TicketCategory) *TicketCategory {
-	return &TicketCategory{
-		ID:          c.ID,
-		TenantID:    c.TenantID,
-		ParentID:    c.ParentID,
-		Name:        c.Name,
-		Description: c.Description,
-		Icon:        c.Icon,
-		SortOrder:   c.SortOrder,
-		IsActive:    c.IsActive,
-		CreatedAt:   c.CreatedAt,
-		UpdatedAt:   c.UpdatedAt,
-	}
 }

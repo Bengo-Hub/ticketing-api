@@ -1,9 +1,34 @@
+-- Baseline: the schema ent auto-migrate built from internal/ent/schema at commit c0d863b.
+-- A database that already has the "tickets" table records this version as applied without
+-- running it (cmd/migrate); a fresh database runs it.
+-- Create "kb_articles" table
+CREATE TABLE "kb_articles" ("id" uuid NOT NULL, "tenant_id" uuid NOT NULL, "author_id" uuid NOT NULL, "title" character varying NOT NULL, "slug" character varying NOT NULL, "content" text NOT NULL, "excerpt" character varying NULL, "category" character varying NULL, "tags" jsonb NULL, "status" character varying NOT NULL DEFAULT 'draft', "is_public" boolean NOT NULL DEFAULT true, "view_count" bigint NOT NULL DEFAULT 0, "helpful_count" bigint NOT NULL DEFAULT 0, "not_helpful_count" bigint NOT NULL DEFAULT 0, "metadata" jsonb NULL, "published_at" timestamptz NULL, "created_at" timestamptz NOT NULL, "updated_at" timestamptz NOT NULL, "deleted_at" timestamptz NULL, PRIMARY KEY ("id"));
+-- Create index "kbarticle_author_id" to table: "kb_articles"
+CREATE INDEX "kbarticle_author_id" ON "kb_articles" ("author_id");
+-- Create index "kbarticle_created_at" to table: "kb_articles"
+CREATE INDEX "kbarticle_created_at" ON "kb_articles" ("created_at");
+-- Create index "kbarticle_deleted_at" to table: "kb_articles"
+CREATE INDEX "kbarticle_deleted_at" ON "kb_articles" ("deleted_at");
+-- Create index "kbarticle_tenant_id_category" to table: "kb_articles"
+CREATE INDEX "kbarticle_tenant_id_category" ON "kb_articles" ("tenant_id", "category");
+-- Create index "kbarticle_tenant_id_is_public" to table: "kb_articles"
+CREATE INDEX "kbarticle_tenant_id_is_public" ON "kb_articles" ("tenant_id", "is_public");
+-- Create index "kbarticle_tenant_id_slug" to table: "kb_articles"
+CREATE UNIQUE INDEX "kbarticle_tenant_id_slug" ON "kb_articles" ("tenant_id", "slug");
+-- Create index "kbarticle_tenant_id_status" to table: "kb_articles"
+CREATE INDEX "kbarticle_tenant_id_status" ON "kb_articles" ("tenant_id", "status");
 -- Create "outbox_events" table
 CREATE TABLE "outbox_events" ("id" uuid NOT NULL, "tenant_id" uuid NOT NULL, "aggregate_type" character varying NOT NULL, "aggregate_id" uuid NOT NULL, "event_type" character varying NOT NULL, "payload" bytea NOT NULL, "status" character varying NOT NULL DEFAULT 'PENDING', "attempts" bigint NOT NULL DEFAULT 0, "last_attempt_at" timestamptz NULL, "published_at" timestamptz NULL, "error_message" character varying NULL, "created_at" timestamptz NOT NULL, PRIMARY KEY ("id"));
 -- Create index "outboxevent_status_created_at" to table: "outbox_events"
 CREATE INDEX "outboxevent_status_created_at" ON "outbox_events" ("status", "created_at");
 -- Create index "outboxevent_tenant_id" to table: "outbox_events"
 CREATE INDEX "outboxevent_tenant_id" ON "outbox_events" ("tenant_id");
+-- Create "routing_rules" table
+CREATE TABLE "routing_rules" ("id" uuid NOT NULL, "tenant_id" uuid NOT NULL, "name" character varying NOT NULL, "description" text NULL, "is_active" boolean NOT NULL DEFAULT true, "sort_order" bigint NOT NULL DEFAULT 0, "conditions" jsonb NOT NULL, "action" jsonb NOT NULL, "created_at" timestamptz NOT NULL, "updated_at" timestamptz NOT NULL, PRIMARY KEY ("id"));
+-- Create index "routingrule_tenant_id_is_active" to table: "routing_rules"
+CREATE INDEX "routingrule_tenant_id_is_active" ON "routing_rules" ("tenant_id", "is_active");
+-- Create index "routingrule_tenant_id_sort_order" to table: "routing_rules"
+CREATE INDEX "routingrule_tenant_id_sort_order" ON "routing_rules" ("tenant_id", "sort_order");
 -- Create "sla_policies" table
 CREATE TABLE "sla_policies" ("id" uuid NOT NULL, "tenant_id" uuid NOT NULL, "name" character varying NOT NULL, "description" text NULL, "priority" character varying NOT NULL, "category_id" uuid NULL, "first_response_minutes" bigint NOT NULL, "first_response_business_hours" boolean NOT NULL DEFAULT true, "resolution_minutes" bigint NOT NULL, "resolution_business_hours" boolean NOT NULL DEFAULT true, "is_active" boolean NOT NULL DEFAULT true, "sort_order" bigint NOT NULL DEFAULT 0, "business_hours" jsonb NULL, "metadata" jsonb NULL, "created_at" timestamptz NOT NULL, "updated_at" timestamptz NOT NULL, PRIMARY KEY ("id"));
 -- Create index "slapolicy_sort_order" to table: "sla_policies"
@@ -47,11 +72,15 @@ CREATE INDEX "ticketcategory_tenant_id_is_active" ON "ticket_categories" ("tenan
 -- Create index "ticketcategory_tenant_id_slug" to table: "ticket_categories"
 CREATE UNIQUE INDEX "ticketcategory_tenant_id_slug" ON "ticket_categories" ("tenant_id", "slug");
 -- Create "tickets" table
-CREATE TABLE "tickets" ("id" uuid NOT NULL, "tenant_id" uuid NOT NULL, "ticket_number" character varying NOT NULL, "customer_id" uuid NOT NULL, "assigned_team_id" uuid NULL, "subject" character varying NOT NULL, "description" text NOT NULL, "status" character varying NOT NULL DEFAULT 'new', "priority" character varying NOT NULL DEFAULT 'normal', "channel" character varying NOT NULL DEFAULT 'web', "order_id" uuid NULL, "external_reference" character varying NULL, "sla_response_due_at" timestamptz NULL, "sla_resolution_due_at" timestamptz NULL, "sla_response_breached" boolean NOT NULL DEFAULT false, "sla_resolution_breached" boolean NOT NULL DEFAULT false, "first_response_at" timestamptz NULL, "resolved_at" timestamptz NULL, "closed_at" timestamptz NULL, "reopened_at" timestamptz NULL, "escalation_level" bigint NOT NULL DEFAULT 0, "escalated_at" timestamptz NULL, "tags" jsonb NULL, "metadata" jsonb NULL, "created_at" timestamptz NOT NULL, "updated_at" timestamptz NOT NULL, "deleted_at" timestamptz NULL, "assigned_agent_id" uuid NULL, "category_id" uuid NULL, PRIMARY KEY ("id"), CONSTRAINT "tickets_agents_assigned_tickets" FOREIGN KEY ("assigned_agent_id") REFERENCES "agents" ("id") ON UPDATE NO ACTION ON DELETE SET NULL, CONSTRAINT "tickets_ticket_categories_tickets" FOREIGN KEY ("category_id") REFERENCES "ticket_categories" ("id") ON UPDATE NO ACTION ON DELETE SET NULL);
+CREATE TABLE "tickets" ("id" uuid NOT NULL, "tenant_id" uuid NOT NULL, "ticket_number" character varying NOT NULL, "customer_id" uuid NOT NULL, "assigned_team_id" uuid NULL, "subject" character varying NOT NULL, "description" text NOT NULL, "status" character varying NOT NULL DEFAULT 'new', "priority" character varying NOT NULL DEFAULT 'normal', "channel" character varying NOT NULL DEFAULT 'web', "order_id" uuid NULL, "external_reference" character varying NULL, "crm_contact_id" uuid NULL, "crm_lead_id" uuid NULL, "sla_response_due_at" timestamptz NULL, "sla_resolution_due_at" timestamptz NULL, "sla_response_breached" boolean NOT NULL DEFAULT false, "sla_resolution_breached" boolean NOT NULL DEFAULT false, "first_response_at" timestamptz NULL, "resolved_at" timestamptz NULL, "closed_at" timestamptz NULL, "reopened_at" timestamptz NULL, "escalation_level" bigint NOT NULL DEFAULT 0, "escalated_at" timestamptz NULL, "tags" jsonb NULL, "metadata" jsonb NULL, "created_at" timestamptz NOT NULL, "updated_at" timestamptz NOT NULL, "deleted_at" timestamptz NULL, "assigned_agent_id" uuid NULL, "category_id" uuid NULL, PRIMARY KEY ("id"), CONSTRAINT "tickets_agents_assigned_tickets" FOREIGN KEY ("assigned_agent_id") REFERENCES "agents" ("id") ON UPDATE NO ACTION ON DELETE SET NULL, CONSTRAINT "tickets_ticket_categories_tickets" FOREIGN KEY ("category_id") REFERENCES "ticket_categories" ("id") ON UPDATE NO ACTION ON DELETE SET NULL);
 -- Create index "ticket_category_id" to table: "tickets"
 CREATE INDEX "ticket_category_id" ON "tickets" ("category_id");
 -- Create index "ticket_created_at" to table: "tickets"
 CREATE INDEX "ticket_created_at" ON "tickets" ("created_at");
+-- Create index "ticket_crm_contact_id" to table: "tickets"
+CREATE INDEX "ticket_crm_contact_id" ON "tickets" ("crm_contact_id");
+-- Create index "ticket_crm_lead_id" to table: "tickets"
+CREATE INDEX "ticket_crm_lead_id" ON "tickets" ("crm_lead_id");
 -- Create index "ticket_deleted_at" to table: "tickets"
 CREATE INDEX "ticket_deleted_at" ON "tickets" ("deleted_at");
 -- Create index "ticket_external_reference" to table: "tickets"

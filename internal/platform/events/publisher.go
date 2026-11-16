@@ -4,116 +4,39 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 
 	eventslib "github.com/Bengo-Hub/shared-events"
 	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
-// Publisher handles publishing ticketing events via the transactional outbox pattern.
-type Publisher struct {
-	repo   eventslib.OutboxRepository
-	logger *zap.Logger
+// Outbox writes ticketing events to the shared-events outbox inside the caller's transaction.
+// The shared background publisher (eventslib.Publisher over OutboxRepo) relays them to NATS.
+type Outbox struct {
+	repo eventslib.OutboxRepository
 }
 
-// NewPublisher creates a new ticketing event publisher backed by the shared-events outbox.
-func NewPublisher(sqlDB *sql.DB, logger *zap.Logger) *Publisher {
-	return &Publisher{
-		repo:   eventslib.NewSQLOutboxRepository(sqlDB),
-		logger: logger.Named("ticketing.events"),
-	}
+// NewOutbox creates the outbox writer over the service database.
+func NewOutbox(sqlDB *sql.DB) *Outbox {
+	return &Outbox{repo: eventslib.NewSQLOutboxRepository(sqlDB)}
 }
 
-// OutboxRepo returns the outbox repository for use by the background publisher.
-func (p *Publisher) OutboxRepo() eventslib.OutboxRepository {
-	return p.repo
+// OutboxRepo returns the outbox repository for the background publisher.
+func (o *Outbox) OutboxRepo() eventslib.OutboxRepository {
+	return o.repo
 }
 
-// publish writes a ticketing-aggregate event to the outbox for background publishing.
-func (p *Publisher) publish(ctx context.Context, tenantID uuid.UUID, eventType string, data map[string]any) error {
-	return p.publishWithAggregate(ctx, tenantID, "ticketing", eventType, data)
-}
-
-// publishWithAggregate writes an event under an explicit aggregate so a cross-domain event
-// (crm.*) gets the subject its own stream and consumer listen on ({aggregate}.{event_type})
-// instead of ticketing.crm.*.
-func (p *Publisher) publishWithAggregate(ctx context.Context, tenantID uuid.UUID, aggregate, eventType string, data map[string]any) error {
-	if p == nil {
-		return nil
+// WriteInTx stores one event in tx with eventslib.CreateOutboxRecordInTx. The event's aggregate id
+// is the payload's ticket_id when it has one, so every event of a ticket shares one identity.
+func (o *Outbox) WriteInTx(ctx context.Context, tx *sql.Tx, tenantID uuid.UUID, aggregate, eventType string, data map[string]any) error {
+	aggregateID := uuid.New()
+	if s, ok := data["ticket_id"].(string); ok {
+		if id, err := uuid.Parse(s); err == nil {
+			aggregateID = id
+		}
 	}
-
-	event := eventslib.NewEvent(eventType, aggregate, uuid.New(), tenantID, data)
-
-	tx, err := p.repo.BeginTx(ctx)
-	if err != nil {
-		p.logger.Error("failed to begin tx for event", zap.String("event_type", eventType), zap.Error(err))
-		return fmt.Errorf("begin tx: %w", err)
+	event := eventslib.NewEvent(eventType, aggregate, aggregateID, tenantID, data)
+	if err := eventslib.CreateOutboxRecordInTx(ctx, tx, o.repo, event); err != nil {
+		return fmt.Errorf("write %s.%s to outbox: %w", aggregate, eventType, err)
 	}
-
-	if err := eventslib.CreateOutboxRecordInTx(ctx, tx, p.repo, event); err != nil {
-		_ = tx.Rollback()
-		p.logger.Error("failed to write event to outbox", zap.String("event_type", eventType), zap.Error(err))
-		return fmt.Errorf("write outbox: %w", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		p.logger.Error("failed to commit event", zap.String("event_type", eventType), zap.Error(err))
-		return fmt.Errorf("commit: %w", err)
-	}
-
-	p.logger.Debug("event written to outbox", zap.String("event_type", eventType))
 	return nil
-}
-
-// PublishTicketCreated publishes a ticketing.ticket.created event (requester contact included).
-func (p *Publisher) PublishTicketCreated(ctx context.Context, tenantID uuid.UUID, data map[string]any) error {
-	return p.publish(ctx, tenantID, "ticket.created", data)
-}
-
-// PublishTicketCommentAdded publishes a ticketing.ticket.comment_added event: a public agent reply.
-func (p *Publisher) PublishTicketCommentAdded(ctx context.Context, tenantID uuid.UUID, data map[string]any) error {
-	return p.publish(ctx, tenantID, "ticket.comment_added", data)
-}
-
-// PublishTicketStatusChanged publishes a ticketing.ticket.status_changed event.
-func (p *Publisher) PublishTicketStatusChanged(ctx context.Context, tenantID uuid.UUID, data map[string]any) error {
-	return p.publish(ctx, tenantID, "ticket.status_changed", data)
-}
-
-// PublishTicketAssigned publishes a ticketing.ticket.assigned event.
-func (p *Publisher) PublishTicketAssigned(ctx context.Context, tenantID uuid.UUID, data map[string]any) error {
-	return p.publish(ctx, tenantID, "ticket.assigned", data)
-}
-
-// PublishTicketResolved publishes a ticketing.ticket.resolved event.
-func (p *Publisher) PublishTicketResolved(ctx context.Context, tenantID uuid.UUID, data map[string]any) error {
-	return p.publish(ctx, tenantID, "ticket.resolved", data)
-}
-
-// PublishCRMActivityRequest publishes a crm.activity.log_requested event for CRM integration.
-// The CRM service subscribes to this subject to log contact/lead activity. It is published
-// under the crm aggregate (subject "crm.activity.log_requested") with the ticket's real
-// tenant id — previously it went out as "ticketing.crm.activity.log_requested" with a nil
-// tenant, so the CRM service never received it.
-func (p *Publisher) PublishCRMActivityRequest(ctx context.Context, tenantID uuid.UUID, data map[string]any) error {
-	return p.publishWithAggregate(ctx, tenantID, "crm", "activity.log_requested", data)
-}
-
-// PublishSLABreach publishes a ticket's SLA breach on the ticketing stream, subject
-// "ticketing.sla.first_response_breached" or "ticketing.sla.resolution_breached", event type
-// "sla.<kind>". No stream captures a bare "sla.>" subject, so the earlier "sla" aggregate meant
-// notifications-api's ticketing consumer (ticketing.>) never received a breach alert.
-func (p *Publisher) PublishSLABreach(ctx context.Context, tenantID uuid.UUID, data map[string]any) error {
-	return p.publish(ctx, tenantID, slaBreachEventType(data), data)
-}
-
-// slaBreachEventType is "sla.first_response_breached" or "sla.resolution_breached" from the
-// payload's event_type, with or without its "sla." prefix; first response is the default.
-func slaBreachEventType(data map[string]any) string {
-	kind := "first_response_breached"
-	if t, ok := data["event_type"].(string); ok && t != "" {
-		kind = strings.TrimPrefix(t, "sla.")
-	}
-	return "sla." + kind
 }

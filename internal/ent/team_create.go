@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
@@ -20,6 +22,7 @@ type TeamCreate struct {
 	config
 	mutation *TeamMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetTenantID sets the "tenant_id" field.
@@ -245,6 +248,7 @@ func (_c *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 		_node = &Team{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(team.Table, sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
@@ -300,11 +304,371 @@ func (_c *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Team.Create().
+//		SetTenantID(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.TeamUpsert) {
+//			SetTenantID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *TeamCreate) OnConflict(opts ...sql.ConflictOption) *TeamUpsertOne {
+	_c.conflict = opts
+	return &TeamUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Team.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *TeamCreate) OnConflictColumns(columns ...string) *TeamUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &TeamUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// TeamUpsertOne is the builder for "upsert"-ing
+	//  one Team node.
+	TeamUpsertOne struct {
+		create *TeamCreate
+	}
+
+	// TeamUpsert is the "OnConflict" setter.
+	TeamUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetTenantID sets the "tenant_id" field.
+func (u *TeamUpsert) SetTenantID(v uuid.UUID) *TeamUpsert {
+	u.Set(team.FieldTenantID, v)
+	return u
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *TeamUpsert) UpdateTenantID() *TeamUpsert {
+	u.SetExcluded(team.FieldTenantID)
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *TeamUpsert) SetName(v string) *TeamUpsert {
+	u.Set(team.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *TeamUpsert) UpdateName() *TeamUpsert {
+	u.SetExcluded(team.FieldName)
+	return u
+}
+
+// SetDescription sets the "description" field.
+func (u *TeamUpsert) SetDescription(v string) *TeamUpsert {
+	u.Set(team.FieldDescription, v)
+	return u
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *TeamUpsert) UpdateDescription() *TeamUpsert {
+	u.SetExcluded(team.FieldDescription)
+	return u
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *TeamUpsert) ClearDescription() *TeamUpsert {
+	u.SetNull(team.FieldDescription)
+	return u
+}
+
+// SetIsActive sets the "is_active" field.
+func (u *TeamUpsert) SetIsActive(v bool) *TeamUpsert {
+	u.Set(team.FieldIsActive, v)
+	return u
+}
+
+// UpdateIsActive sets the "is_active" field to the value that was provided on create.
+func (u *TeamUpsert) UpdateIsActive() *TeamUpsert {
+	u.SetExcluded(team.FieldIsActive)
+	return u
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *TeamUpsert) SetMetadata(v map[string]interface{}) *TeamUpsert {
+	u.Set(team.FieldMetadata, v)
+	return u
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *TeamUpsert) UpdateMetadata() *TeamUpsert {
+	u.SetExcluded(team.FieldMetadata)
+	return u
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *TeamUpsert) ClearMetadata() *TeamUpsert {
+	u.SetNull(team.FieldMetadata)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *TeamUpsert) SetUpdatedAt(v time.Time) *TeamUpsert {
+	u.Set(team.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *TeamUpsert) UpdateUpdatedAt() *TeamUpsert {
+	u.SetExcluded(team.FieldUpdatedAt)
+	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *TeamUpsert) SetDeletedAt(v time.Time) *TeamUpsert {
+	u.Set(team.FieldDeletedAt, v)
+	return u
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *TeamUpsert) UpdateDeletedAt() *TeamUpsert {
+	u.SetExcluded(team.FieldDeletedAt)
+	return u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *TeamUpsert) ClearDeletedAt() *TeamUpsert {
+	u.SetNull(team.FieldDeletedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.Team.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(team.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *TeamUpsertOne) UpdateNewValues() *TeamUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(team.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(team.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Team.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *TeamUpsertOne) Ignore() *TeamUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *TeamUpsertOne) DoNothing() *TeamUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the TeamCreate.OnConflict
+// documentation for more info.
+func (u *TeamUpsertOne) Update(set func(*TeamUpsert)) *TeamUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&TeamUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (u *TeamUpsertOne) SetTenantID(v uuid.UUID) *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetTenantID(v)
+	})
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *TeamUpsertOne) UpdateTenantID() *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateTenantID()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *TeamUpsertOne) SetName(v string) *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *TeamUpsertOne) UpdateName() *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *TeamUpsertOne) SetDescription(v string) *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *TeamUpsertOne) UpdateDescription() *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *TeamUpsertOne) ClearDescription() *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.ClearDescription()
+	})
+}
+
+// SetIsActive sets the "is_active" field.
+func (u *TeamUpsertOne) SetIsActive(v bool) *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetIsActive(v)
+	})
+}
+
+// UpdateIsActive sets the "is_active" field to the value that was provided on create.
+func (u *TeamUpsertOne) UpdateIsActive() *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateIsActive()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *TeamUpsertOne) SetMetadata(v map[string]interface{}) *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *TeamUpsertOne) UpdateMetadata() *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *TeamUpsertOne) ClearMetadata() *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.ClearMetadata()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *TeamUpsertOne) SetUpdatedAt(v time.Time) *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *TeamUpsertOne) UpdateUpdatedAt() *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *TeamUpsertOne) SetDeletedAt(v time.Time) *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *TeamUpsertOne) UpdateDeletedAt() *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *TeamUpsertOne) ClearDeletedAt() *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.ClearDeletedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *TeamUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for TeamCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *TeamUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *TeamUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: TeamUpsertOne.ID is not supported by MySQL driver. Use TeamUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *TeamUpsertOne) IDX(ctx context.Context) uuid.UUID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // TeamCreateBulk is the builder for creating many Team entities in bulk.
 type TeamCreateBulk struct {
 	config
 	err      error
 	builders []*TeamCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Team entities in the database.
@@ -334,6 +698,7 @@ func (_c *TeamCreateBulk) Save(ctx context.Context) ([]*Team, error) {
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -380,6 +745,242 @@ func (_c *TeamCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *TeamCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Team.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.TeamUpsert) {
+//			SetTenantID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *TeamCreateBulk) OnConflict(opts ...sql.ConflictOption) *TeamUpsertBulk {
+	_c.conflict = opts
+	return &TeamUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Team.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *TeamCreateBulk) OnConflictColumns(columns ...string) *TeamUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &TeamUpsertBulk{
+		create: _c,
+	}
+}
+
+// TeamUpsertBulk is the builder for "upsert"-ing
+// a bulk of Team nodes.
+type TeamUpsertBulk struct {
+	create *TeamCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Team.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(team.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *TeamUpsertBulk) UpdateNewValues() *TeamUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(team.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(team.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Team.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *TeamUpsertBulk) Ignore() *TeamUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *TeamUpsertBulk) DoNothing() *TeamUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the TeamCreateBulk.OnConflict
+// documentation for more info.
+func (u *TeamUpsertBulk) Update(set func(*TeamUpsert)) *TeamUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&TeamUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (u *TeamUpsertBulk) SetTenantID(v uuid.UUID) *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetTenantID(v)
+	})
+}
+
+// UpdateTenantID sets the "tenant_id" field to the value that was provided on create.
+func (u *TeamUpsertBulk) UpdateTenantID() *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateTenantID()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *TeamUpsertBulk) SetName(v string) *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *TeamUpsertBulk) UpdateName() *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *TeamUpsertBulk) SetDescription(v string) *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *TeamUpsertBulk) UpdateDescription() *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *TeamUpsertBulk) ClearDescription() *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.ClearDescription()
+	})
+}
+
+// SetIsActive sets the "is_active" field.
+func (u *TeamUpsertBulk) SetIsActive(v bool) *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetIsActive(v)
+	})
+}
+
+// UpdateIsActive sets the "is_active" field to the value that was provided on create.
+func (u *TeamUpsertBulk) UpdateIsActive() *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateIsActive()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *TeamUpsertBulk) SetMetadata(v map[string]interface{}) *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *TeamUpsertBulk) UpdateMetadata() *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *TeamUpsertBulk) ClearMetadata() *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.ClearMetadata()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *TeamUpsertBulk) SetUpdatedAt(v time.Time) *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *TeamUpsertBulk) UpdateUpdatedAt() *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *TeamUpsertBulk) SetDeletedAt(v time.Time) *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *TeamUpsertBulk) UpdateDeletedAt() *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *TeamUpsertBulk) ClearDeletedAt() *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.ClearDeletedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *TeamUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the TeamCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for TeamCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *TeamUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

@@ -299,12 +299,12 @@ func (_q *TicketCommentQuery) WithTicket(opts ...func(*TicketQuery)) *TicketComm
 // Example:
 //
 //	var v []struct {
-//		TicketID uuid.UUID `json:"ticket_id,omitempty"`
+//		TenantID uuid.UUID `json:"tenant_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.TicketComment.Query().
-//		GroupBy(ticketcomment.FieldTicketID).
+//		GroupBy(ticketcomment.FieldTenantID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *TicketCommentQuery) GroupBy(field string, fields ...string) *TicketCommentGroupBy {
@@ -322,11 +322,11 @@ func (_q *TicketCommentQuery) GroupBy(field string, fields ...string) *TicketCom
 // Example:
 //
 //	var v []struct {
-//		TicketID uuid.UUID `json:"ticket_id,omitempty"`
+//		TenantID uuid.UUID `json:"tenant_id,omitempty"`
 //	}
 //
 //	client.TicketComment.Query().
-//		Select(ticketcomment.FieldTicketID).
+//		Select(ticketcomment.FieldTenantID).
 //		Scan(ctx, &v)
 func (_q *TicketCommentQuery) Select(fields ...string) *TicketCommentSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

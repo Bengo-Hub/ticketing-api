@@ -13,6 +13,6 @@ type Repository interface {
 	Update(ctx context.Context, tenantID, id uuid.UUID, req UpdateArticleRequest) (*Article, error)
 	Delete(ctx context.Context, tenantID, id uuid.UUID) error
 	List(ctx context.Context, filter ArticleFilter) (*ArticleList, error)
-	IncrementViewCount(ctx context.Context, id uuid.UUID) error
-	Vote(ctx context.Context, id uuid.UUID, helpful bool) error
+	IncrementViewCount(ctx context.Context, tenantID, id uuid.UUID) error
+	Vote(ctx context.Context, tenantID, id uuid.UUID, helpful bool) error
 }
