@@ -2,7 +2,9 @@
 
 ## Overview
 
-The Ticketing service integrates with the centralized Apache Superset instance for BI dashboards, analytics, and reporting. Superset is deployed as a centralized service accessible to all Codevertex services.
+**Status: not built.** ticketing-api has no Superset client, no `SUPERSET_*` settings and no dashboard bootstrap today. This page is the target design for BI dashboards on the centralized Superset instance. In-app analytics come first, from rollup tables in [sprint 12](sprints/sprint-12-analytics-csat.md), and the dashboards below read those tables once they exist. Data sources name the real tables in [erd.md](erd.md); tables that do not exist yet are marked with their sprint.
+
+The Ticketing service is designed to use the centralized Apache Superset instance for BI dashboards, analytics, and reporting. Superset is deployed as a centralized service accessible to all Codevertex services.
 
 ---
 
@@ -73,7 +75,7 @@ Superset connects directly to PostgreSQL database via read-only user for data ac
 
 **Connection String** (for Superset):
 ```
-postgresql://superset_readonly:password@postgresql.infra.svc.cluster.local:5432/ticketing_db?sslmode=require
+postgresql://<READONLY_USER>:<REPLACE_ME>@<POSTGRES_HOST>:5432/<TICKETING_DB>?sslmode=require
 ```
 
 **Data Source Creation**:
@@ -104,7 +106,7 @@ postgresql://superset_readonly:password@postgresql.infra.svc.cluster.local:5432/
 - Category
 - Agent
 
-**Data Source**: `tickets`, `ticket_assignments` tables
+**Data Source**: `tickets`, `ticket_categories`, `agents` tables, and the ticket rollups (sprint 12)
 
 ### 2. Agent Performance Dashboard
 
@@ -123,7 +125,7 @@ postgresql://superset_readonly:password@postgresql.infra.svc.cluster.local:5432/
 - Agent selection
 - Team selection
 
-**Data Source**: `agents`, `ticket_assignments`, `ticket_comments`, `satisfaction_responses` tables
+**Data Source**: `agents`, `teams`, `tickets`, `ticket_comments` tables, and `csat_responses` (sprint 12)
 
 ### 3. SLA Compliance Dashboard
 
@@ -142,7 +144,7 @@ postgresql://superset_readonly:password@postgresql.infra.svc.cluster.local:5432/
 - SLA policy
 - Priority
 
-**Data Source**: `sla_policies`, `sla_records`, `sla_breaches` tables
+**Data Source**: `sla_policies` and the SLA columns on `tickets` (`sla_*_due_at`, `sla_*_breached`, `first_response_at`, `resolved_at`), plus the SLA rollups (sprint 12)
 
 ### 4. Customer Satisfaction Dashboard
 
@@ -160,7 +162,7 @@ postgresql://superset_readonly:password@postgresql.infra.svc.cluster.local:5432/
 - Category
 - Agent
 
-**Data Source**: `satisfaction_surveys`, `satisfaction_responses` tables
+**Data Source**: `csat_responses` (sprint 12). NPS is not planned.
 
 ### 5. Knowledge Base Analytics Dashboard
 
@@ -178,7 +180,7 @@ postgresql://superset_readonly:password@postgresql.infra.svc.cluster.local:5432/
 - Category
 - Article
 
-**Data Source**: `kb_articles`, `kb_article_views`, `kb_article_feedback` tables
+**Data Source**: `kb_articles` (`view_count`, `helpful_count`, `not_helpful_count`). There is no per-view history table, so view trends need the sprint 12 rollups.
 
 ---
 
@@ -187,7 +189,7 @@ postgresql://superset_readonly:password@postgresql.infra.svc.cluster.local:5432/
 ### Initialization Process
 
 1. Authenticate with Superset using admin credentials
-2. Create/update data source pointing to PostgreSQL with pgvector
+2. Create/update data source pointing to the ticketing PostgreSQL database
 3. Create/update dashboards for each module:
    - Ticket Overview Dashboard
    - Agent Performance Dashboard

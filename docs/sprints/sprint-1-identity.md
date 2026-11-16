@@ -1,67 +1,34 @@
-# Sprint 1 — Identity & Access Management
+# Sprint 1: Identity and Access
 
-**Duration**: Week 2  
-**Status**: ✅ Complete
+**Status: Done.** Teams, agents and just-in-time provisioning were built first. Local Trinity RBAC, the tenant guard and `auth/me` landed in 4f03d8e and are live in production, with the 108 permission codes seeded.
 
----
+## Tasks
 
-## Overview
+### Teams and agents
 
-Implements the full agent identity layer: team and agent CRUD, availability status, skill-based routing helpers, and JIT agent provisioning from auth.user.created NATS events.
+- [x] Teams: `POST/GET /api/v1/{tenant}/teams`, `GET/PUT/DELETE /teams/{teamId}` (`ticketing.teams.*`)
+- [x] Agents: create, list (filters `teamId`, `status`, `role`, `active`), `GET /agents/available`, `GET /agents/{agentId}`, `GET /agents/user/{userId}`, update, `PUT /agents/{agentId}/status` (`agents.change` or `agents.change_own`), delete
+- [x] Agents unique per `(tenant_id, user_id)`, so one person can be an agent in several tenants (4f03d8e)
 
----
+### Authorization (4f03d8e)
 
-## Deliverables
+- [x] Chain on every protected route: `RequireAuth` with API keys on by default, `RequireActiveSubscriptionForMutations`, `httpware.TenantV2`, the tenant guard (platform owners may use `?tenantId=`), `rbac.ResolveAccess`, `OutletContext`, `RequirePermission`
+- [x] Permission catalogue `ticketing.{module}.{action}`: 12 modules by 9 actions, upserted on start
+- [x] Implication rules: `manage` grants the module, `manage_own` grants every `_own` action, an action grants its `_own` variant
+- [x] System roles `ticketing_admin`, `supervisor`, `agent`, `customer`, seeded per tenant on first sign-in
+- [x] Just-in-time `TicketingUser` with the role mapped from global roles, and an agent profile for staff roles
+- [x] `auth.user.created` and `auth.user.updated` on a queue subscription, with the same rules as sign-in
+- [x] `GET /api/v1/{tenant}/ticketing/auth/me`
+- [x] Role administration: `GET /ticketing/roles`, `GET /ticketing/users`, `PUT /ticketing/users/{userId}/roles`
+- [x] Customers see and change only their own tickets and never see internal notes
 
-### 1. Team Management
-- `POST /api/v1/{tenant}/teams` — create team
-- `GET /api/v1/{tenant}/teams` — list with pagination
-- `GET /api/v1/{tenant}/teams/{teamId}` — get team
-- `PUT /api/v1/{tenant}/teams/{teamId}` — update team
-- `DELETE /api/v1/{tenant}/teams/{teamId}` — soft-delete
+### Not in this sprint
 
-### 2. Agent Management
-- `POST /api/v1/{tenant}/agents` — create agent
-- `GET /api/v1/{tenant}/agents` — list with filters (role, status, teamId, active) + pagination
-- `GET /api/v1/{tenant}/agents/available` — available agents for assignment
-- `GET /api/v1/{tenant}/agents/{agentId}` — get agent
-- `GET /api/v1/{tenant}/agents/user/{userId}` — lookup by auth-service user ID
-- `PUT /api/v1/{tenant}/agents/{agentId}` — update profile, skills, capacity
-- `PUT /api/v1/{tenant}/agents/{agentId}/status` — update availability (available/busy/away/offline)
-- `DELETE /api/v1/{tenant}/agents/{agentId}` — deactivate
+- Keyset pagination moves to sprint 9. Lists use offset paging from pagination v0.5.0 today.
+- `auth.user.deleted` handling is part of the integration review.
 
-### 3. JIT Agent Provisioning
-- `internal/modules/identity/auth_events.go` — NATS subscriber on `auth.user.created` and `auth.user.updated`
-- When auth event payload contains role = `agent`, `supervisor`, or `admin`, auto-creates the agent record
-- Idempotent — skips if agent already exists for the user_id
-- Agent email and display_name synced on `auth.user.updated`
+## Acceptance criteria
 
-### 4. Pagination
-All list endpoints now use `pagination.Parse(r)` from `github.com/Bengo-Hub/pagination v0.2.0`.  
-Response shape: `{ data, total, limit, page, hasMore }`.
-
----
-
-## Shared Libs Used
-
-| Library | Version | Usage |
-|---------|---------|-------|
-| `github.com/Bengo-Hub/pagination` | v0.2.0 | All list endpoints |
-| `github.com/Bengo-Hub/shared-auth-client` | v0.6.1 | JWT claims extraction |
-
----
-
-## Definition of Done
-
-- [x] Team CRUD API working
-- [x] Agent CRUD API with skill/capacity fields
-- [x] Availability status transitions
-- [x] JIT agent provisioning from auth.user.created
-- [x] Pagination on all list endpoints
-- [x] Go build passes clean
-
----
-
-## Next Sprint
-
-**Sprint 2**: Ticket Management — full ticket lifecycle, comments, attachments, categories.
+- A token for tenant A calling `/api/v1/{tenant-B-slug}/tickets` gets 403 `tenant_mismatch`. Met, covered by `access_test.go`.
+- A first sign-in by a `manager` creates a `supervisor` ticketing user with an agent profile. Met, covered by `rbac_test.go`.
+- A customer cannot read another customer's ticket or any internal note. Met in the handlers.

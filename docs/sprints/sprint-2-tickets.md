@@ -1,100 +1,38 @@
-# Sprint 2 — Ticket Management
+# Sprint 2: Ticket Management
 
-**Duration**: Week 3  
-**Status**: ✅ Complete
+**Status: Partial.** The ticket lifecycle, comments, categories, per-tenant numbers, the outbox and the internal create are built and live. Attachment upload and ticket search are missing.
 
----
+## Tasks
 
-## Overview
+- [x] `POST /api/v1/{tenant}/tickets`, list with filters `status`, `priority`, `channel`, `customerId`, `agentId`, `teamId`, `categoryId`, `orderId`
+- [x] `GET /tickets/{ticketId}`, `GET /tickets/number/{ticketNumber}`, `PUT /tickets/{ticketId}`, `PUT /tickets/{ticketId}/status`, `PUT /tickets/{ticketId}/assign`, `DELETE /tickets/{ticketId}` (soft delete)
+- [x] Status state machine (table below), invalid moves answer 400
+- [x] Comments: add, list, update, delete; the first public agent reply sets `first_response_at`; authors come from the token
+- [x] Categories with hierarchy; delete is refused while a category has children or tickets
+- [x] Ticket numbers unique per tenant from `ticket_sequences` inside the create transaction (4f03d8e). The old `COUNT(*)+1` generator, which collided across tenants, is gone.
+- [x] Outbox rows written in the same transaction as the ticket change (4f03d8e)
+- [x] `tenant_id` on comments and attachments, backfilled from the parent ticket (4f03d8e)
+- [x] Internal create with `X-API-Key` and `X-Tenant-ID`, idempotent on (tenant, source, source_ref.type, source_ref.id), 201 or 200 (4f03d8e). Contract in [integrations.md](../integrations.md).
+- [x] Notifications through events only; the direct notifications client was removed on 13 November 2026
+- [x] `GET /tickets/{ticketId}/attachments` lists attachment records
+- [ ] Attachment upload, signed download URLs and delete (sprint 9)
+- [ ] `search` on the ticket list. ticketing-ui sends it and `ListTickets` does not read it yet (sprint 9)
+- [ ] Update requests that can clear a field. `UpdateTicketRequest` uses pointers with `omitempty`, so a null cannot unset a category, agent or team.
 
-Implements the full ticket lifecycle: creation, assignment, status transitions, comments, attachments, categories, and ticket statistics. Includes the S2S internal endpoint for Vera AI tool calls and outbox-pattern event publishing.
+## Status transitions
 
----
+| From | Allowed next statuses |
+|---|---|
+| `new` | `open`, `in_progress`, `cancelled` |
+| `open` | `in_progress`, `pending_customer`, `pending_internal`, `resolved`, `closed`, `cancelled` |
+| `in_progress` | `open`, `pending_customer`, `pending_internal`, `resolved`, `closed`, `cancelled` |
+| `pending_customer`, `pending_internal` | `open`, `in_progress`, `resolved`, `closed`, `cancelled` |
+| `resolved` | `open`, `closed` |
+| `closed` | `open` |
+| `cancelled` | none |
 
-## Deliverables
+## Acceptance criteria
 
-### 1. Ticket CRUD
-- `POST /api/v1/{tenant}/tickets` — create ticket (sets defaults: status=new, priority=normal, channel=web)
-- `GET /api/v1/{tenant}/tickets` — list with filters (status, priority, customerId, agentId, teamId, categoryId, orderId, channel) + pagination
-- `GET /api/v1/{tenant}/tickets/stats` — counts grouped by status
-- `GET /api/v1/{tenant}/tickets/{ticketId}` — get ticket
-- `GET /api/v1/{tenant}/tickets/number/{ticketNumber}` — get by ticket number (e.g. TKT-00042)
-- `PUT /api/v1/{tenant}/tickets/{ticketId}` — update subject/description/priority/tags/metadata
-- `PUT /api/v1/{tenant}/tickets/{ticketId}/status` — status transition with validation
-- `PUT /api/v1/{tenant}/tickets/{ticketId}/assign` — assign agent and/or team
-- `DELETE /api/v1/{tenant}/tickets/{ticketId}` — soft-delete
-
-### 2. Comments
-- `POST /api/v1/{tenant}/tickets/{ticketId}/comments` — add comment (public/internal/system)
-- `GET /api/v1/{tenant}/tickets/{ticketId}/comments` — list comments
-- `PUT /api/v1/{tenant}/tickets/{ticketId}/comments/{commentId}` — update content
-- `DELETE /api/v1/{tenant}/tickets/{ticketId}/comments/{commentId}` — soft-delete
-- First agent public response marks `first_response_at` on the ticket
-
-### 3. Attachments
-- `GET /api/v1/{tenant}/tickets/{ticketId}/attachments` — list attachments
-
-### 4. Categories
-- `POST /api/v1/{tenant}/categories` — create category (supports hierarchy via parentId)
-- `GET /api/v1/{tenant}/categories` — list with filters (parentId, active) + pagination
-- `GET /api/v1/{tenant}/categories/{categoryId}` — get category
-- `PUT /api/v1/{tenant}/categories/{categoryId}` — update
-- `DELETE /api/v1/{tenant}/categories/{categoryId}` — delete (blocked if has children or tickets)
-
-### 5. S2S Internal Endpoint
-- `POST /api/v1/internal/tickets` — create ticket without JWT auth; validated by `X-API-Key: $INTERNAL_SERVICE_KEY`
-- Used by Vera AI `create_ticket` tool to open support tickets on behalf of chat widget users
-- Registered outside the JWT middleware group in the router
-
-### 6. Event Publishing (Outbox Pattern)
-- `ticketing.ticket.assigned` — published when agent is assigned
-- `ticketing.ticket.resolved` — published when status changes to resolved
-- Uses `github.com/Bengo-Hub/shared-events v0.2.0` outbox + background NATS publisher
-
-### 7. Notifications Client
-- `internal/clients/notifications.go` — S2S client to notifications-api
-- `SendTicketCreated`, `SendTicketAssigned`, `SendTicketResolved`, `SendAgentComment`
-- Wired via `WithNotificationsClient` option on the tickets handler
-
----
-
-## Status State Machine
-
-```
-new → open | in_progress | cancelled
-open → in_progress | pending_customer | pending_internal | resolved | closed | cancelled
-in_progress → open | pending_customer | pending_internal | resolved | closed | cancelled
-pending_customer → open | in_progress | resolved | closed | cancelled
-pending_internal → open | in_progress | resolved | closed | cancelled
-resolved → open | closed
-closed → open
-cancelled → (terminal)
-```
-
----
-
-## Shared Libs Used
-
-| Library | Version | Usage |
-|---------|---------|-------|
-| `github.com/Bengo-Hub/pagination` | v0.2.0 | Ticket and category list endpoints |
-| `github.com/Bengo-Hub/shared-events` | v0.2.0 | Outbox event publishing |
-| `github.com/Bengo-Hub/shared-auth-client` | v0.6.1 | JWT claims, S2S key validation |
-
----
-
-## Definition of Done
-
-- [x] Full ticket CRUD with state machine
-- [x] Comments with first-response tracking
-- [x] Ticket categories with hierarchy
-- [x] S2S internal endpoint for Vera AI
-- [x] Outbox pattern for NATS events
-- [x] Notifications client wired
-- [x] Pagination on all list endpoints
-
----
-
-## Next Sprint
-
-**Sprint 3**: SLA Management — SLA policies, breach detection, escalation timers.
+- Two tenants each get `TKT-000001` as their first ticket, and 50 concurrent creates across two tenants never share a number. Met over a fake repository in `sequence_test.go`; the database version is a sprint 0 item.
+- A repeated internal create for the same QA defect returns the first ticket with 200. Met, covered by `handler_internal_test.go`.
+- A ticket change whose transaction rolls back leaves no event behind. Met by design of the outbox write.

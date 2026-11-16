@@ -1,112 +1,21 @@
-# Sprint 3 — SLA Management
+# Sprint 3: SLA Management
 
-**Duration**: Week 4  
-**Status**: 🔲 Pending
+**Status: Partial.** Policy CRUD, deadlines on create and the breach worker are built. Deadlines are wall-clock: business hours, pauses, escalation and the SLA report move to [sprint 10](sprint-10-sla-leaders.md).
 
----
+## Tasks
 
-## Overview
+- [x] `POST/GET /api/v1/{tenant}/sla/policies`, `GET/PUT/DELETE /sla/policies/{policyId}` (`ticketing.sla.*`), list filters `priority` and `is_active`
+- [x] On create, the matching active policy (priority, optional category) sets `sla_response_due_at` and `sla_resolution_due_at`
+- [x] The first public agent reply sets `first_response_at`
+- [x] `ticketing-worker` scans every 5 minutes, 200 tickets at a time, records each breach once with its event in one transaction, and publishes `ticketing.sla.first_response_breached` or `ticketing.sla.resolution_breached` through the outbox
+- [x] The scan runs only in the worker Deployment, each tick claimed fleet-wide with the shared cache `RunOnce` (4f03d8e). Before that commit it also ran inside both API pods.
+- [x] Seeded default SLA policies per tenant through `ticketing-seed`
+- [ ] Apply `first_response_business_hours`, `resolution_business_hours` and `business_hours` (stored, ignored today)
+- [ ] Pause clocks on `pending_customer` and `pending_internal`
+- [ ] Pre-breach warnings and escalation
+- [ ] `GET /sla/reports`
 
-Implements Service Level Agreement policies: first-response and resolution time targets by priority tier, breach detection, and escalation workflows. An Ent schema already exists (`sla_policies` table); this sprint wires the business logic, API, and breach evaluation into the ticket lifecycle.
+## Acceptance criteria
 
----
-
-## Deliverables
-
-### 1. SLA Policy API
-- `POST /api/v1/{tenant}/sla/policies` — create SLA policy
-- `GET /api/v1/{tenant}/sla/policies` — list policies (paginated)
-- `GET /api/v1/{tenant}/sla/policies/{policyId}` — get policy
-- `PUT /api/v1/{tenant}/sla/policies/{policyId}` — update
-- `DELETE /api/v1/{tenant}/sla/policies/{policyId}` — delete (blocked if tickets reference it)
-
-### 2. SLA Domain Model
-
-```go
-// SLAPolicy defines response time targets per priority.
-type SLAPolicy struct {
-    ID                     uuid.UUID
-    TenantID               uuid.UUID
-    Name                   string
-    Description            string
-    Priority               TicketPriority
-    FirstResponseTargetMin int    // minutes
-    ResolutionTargetMin    int    // minutes
-    BusinessHoursOnly      bool
-    IsActive               bool
-    CreatedAt              time.Time
-    UpdatedAt              time.Time
-}
-
-// SLAStatus on a ticket.
-type SLAStatus struct {
-    PolicyID               uuid.UUID
-    FirstResponseBreached  bool
-    ResolutionBreached     bool
-    FirstResponseDueAt     *time.Time
-    ResolutionDueAt        *time.Time
-    FirstResponseAt        *time.Time
-    ResolvedAt             *time.Time
-}
-```
-
-### 3. SLA Evaluation in Ticket Lifecycle
-- On ticket creation: look up active SLA policy matching ticket priority → compute due times → store on ticket
-- On first agent comment (public): record `first_response_at`, mark breach if overdue
-- On ticket resolved: record `resolved_at`, mark breach if overdue
-
-### 4. SLA Background Worker
-- `cmd/worker/main.go` — standalone worker binary
-- Polls every 5 minutes for tickets with SLA targets past due
-- Publishes `ticketing.sla.first_response_breached` and `ticketing.sla.resolution_breached` events
-- Triggers escalation: assigns to supervisor team, updates priority to urgent
-
-### 5. SLA Reporting Endpoint
-- `GET /api/v1/{tenant}/sla/reports` — breach counts, avg response times by priority and date range
-
----
-
-## Files to Create
-
-```
-internal/modules/sla/
-├── domain.go          # SLAPolicy, SLAStatus types
-├── errors.go          # ErrPolicyNotFound, ErrPolicyInUse
-├── repository.go      # Repository interface
-├── repository_ent.go  # Ent implementation
-├── service.go         # Business logic
-└── handler.go         # HTTP handlers
-
-cmd/worker/
-└── main.go            # Worker entry point
-```
-
----
-
-## Ent Schema Status
-
-`internal/ent/schema/slapolicy.go` already exists with fields:
-- `name`, `description`, `priority`
-- `first_response_target_minutes`, `resolution_target_minutes`
-- `business_hours_only`, `is_active`, `tenant_id`
-- `created_at`, `updated_at`
-
-Fields to add via migration: `escalation_policy_id`, `notify_agent_before_breach_min`.
-
----
-
-## Definition of Done
-
-- [ ] SLA policy CRUD API
-- [ ] SLA due times computed on ticket creation
-- [ ] First response and resolution breach tracking
-- [ ] Background worker for breach notifications
-- [ ] SLA reporting endpoint
-- [ ] Atlas versioned migration for new fields
-- [ ] Go build clean
-
----
-
-## Next Sprint
-
-**Sprint 4**: Public API — unauthenticated ticket submission, OTP verification, public status tracking.
+- A ticket past its response deadline gets exactly one breach event however many worker replicas run. Met.
+- A policy marked business hours only counts business hours. Not met, sprint 10.

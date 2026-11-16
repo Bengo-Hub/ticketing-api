@@ -1,292 +1,126 @@
-# Ticketing Service - Implementation Plan
-
-## Executive Summary
-
-**System Purpose**: Multi-tenant customer support and helpdesk ticketing system for Codevertex ecosystem. Provides comprehensive ticket management, SLA tracking, knowledge base integration, and customer satisfaction measurement. Enables support teams to efficiently handle customer inquiries, technical issues, and service requests across all Codevertex services.
-
-**Key Capabilities**:
-- Multi-channel ticket creation (web, email, API, chat)
-- Ticket lifecycle management with state machine
-- SLA tracking and escalation workflows
-- Agent assignment and routing
-- Knowledge base integration
-- Customer satisfaction surveys
-- Ticket analytics and reporting
-- Integration with all Codevertex services for context-aware support
-
-**Entity Ownership**: This service owns all ticketing-specific entities: tickets, ticket comments, attachments, ticket assignments, SLA records, knowledge base articles, and satisfaction surveys. **Ticketing does NOT own**: users (references auth-service via `user_id`), tenants (references from auth-service), orders (references from ordering/POS services), projects (references from projects-service), financial transactions (references from treasury-api).
-
----
-
-## Technology Stack
-
-### Core Framework
-- **Language**: Go 1.22+
-- **Architecture**: Clean/Hexagonal architecture
-- **HTTP Router**: chi
-- **API Documentation**: OpenAPI-first contracts
-- **gRPC**: ConnectRPC gateway for high-throughput integrations
-
-### Data & Caching
-- **Primary Database**: PostgreSQL 16+ (pgx/v5) with Ent ORM
-- **Caching**: Redis 7+ for caching, rate limiting, and real-time updates
-- **Message Broker**: NATS JetStream for event backbone
-- **Storage**: S3-compatible storage for ticket attachments
-
-### Supporting Libraries
-- **ORM**: Ent (schema-as-code migrations)
-- **Validation**: Custom validators
-- **Resilience**: Circuit breaker patterns, retry policies
-- **Logging**: zap (structured logging)
-- **Tracing**: OpenTelemetry instrumentation
-- **Metrics**: Prometheus
-
-### DevOps & Observability
-- **Containerization**: Multi-stage Docker builds
-- **Orchestration**: Kubernetes (via centralized devops-k8s)
-- **CI/CD**: GitHub Actions → ArgoCD
-- **Monitoring**: Prometheus + Grafana, OpenTelemetry
-- **APM**: Jaeger distributed tracing
-
----
-
-## Domain Modules & Features
-
-### 1. Identity & Access Management
-
-**Ticketing-Specific Features**:
-- Multi-tenant support with RBAC (customer, agent, supervisor, admin)
-- Agent profiles and availability management
-- Team and department management
-- Agent performance metrics
-
-**Entities Owned**:
-- `teams` - Support team groupings
-- `agents` - Agent profiles (references auth-service users)
-- `agent_availability` - Agent availability schedules
-- `agent_performance` - Agent performance metrics
-
-**Integration Points**:
-- **auth-service**: JWT validation, user identity sync, MFA enforcement
-- **Tenant Sync**: Webhook events for tenant/outlet discovery
-
-### 2. Ticket Management
-
-**Ticketing-Specific Features**:
-- Multi-channel ticket creation (web form, email, API, chat)
-- Ticket lifecycle with state machine (new → open → in-progress → resolved → closed)
-- Ticket categories and types (support, bug, feature request, billing, technical)
-- Priority levels (low, medium, high, urgent, critical)
-- Ticket tags and labels
-- Ticket merging and splitting
-- Ticket templates
-
-**Entities Owned**:
-- `tickets` - Canonical ticket records
-- `ticket_categories` - Category definitions
-- `ticket_types` - Type definitions
-- `ticket_priorities` - Priority definitions
-- `ticket_tags` - Tag definitions
-- `ticket_tag_assignments` - Ticket-tag relationships
-- `ticket_templates` - Pre-defined ticket templates
-- `ticket_merges` - Ticket merge history
-- `ticket_splits` - Ticket split history
-
-**Integration Points**:
-- **auth-service**: User identity (references only)
-- **notifications-service**: Ticket notifications, status updates
-- **projects-service**: Link tickets to projects
-- **ERP**: Link tickets to orders, invoices, customers
-
-### 3. Ticket Communication
-
-**Ticketing-Specific Features**:
-- Ticket comments and replies
-- Internal notes (agent-only)
-- Email threading
-- @mentions and notifications
-- File attachments
-- Rich text formatting
-
-**Entities Owned**:
-- `ticket_comments` - Comment records
-- `ticket_attachments` - File attachments
-- `ticket_mentions` - @mention tracking
-- `ticket_email_threads` - Email threading
-
-**Integration Points**:
-- **notifications-service**: Comment notifications, @mention alerts
-- **S3 Storage**: Attachment storage
-
-### 4. Assignment & Routing
-
-**Ticketing-Specific Features**:
-- Automatic ticket assignment (round-robin, skill-based, load-based)
-- Manual assignment
-- Team assignment
-- Escalation workflows
-- Reassignment history
-
-**Entities Owned**:
-- `ticket_assignments` - Assignment records
-- `assignment_rules` - Auto-assignment rules
-- `escalation_rules` - Escalation workflow rules
-- `escalation_history` - Escalation audit trail
-
-**Integration Points**:
-- **auth-service**: Agent identity (references only)
-
-### 5. SLA Management
-
-**Ticketing-Specific Features**:
-- SLA policy definitions (response time, resolution time)
-- SLA tracking per ticket
-- SLA breach detection and alerts
-- SLA reports and analytics
-
-**Entities Owned**:
-- `sla_policies` - SLA policy definitions
-- `sla_records` - SLA tracking per ticket
-- `sla_breaches` - SLA breach records
-- `sla_metrics` - SLA performance metrics
-
-**Integration Points**:
-- **notifications-service**: SLA breach alerts
-
-### 6. Knowledge Base
-
-**Ticketing-Specific Features**:
-- Knowledge base articles
-- Article categories and tags
-- Article search and recommendations
-- Article views and helpfulness tracking
-- Article versioning
-
-**Entities Owned**:
-- `kb_categories` - Knowledge base categories
-- `kb_articles` - Article records
-- `kb_article_tags` - Article tags
-- `kb_article_versions` - Article version history
-- `kb_article_views` - View tracking
-- `kb_article_feedback` - Helpfulness feedback
-
-**Integration Points**:
-- **Search**: Full-text search with PostgreSQL or Elasticsearch
-
-### 7. Customer Satisfaction
-
-**Ticketing-Specific Features**:
-- Satisfaction surveys (CSAT, NPS)
-- Survey responses and analytics
-- Feedback collection
-- Response tracking
-
-**Entities Owned**:
-- `satisfaction_surveys` - Survey definitions
-- `satisfaction_responses` - Survey responses
-- `satisfaction_metrics` - Satisfaction analytics
-
-**Integration Points**:
-- **notifications-service**: Survey delivery
-
-### 8. Analytics & Reporting
-
-**Ticketing-Specific Features**:
-- Ticket volume analytics
-- Agent performance metrics
-- Response time analytics
-- Resolution time analytics
-- Customer satisfaction trends
-- SLA compliance reports
-
-**Entities Owned**:
-- `ticket_analytics` - Pre-aggregated analytics
-- `agent_metrics` - Agent performance data
-
-**Integration Points**:
-- **Superset**: BI dashboards and reports
-
----
-
-## Cross-Cutting Concerns
-
-### Testing
-- Go test suites with table-driven tests
-- Testcontainers for integration testing
-- Pact for contract tests
-- Performance testing for high-volume scenarios
-
-### Observability
-- Structured logging (zap)
-- Tracing via OpenTelemetry
-- Metrics exported via Prometheus
-- Distributed tracing via Tempo/Jaeger
-
-### Security
-- OWASP ASVS baseline
-- TLS everywhere
-- Secrets via Vault/Parameter Store
-- Rate limiting & anomaly detection middleware
-- JWT validation via auth-service
-- Row-level security with tenant_id
-
-### Scalability
-- Stateless HTTP layer
-- Background workers via NATS/Redis streams
-- Database connection pooling
-- Caching strategy for frequently accessed data
-
-### Data Modelling
-- Ent schemas as single source of truth
-- Tenant/outlet discovery webhooks
-- Outbox pattern for reliable domain events
-- Vector columns for semantic search (pgvector)
-
----
-
-## API & Protocol Strategy
-
-- **REST-first**: Versioned routes (`/api/v1/{tenantID}/tickets`), documented via OpenAPI
-- **WebSocket/SSE**: Real-time ticket updates
-- **Webhooks**: External provider callbacks, ticket events
-- **Idempotency**: Keys, correlation IDs, distributed tracing context propagation
-
----
-
-## Compliance & Risk Controls
-
-- Align with Kenya Data Protection Act: explicit consent flows, user data export/delete endpoints, audit logging
-- SLA compliance tracking and reporting
-- Disaster recovery playbook, RTO/RPO targets (<1 hour)
-
----
-
-## Sprint Delivery Plan
-
-See `docs/sprints/` folder for detailed sprint plans:
-- Sprint 0: Foundations
-- Sprint 1: Identity & Access Management
-- Sprint 2: Ticket Management Core
-- Sprint 3: Communication & Attachments
-- Sprint 4: Assignment & Routing
-- Sprint 5: SLA Management
-- Sprint 6: Knowledge Base
-- Sprint 7: Analytics & Hardening
-- Sprint 8: Launch & Handover
-
----
-
-## Runtime Ports & Environments
-
-- **Local development**: Service runs on port **4107**
-- **Cloud deployment**: All backend services listen on **port 4000** for consistency behind ingress controllers
-
----
+# Ticketing API Plan
+
+ticketing-api is the multi-tenant help desk for the Codevertex platform: tickets, comments, categories, agents and teams, SLA policies, routing rules, the knowledge base and the public support routes. It owns those records and its local ticketing roles and permissions. It does not own users or tenants (auth-api), contacts (marketflow CRM), message delivery (notifications-api), or the orders, invoices and projects a ticket refers to.
+
+Design detail is in [architecture.md](architecture.md), the schema in [erd.md](erd.md) and every integration in [integrations.md](integrations.md).
+
+## State on 2026-11-16
+
+Commit 4f03d8e is live in production. The production migration recorded the baseline, applied `20261116090100_phase0.sql`, and the API seeded the 108 permission codes; `/readyz` answers OK. That commit delivered:
+
+- Trinity authorization: `RequireAuth` with API keys, `RequireActiveSubscriptionForMutations`, `TenantV2`, the tenant guard, just-in-time ticketing users with role mapping, `OutletContext` and `RequirePermission` on every route, plus `GET /{tenant}/ticketing/auth/me`.
+- Per-tenant ticket numbers from `ticket_sequences`.
+- Outbox writes in the domain transaction.
+- `tenant_id` on comments and attachments, agents unique per tenant, KB counters scoped by tenant.
+- Versioned migrations applied at pod start under an advisory lock.
+- The SLA scan only in the worker under `RunOnce`, real `/metrics` and `/readyz`, `go vet` and `go test` in CI.
+- The internal create contract with `source` and `source_ref`.
+- Shared libraries at auth-client v0.20.0, httpware v0.20.0, shared-events v0.11.1, cache v0.5.10, pagination v0.5.0 and shared-ratelimit v0.3.1.
+
+The sprint list below gives the status of each sprint against the code.
+
+## Find, Flip, Fix (read 2026-11-16)
+
+Vendor comparison blogs are weak evidence. Capterra and G2 review tallies are stronger evidence.
+
+### Find: what people pay for
+
+| Product | Price (USD per agent per month, sources disagree) | Known for | Top complaints |
+|---|---|---|---|
+| Zendesk | Suite Team about 55, Professional about 115; Copilot, WFM and Contact Center add-ons at 50 each; AI resolutions 1.50 to 2.00 each | Unified agent workspace, omnichannel, the largest app ecosystem | Price and add-ons, key features locked to high tiers, admin complexity, slow vendor support (Trustpilot 1.8) |
+| Freshdesk | Free (2 agents), Growth from about 15, AI add-on about 29 | Collision detection from Growth, parent-child tickets on Pro, SLA with business hours, portal | G2: "missing features" (115) and "ticketing issues" (93) |
+| Zoho Desk | Free (3 agents), Standard 9 to 14, Professional 16 to 23 | Cheapest, Zia AI in 40+ languages, Zoho suite integration | Steep learning curve (329 and 233 G2 mentions) |
+| Help Scout | 19 to 115, partly contact-based | Simple shared-inbox email support | Costs climb unpredictably with contact volume |
+| HappyFox | 21 to 24 (help desk), 49 (ITSM) | Fast setup, easy navigation | Limited automation, small integration set |
+| Jira Service Management | Free (3 agents), Standard about 20, Premium about 45 | Internal IT desk, change and problem management | Learning curve, complexity, change management locked to Premium |
+
+The features the leaders share make up the baseline:
+
+- Agent workspace: views and saved filters, collision detection, macros and canned replies, internal notes and public replies, merge, parent-child links, bulk actions, tags, @mentions.
+- SLA: business hours, holidays, pause on pending, pre-breach alerts and escalation.
+- Customer side: CSAT after resolution, a knowledge base with real search and deflection, a customer portal.
+- Reporting: agent and SLA reports.
+- Channels: email, chat or WhatsApp, and a web form.
+
+### Flip: the angle for Kenya and East Africa
+
+- WhatsApp is the first channel, not an add-on, through notifications-api, which the fleet already uses.
+- Pricing is in KES with no per-feature add-ons. Ticketing is part of the existing subscription plans, gated only through entitlements, and core ticket work is never plan-gated.
+- AI (Vera through marketflow-ai) is billed only from the existing prepaid AI credit wallet, with no per-resolution metering.
+- The customer is the marketflow contact. Ticketing stores no PII copy, so tickets link to POS orders, ordering orders, projects QA and treasury invoices across the platform.
+- The agent UI works offline, the PWA is mobile-first, and it is in English and Swahili.
+
+### Fix: competitor complaints as testable requirements
+
+1. **No feature behind an add-on.** An e2e test with a tier-1 tenant creates, assigns, comments on, merges and resolves a ticket, and uses macros and SLA. Proved in sprints 9, 10 and 11.
+2. **Low learning curve.** Seeded defaults (categories, SLA policy, macros, a business-hours calendar with Kenyan public holidays) give a new tenant a working desk with zero configuration. An e2e test runs a fresh tenant from first ticket to resolution without opening the admin pages. Proved in sprint 10.
+3. **No missed duplicate replies.** Collision detection covers viewing and typing. An e2e test with two agents on one ticket shows the second agent the warning within 2 seconds. Proved in sprint 9.
+4. **Predictable cost.** AI calls debit the AI credit wallet and refuse cleanly at zero balance. A unit test with a zero-balance tenant hides the AI suggestion and still saves the ticket. Proved in sprint 13.
+5. **Reports stay fast as data grows.** Analytics come from rollup tables and indexed `GROUP BY`, never row loads. A benchmark with 200k tickets keeps `/analytics/*` under 300 ms p95 locally. Proved in sprint 12.
+
+### Sources (read 2026-11-16)
+
+- https://www.featurebase.app/blog/freshdesk-vs-zendesk-vs-zoho
+- https://eesel.ai/blog/zendesk-review
+- https://hiverhq.com/blog/zendesk-reviews
+- https://www.capterra.com/p/164283/Zendesk/reviews/
+- https://www.capterra.co.za/reviews/169505/zoho-desk
+- https://www.capterra.co.za/reviews/124981/freshdesk
+- https://www.g2.com/compare/freshdesk-vs-helpdesk-vs-zoho-desk
+- https://www.getmacha.com/blog/freshdesk-features
+- https://toolradar.com/blog/help-desk-software-comparison
+- https://www.eesel.ai/blog/help-scout-review
+- https://costbench.com/compare/happyfox-help-desk-vs-jira-service-management/
+- https://superframeworks.com/articles/best-zendesk-alternatives
+
+## Sprints
+
+| Sprint | Scope | Status | What is missing |
+|---|---|---|---|
+| [0](sprints/sprint-0-foundation.md) | Foundation | Partial | Tracing, Testcontainers tests |
+| [1](sprints/sprint-1-identity.md) | Identity and access | Done | |
+| [2](sprints/sprint-2-tickets.md) | Ticket management | Partial | Attachment upload, ticket search, clearing fields on update |
+| [3](sprints/sprint-3-sla.md) | SLA management | Partial | Business hours, pauses, escalation, SLA report |
+| [4](sprints/sprint-4-public-api.md) | Public API and email codes | Done | |
+| [5](sprints/sprint-5-knowledge-base.md) | Knowledge base | Partial | Full-text search, category list, suggestions |
+| [6](sprints/sprint-6-analytics.md) | Analytics | Partial | Agent, SLA and CSAT reports, export, rollups, `resolved_at` trend |
+| [7](sprints/sprint-7-notifications.md) | Notifications | Partial | Preferences, @mentions, SMS and WhatsApp |
+| [8](sprints/sprint-8-routing.md) | Routing and classification | Partial | Least-loaded fallback, ticket counts, escalation, AI classification |
+| [9](sprints/sprint-9-agent-productivity.md) | Agent productivity | Pending | Keyset paging, full-text search, views, tags, macros, merge, parent-child, bulk, collision presence, @mentions, attachments on R2 |
+| [10](sprints/sprint-10-sla-leaders.md) | SLA that matches the leaders | Pending | Business-hours calendars with Kenyan holidays, pause on pending, pre-breach, escalation, SLA report |
+| [11](sprints/sprint-11-channels.md) | Channels | Pending | WhatsApp through `notifications.whatsapp.tenant_inbound`, email through forwarding addresses and the support mailbox over JMAP, ingest rules |
+| [12](sprints/sprint-12-analytics-csat.md) | Analytics and CSAT | Pending | Rollups under `RunOnce`, `resolved_at` trends, CSAT, export through the reports module, 200k benchmark |
+| [13](sprints/sprint-13-ai-vera.md) | AI with Vera | Pending | Classify, summarize, suggested reply, KB suggestions, AI wallet credits, `IsGatingExempt` for codevertex only |
+
+After sprint 13 comes the integration review and test pass: auth-api (including `auth.user.deleted`), notifications-api, marketflow, subscriptions-api, marketflow-ai, projects-api end to end, and the pos, ordering and treasury links shown on a ticket, with Testcontainers repository tests and Playwright e2e tests for the five Fix requirements.
+
+## Known issues and pending
+
+| Item | Repo | Where it is fixed |
+|---|---|---|
+| GitHub reports 57 Dependabot alerts on ticketing-ui | UI | Integration review and test pass |
+| No service worker ships in production: next-pwa runs only under webpack and the Docker build uses Turbopack | UI | UI sprint 8, app shell and offline |
+| The public support pages still use native form fields and a plain textarea | UI | UI sprint 8 |
+| `SLASidebar` always says business hours apply, though deadlines are wall-clock | UI | UI sprint 9, with API sprint 10 |
+| Update requests cannot clear a field, because `UpdateTicketRequest` uses pointers with `omitempty` | API | Sprint 9 |
+| Fields the UI needs and the API lacks: stats `resolved_today` and `overdue`, previous-period figures, a tenant user directory for people not yet provisioned in ticketing (`GET /ticketing/users` lists only provisioned users), a KB category list, comment author names | API | Sprints 9 and 12 |
+| The OTP client is not on shared-service-client, because a retried call could replay a one-time code | API | Kept as is by design |
+| `internal/modules/tickets/handler.go` (469 lines) and `internal/modules/identity/handler.go` (465 lines) are over 400 lines | API | Sprint 9 |
+| `ListTickets` does not read the `search` parameter yet | API | Sprint 9 |
+| Turbopack on Windows refuses the shared-ui-lib `@source` path through the pnpm junction, so local verification uses `next build --webpack` while CI builds with Turbopack on Linux | UI | Open |
+| The analytics trend loads rows and counts resolved by current status | API | Sprint 12 |
+| `IncrementAgentTicketCount`, `DecrementAgentTicketCount` and `GetLeastLoadedAgent` exist and the ticket flow does not call them | API | Sprint 8 follow-up |
+
+## Runtime
+
+- API on `HTTP_PORT`, default 4009. Metrics on `METRICS_PORT`, default 9090.
+- Public host `ticketingapi.codevertexafrica.com`.
+- Migrations run from `scripts/entrypoint.sh` at every pod start. The SLA scan runs only in the `ticketing-worker` Deployment.
 
 ## References
 
-- [Integration Guide](docs/integrations.md)
-- [Entity Relationship Diagram](docs/erd.md)
-- [Superset Integration](docs/superset-integration.md)
-- [Sprint Plans](docs/sprints/)
-
+- [Architecture](architecture.md)
+- [ERD](erd.md)
+- [Integrations](integrations.md)
+- [Superset design](superset-integration.md)
+- [ticketing-ui plan](../../ticketing-ui/docs/plan.md)

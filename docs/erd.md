@@ -1,549 +1,314 @@
-# Ticketing Service – Entity Relationship Diagram
+# Ticketing API Entity Relationship Diagram
 
-The Ticketing service manages customer support tickets, SLA tracking, knowledge base, and customer satisfaction. Ent schemas model the domain and power migrations.
+This is the schema in `internal/ent/schema` and the versioned migrations `20261116090000_baseline.sql` and `20261116090100_phase0.sql`. Tables that do not exist yet are listed at the end with the sprint that adds them.
 
-> **Conventions**
-> - UUID primary keys (`id UUID PRIMARY KEY DEFAULT gen_random_uuid()`).
-> - `tenant_id UUID NOT NULL` on all operational tables for multi-tenant isolation.
-> - Timestamps are `TIMESTAMPTZ` with timezone awareness.
-> - All tables include `created_at TIMESTAMPTZ DEFAULT NOW()` and `updated_at TIMESTAMPTZ DEFAULT NOW()`.
-> - Soft deletes via `deleted_at TIMESTAMPTZ` where applicable.
-> - Vector columns use `vector(1536)` for AI-powered semantic search (pgvector extension).
+Conventions:
 
----
+- UUID primary keys, except `role_permissions`, which uses a bigint identity.
+- `tenant_id uuid NOT NULL` on every tenant table. Tenants live in auth-api, so `tenant_id` has no foreign key.
+- Timestamps are `timestamptz`. Soft deletes use `deleted_at` where a table has it.
+- User ids (`customer_id`, `author_id`, `uploaded_by`, `user_id`, `auth_service_user_id`) are auth-api user ids with no foreign key.
+- Production also has the `pg_trgm` and `uuid-ossp` extensions. No column uses pgvector.
 
-## Database Extensions
+```mermaid
+erDiagram
+    teams ||--o{ agents : "team_id"
+    agents ||--o{ tickets : "assigned_agent_id"
+    ticket_categories ||--o{ tickets : "category_id"
+    ticket_categories ||--o{ ticket_categories : "parent_id"
+    tickets ||--o{ ticket_comments : "ticket_id"
+    tickets ||--o{ ticket_attachments : "ticket_id"
+    ticketing_roles ||--o{ role_permissions : "role_id"
+    ticketing_permissions ||--o{ role_permissions : "permission_id"
+    ticketing_roles ||--o{ user_role_assignments : "role_id"
+    ticketing_users ||--o{ user_role_assignments : "user_id"
+```
 
-- `pgvector` - Vector similarity search for AI-powered queries
-- `uuid-ossp` - UUID generation
-- `pg_trgm` - Trigram matching for fuzzy search
-- `btree_gin` - GIN indexes for composite queries
+`ticket_sequences`, `sla_policies`, `routing_rules`, `kb_articles` and `outbox_events` stand alone and relate by `tenant_id` only. `tickets.assigned_team_id` and `ticket_attachments.comment_id` are plain columns with no foreign key.
 
----
-
-## Identity & Access Management
-
-### teams
-
-**Purpose**: Support team groupings.
-
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | Team identifier |
-| `tenant_id` | UUID | NOT NULL, FK → tenants | Tenant isolation |
-| `name` | VARCHAR(255) | NOT NULL | Team name |
-| `description` | TEXT | | Team description |
-| `is_active` | BOOLEAN | DEFAULT true | Active status |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
-| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
-
-**Indexes**:
-- `idx_teams_tenant_id` ON `tenant_id`
-- `idx_teams_name` ON `name`
-- `idx_teams_is_active` ON `is_active`
-
-**Relations**:
-- `tenant_id` → `tenants(id)` (via auth-service sync)
-
-### agents
-
-**Purpose**: Agent profiles (references auth-service users).
-
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | Agent identifier |
-| `tenant_id` | UUID | NOT NULL, FK → tenants | Tenant isolation |
-| `user_id` | UUID | NOT NULL, FK → users | User reference (from auth-service) |
-| `team_id` | UUID | FK → teams(id) | Team assignment |
-| `status` | VARCHAR(20) | CHECK | active, inactive, away, busy |
-| `max_concurrent_tickets` | INTEGER | DEFAULT 5 | Max concurrent tickets |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
-| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
-
-**Indexes**:
-- `idx_agents_tenant_id` ON `tenant_id`
-- `idx_agents_user_id` ON `user_id`
-- `idx_agents_team_id` ON `team_id`
-- `idx_agents_status` ON `status`
-
-**Relations**:
-- `tenant_id` → `tenants(id)` (via auth-service sync)
-- `user_id` → `users(id)` (references auth-service)
-- `team_id` → `teams(id)`
-
-### agent_availability
-
-**Purpose**: Agent availability schedules.
-
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | Availability record identifier |
-| `agent_id` | UUID | NOT NULL, FK → agents(id) | Agent reference |
-| `day_of_week` | INTEGER | CHECK (0-6) | Day of week (0=Sunday) |
-| `start_time` | TIME | | Start time |
-| `end_time` | TIME | | End time |
-| `is_available` | BOOLEAN | DEFAULT true | Available flag |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
-| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
-
-**Indexes**:
-- `idx_agent_availability_agent` ON `agent_id`
-- `idx_agent_availability_day` ON `day_of_week`
-
-**Relations**:
-- `agent_id` → `agents(id)`
-
----
-
-## Ticket Management
-
-### ticket_categories
-
-**Purpose**: Ticket category definitions.
-
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | Category identifier |
-| `tenant_id` | UUID | NOT NULL, FK → tenants | Tenant isolation |
-| `name` | VARCHAR(255) | NOT NULL | Category name |
-| `description` | TEXT | | Category description |
-| `is_active` | BOOLEAN | DEFAULT true | Active status |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
-| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
-
-**Indexes**:
-- `idx_ticket_categories_tenant_id` ON `tenant_id`
-- `idx_ticket_categories_name` ON `name`
-
-**Relations**:
-- `tenant_id` → `tenants(id)` (via auth-service sync)
-
-### ticket_priorities
-
-**Purpose**: Ticket priority definitions.
-
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | Priority identifier |
-| `tenant_id` | UUID | NOT NULL, FK → tenants | Tenant isolation |
-| `name` | VARCHAR(50) | NOT NULL | Priority name (low, medium, high, urgent, critical) |
-| `level` | INTEGER | NOT NULL | Priority level (1-5) |
-| `color` | VARCHAR(7) | | Color code |
-| `is_active` | BOOLEAN | DEFAULT true | Active status |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
-| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
-
-**Indexes**:
-- `idx_ticket_priorities_tenant_id` ON `tenant_id`
-- `idx_ticket_priorities_level` ON `level`
-
-**Relations**:
-- `tenant_id` → `tenants(id)` (via auth-service sync)
+## Tickets
 
 ### tickets
 
-**Purpose**: Canonical ticket records.
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | Not null |
+| `ticket_number` | varchar | Not null, `TKT-000001` style, unique per tenant |
+| `customer_id` | uuid | Not null. The requester's auth user id, or a synthetic id for public and internal requesters |
+| `assigned_agent_id` | uuid | FK `agents.id`, on delete set null |
+| `assigned_team_id` | uuid | Team id, no FK |
+| `category_id` | uuid | FK `ticket_categories.id`, on delete set null |
+| `subject` | varchar | Not null |
+| `description` | text | Not null |
+| `status` | varchar | Default `new`. `new`, `open`, `in_progress`, `pending_customer`, `pending_internal`, `resolved`, `closed`, `cancelled` |
+| `priority` | varchar | Default `normal`. `low`, `normal`, `high`, `urgent`, `critical` |
+| `channel` | varchar | Default `web`. `web`, `email`, `api`, `chat`, `whatsapp`, `phone`, `internal` |
+| `order_id` | uuid | Order reference in another service |
+| `external_reference` | varchar | Caller's reference |
+| `crm_contact_id`, `crm_lead_id` | uuid | marketflow CRM references |
+| `sla_response_due_at`, `sla_resolution_due_at` | timestamptz | SLA deadlines |
+| `sla_response_breached`, `sla_resolution_breached` | boolean | Default false |
+| `first_response_at`, `resolved_at`, `closed_at`, `reopened_at` | timestamptz | Lifecycle times |
+| `escalation_level` | bigint | Default 0. Not written yet (sprint 10) |
+| `escalated_at` | timestamptz | Not written yet (sprint 10) |
+| `tags` | jsonb | String list |
+| `metadata` | jsonb | Requester contact (`requester_name`, `requester_email`, `requester_phone`), `source`, `source_ref`, `category`, `contact_hash` |
+| `created_at`, `updated_at`, `deleted_at` | timestamptz | |
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | Ticket identifier |
-| `tenant_id` | UUID | NOT NULL, FK → tenants | Tenant isolation |
-| `ticket_number` | VARCHAR(50) | NOT NULL, UNIQUE(tenant_id, ticket_number) | Ticket number (e.g., TKT-001) |
-| `subject` | VARCHAR(500) | NOT NULL | Ticket subject |
-| `description` | TEXT | NOT NULL | Ticket description |
-| `category_id` | UUID | FK → ticket_categories(id) | Category reference |
-| `priority_id` | UUID | FK → ticket_priorities(id) | Priority reference |
-| `status` | VARCHAR(20) | CHECK | new, open, in_progress, resolved, closed, cancelled |
-| `source` | VARCHAR(50) | | Source (web, email, api, chat, phone) |
-| `customer_id` | UUID | FK → users(id) | Customer reference (from auth-service) |
-| `assigned_agent_id` | UUID | FK → agents(id) | Assigned agent |
-| `assigned_team_id` | UUID | FK → teams(id) | Assigned team |
-| `project_id` | UUID | | Project reference (from projects-service) |
-| `order_id` | UUID | | Order reference (from ordering/POS services) |
-| `invoice_id` | UUID | | Invoice reference (from treasury-api) |
-| `metadata` | JSONB | | Additional metadata |
-| `embedding` | vector(1536) | | Vector embedding for semantic search |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
-| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
-| `resolved_at` | TIMESTAMPTZ | | Resolution timestamp |
-| `closed_at` | TIMESTAMPTZ | | Closure timestamp |
+Indexes:
 
-**Indexes**:
-- `idx_tickets_tenant_id` ON `tenant_id`
-- `idx_tickets_ticket_number` ON `ticket_number`
-- `idx_tickets_status` ON `status`
-- `idx_tickets_category` ON `category_id`
-- `idx_tickets_priority` ON `priority_id`
-- `idx_tickets_customer` ON `customer_id`
-- `idx_tickets_assigned_agent` ON `assigned_agent_id`
-- `idx_tickets_assigned_team` ON `assigned_team_id`
-- `idx_tickets_created_at` ON `created_at`
-- `idx_tickets_embedding` ON `embedding` USING ivfflat (vector_cosine_ops)
+| Index | Columns |
+|---|---|
+| `ticket_tenant_id_ticket_number` | Unique `(tenant_id, ticket_number)`. Per-tenant ticket numbers; replaced the old global unique index on `ticket_number`. |
+| `ticket_tenant_source_ref` | Unique expression index `(tenant_id, metadata->>'source', metadata->'source_ref'->>'type', metadata->'source_ref'->>'id')` where `metadata->'source_ref'->>'id' IS NOT NULL`. The internal create idempotency key. It exists only in the migration, since Ent cannot declare expression indexes. |
+| `ticket_tenant_id_status`, `ticket_tenant_id_priority`, `ticket_tenant_id_customer_id`, `ticket_tenant_id_assigned_agent_id`, `ticket_tenant_id_assigned_team_id` | Tenant filters |
+| `ticket_category_id`, `ticket_order_id`, `ticket_crm_contact_id`, `ticket_crm_lead_id`, `ticket_external_reference` | Lookups |
+| `ticket_sla_response_due_at`, `ticket_sla_resolution_due_at` | Breach scan |
+| `ticket_created_at`, `ticket_deleted_at` | |
 
-**Relations**:
-- `tenant_id` → `tenants(id)` (via auth-service sync)
-- `category_id` → `ticket_categories(id)`
-- `priority_id` → `ticket_priorities(id)`
-- `customer_id` → `users(id)` (references auth-service)
-- `assigned_agent_id` → `agents(id)`
-- `assigned_team_id` → `teams(id)`
+### ticket_sequences
 
-### ticket_tags
+One counter row per tenant. The create transaction claims the next number with `INSERT ... ON CONFLICT (tenant_id) DO UPDATE ... RETURNING next_value`.
 
-**Purpose**: Ticket tag definitions.
-
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | Tag identifier |
-| `tenant_id` | UUID | NOT NULL, FK → tenants | Tenant isolation |
-| `name` | VARCHAR(100) | NOT NULL | Tag name |
-| `color` | VARCHAR(7) | | Color code |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
-
-**Indexes**:
-- `idx_ticket_tags_tenant_id` ON `tenant_id`
-- `idx_ticket_tags_name` ON `name`
-
-**Relations**:
-- `tenant_id` → `tenants(id)` (via auth-service sync)
-
-### ticket_tag_assignments
-
-**Purpose**: Ticket-tag relationships.
-
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | Assignment identifier |
-| `ticket_id` | UUID | NOT NULL, FK → tickets(id) | Ticket reference |
-| `tag_id` | UUID | NOT NULL, FK → ticket_tags(id) | Tag reference |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
-
-**Indexes**:
-- `idx_ticket_tag_assignments_ticket` ON `ticket_id`
-- `idx_ticket_tag_assignments_tag` ON `tag_id`
-- UNIQUE(`ticket_id`, `tag_id`)
-
-**Relations**:
-- `ticket_id` → `tickets(id)`
-- `tag_id` → `ticket_tags(id)`
-
----
-
-## Ticket Communication
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | Not null, unique (`ticket_sequences_tenant_id_key`) |
+| `next_value` | bigint | Default 0. The last number handed out |
+| `updated_at` | timestamptz | |
 
 ### ticket_comments
 
-**Purpose**: Ticket comments and replies.
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | Not null. Added in phase 0 and backfilled from the parent ticket |
+| `ticket_id` | uuid | FK `tickets.id` |
+| `author_id` | uuid | From the caller's token |
+| `author_type` | varchar | Default `agent` |
+| `comment_type` | varchar | Default `public`. `public`, `internal`, `system` |
+| `content` | text | Not null |
+| `content_html` | text | |
+| `is_edited`, `edited_at` | boolean, timestamptz | |
+| `mentions` | jsonb | Not filled yet (sprint 9) |
+| `metadata` | jsonb | |
+| `created_at`, `deleted_at` | timestamptz | |
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | Comment identifier |
-| `ticket_id` | UUID | NOT NULL, FK → tickets(id) | Ticket reference |
-| `author_id` | UUID | FK → users(id) | Author reference (from auth-service) |
-| `comment_type` | VARCHAR(20) | CHECK | public, internal, system |
-| `content` | TEXT | NOT NULL | Comment content |
-| `is_internal` | BOOLEAN | DEFAULT false | Internal note flag |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
-| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
-
-**Indexes**:
-- `idx_ticket_comments_ticket` ON `ticket_id`
-- `idx_ticket_comments_author` ON `author_id`
-- `idx_ticket_comments_created_at` ON `created_at`
-
-**Relations**:
-- `ticket_id` → `tickets(id)`
-- `author_id` → `users(id)` (references auth-service)
+Indexes: `ticketcomment_tenant_id_ticket_id`, `ticketcomment_ticket_id_created_at`, `ticketcomment_ticket_id_comment_type`, `ticketcomment_author_id`, `ticketcomment_deleted_at`.
 
 ### ticket_attachments
 
-**Purpose**: File attachments for tickets.
+Records only. Upload, signed URLs and delete arrive in sprint 9.
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | Attachment identifier |
-| `ticket_id` | UUID | NOT NULL, FK → tickets(id) | Ticket reference |
-| `comment_id` | UUID | FK → ticket_comments(id) | Comment reference (optional) |
-| `file_name` | VARCHAR(255) | NOT NULL | File name |
-| `file_size` | BIGINT | | File size (bytes) |
-| `file_type` | VARCHAR(100) | | MIME type |
-| `storage_url` | VARCHAR(500) | NOT NULL | Storage URL (S3) |
-| `uploaded_by_id` | UUID | FK → users(id) | Uploader reference (from auth-service) |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | Not null. Added in phase 0 and backfilled from the parent ticket |
+| `ticket_id` | uuid | FK `tickets.id` |
+| `comment_id` | uuid | Optional, no FK |
+| `uploaded_by` | uuid | Not null |
+| `filename`, `storage_key`, `content_type` | varchar | Not null |
+| `file_size` | bigint | Not null |
+| `url`, `url_expires_at` | varchar, timestamptz | |
+| `metadata` | jsonb | |
+| `created_at`, `deleted_at` | timestamptz | |
 
-**Indexes**:
-- `idx_ticket_attachments_ticket` ON `ticket_id`
-- `idx_ticket_attachments_comment` ON `comment_id`
+Indexes: `ticketattachment_tenant_id_ticket_id`, `ticketattachment_ticket_id`, `ticketattachment_comment_id`, `ticketattachment_uploaded_by`, `ticketattachment_deleted_at`.
 
-**Relations**:
-- `ticket_id` → `tickets(id)`
-- `comment_id` → `ticket_comments(id)`
-- `uploaded_by_id` → `users(id)` (references auth-service)
+### ticket_categories
 
----
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | Not null |
+| `parent_id` | uuid | FK `ticket_categories.id`, on delete set null |
+| `name`, `slug` | varchar | Not null, slug unique per tenant |
+| `description` | text | |
+| `icon` | varchar | |
+| `sort_order` | bigint | Default 0 |
+| `is_active` | boolean | Default true |
+| `default_assignee_id` | uuid | |
+| `created_at`, `updated_at` | timestamptz | |
 
-## Assignment & Routing
+## Agents and teams
 
-### ticket_assignments
+### teams
 
-**Purpose**: Ticket assignment records.
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | Not null |
+| `name` | varchar | Not null, unique per tenant |
+| `description` | text | |
+| `is_active` | boolean | Default true |
+| `metadata` | jsonb | |
+| `created_at`, `updated_at`, `deleted_at` | timestamptz | |
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | Assignment identifier |
-| `ticket_id` | UUID | NOT NULL, FK → tickets(id) | Ticket reference |
-| `agent_id` | UUID | FK → agents(id) | Agent reference |
-| `team_id` | UUID | FK → teams(id) | Team reference |
-| `assigned_by_id` | UUID | FK → users(id) | Assigner reference (from auth-service) |
-| `assignment_type` | VARCHAR(20) | CHECK | automatic, manual, escalation |
-| `assigned_at` | TIMESTAMPTZ | DEFAULT NOW() | Assignment timestamp |
-| `unassigned_at` | TIMESTAMPTZ | | Unassignment timestamp |
+### agents
 
-**Indexes**:
-- `idx_ticket_assignments_ticket` ON `ticket_id`
-- `idx_ticket_assignments_agent` ON `agent_id`
-- `idx_ticket_assignments_team` ON `team_id`
-- `idx_ticket_assignments_assigned_at` ON `assigned_at`
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | Not null |
+| `user_id` | uuid | Auth user. Unique per tenant (`agent_tenant_id_user_id`); the old global unique index was dropped in phase 0, so one person can be an agent in several tenants |
+| `team_id` | uuid | FK `teams.id`, on delete set null |
+| `display_name`, `email` | varchar | Not null |
+| `avatar_url` | varchar | |
+| `role` | varchar | Default `agent`. `agent`, `supervisor`, `admin` |
+| `status` | varchar | Default `offline` |
+| `max_concurrent_tickets`, `current_ticket_count` | bigint | Defaults 10 and 0 |
+| `skills`, `metadata` | jsonb | |
+| `is_active` | boolean | Default true |
+| `last_active_at`, `created_at`, `updated_at` | timestamptz | |
 
-**Relations**:
-- `ticket_id` → `tickets(id)`
-- `agent_id` → `agents(id)`
-- `team_id` → `teams(id)`
-- `assigned_by_id` → `users(id)` (references auth-service)
+## Local RBAC
 
-### assignment_rules
+### ticketing_permissions
 
-**Purpose**: Automatic assignment rule definitions.
+The fixed catalogue, 108 codes, upserted on every API start.
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | Rule identifier |
-| `tenant_id` | UUID | NOT NULL, FK → tenants | Tenant isolation |
-| `name` | VARCHAR(255) | NOT NULL | Rule name |
-| `rule_type` | VARCHAR(50) | CHECK | round_robin, skill_based, load_based |
-| `conditions_json` | JSONB | | Rule conditions |
-| `is_active` | BOOLEAN | DEFAULT true | Active flag |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
-| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `permission_code` | varchar | Unique, `ticketing.{module}.{action}` |
+| `module`, `action` | varchar | Indexed together |
+| `resource` | varchar | |
+| `description` | text | |
+| `created_at` | timestamptz | |
 
-**Indexes**:
-- `idx_assignment_rules_tenant_id` ON `tenant_id`
-- `idx_assignment_rules_rule_type` ON `rule_type`
+### ticketing_roles
 
-**Relations**:
-- `tenant_id` → `tenants(id)` (via auth-service sync)
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | Not null |
+| `role_code` | varchar | Unique per tenant. System roles `ticketing_admin`, `supervisor`, `agent`, `customer` |
+| `name` | varchar | |
+| `description` | text | |
+| `is_system_role` | boolean | Default false |
+| `created_at`, `updated_at` | timestamptz | |
 
----
+### role_permissions
 
-## SLA Management
+| Column | Type | Notes |
+|---|---|---|
+| `id` | bigint identity | Primary key |
+| `role_id` | uuid | FK `ticketing_roles.id`, on delete cascade |
+| `permission_id` | uuid | FK `ticketing_permissions.id`, on delete cascade |
+
+Unique `(role_id, permission_id)`.
+
+### ticketing_users
+
+One row per auth user per tenant, created just in time at sign-in or from `auth.user.*` events.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | Not null |
+| `auth_service_user_id` | uuid | Unique per tenant, also indexed alone |
+| `email`, `name` | varchar | |
+| `sync_status` | varchar | Default `synced` |
+| `last_sync_at`, `created_at`, `updated_at` | timestamptz | |
+
+### user_role_assignments
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | Not null |
+| `user_id` | uuid | FK `ticketing_users.id`, on delete cascade |
+| `role_id` | uuid | FK `ticketing_roles.id`, on delete cascade |
+| `assigned_by` | uuid | Not null |
+| `assigned_at` | timestamptz | |
+| `expires_at` | timestamptz | |
+
+Unique `(tenant_id, user_id, role_id)`.
+
+## SLA and routing
 
 ### sla_policies
 
-**Purpose**: SLA policy definitions.
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | Not null |
+| `name` | varchar | |
+| `description` | text | |
+| `priority` | varchar | Matched against the ticket priority |
+| `category_id` | uuid | Optional category match, no FK |
+| `first_response_minutes`, `resolution_minutes` | bigint | Targets |
+| `first_response_business_hours`, `resolution_business_hours` | boolean | Default true. Stored, not applied yet (sprint 10) |
+| `business_hours` | jsonb | Stored, not applied yet (sprint 10) |
+| `is_active` | boolean | Default true |
+| `sort_order` | bigint | |
+| `metadata` | jsonb | |
+| `created_at`, `updated_at` | timestamptz | |
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | SLA policy identifier |
-| `tenant_id` | UUID | NOT NULL, FK → tenants | Tenant isolation |
-| `name` | VARCHAR(255) | NOT NULL | Policy name |
-| `response_time_minutes` | INTEGER | | Response time (minutes) |
-| `resolution_time_hours` | INTEGER | | Resolution time (hours) |
-| `priority_id` | UUID | FK → ticket_priorities(id) | Priority reference |
-| `category_id` | UUID | FK → ticket_categories(id) | Category reference |
-| `is_active` | BOOLEAN | DEFAULT true | Active flag |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
-| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
+### routing_rules
 
-**Indexes**:
-- `idx_sla_policies_tenant_id` ON `tenant_id`
-- `idx_sla_policies_priority` ON `priority_id`
-- `idx_sla_policies_category` ON `category_id`
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | Not null |
+| `name` | varchar | |
+| `description` | text | |
+| `is_active` | boolean | Default true |
+| `sort_order` | bigint | Evaluation order |
+| `conditions` | jsonb | Not null |
+| `action` | jsonb | Not null. `assign_team`, `assign_agent` or `set_priority` |
+| `created_at`, `updated_at` | timestamptz | |
 
-**Relations**:
-- `tenant_id` → `tenants(id)` (via auth-service sync)
-- `priority_id` → `ticket_priorities(id)`
-- `category_id` → `ticket_categories(id)`
-
-### sla_records
-
-**Purpose**: SLA tracking per ticket.
-
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | SLA record identifier |
-| `ticket_id` | UUID | NOT NULL, FK → tickets(id) | Ticket reference |
-| `sla_policy_id` | UUID | NOT NULL, FK → sla_policies(id) | SLA policy reference |
-| `response_deadline` | TIMESTAMPTZ | | Response deadline |
-| `resolution_deadline` | TIMESTAMPTZ | | Resolution deadline |
-| `first_response_at` | TIMESTAMPTZ | | First response timestamp |
-| `resolved_at` | TIMESTAMPTZ | | Resolution timestamp |
-| `response_breached` | BOOLEAN | DEFAULT false | Response breach flag |
-| `resolution_breached` | BOOLEAN | DEFAULT false | Resolution breach flag |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
-| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
-
-**Indexes**:
-- `idx_sla_records_ticket` ON `ticket_id`
-- `idx_sla_records_sla_policy` ON `sla_policy_id`
-- `idx_sla_records_response_deadline` ON `response_deadline`
-- `idx_sla_records_resolution_deadline` ON `resolution_deadline`
-
-**Relations**:
-- `ticket_id` → `tickets(id)`
-- `sla_policy_id` → `sla_policies(id)`
-
----
-
-## Knowledge Base
-
-### kb_categories
-
-**Purpose**: Knowledge base category structure.
-
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | Category identifier |
-| `tenant_id` | UUID | NOT NULL, FK → tenants | Tenant isolation |
-| `name` | VARCHAR(255) | NOT NULL | Category name |
-| `description` | TEXT | | Category description |
-| `parent_id` | UUID | FK → kb_categories(id) | Parent category |
-| `is_active` | BOOLEAN | DEFAULT true | Active flag |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
-| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
-
-**Indexes**:
-- `idx_kb_categories_tenant_id` ON `tenant_id`
-- `idx_kb_categories_parent_id` ON `parent_id`
-
-**Relations**:
-- `tenant_id` → `tenants(id)` (via auth-service sync)
-- `parent_id` → `kb_categories(id)` (self-referential)
+## Knowledge base
 
 ### kb_articles
 
-**Purpose**: Knowledge base articles.
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | Not null |
+| `author_id` | uuid | Not null |
+| `title`, `slug` | varchar | Slug unique per tenant |
+| `content` | text | |
+| `excerpt`, `category` | varchar | Category is free text |
+| `tags` | jsonb | |
+| `status` | varchar | Default `draft` |
+| `is_public` | boolean | Default true |
+| `view_count`, `helpful_count`, `not_helpful_count` | bigint | Updated scoped by tenant |
+| `metadata` | jsonb | |
+| `published_at`, `created_at`, `updated_at`, `deleted_at` | timestamptz | |
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | Article identifier |
-| `tenant_id` | UUID | NOT NULL, FK → tenants | Tenant isolation |
-| `category_id` | UUID | FK → kb_categories(id) | Category reference |
-| `title` | VARCHAR(500) | NOT NULL | Article title |
-| `content` | TEXT | NOT NULL | Article content |
-| `status` | VARCHAR(20) | CHECK | draft, published, archived |
-| `view_count` | INTEGER | DEFAULT 0 | View count |
-| `helpful_count` | INTEGER | DEFAULT 0 | Helpful count |
-| `not_helpful_count` | INTEGER | DEFAULT 0 | Not helpful count |
-| `embedding` | vector(1536) | | Vector embedding for semantic search |
-| `created_by_id` | UUID | FK → users(id) | Creator reference (from auth-service) |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
-| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
+## Events
 
-**Indexes**:
-- `idx_kb_articles_tenant_id` ON `tenant_id`
-- `idx_kb_articles_category` ON `category_id`
-- `idx_kb_articles_status` ON `status`
-- `idx_kb_articles_embedding` ON `embedding` USING ivfflat (vector_cosine_ops)
+### outbox_events
 
-**Relations**:
-- `tenant_id` → `tenants(id)` (via auth-service sync)
-- `category_id` → `kb_categories(id)`
-- `created_by_id` → `users(id)` (references auth-service)
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | |
+| `aggregate_type`, `event_type` | varchar | |
+| `aggregate_id` | uuid | |
+| `payload` | bytea | |
+| `status` | varchar | Default `PENDING` |
+| `attempts` | bigint | |
+| `last_attempt_at`, `published_at`, `created_at` | timestamptz | |
+| `error_message` | varchar | |
 
----
+`atlas_schema_revisions` records applied migration files and is managed by `ticketing-migrate`.
 
-## Customer Satisfaction
+## Planned tables
 
-### satisfaction_surveys
+| Table or column | Purpose | Sprint |
+|---|---|---|
+| Generated `tsvector` columns with GIN indexes on `tickets` and `kb_articles` (or `pg_trgm` indexes) | Full-text search | 9 |
+| `ticket_views` | Saved views and filters per agent | 9 |
+| `macros` | Canned replies that set fields | 9 |
+| A `related` link between tickets | Merge and parent-child | 9 |
+| Business-hours calendars and holidays | SLA clocks | 10 |
+| Ticket rollup tables (hourly and daily) | Analytics | 12 |
+| `csat_responses` | CSAT scores | 12 |
 
-**Purpose**: Satisfaction survey definitions.
+## Maintenance
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | Survey identifier |
-| `tenant_id` | UUID | NOT NULL, FK → tenants | Tenant isolation |
-| `name` | VARCHAR(255) | NOT NULL | Survey name |
-| `survey_type` | VARCHAR(20) | CHECK | csat, nps, custom |
-| `is_active` | BOOLEAN | DEFAULT true | Active flag |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
-| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
-
-**Indexes**:
-- `idx_satisfaction_surveys_tenant_id` ON `tenant_id`
-- `idx_satisfaction_surveys_survey_type` ON `survey_type`
-
-**Relations**:
-- `tenant_id` → `tenants(id)` (via auth-service sync)
-
-### satisfaction_responses
-
-**Purpose**: Survey responses.
-
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY | Response identifier |
-| `ticket_id` | UUID | FK → tickets(id) | Ticket reference |
-| `survey_id` | UUID | NOT NULL, FK → satisfaction_surveys(id) | Survey reference |
-| `customer_id` | UUID | FK → users(id) | Customer reference (from auth-service) |
-| `score` | INTEGER | | Score (1-5 for CSAT, 0-10 for NPS) |
-| `comment` | TEXT | | Additional comment |
-| `responded_at` | TIMESTAMPTZ | DEFAULT NOW() | Response timestamp |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
-
-**Indexes**:
-- `idx_satisfaction_responses_ticket` ON `ticket_id`
-- `idx_satisfaction_responses_survey` ON `survey_id`
-- `idx_satisfaction_responses_customer` ON `customer_id`
-
-**Relations**:
-- `ticket_id` → `tickets(id)`
-- `survey_id` → `satisfaction_surveys(id)`
-- `customer_id` → `users(id)` (references auth-service)
-
----
-
-## Integration Points
-
-### External Service References
-
-**Auth Service**:
-- `agents.user_id` → `users(id)` (user identity)
-- `tickets.customer_id` → `users(id)` (customer identity)
-- `ticket_comments.author_id` → `users(id)` (comment author)
-
-**Projects Service**:
-- `tickets.project_id` → References project UUID (from projects-service)
-
-**Treasury Service**:
-- `tickets.invoice_id` → References invoice UUID (from treasury-api)
-
-**Ordering/POS Services**:
-- `tickets.order_id` → References order UUID (from ordering/POS services)
-
----
-
-## Views & Functions
-
-### Recommended Views
-
-**v_ticket_summary**:
-- Ticket details with assignments, comments, and SLA status
-
-**v_agent_performance**:
-- Agent metrics aggregated (tickets handled, response time, resolution time)
-
-**v_sla_compliance**:
-- SLA compliance metrics by policy, priority, category
-
-**v_customer_satisfaction**:
-- Satisfaction scores aggregated by period, category, agent
-
----
-
-## Maintenance Notes
-
-- Maintain this document alongside Ent schema changes.
-- After changing Ent schemas, run `go generate ./internal/ent` and refresh the ERD.
-- Vector embeddings are generated using OpenAI embeddings API or similar (1536 dimensions).
-- User management is handled by auth-service - reference user IDs only.
-
+After changing an Ent schema I run `go generate ./internal/ent`, add a versioned migration in `internal/ent/migrate/migrations` with its `atlas.sum` entry, and update this page.

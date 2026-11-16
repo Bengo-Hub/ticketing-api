@@ -1,526 +1,140 @@
-# Ticketing Service - Integration Guide
+# Ticketing API Integrations
 
-## Overview
+This page lists every integration ticketing-api has in code today, the internal create contract other services call, and the integrations planned in the sprint files. Anything planned is marked with its sprint.
 
-This document provides detailed integration information for all external services and systems integrated with the Ticketing service, including internal Codevertex microservices and external third-party services.
+## Summary
 
----
+| Service | Direction | How | Status |
+|---|---|---|---|
+| auth-api | inbound and outbound | JWKS and API key validation, tenant lookups, public OTP token check, `auth.user.*` and `apikey.changed` events | Built |
+| notifications-api | outbound | `ticketing.>` events on the `ticketing` stream | Built |
+| marketflow CRM | outbound and inbound | `crm.activity.log_requested` events, the erasure link check | Built |
+| projects-api | inbound | Internal create for QA defects | Built |
+| hadia-api | inbound | Internal create and internal read for its support form | Built |
+| marketflow-ai (Vera) | inbound | Internal create from the `create_ticket` tool | Built |
+| subscriptions-api, auth-api | inbound | `tenant.purge` | Built |
+| notifications-api inbound WhatsApp | inbound | `notifications.whatsapp.tenant_inbound` | Planned, sprint 11 |
+| Stalwart support mailboxes | inbound | JMAP | Planned, sprint 11 |
+| object storage (R2) | outbound | httpware/objectstore | Planned, sprint 9 |
+| shared reports module | in process | Report export | Planned, sprint 12 |
+| marketflow-ai, subscriptions-api AI wallet | outbound | Classification, summaries, replies, credits | Planned, sprint 13 |
 
-## Table of Contents
+## Internal create: POST /api/v1/internal/tickets
 
-1. [Internal Codevertex Service Integrations](#internal-codevertex-service-integrations)
-2. [External Third-Party Integrations](#external-third-party-integrations)
-3. [Integration Patterns](#integration-patterns)
-4. [Two-Tier Configuration Management](#two-tier-configuration-management)
-5. [Event-Driven Architecture](#event-driven-architecture)
-6. [Integration Security](#integration-security)
-7. [Error Handling & Resilience](#error-handling--resilience)
+Services raise tickets on a tenant's desk through this route. It takes no user token.
 
----
+**Headers**
 
-## Internal Codevertex Service Integrations
+| Header | Value |
+|---|---|
+| `X-API-Key` | `INTERNAL_SERVICE_KEY`, the fleet S2S key |
+| `X-Tenant-ID` | The tenant's auth UUID. The body carries no tenant. |
 
-### Auth Service
+**Body**
 
-**Integration Type**: OAuth2/OIDC + Events + REST
+| Field | Required | Notes |
+|---|---|---|
+| `subject` | yes | Trimmed, must not be empty |
+| `description` | yes | Trimmed, must not be empty |
+| `source` | yes | The calling system, for example `projects.qa`. At most 200 characters. Stored in ticket metadata. |
+| `priority` | no | `low`, `normal`, `high`, `urgent` or `critical`. Defaults to `normal`. |
+| `channel` | no | `web`, `email`, `api`, `chat`, `whatsapp`, `phone` or `internal`. Defaults to `web`. |
+| `category` | no | Free text, stored in ticket metadata |
+| `source_ref` | no | `{type, id, parent?}`, the record the ticket was raised for. `type` and `id` are required when it is sent, at most 200 characters each. `parent` is optional context `{type, id}` with no parent of its own. Stored in ticket metadata. |
+| `requester_name`, `requester_email`, `requester_phone` | no | The requester's contact, stored in ticket metadata and carried on every ticket event |
+| `contact_hash` | no | The caller's keyed hash of a contact it verified. Ticketing stores it and returns it on the internal read so the caller can prove a later reader. One contact's tickets group under one synthetic customer id derived from the hash. |
 
-**Use Cases**:
-- User authentication and authorization
-- JWT token validation
-- User identity synchronization
-- Tenant/outlet discovery
+**Idempotency.** The key is (tenant, `source`, `source_ref.type`, `source_ref.id`), enforced by the unique expression index `ticket_tenant_source_ref`. `source_ref.parent` is not part of the key. A repeat for the same key returns the existing ticket. When two calls race, the loser of the insert reads back the winner's ticket. Without `source_ref`, every call creates a new ticket.
 
-**Architecture**:
-- Uses `shared/auth-client` v0.1.0 library for JWT validation
-- All protected `/api/v1/{tenantID}` routes require valid Bearer tokens
-- Local agent table synced with auth-service (app-specific data only)
+**Responses**
 
-**Events Consumed**:
-- `auth.tenant.created` - Initialize tenant in ticketing system
-- `auth.tenant.updated` - Update tenant metadata
-- `auth.user.created` - Create agent/user reference (if needed)
-- `auth.user.updated` - Update user identity fields
+| Status | When | Body |
+|---|---|---|
+| 201 | A new ticket was created | `{"id", "ticket_number", "status"}` |
+| 200 | The key matched an existing ticket | `{"id", "ticket_number", "status"}` of that ticket |
+| 400 | `X-Tenant-ID` missing or not a UUID, body unreadable, a required field missing, an invalid priority, channel or `source_ref` | `{"error": "..."}` |
+| 401 | Missing or wrong `X-API-Key` | `{"error": "unauthorized"}` |
 
-### Notifications Service
+A created ticket goes through the same path as any other create: routing rule, SLA deadlines, per-tenant number, and `ticketing.ticket.created` in the same transaction.
 
-**Integration Type**: Events (NATS) only. Ticketing makes no direct call to notifications-api; the
-old S2S client was never called and was removed on 13 November 2026.
+## Internal read: GET /api/v1/internal/tickets/{ticketNumber}
 
-**Use Cases** (built):
-- Ticket created, sent to the requester
-- Public agent reply, sent to the requester
-- Status change and resolution, sent to the requester
-- Assignment, sent to the agent
-- SLA breach alerts, sent to the assigned agent (else the tenant's support contact)
+Takes `X-API-Key` and `X-Tenant-ID`, and answers 401 and 400 on the same rules as the create. It returns what a calling service may show its own user: `id`, `ticket_number`, `status`, `priority`, `channel`, `subject`, `description`, `category`, `contact_hash`, `source`, `source_ref`, `created_at`, `updated_at` and the public comments (`author_type`, `content`, `created_at`). Internal notes and the requester's contact details never leave through it.
 
-Not built: @mention alerts and satisfaction surveys.
+## Internal create callers
 
-**Events Published** (subject `ticketing.<event type>`, outbox on the `ticketing` stream):
-- `ticketing.ticket.created`
-- `ticketing.ticket.assigned`
-- `ticketing.ticket.comment_added` (public agent replies only; internal notes and customer comments never)
-- `ticketing.ticket.status_changed` (every change except to resolved)
-- `ticketing.ticket.resolved`
-- `ticketing.sla.first_response_breached`, `ticketing.sla.resolution_breached` (SLA worker, event type `sla.<kind>`)
+| Caller | Code | `source` | `channel` | `source_ref` |
+|---|---|---|---|---|
+| projects-api, a failed QA criterion | `internal/platform/ticketing/client.go` | `projects.qa` | `internal` | `{type: "qa_defect", id: <defect id>, parent: {type: "qa_session", id: <session id>}}`, so one QA session can raise several defects and each defect raises one ticket |
+| hadia-api support form | `internal/clients/ticketing/client.go`, called from `internal/modules/support/service.go` after its own email or phone code | `hadia-contact-form` | `web` | none, so each submission opens a ticket. It sends the requester fields and `contact_hash`, and reads tickets back through the internal read. |
+| marketflow-ai `create_ticket` tool | `internal/agent/tools/create_ticket.go` | `vera_ai` | `chat` | none. The tool maps the model's priority to a ticketing priority and reports the real `ticket_number`. |
 
-Every ticket event carries the requester's `requester_name`, `requester_email` and `requester_phone`,
-so notifications-api can reach the customer (by email today; the phone is there for SMS and WhatsApp later). Payload shapes are in the
-event catalogue below.
+ticketing-api deploys before its callers whenever this contract changes, and every caller switches in the same release.
 
-**Support routing** (owner decision, 12 November 2026): a tenant's ticket messages go out through
-the tenant's support contact (auth-api tenant metadata `support` {email, phone, whatsapp}, read with
-`cache.ResolveSupportContact` from the shared tenant cache), falling back to its contact email and
-phone. Platform tickets (the codevertex tenant) use support@codevertexafrica.com.
+## auth-api
 
-### Projects Service
+- **JWT and API keys.** `RequireAuth` from auth-client v0.20.0 validates SSO tokens against `{AUTH_SERVICE_URL}/api/v1/.well-known/jwks.json` (issuer `AUTH_ISSUER`, audience `AUTH_AUDIENCE`) and accepts auth-api API keys while `AUTH_ENABLE_API_KEY` is true. The full chain is in [architecture.md](architecture.md).
+- **API key revocation.** ticketing subscribes to the `auth` broadcast `apikey.changed` and drops the key from every validator on the pod.
+- **Tenants.** Slugs and tenant details resolve through `internal/platform/tenantcache` (shared cache, then auth-api). The tenant's support contact is metadata `support`, read with `cache.ResolveSupportContact`.
+- **Public OTP.** The public support pages get a six-digit email code from auth-api's public OTP routes. ticketing trades the resulting `X-OTP-Token` with auth-api through `internal/clients/otp.go`, which sends the internal service key. This client uses plain `net/http`, not shared-service-client, because a retried call could replay a one-time code.
+- **User events.** `auth.user.created` and `auth.user.updated` arrive on a queue subscription. They create or refresh the tenant's ticketing user with the same role mapping as sign-in, and refresh an existing agent's email and name. `auth.user.deleted` is not consumed yet (integration review).
 
-**Integration Type**: Events (NATS) + REST API
+## notifications-api
 
-**Use Cases**:
-- Link tickets to projects
-- Project-related support requests
-- Project issue tracking
+Events only. Ticketing makes no direct call to notifications-api. notifications-api's ticketing consumer turns these into email:
 
-**REST API Usage**:
-- `GET /api/v1/projects/{id}` - Get project details
-- `POST /api/v1/projects/{id}/tickets` - Link ticket to project
+| Event | Recipient |
+|---|---|
+| `ticketing.ticket.created` | Requester (receipt) |
+| `ticketing.ticket.assigned` | Assigned agent |
+| `ticketing.ticket.comment_added` (public agent replies only) | Requester |
+| `ticketing.ticket.status_changed` (every change except to resolved) | Requester, for the statuses that need them |
+| `ticketing.ticket.resolved` | Requester |
+| `ticketing.sla.first_response_breached`, `ticketing.sla.resolution_breached` | Assigned agent, else the tenant's support contact |
 
-**Events Published**:
-- `ticketing.ticket.created` - For project issue tracking
+Payloads are in [architecture.md](architecture.md). Mail goes out under the tenant's name with the tenant's support email as Reply-To. Platform tickets on the codevertex tenant use support@codevertexafrica.com. SMS, WhatsApp, @mention alerts and CSAT surveys are not sent yet (sprints 9, 11 and 12).
 
-**Events Consumed**:
-- `projects.project.created` - Create project reference
-- `projects.issue.created` - Create ticket from project issue
+## marketflow CRM
 
-### ERP Service
+- **Activity.** Ticket changes for a ticket with a CRM contact publish `crm.activity.log_requested` through the outbox. The CRM service's own stream captures it.
+- **Erasure link check.** `GET /api/v1/s2s/{tenant}/crm-links/{contactID}` with `X-API-Key` answers `{"referenced": true|false}`. It is true when any ticket in any tenant carries the contact in `tickets.crm_contact_id`: CRM contact ids are random UUIDs minted by marketflow, so a match anywhere is the same person, and a ticket held under a mismatched tenant can only answer "referenced", which keeps the contact. A tenant UUID is accepted as given and a slug resolves through auth-api (an unknown slug answers 404). A bad contact id answers 400 and a missing or wrong key 401. Only the flag is returned and logs carry ids only.
 
-**Integration Type**: Events (NATS) + REST API
+## Tenant purge
 
-**Use Cases**:
-- Link tickets to orders, invoices, customers
-- Billing-related support
-- CRM integration for customer context
+The shared `TenantPurger` subscribes to `tenant.purge` on the `tenant` stream. auth-api sends it when a platform admin deletes a tenant or declines its registration, and subscriptions-api sends it for a dormant account a platform owner confirmed. Ticketing then deletes every row it holds for the tenant.
 
-**REST API Usage**:
-- `GET /api/v1/erp/orders/{id}` - Get order details
-- `GET /api/v1/erp/invoices/{id}` - Get invoice details
-- `GET /api/v1/erp/customers/{id}` - Get customer details
+## Email
 
-**Events Published**:
-- `ticketing.ticket.created` - For order/invoice support
+**Built: outbound only.** Ticketing publishes the ticket events above and notifications-api sends the email. Ticketing holds no SMTP, IMAP or POP3 credentials.
 
-**Events Consumed**:
-- `erp.order.created` - Create ticket reference
-- `erp.invoice.issue` - Create billing support ticket
+**Inbound email to ticket (owner decision 2026-11-16, built in [sprint 11](sprints/sprint-11-channels.md)).** It replaces the 12 November decision to stay outbound only.
 
-### Treasury Service
+- **Tenants.** Each tenant gets a forwarding address `<slug>@support.codevertexafrica.com` on our Stalwart server. The tenant sets an auto-forward from its own support mailbox, and I never store a tenant mailbox password. ticketing reads the catch-all support domain over JMAP, maps the local part to the tenant, opens a ticket or threads a reply (`In-Reply-To`, `References`, then a `[TKT-n]` subject tag) and dedupes on the Message-ID. The tenant's `support` address in auth-api metadata stays the Reply-To on outbound mail. A settings page shows the forwarding address with a verify step: a test email that must arrive.
+- **Platform tenant.** `support@codevertexafrica.com` is its own Stalwart mailbox and no longer an info@ alias. In sprint 11 ticketing reads it over JMAP for the codevertex tenant on the same path as tenant mail. info@ stays a human inbox.
+- **Ingest rules.** Mail from no-reply addresses, auto-replies (`Auto-Submitted`, `X-Autoreply`, bounce DSNs) and mail flagged by ClamAV never opens a ticket. Attachments go to object storage. Every requester resolves to a marketflow contact.
+- The JMAP client follows the pattern mail-service already uses with Stalwart.
 
-**Integration Type**: Events (NATS) + REST API
+Until this ships, a customer replies through the public ticket page or opens a ticket through the public form, Vera or a service's internal create.
 
-**Use Cases**:
-- Payment-related support
-- Billing inquiries
-- Refund requests
+## WhatsApp (planned, sprint 11)
 
-**REST API Usage**:
-- `GET /api/v1/treasury/payments/{id}` - Get payment details
-- `GET /api/v1/treasury/invoices/{id}` - Get invoice details
+Messages to the platform WhatsApp number go out from notifications-api as `notifications.whatsapp.inbound` with no tenant, and only marketflow-api's WhatsApp assistant consumes them. Messages to a tenant's own number land in notifications-api's shared inbox and publish nothing another service can consume.
 
-**Events Published**:
-- `ticketing.ticket.created` - For payment support
+Sprint 11 adds `notifications.whatsapp.tenant_inbound` to notifications-api, carrying the tenant id, the WhatsApp message id, the sender, the contact name, the text or a media reference and the time received, published once per inbound message through its outbox. ticketing-api consumes it on a durable queue and threads it onto the requester's latest open WhatsApp ticket or opens a new one, dedupes on the WhatsApp message id and never opens a ticket from a STOP reply. Auto-ticketing is the tenant setting `channels.whatsapp.auto_ticket`, off by default. The notifications inbox also gets a Convert to ticket action that calls the internal create with `source: "notifications.whatsapp"`. Agent replies on a WhatsApp ticket go out through the notifications send path inside the 24-hour window, or as a template outside it.
 
-**Events Consumed**:
-- `treasury.payment.failed` - Create payment support ticket
-- `treasury.invoice.overdue` - Create billing support ticket
+## Order, invoice and project links
 
-### Ordering-Backend
+Tickets carry `order_id`, `external_reference`, `crm_contact_id` and `crm_lead_id`, and internal tickets carry `source` and `source_ref` in metadata. Ticketing calls none of pos-api, ordering, treasury or inventory today. Showing those links on the ticket is part of the integration review after sprint 13.
 
-**Integration Type**: Events (NATS) + REST API
+## Security
 
-**Use Cases**:
-- Order-related support
-- Delivery issues
-- Menu inquiries
-
-**REST API Usage**:
-- `GET /api/v1/ordering/orders/{id}` - Get order details
-
-**Events Published**:
-- `ticketing.ticket.created` - For order support
-
-**Events Consumed**:
-- `cafe.order.issue` - Create order support ticket
-
-### POS Service
-
-**Integration Type**: Events (NATS) + REST API
-
-**Use Cases**:
-- POS-related support
-- Device issues
-- Transaction inquiries
-
-**REST API Usage**:
-- `GET /api/v1/pos/orders/{id}` - Get POS order details
-
-**Events Published**:
-- `ticketing.ticket.created` - For POS support
-
-**Events Consumed**:
-- `pos.device.error` - Create device support ticket
-
-### Inventory Service
-
-**Integration Type**: Events (NATS) + REST API
-
-**Use Cases**:
-- Stock-related inquiries
-- Inventory issues
-
-**REST API Usage**:
-- `GET /api/v1/inventory/items/{id}` - Get item details
-
-**Events Published**:
-- `ticketing.ticket.created` - For inventory support
-
-### Logistics Service
-
-**Integration Type**: Events (NATS) + REST API
-
-**Use Cases**:
-- Delivery-related support
-- Shipping inquiries
-- Tracking issues
-
-**REST API Usage**:
-- `GET /api/v1/logistics/shipments/{id}` - Get shipment details
-
-**Events Published**:
-- `ticketing.ticket.created` - For delivery support
-
-**Events Consumed**:
-- `logistics.delivery.issue` - Create delivery support ticket
-
-### MarketFlow CRM: erasure link check
-
-When a person is erased in another service, marketflow asks every service whether it still links the CRM contact before it deletes it. Ticketing answers `GET /api/v1/s2s/{tenant}/crm-links/{contactID}` with `{"referenced": true|false}`, sent with the shared `X-API-Key` (`INTERNAL_SERVICE_KEY`). The answer is true when any ticket carries the contact id in `tickets.crm_contact_id`, in any tenant: CRM contact ids are random UUIDs minted by marketflow, so a match anywhere is the same person, and tickets held under a mismatched tenant id can only answer "referenced", which keeps the contact. Ticketing keeps no tenant table, so a tenant UUID is accepted as given and a slug is resolved through auth-api (an unknown slug answers 404). Only the flag is returned and logs carry ids only. A bad contact id answers 400 and a missing or wrong key 401; marketflow treats every answer other than a clean 200 as "cannot answer" and keeps the contact.
-
----
-
-## External Third-Party Integrations
-
-### Email Providers
-
-**Purpose**: Ticket notifications (built); email-to-ticket (designed, not built)
-
-**Built**: outbound only. Ticketing publishes the ticket events above and notifications-api sends
-the email from the tenant's own account (or the platform account) with the tenant's support email
-as Reply-To. Ticketing holds no SMTP, IMAP or POP3 credentials.
-
-**Designed, not built** (owner decision, 12 November 2026: outbound only for now):
-- Email-to-ticket: a message to a support address opening a ticket
-- Ticket reply by email: a reply to a ticket email adding a comment
-- WhatsApp-to-ticket: a WhatsApp message to the support number opening a ticket
-
-Until these are built, a customer replies through the public ticket page (OTP verified) or opens a
-ticket through the public form, Vera or a service's S2S call.
-
-### Chat Widgets
-
-**Purpose**: Live chat integration
-
-**Configuration** (Tier 1):
-- Chat provider API keys: Stored encrypted
-- Widget configuration: Configured
-
-**Use Cases**:
-- Live chat to ticket conversion
-- Real-time chat support
-
-### Knowledge Base Search
-
-**Purpose**: Full-text search for knowledge base
-
-**Configuration** (Tier 1):
-- Search provider credentials: Stored encrypted
-
-**Use Cases**:
-- Article search
-- Related article recommendations
-
----
-
-## Integration Patterns
-
-### 1. REST API Pattern (Synchronous)
-
-**Use Case**: Data retrieval, immediate operations
-
-**Implementation**:
-- HTTP client with retry logic
-- Circuit breaker pattern
-- Request timeout (5 seconds default)
-- Idempotency keys for mutations
-
-### 2. Event-Driven Pattern (Asynchronous)
-
-**Use Case**: Cross-service communication, notifications
-
-**Transport**: NATS JetStream
-
-**Flow**:
-1. Service publishes event to NATS
-2. Subscriber services consume event
-3. Process event and update local state
-4. Publish response events if needed
-
-**Reliability**:
-- At-least-once delivery
-- Event deduplication via event_id
-- Retry on failure
-- Dead letter queue for failed events
-
-### 3. Webhook Pattern (Callbacks)
-
-**Use Case**: External provider callbacks, ticket events
-
-**Implementation**:
-- Webhook endpoints in ticketing service
-- Signature verification (HMAC-SHA256)
-- Retry logic for failed deliveries
-- Idempotency handling
-
-### 4. WebSocket/SSE Pattern (Real-time)
-
-**Use Case**: Real-time ticket updates, live chat
-
-**Implementation**:
-- WebSocket connections for bidirectional communication
-- SSE for server-to-client updates
-- Connection management and reconnection logic
-
----
-
-## Two-Tier Configuration Management
-
-### Tier 1: Developer/Superuser Configuration
-
-**Visibility**: Only developers and superusers
-
-**Configuration Items**:
-- Database credentials
-- External API credentials
-- Encryption keys
-- Service-to-service API keys
-
-**Storage**:
-- Encrypted at rest in database (AES-256-GCM)
-- K8s secrets for runtime
-- Vault for production secrets
-
-### Tier 2: Business User Configuration
-
-**Visibility**: Normal system users (tenant admins, supervisors)
-
-**Configuration Items**:
-- SLA policies
-- Assignment rules
-- Escalation workflows
-- Email templates
-- Knowledge base settings
-
-**Storage**:
-- Plain text in database (non-sensitive)
-- Tenant-specific configuration tables
-
----
-
-## Event-Driven Architecture
-
-### Event Catalog
-
-#### Outbound Events (Published by Ticketing Service)
-
-All ticket events use the shared-events envelope (`id`, `event_type`, `aggregate_type`
-`ticketing`, `tenant_id`, `payload`) and the subject `ticketing.<event_type>`. Payloads are built in
-`internal/modules/tickets/events.go` and tested in `events_test.go`.
-
-Every ticket event's payload carries these keys, always present and empty when unknown:
-
-| Key | Meaning |
-|-----|---------|
-| `ticket_id`, `ticket_number`, `subject` | The ticket |
-| `status`, `priority`, `channel` | Its state; `status` is the new status on a status event |
-| `source` | Who opened it (`public_form`, `vera`, ...), from ticket metadata |
-| `agent_id` | The assigned agent, if any |
-| `requester_name`, `requester_email`, `requester_phone` | The requester's contact (phone in `+<digits>` form) |
-
-**ticketing.ticket.created** (event type `ticket.created`)
-```json
-{
-  "id": "uuid",
-  "event_type": "ticket.created",
-  "aggregate_type": "ticketing",
-  "tenant_id": "tenant-uuid",
-  "payload": {
-    "ticket_id": "ticket-uuid",
-    "ticket_number": "TKT-0001",
-    "subject": "Payout not received",
-    "status": "new",
-    "priority": "normal",
-    "channel": "web",
-    "source": "public_form",
-    "agent_id": "",
-    "requester_name": "Amina",
-    "requester_email": "amina@example.com",
-    "requester_phone": "+254712345678",
-    "description": "First 500 characters of the description",
-    "created_at": "2026-11-13T09:00:00Z"
-  }
-}
-```
-
-**ticketing.ticket.assigned**: the shared keys plus `agent_id` (the new assignee) and `agent_email`.
-
-**ticketing.ticket.comment_added**: published for a public agent reply only. The shared keys plus
-`comment_id`, `comment` (first 500 characters), `author_id`, `author_type` (`agent`) and
-`agent_email` (the replying agent).
-
-**ticketing.ticket.status_changed**: every status change except to resolved. The shared keys plus
-`old_status` and `new_status`.
-
-**ticketing.ticket.resolved**: the shared keys (so the customer is told, not only the tenant) plus
-`old_status`, `new_status` (`resolved`) and `resolved_at`.
-
-**ticketing.sla.first_response_breached** and **ticketing.sla.resolution_breached**
-
-Published by the SLA worker (`cmd/worker`) on the `ticketing` stream once per breach (another
-replica that already recorded it publishes nothing). notifications-api's ticketing consumer
-alerts the assigned agent (`agent_email`), or the tenant's support contact when there is none. The
-payload never carries the requester's contact.
-```json
-{
-  "id": "uuid",
-  "event_type": "sla.first_response_breached",
-  "aggregate_type": "ticketing",
-  "tenant_id": "tenant-uuid",
-  "payload": {
-    "ticket_id": "ticket-uuid",
-    "ticket_number": "TKT-1042",
-    "subject": "Printer down",
-    "priority": "high",
-    "status": "open",
-    "agent_id": "agent-uuid",
-    "agent_email": "agent@example.com",
-    "team_id": "team-uuid",
-    "response_breached": true,
-    "resolution_breached": false,
-    "event_type": "sla.first_response_breached"
-  }
-}
-```
-
-#### Inbound Events (Consumed by Ticketing Service)
-
-**projects.issue.created**
-```json
-{
-  "event_id": "uuid",
-  "event_type": "projects.issue.created",
-  "tenant_id": "tenant-uuid",
-  "timestamp": "2024-12-05T10:30:00Z",
-  "data": {
-    "issue_id": "issue-uuid",
-    "project_id": "project-uuid",
-    "title": "Issue title",
-    "description": "Issue description"
-  }
-}
-```
-
-**treasury.payment.failed**
-```json
-{
-  "event_id": "uuid",
-  "event_type": "treasury.payment.failed",
-  "tenant_id": "tenant-uuid",
-  "timestamp": "2024-12-05T10:30:00Z",
-  "data": {
-    "payment_id": "payment-uuid",
-    "customer_id": "customer-uuid",
-    "amount": 1000.00
-  }
-}
-```
-
----
-
-## Integration Security
-
-### Authentication
-
-**JWT Tokens**:
-- Validated via `shared/auth-client` library
-- JWKS from auth-service
-- Token claims include tenant_id for scoping
-
-**API Keys** (Service-to-Service):
-- Stored in K8s secrets
-- Rotated quarterly
-
-### Authorization
-
-**Tenant Isolation**:
-- All requests scoped by tenant_id
-- Ticket access isolated per tenant
-- Data isolation enforced at database level
-
-### Secrets Management
-
-**Encryption**:
-- Secrets encrypted at rest (AES-256-GCM)
-- Decrypted only when used
-- Key rotation every 90 days
-
----
-
-## Error Handling & Resilience
-
-### Retry Policies
-
-**Exponential Backoff**:
-- Initial delay: 1 second
-- Max delay: 30 seconds
-- Max retries: 3
-
-### Circuit Breaker
-
-**Implementation**:
-- Opens after 5 consecutive failures
-- Half-open after 60 seconds
-- Closes on successful request
-
-### Monitoring
-
-**Metrics**:
-- API call latency (p50, p95, p99)
-- API call success/failure rates
-- Event publishing success rates
-- Ticket creation rate
-- SLA compliance rate
-
-**Alerts**:
-- High failure rate (>5%)
-- Service unavailability
-- Event delivery failures
-- SLA breach threshold exceeded
-
----
+- Internal routes check `X-API-Key` with `httpware.ValidServiceKey` and require `X-Tenant-ID`.
+- Protected routes run the full auth chain, including the tenant guard that refuses a URL tenant other than the token's.
+- Public routes need an OTP token or a ticket access token, and public creates are rate limited per IP and per verified email.
+- Secrets come from Kubernetes secrets as environment variables. Nothing in this repository holds a real key.
 
 ## References
 
-- [Auth Service Integration](../auth-service/auth-api/docs/integrations.md)
-- [Notifications Service Integration](../../../../notifications-service/notifications-api/docs/integrations.md) (its ticketing consumer turns the ticket events above into email)
-- [Projects Service Integration](../projects-service/projects-api/docs/integrations.md)
-- [Treasury Service Integration](../finance-service/treasury-api/docs/integrations.md)
-
+- [Architecture](architecture.md)
+- [ERD](erd.md)
+- [Plan](plan.md)
