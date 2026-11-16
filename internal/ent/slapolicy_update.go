@@ -132,20 +132,6 @@ func (_u *SLAPolicyUpdate) AddFirstResponseMinutes(v int) *SLAPolicyUpdate {
 	return _u
 }
 
-// SetFirstResponseBusinessHours sets the "first_response_business_hours" field.
-func (_u *SLAPolicyUpdate) SetFirstResponseBusinessHours(v bool) *SLAPolicyUpdate {
-	_u.mutation.SetFirstResponseBusinessHours(v)
-	return _u
-}
-
-// SetNillableFirstResponseBusinessHours sets the "first_response_business_hours" field if the given value is not nil.
-func (_u *SLAPolicyUpdate) SetNillableFirstResponseBusinessHours(v *bool) *SLAPolicyUpdate {
-	if v != nil {
-		_u.SetFirstResponseBusinessHours(*v)
-	}
-	return _u
-}
-
 // SetResolutionMinutes sets the "resolution_minutes" field.
 func (_u *SLAPolicyUpdate) SetResolutionMinutes(v int) *SLAPolicyUpdate {
 	_u.mutation.ResetResolutionMinutes()
@@ -167,17 +153,23 @@ func (_u *SLAPolicyUpdate) AddResolutionMinutes(v int) *SLAPolicyUpdate {
 	return _u
 }
 
-// SetResolutionBusinessHours sets the "resolution_business_hours" field.
-func (_u *SLAPolicyUpdate) SetResolutionBusinessHours(v bool) *SLAPolicyUpdate {
-	_u.mutation.SetResolutionBusinessHours(v)
+// SetCalendarID sets the "calendar_id" field.
+func (_u *SLAPolicyUpdate) SetCalendarID(v uuid.UUID) *SLAPolicyUpdate {
+	_u.mutation.SetCalendarID(v)
 	return _u
 }
 
-// SetNillableResolutionBusinessHours sets the "resolution_business_hours" field if the given value is not nil.
-func (_u *SLAPolicyUpdate) SetNillableResolutionBusinessHours(v *bool) *SLAPolicyUpdate {
+// SetNillableCalendarID sets the "calendar_id" field if the given value is not nil.
+func (_u *SLAPolicyUpdate) SetNillableCalendarID(v *uuid.UUID) *SLAPolicyUpdate {
 	if v != nil {
-		_u.SetResolutionBusinessHours(*v)
+		_u.SetCalendarID(*v)
 	}
+	return _u
+}
+
+// ClearCalendarID clears the value of the "calendar_id" field.
+func (_u *SLAPolicyUpdate) ClearCalendarID() *SLAPolicyUpdate {
+	_u.mutation.ClearCalendarID()
 	return _u
 }
 
@@ -213,18 +205,6 @@ func (_u *SLAPolicyUpdate) SetNillableSortOrder(v *int) *SLAPolicyUpdate {
 // AddSortOrder adds value to the "sort_order" field.
 func (_u *SLAPolicyUpdate) AddSortOrder(v int) *SLAPolicyUpdate {
 	_u.mutation.AddSortOrder(v)
-	return _u
-}
-
-// SetBusinessHours sets the "business_hours" field.
-func (_u *SLAPolicyUpdate) SetBusinessHours(v map[string]interface{}) *SLAPolicyUpdate {
-	_u.mutation.SetBusinessHours(v)
-	return _u
-}
-
-// ClearBusinessHours clears the value of the "business_hours" field.
-func (_u *SLAPolicyUpdate) ClearBusinessHours() *SLAPolicyUpdate {
-	_u.mutation.ClearBusinessHours()
 	return _u
 }
 
@@ -341,17 +321,17 @@ func (_u *SLAPolicyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedFirstResponseMinutes(); ok {
 		_spec.AddField(slapolicy.FieldFirstResponseMinutes, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.FirstResponseBusinessHours(); ok {
-		_spec.SetField(slapolicy.FieldFirstResponseBusinessHours, field.TypeBool, value)
-	}
 	if value, ok := _u.mutation.ResolutionMinutes(); ok {
 		_spec.SetField(slapolicy.FieldResolutionMinutes, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedResolutionMinutes(); ok {
 		_spec.AddField(slapolicy.FieldResolutionMinutes, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.ResolutionBusinessHours(); ok {
-		_spec.SetField(slapolicy.FieldResolutionBusinessHours, field.TypeBool, value)
+	if value, ok := _u.mutation.CalendarID(); ok {
+		_spec.SetField(slapolicy.FieldCalendarID, field.TypeUUID, value)
+	}
+	if _u.mutation.CalendarIDCleared() {
+		_spec.ClearField(slapolicy.FieldCalendarID, field.TypeUUID)
 	}
 	if value, ok := _u.mutation.IsActive(); ok {
 		_spec.SetField(slapolicy.FieldIsActive, field.TypeBool, value)
@@ -361,12 +341,6 @@ func (_u *SLAPolicyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedSortOrder(); ok {
 		_spec.AddField(slapolicy.FieldSortOrder, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.BusinessHours(); ok {
-		_spec.SetField(slapolicy.FieldBusinessHours, field.TypeJSON, value)
-	}
-	if _u.mutation.BusinessHoursCleared() {
-		_spec.ClearField(slapolicy.FieldBusinessHours, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Metadata(); ok {
 		_spec.SetField(slapolicy.FieldMetadata, field.TypeJSON, value)
@@ -500,20 +474,6 @@ func (_u *SLAPolicyUpdateOne) AddFirstResponseMinutes(v int) *SLAPolicyUpdateOne
 	return _u
 }
 
-// SetFirstResponseBusinessHours sets the "first_response_business_hours" field.
-func (_u *SLAPolicyUpdateOne) SetFirstResponseBusinessHours(v bool) *SLAPolicyUpdateOne {
-	_u.mutation.SetFirstResponseBusinessHours(v)
-	return _u
-}
-
-// SetNillableFirstResponseBusinessHours sets the "first_response_business_hours" field if the given value is not nil.
-func (_u *SLAPolicyUpdateOne) SetNillableFirstResponseBusinessHours(v *bool) *SLAPolicyUpdateOne {
-	if v != nil {
-		_u.SetFirstResponseBusinessHours(*v)
-	}
-	return _u
-}
-
 // SetResolutionMinutes sets the "resolution_minutes" field.
 func (_u *SLAPolicyUpdateOne) SetResolutionMinutes(v int) *SLAPolicyUpdateOne {
 	_u.mutation.ResetResolutionMinutes()
@@ -535,17 +495,23 @@ func (_u *SLAPolicyUpdateOne) AddResolutionMinutes(v int) *SLAPolicyUpdateOne {
 	return _u
 }
 
-// SetResolutionBusinessHours sets the "resolution_business_hours" field.
-func (_u *SLAPolicyUpdateOne) SetResolutionBusinessHours(v bool) *SLAPolicyUpdateOne {
-	_u.mutation.SetResolutionBusinessHours(v)
+// SetCalendarID sets the "calendar_id" field.
+func (_u *SLAPolicyUpdateOne) SetCalendarID(v uuid.UUID) *SLAPolicyUpdateOne {
+	_u.mutation.SetCalendarID(v)
 	return _u
 }
 
-// SetNillableResolutionBusinessHours sets the "resolution_business_hours" field if the given value is not nil.
-func (_u *SLAPolicyUpdateOne) SetNillableResolutionBusinessHours(v *bool) *SLAPolicyUpdateOne {
+// SetNillableCalendarID sets the "calendar_id" field if the given value is not nil.
+func (_u *SLAPolicyUpdateOne) SetNillableCalendarID(v *uuid.UUID) *SLAPolicyUpdateOne {
 	if v != nil {
-		_u.SetResolutionBusinessHours(*v)
+		_u.SetCalendarID(*v)
 	}
+	return _u
+}
+
+// ClearCalendarID clears the value of the "calendar_id" field.
+func (_u *SLAPolicyUpdateOne) ClearCalendarID() *SLAPolicyUpdateOne {
+	_u.mutation.ClearCalendarID()
 	return _u
 }
 
@@ -581,18 +547,6 @@ func (_u *SLAPolicyUpdateOne) SetNillableSortOrder(v *int) *SLAPolicyUpdateOne {
 // AddSortOrder adds value to the "sort_order" field.
 func (_u *SLAPolicyUpdateOne) AddSortOrder(v int) *SLAPolicyUpdateOne {
 	_u.mutation.AddSortOrder(v)
-	return _u
-}
-
-// SetBusinessHours sets the "business_hours" field.
-func (_u *SLAPolicyUpdateOne) SetBusinessHours(v map[string]interface{}) *SLAPolicyUpdateOne {
-	_u.mutation.SetBusinessHours(v)
-	return _u
-}
-
-// ClearBusinessHours clears the value of the "business_hours" field.
-func (_u *SLAPolicyUpdateOne) ClearBusinessHours() *SLAPolicyUpdateOne {
-	_u.mutation.ClearBusinessHours()
 	return _u
 }
 
@@ -739,17 +693,17 @@ func (_u *SLAPolicyUpdateOne) sqlSave(ctx context.Context) (_node *SLAPolicy, er
 	if value, ok := _u.mutation.AddedFirstResponseMinutes(); ok {
 		_spec.AddField(slapolicy.FieldFirstResponseMinutes, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.FirstResponseBusinessHours(); ok {
-		_spec.SetField(slapolicy.FieldFirstResponseBusinessHours, field.TypeBool, value)
-	}
 	if value, ok := _u.mutation.ResolutionMinutes(); ok {
 		_spec.SetField(slapolicy.FieldResolutionMinutes, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedResolutionMinutes(); ok {
 		_spec.AddField(slapolicy.FieldResolutionMinutes, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.ResolutionBusinessHours(); ok {
-		_spec.SetField(slapolicy.FieldResolutionBusinessHours, field.TypeBool, value)
+	if value, ok := _u.mutation.CalendarID(); ok {
+		_spec.SetField(slapolicy.FieldCalendarID, field.TypeUUID, value)
+	}
+	if _u.mutation.CalendarIDCleared() {
+		_spec.ClearField(slapolicy.FieldCalendarID, field.TypeUUID)
 	}
 	if value, ok := _u.mutation.IsActive(); ok {
 		_spec.SetField(slapolicy.FieldIsActive, field.TypeBool, value)
@@ -759,12 +713,6 @@ func (_u *SLAPolicyUpdateOne) sqlSave(ctx context.Context) (_node *SLAPolicy, er
 	}
 	if value, ok := _u.mutation.AddedSortOrder(); ok {
 		_spec.AddField(slapolicy.FieldSortOrder, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.BusinessHours(); ok {
-		_spec.SetField(slapolicy.FieldBusinessHours, field.TypeJSON, value)
-	}
-	if _u.mutation.BusinessHoursCleared() {
-		_spec.ClearField(slapolicy.FieldBusinessHours, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Metadata(); ok {
 		_spec.SetField(slapolicy.FieldMetadata, field.TypeJSON, value)

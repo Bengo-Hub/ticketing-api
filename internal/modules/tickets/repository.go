@@ -61,6 +61,9 @@ type Repository interface {
 	AgentEmails(ctx context.Context, tenantID uuid.UUID, agentIDs []uuid.UUID) (map[uuid.UUID]string, error)
 	// TeamExists reports whether the team belongs to the tenant.
 	TeamExists(ctx context.Context, tenantID uuid.UUID, teamID uuid.UUID) (bool, error)
+	// TeamAlertEmails returns who hears about a team's SLA alerts: its active supervisors and
+	// admins, or all its active agents when it has none, at most 20.
+	TeamAlertEmails(ctx context.Context, tenantID uuid.UUID, teamID uuid.UUID) ([]string, error)
 
 	// Saved views
 	CreateView(ctx context.Context, tenantID uuid.UUID, v *TicketView) error
@@ -104,4 +107,19 @@ type Repository interface {
 
 	// ListTicketsPendingBreach returns open tickets with past-due SLA targets, across tenants.
 	ListTicketsPendingBreach(ctx context.Context, now time.Time, limit int) ([]*Ticket, error)
+
+	// UpdateSLA writes the SLA columns the update names.
+	UpdateSLA(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, u SLAUpdate) error
+	// ListBreachWarnings returns targets due within their policy's notify_before_breach_min and
+	// not yet warned, across tenants, soonest first.
+	ListBreachWarnings(ctx context.Context, now time.Time, limit int) ([]BreachWarning, error)
+	// MarkSLAWarned records the warning for one target in ticket metadata; changed is false when
+	// it was already recorded.
+	MarkSLAWarned(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, target string, at time.Time) (changed bool, err error)
+	// ListEscalationsDue returns tickets whose next escalation rule is due, across tenants.
+	ListEscalationsDue(ctx context.Context, now time.Time, limit int) ([]EscalationDue, error)
+	// Escalate moves a ticket from fromLevel to fromLevel+1 with the new priority and team (nil
+	// leaves each alone; a new team clears the agent). changed is false when another run already
+	// moved the level.
+	Escalate(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, fromLevel int, priority *TicketPriority, teamID *uuid.UUID, at time.Time) (changed bool, err error)
 }

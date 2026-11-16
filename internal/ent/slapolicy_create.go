@@ -76,36 +76,22 @@ func (_c *SLAPolicyCreate) SetFirstResponseMinutes(v int) *SLAPolicyCreate {
 	return _c
 }
 
-// SetFirstResponseBusinessHours sets the "first_response_business_hours" field.
-func (_c *SLAPolicyCreate) SetFirstResponseBusinessHours(v bool) *SLAPolicyCreate {
-	_c.mutation.SetFirstResponseBusinessHours(v)
-	return _c
-}
-
-// SetNillableFirstResponseBusinessHours sets the "first_response_business_hours" field if the given value is not nil.
-func (_c *SLAPolicyCreate) SetNillableFirstResponseBusinessHours(v *bool) *SLAPolicyCreate {
-	if v != nil {
-		_c.SetFirstResponseBusinessHours(*v)
-	}
-	return _c
-}
-
 // SetResolutionMinutes sets the "resolution_minutes" field.
 func (_c *SLAPolicyCreate) SetResolutionMinutes(v int) *SLAPolicyCreate {
 	_c.mutation.SetResolutionMinutes(v)
 	return _c
 }
 
-// SetResolutionBusinessHours sets the "resolution_business_hours" field.
-func (_c *SLAPolicyCreate) SetResolutionBusinessHours(v bool) *SLAPolicyCreate {
-	_c.mutation.SetResolutionBusinessHours(v)
+// SetCalendarID sets the "calendar_id" field.
+func (_c *SLAPolicyCreate) SetCalendarID(v uuid.UUID) *SLAPolicyCreate {
+	_c.mutation.SetCalendarID(v)
 	return _c
 }
 
-// SetNillableResolutionBusinessHours sets the "resolution_business_hours" field if the given value is not nil.
-func (_c *SLAPolicyCreate) SetNillableResolutionBusinessHours(v *bool) *SLAPolicyCreate {
+// SetNillableCalendarID sets the "calendar_id" field if the given value is not nil.
+func (_c *SLAPolicyCreate) SetNillableCalendarID(v *uuid.UUID) *SLAPolicyCreate {
 	if v != nil {
-		_c.SetResolutionBusinessHours(*v)
+		_c.SetCalendarID(*v)
 	}
 	return _c
 }
@@ -135,12 +121,6 @@ func (_c *SLAPolicyCreate) SetNillableSortOrder(v *int) *SLAPolicyCreate {
 	if v != nil {
 		_c.SetSortOrder(*v)
 	}
-	return _c
-}
-
-// SetBusinessHours sets the "business_hours" field.
-func (_c *SLAPolicyCreate) SetBusinessHours(v map[string]interface{}) *SLAPolicyCreate {
-	_c.mutation.SetBusinessHours(v)
 	return _c
 }
 
@@ -227,14 +207,6 @@ func (_c *SLAPolicyCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *SLAPolicyCreate) defaults() {
-	if _, ok := _c.mutation.FirstResponseBusinessHours(); !ok {
-		v := slapolicy.DefaultFirstResponseBusinessHours
-		_c.mutation.SetFirstResponseBusinessHours(v)
-	}
-	if _, ok := _c.mutation.ResolutionBusinessHours(); !ok {
-		v := slapolicy.DefaultResolutionBusinessHours
-		_c.mutation.SetResolutionBusinessHours(v)
-	}
 	if _, ok := _c.mutation.IsActive(); !ok {
 		v := slapolicy.DefaultIsActive
 		_c.mutation.SetIsActive(v)
@@ -281,14 +253,8 @@ func (_c *SLAPolicyCreate) check() error {
 	if _, ok := _c.mutation.FirstResponseMinutes(); !ok {
 		return &ValidationError{Name: "first_response_minutes", err: errors.New(`ent: missing required field "SLAPolicy.first_response_minutes"`)}
 	}
-	if _, ok := _c.mutation.FirstResponseBusinessHours(); !ok {
-		return &ValidationError{Name: "first_response_business_hours", err: errors.New(`ent: missing required field "SLAPolicy.first_response_business_hours"`)}
-	}
 	if _, ok := _c.mutation.ResolutionMinutes(); !ok {
 		return &ValidationError{Name: "resolution_minutes", err: errors.New(`ent: missing required field "SLAPolicy.resolution_minutes"`)}
-	}
-	if _, ok := _c.mutation.ResolutionBusinessHours(); !ok {
-		return &ValidationError{Name: "resolution_business_hours", err: errors.New(`ent: missing required field "SLAPolicy.resolution_business_hours"`)}
 	}
 	if _, ok := _c.mutation.IsActive(); !ok {
 		return &ValidationError{Name: "is_active", err: errors.New(`ent: missing required field "SLAPolicy.is_active"`)}
@@ -362,17 +328,13 @@ func (_c *SLAPolicyCreate) createSpec() (*SLAPolicy, *sqlgraph.CreateSpec) {
 		_spec.SetField(slapolicy.FieldFirstResponseMinutes, field.TypeInt, value)
 		_node.FirstResponseMinutes = value
 	}
-	if value, ok := _c.mutation.FirstResponseBusinessHours(); ok {
-		_spec.SetField(slapolicy.FieldFirstResponseBusinessHours, field.TypeBool, value)
-		_node.FirstResponseBusinessHours = value
-	}
 	if value, ok := _c.mutation.ResolutionMinutes(); ok {
 		_spec.SetField(slapolicy.FieldResolutionMinutes, field.TypeInt, value)
 		_node.ResolutionMinutes = value
 	}
-	if value, ok := _c.mutation.ResolutionBusinessHours(); ok {
-		_spec.SetField(slapolicy.FieldResolutionBusinessHours, field.TypeBool, value)
-		_node.ResolutionBusinessHours = value
+	if value, ok := _c.mutation.CalendarID(); ok {
+		_spec.SetField(slapolicy.FieldCalendarID, field.TypeUUID, value)
+		_node.CalendarID = &value
 	}
 	if value, ok := _c.mutation.IsActive(); ok {
 		_spec.SetField(slapolicy.FieldIsActive, field.TypeBool, value)
@@ -381,10 +343,6 @@ func (_c *SLAPolicyCreate) createSpec() (*SLAPolicy, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.SortOrder(); ok {
 		_spec.SetField(slapolicy.FieldSortOrder, field.TypeInt, value)
 		_node.SortOrder = value
-	}
-	if value, ok := _c.mutation.BusinessHours(); ok {
-		_spec.SetField(slapolicy.FieldBusinessHours, field.TypeJSON, value)
-		_node.BusinessHours = value
 	}
 	if value, ok := _c.mutation.Metadata(); ok {
 		_spec.SetField(slapolicy.FieldMetadata, field.TypeJSON, value)
@@ -540,18 +498,6 @@ func (u *SLAPolicyUpsert) AddFirstResponseMinutes(v int) *SLAPolicyUpsert {
 	return u
 }
 
-// SetFirstResponseBusinessHours sets the "first_response_business_hours" field.
-func (u *SLAPolicyUpsert) SetFirstResponseBusinessHours(v bool) *SLAPolicyUpsert {
-	u.Set(slapolicy.FieldFirstResponseBusinessHours, v)
-	return u
-}
-
-// UpdateFirstResponseBusinessHours sets the "first_response_business_hours" field to the value that was provided on create.
-func (u *SLAPolicyUpsert) UpdateFirstResponseBusinessHours() *SLAPolicyUpsert {
-	u.SetExcluded(slapolicy.FieldFirstResponseBusinessHours)
-	return u
-}
-
 // SetResolutionMinutes sets the "resolution_minutes" field.
 func (u *SLAPolicyUpsert) SetResolutionMinutes(v int) *SLAPolicyUpsert {
 	u.Set(slapolicy.FieldResolutionMinutes, v)
@@ -570,15 +516,21 @@ func (u *SLAPolicyUpsert) AddResolutionMinutes(v int) *SLAPolicyUpsert {
 	return u
 }
 
-// SetResolutionBusinessHours sets the "resolution_business_hours" field.
-func (u *SLAPolicyUpsert) SetResolutionBusinessHours(v bool) *SLAPolicyUpsert {
-	u.Set(slapolicy.FieldResolutionBusinessHours, v)
+// SetCalendarID sets the "calendar_id" field.
+func (u *SLAPolicyUpsert) SetCalendarID(v uuid.UUID) *SLAPolicyUpsert {
+	u.Set(slapolicy.FieldCalendarID, v)
 	return u
 }
 
-// UpdateResolutionBusinessHours sets the "resolution_business_hours" field to the value that was provided on create.
-func (u *SLAPolicyUpsert) UpdateResolutionBusinessHours() *SLAPolicyUpsert {
-	u.SetExcluded(slapolicy.FieldResolutionBusinessHours)
+// UpdateCalendarID sets the "calendar_id" field to the value that was provided on create.
+func (u *SLAPolicyUpsert) UpdateCalendarID() *SLAPolicyUpsert {
+	u.SetExcluded(slapolicy.FieldCalendarID)
+	return u
+}
+
+// ClearCalendarID clears the value of the "calendar_id" field.
+func (u *SLAPolicyUpsert) ClearCalendarID() *SLAPolicyUpsert {
+	u.SetNull(slapolicy.FieldCalendarID)
 	return u
 }
 
@@ -609,24 +561,6 @@ func (u *SLAPolicyUpsert) UpdateSortOrder() *SLAPolicyUpsert {
 // AddSortOrder adds v to the "sort_order" field.
 func (u *SLAPolicyUpsert) AddSortOrder(v int) *SLAPolicyUpsert {
 	u.Add(slapolicy.FieldSortOrder, v)
-	return u
-}
-
-// SetBusinessHours sets the "business_hours" field.
-func (u *SLAPolicyUpsert) SetBusinessHours(v map[string]interface{}) *SLAPolicyUpsert {
-	u.Set(slapolicy.FieldBusinessHours, v)
-	return u
-}
-
-// UpdateBusinessHours sets the "business_hours" field to the value that was provided on create.
-func (u *SLAPolicyUpsert) UpdateBusinessHours() *SLAPolicyUpsert {
-	u.SetExcluded(slapolicy.FieldBusinessHours)
-	return u
-}
-
-// ClearBusinessHours clears the value of the "business_hours" field.
-func (u *SLAPolicyUpsert) ClearBusinessHours() *SLAPolicyUpsert {
-	u.SetNull(slapolicy.FieldBusinessHours)
 	return u
 }
 
@@ -816,20 +750,6 @@ func (u *SLAPolicyUpsertOne) UpdateFirstResponseMinutes() *SLAPolicyUpsertOne {
 	})
 }
 
-// SetFirstResponseBusinessHours sets the "first_response_business_hours" field.
-func (u *SLAPolicyUpsertOne) SetFirstResponseBusinessHours(v bool) *SLAPolicyUpsertOne {
-	return u.Update(func(s *SLAPolicyUpsert) {
-		s.SetFirstResponseBusinessHours(v)
-	})
-}
-
-// UpdateFirstResponseBusinessHours sets the "first_response_business_hours" field to the value that was provided on create.
-func (u *SLAPolicyUpsertOne) UpdateFirstResponseBusinessHours() *SLAPolicyUpsertOne {
-	return u.Update(func(s *SLAPolicyUpsert) {
-		s.UpdateFirstResponseBusinessHours()
-	})
-}
-
 // SetResolutionMinutes sets the "resolution_minutes" field.
 func (u *SLAPolicyUpsertOne) SetResolutionMinutes(v int) *SLAPolicyUpsertOne {
 	return u.Update(func(s *SLAPolicyUpsert) {
@@ -851,17 +771,24 @@ func (u *SLAPolicyUpsertOne) UpdateResolutionMinutes() *SLAPolicyUpsertOne {
 	})
 }
 
-// SetResolutionBusinessHours sets the "resolution_business_hours" field.
-func (u *SLAPolicyUpsertOne) SetResolutionBusinessHours(v bool) *SLAPolicyUpsertOne {
+// SetCalendarID sets the "calendar_id" field.
+func (u *SLAPolicyUpsertOne) SetCalendarID(v uuid.UUID) *SLAPolicyUpsertOne {
 	return u.Update(func(s *SLAPolicyUpsert) {
-		s.SetResolutionBusinessHours(v)
+		s.SetCalendarID(v)
 	})
 }
 
-// UpdateResolutionBusinessHours sets the "resolution_business_hours" field to the value that was provided on create.
-func (u *SLAPolicyUpsertOne) UpdateResolutionBusinessHours() *SLAPolicyUpsertOne {
+// UpdateCalendarID sets the "calendar_id" field to the value that was provided on create.
+func (u *SLAPolicyUpsertOne) UpdateCalendarID() *SLAPolicyUpsertOne {
 	return u.Update(func(s *SLAPolicyUpsert) {
-		s.UpdateResolutionBusinessHours()
+		s.UpdateCalendarID()
+	})
+}
+
+// ClearCalendarID clears the value of the "calendar_id" field.
+func (u *SLAPolicyUpsertOne) ClearCalendarID() *SLAPolicyUpsertOne {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.ClearCalendarID()
 	})
 }
 
@@ -897,27 +824,6 @@ func (u *SLAPolicyUpsertOne) AddSortOrder(v int) *SLAPolicyUpsertOne {
 func (u *SLAPolicyUpsertOne) UpdateSortOrder() *SLAPolicyUpsertOne {
 	return u.Update(func(s *SLAPolicyUpsert) {
 		s.UpdateSortOrder()
-	})
-}
-
-// SetBusinessHours sets the "business_hours" field.
-func (u *SLAPolicyUpsertOne) SetBusinessHours(v map[string]interface{}) *SLAPolicyUpsertOne {
-	return u.Update(func(s *SLAPolicyUpsert) {
-		s.SetBusinessHours(v)
-	})
-}
-
-// UpdateBusinessHours sets the "business_hours" field to the value that was provided on create.
-func (u *SLAPolicyUpsertOne) UpdateBusinessHours() *SLAPolicyUpsertOne {
-	return u.Update(func(s *SLAPolicyUpsert) {
-		s.UpdateBusinessHours()
-	})
-}
-
-// ClearBusinessHours clears the value of the "business_hours" field.
-func (u *SLAPolicyUpsertOne) ClearBusinessHours() *SLAPolicyUpsertOne {
-	return u.Update(func(s *SLAPolicyUpsert) {
-		s.ClearBusinessHours()
 	})
 }
 
@@ -1279,20 +1185,6 @@ func (u *SLAPolicyUpsertBulk) UpdateFirstResponseMinutes() *SLAPolicyUpsertBulk 
 	})
 }
 
-// SetFirstResponseBusinessHours sets the "first_response_business_hours" field.
-func (u *SLAPolicyUpsertBulk) SetFirstResponseBusinessHours(v bool) *SLAPolicyUpsertBulk {
-	return u.Update(func(s *SLAPolicyUpsert) {
-		s.SetFirstResponseBusinessHours(v)
-	})
-}
-
-// UpdateFirstResponseBusinessHours sets the "first_response_business_hours" field to the value that was provided on create.
-func (u *SLAPolicyUpsertBulk) UpdateFirstResponseBusinessHours() *SLAPolicyUpsertBulk {
-	return u.Update(func(s *SLAPolicyUpsert) {
-		s.UpdateFirstResponseBusinessHours()
-	})
-}
-
 // SetResolutionMinutes sets the "resolution_minutes" field.
 func (u *SLAPolicyUpsertBulk) SetResolutionMinutes(v int) *SLAPolicyUpsertBulk {
 	return u.Update(func(s *SLAPolicyUpsert) {
@@ -1314,17 +1206,24 @@ func (u *SLAPolicyUpsertBulk) UpdateResolutionMinutes() *SLAPolicyUpsertBulk {
 	})
 }
 
-// SetResolutionBusinessHours sets the "resolution_business_hours" field.
-func (u *SLAPolicyUpsertBulk) SetResolutionBusinessHours(v bool) *SLAPolicyUpsertBulk {
+// SetCalendarID sets the "calendar_id" field.
+func (u *SLAPolicyUpsertBulk) SetCalendarID(v uuid.UUID) *SLAPolicyUpsertBulk {
 	return u.Update(func(s *SLAPolicyUpsert) {
-		s.SetResolutionBusinessHours(v)
+		s.SetCalendarID(v)
 	})
 }
 
-// UpdateResolutionBusinessHours sets the "resolution_business_hours" field to the value that was provided on create.
-func (u *SLAPolicyUpsertBulk) UpdateResolutionBusinessHours() *SLAPolicyUpsertBulk {
+// UpdateCalendarID sets the "calendar_id" field to the value that was provided on create.
+func (u *SLAPolicyUpsertBulk) UpdateCalendarID() *SLAPolicyUpsertBulk {
 	return u.Update(func(s *SLAPolicyUpsert) {
-		s.UpdateResolutionBusinessHours()
+		s.UpdateCalendarID()
+	})
+}
+
+// ClearCalendarID clears the value of the "calendar_id" field.
+func (u *SLAPolicyUpsertBulk) ClearCalendarID() *SLAPolicyUpsertBulk {
+	return u.Update(func(s *SLAPolicyUpsert) {
+		s.ClearCalendarID()
 	})
 }
 
@@ -1360,27 +1259,6 @@ func (u *SLAPolicyUpsertBulk) AddSortOrder(v int) *SLAPolicyUpsertBulk {
 func (u *SLAPolicyUpsertBulk) UpdateSortOrder() *SLAPolicyUpsertBulk {
 	return u.Update(func(s *SLAPolicyUpsert) {
 		s.UpdateSortOrder()
-	})
-}
-
-// SetBusinessHours sets the "business_hours" field.
-func (u *SLAPolicyUpsertBulk) SetBusinessHours(v map[string]interface{}) *SLAPolicyUpsertBulk {
-	return u.Update(func(s *SLAPolicyUpsert) {
-		s.SetBusinessHours(v)
-	})
-}
-
-// UpdateBusinessHours sets the "business_hours" field to the value that was provided on create.
-func (u *SLAPolicyUpsertBulk) UpdateBusinessHours() *SLAPolicyUpsertBulk {
-	return u.Update(func(s *SLAPolicyUpsert) {
-		s.UpdateBusinessHours()
-	})
-}
-
-// ClearBusinessHours clears the value of the "business_hours" field.
-func (u *SLAPolicyUpsertBulk) ClearBusinessHours() *SLAPolicyUpsertBulk {
-	return u.Update(func(s *SLAPolicyUpsert) {
-		s.ClearBusinessHours()
 	})
 }
 

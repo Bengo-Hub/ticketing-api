@@ -95,6 +95,25 @@ func (Ticket) Fields() []ent.Field {
 		field.Bool("sla_resolution_breached").
 			Default(false).
 			Comment("Whether resolution SLA was breached"),
+		field.UUID("sla_policy_id", uuid.UUID{}).
+			Optional().
+			Nillable().
+			Comment("SLA policy that set the deadlines; the worker joins it for warnings and escalation"),
+		field.Time("sla_paused_at").
+			Optional().
+			Nillable().
+			Comment("When the SLA clock stopped (pending status); null while it runs"),
+		field.Int("sla_paused_minutes").
+			Default(0).
+			Comment("Total minutes the SLA clock was stopped, in the policy's clock"),
+		field.Int("sla_first_response_minutes").
+			Optional().
+			Nillable().
+			Comment("Minutes from creation to first response in the policy's clock, net of pauses"),
+		field.Int("sla_resolution_minutes").
+			Optional().
+			Nillable().
+			Comment("Minutes from creation to resolution in the policy's clock, net of pauses"),
 		// Timestamps
 		field.Time("first_response_at").
 			Optional().

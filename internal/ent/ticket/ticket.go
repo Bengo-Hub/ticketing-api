@@ -54,6 +54,16 @@ const (
 	FieldSLAResponseBreached = "sla_response_breached"
 	// FieldSLAResolutionBreached holds the string denoting the sla_resolution_breached field in the database.
 	FieldSLAResolutionBreached = "sla_resolution_breached"
+	// FieldSLAPolicyID holds the string denoting the sla_policy_id field in the database.
+	FieldSLAPolicyID = "sla_policy_id"
+	// FieldSLAPausedAt holds the string denoting the sla_paused_at field in the database.
+	FieldSLAPausedAt = "sla_paused_at"
+	// FieldSLAPausedMinutes holds the string denoting the sla_paused_minutes field in the database.
+	FieldSLAPausedMinutes = "sla_paused_minutes"
+	// FieldSLAFirstResponseMinutes holds the string denoting the sla_first_response_minutes field in the database.
+	FieldSLAFirstResponseMinutes = "sla_first_response_minutes"
+	// FieldSLAResolutionMinutes holds the string denoting the sla_resolution_minutes field in the database.
+	FieldSLAResolutionMinutes = "sla_resolution_minutes"
 	// FieldFirstResponseAt holds the string denoting the first_response_at field in the database.
 	FieldFirstResponseAt = "first_response_at"
 	// FieldResolvedAt holds the string denoting the resolved_at field in the database.
@@ -138,6 +148,11 @@ var Columns = []string{
 	FieldSLAResolutionDueAt,
 	FieldSLAResponseBreached,
 	FieldSLAResolutionBreached,
+	FieldSLAPolicyID,
+	FieldSLAPausedAt,
+	FieldSLAPausedMinutes,
+	FieldSLAFirstResponseMinutes,
+	FieldSLAResolutionMinutes,
 	FieldFirstResponseAt,
 	FieldResolvedAt,
 	FieldClosedAt,
@@ -174,6 +189,8 @@ var (
 	DefaultSLAResponseBreached bool
 	// DefaultSLAResolutionBreached holds the default value on creation for the "sla_resolution_breached" field.
 	DefaultSLAResolutionBreached bool
+	// DefaultSLAPausedMinutes holds the default value on creation for the "sla_paused_minutes" field.
+	DefaultSLAPausedMinutes int
 	// DefaultEscalationLevel holds the default value on creation for the "escalation_level" field.
 	DefaultEscalationLevel int
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
@@ -379,6 +396,31 @@ func BySLAResponseBreached(opts ...sql.OrderTermOption) OrderOption {
 // BySLAResolutionBreached orders the results by the sla_resolution_breached field.
 func BySLAResolutionBreached(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSLAResolutionBreached, opts...).ToFunc()
+}
+
+// BySLAPolicyID orders the results by the sla_policy_id field.
+func BySLAPolicyID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSLAPolicyID, opts...).ToFunc()
+}
+
+// BySLAPausedAt orders the results by the sla_paused_at field.
+func BySLAPausedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSLAPausedAt, opts...).ToFunc()
+}
+
+// BySLAPausedMinutes orders the results by the sla_paused_minutes field.
+func BySLAPausedMinutes(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSLAPausedMinutes, opts...).ToFunc()
+}
+
+// BySLAFirstResponseMinutes orders the results by the sla_first_response_minutes field.
+func BySLAFirstResponseMinutes(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSLAFirstResponseMinutes, opts...).ToFunc()
+}
+
+// BySLAResolutionMinutes orders the results by the sla_resolution_minutes field.
+func BySLAResolutionMinutes(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSLAResolutionMinutes, opts...).ToFunc()
 }
 
 // ByFirstResponseAt orders the results by the first_response_at field.

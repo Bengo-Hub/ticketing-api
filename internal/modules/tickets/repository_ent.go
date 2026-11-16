@@ -128,7 +128,8 @@ func (r *EntRepository) CreateTicket(ctx context.Context, tenantID uuid.UUID, t 
 		SetNillableCrmContactID(t.CRMContactID).
 		SetNillableCrmLeadID(t.CRMLeadID).
 		SetNillableSLAResponseDueAt(t.SLAResponseDueAt).
-		SetNillableSLAResolutionDueAt(t.SLAResolutionDueAt)
+		SetNillableSLAResolutionDueAt(t.SLAResolutionDueAt).
+		SetNillableSLAPolicyID(t.SLAPolicyID)
 	if t.ExternalReference != "" {
 		create = create.SetExternalReference(t.ExternalReference)
 	}

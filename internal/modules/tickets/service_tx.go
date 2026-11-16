@@ -24,6 +24,11 @@ func (s *Service) statusTx(ctx context.Context, repo Repository, out *Outbox, te
 	if err := repo.UpdateTicketStatus(ctx, tenantID, ticketID, status); err != nil {
 		return from, err
 	}
+	now := s.now()
+	// The SLA clock stops on a pending status and restarts, with moved deadlines, when it ends.
+	if err := s.slaStatusTx(ctx, repo, ticket, status, now); err != nil {
+		return from, err
+	}
 	if status != StatusResolved {
 		// Every other change tells the requester where their ticket stands.
 		if status != from {
@@ -31,7 +36,6 @@ func (s *Service) statusTx(ctx context.Context, repo Repository, out *Outbox, te
 		}
 		return from, nil
 	}
-	now := s.now()
 	if ticket.SLAResolutionDueAt != nil && !ticket.SLAResolutionBreached && now.After(*ticket.SLAResolutionDueAt) {
 		if _, err := repo.MarkSLABreached(ctx, tenantID, ticketID, false, true); err != nil {
 			return from, err
@@ -147,10 +151,14 @@ func (s *Service) commentTx(ctx context.Context, repo Repository, out *Outbox, r
 	if !publicReply {
 		return comment, nil
 	}
+	late, err := s.slaFirstResponseTx(ctx, repo, ticket, s.now())
+	if err != nil {
+		return nil, err
+	}
 	if err := repo.MarkFirstResponse(ctx, req.TenantID, req.TicketID); err != nil {
 		return nil, err
 	}
-	if ticket.FirstResponseAt == nil && ticket.SLAResponseDueAt != nil && !ticket.SLAResponseBreached && s.now().After(*ticket.SLAResponseDueAt) {
+	if late {
 		if _, err := repo.MarkSLABreached(ctx, req.TenantID, req.TicketID, true, false); err != nil {
 			return nil, err
 		}

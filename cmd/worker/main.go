@@ -1,6 +1,7 @@
-// Command worker runs the SLA breach scan. It is the only process that runs it (the API pods do
-// not), and every tick is claimed fleet-wide through the shared cache, so a second worker replica
-// or a restart inside a period never repeats a scan.
+// Command worker runs the SLA scans: breaches, pre-breach warnings and escalations. It is the only
+// process that runs them (the API pods do not), and every scan of every tick is claimed fleet-wide
+// through the shared cache, so a second worker replica or a restart inside a period never repeats
+// one.
 package main
 
 import (
@@ -15,6 +16,7 @@ import (
 	entsql "entgo.io/ent/dialect/sql"
 	sharedcache "github.com/Bengo-Hub/cache"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
 	"github.com/bengobox/ticketing-service/internal/config"
@@ -25,10 +27,18 @@ import (
 )
 
 const (
-	pollInterval = 5 * time.Minute
-	breachBatch  = 200
-	runOnceKey   = "ticketing:sla-breach-scan"
+	// pollInterval is one minute so a warning lands close to its configured lead time.
+	pollInterval    = time.Minute
+	breachBatch     = 200
+	warningBatch    = 200
+	escalationBatch = 100
 )
+
+// scan is one SLA job, claimed per period under its own RunOnce key.
+type scan struct {
+	key string
+	run func(ctx context.Context, now time.Time)
+}
 
 func main() {
 	cfg, err := config.Load()
@@ -61,44 +71,52 @@ func main() {
 		log.Warn("worker: redis not reachable at startup; scans wait until it is", zap.Error(redisErr))
 	}
 
-	// Breach events go to the outbox in the breach's own transaction; the API pods relay them.
+	// Every event goes to the outbox in its change's own transaction; the API pods relay them.
 	repo := tickets.NewEntRepository(ormClient, db, events.NewOutbox(db))
 	svc := tickets.NewService(repo, log)
 
-	log.Info("sla breach worker started", zap.Duration("poll_interval", pollInterval))
-	tick := func() {
-		if rdb == nil {
-			// No Redis configured (local development): a single worker runs every tick.
-			runBreachCheck(ctx, repo, svc, log)
-			return
-		}
-		key := sharedcache.PeriodKey(runOnceKey, pollInterval)
-		ran, err := sharedcache.RunOnce(ctx, rdb, log, key, pollInterval, func(jobCtx context.Context) error {
-			runBreachCheck(jobCtx, repo, svc, log)
-			return nil
-		})
-		if err != nil {
-			log.Warn("sla breach scan skipped", zap.Bool("ran", ran), zap.Error(err))
-		}
+	scans := []scan{
+		{key: "ticketing:sla-breach-scan", run: func(c context.Context, now time.Time) { runBreachCheck(c, repo, svc, log, now) }},
+		{key: "ticketing:sla-warning-scan", run: func(c context.Context, now time.Time) { runWarnings(c, repo, svc, log, now) }},
+		{key: "ticketing:sla-escalation-scan", run: func(c context.Context, now time.Time) { runEscalations(c, repo, svc, log, now) }},
 	}
 
+	log.Info("sla worker started", zap.Duration("poll_interval", pollInterval))
 	ticker := time.NewTicker(pollInterval)
 	defer ticker.Stop()
-	tick()
+	tick(ctx, rdb, log, scans)
 	for {
 		select {
 		case <-ticker.C:
-			tick()
+			tick(ctx, rdb, log, scans)
 		case <-ctx.Done():
-			log.Info("sla breach worker stopping")
+			log.Info("sla worker stopping")
 			return
 		}
 	}
 }
 
+// tick runs each scan once per period across the fleet. Without Redis (local development) a
+// single worker runs every tick.
+func tick(ctx context.Context, rdb *redis.Client, log *zap.Logger, scans []scan) {
+	for _, s := range scans {
+		if rdb == nil {
+			s.run(ctx, time.Now())
+			continue
+		}
+		key := sharedcache.PeriodKey(s.key, pollInterval)
+		ran, err := sharedcache.RunOnce(ctx, rdb, log, key, pollInterval, func(jobCtx context.Context) error {
+			s.run(jobCtx, time.Now())
+			return nil
+		})
+		if err != nil {
+			log.Warn("sla scan skipped", zap.String("scan", s.key), zap.Bool("ran", ran), zap.Error(err))
+		}
+	}
+}
+
 // runBreachCheck records each due breach once, with its event, in one transaction per ticket.
-func runBreachCheck(ctx context.Context, repo tickets.Repository, svc *tickets.Service, log *zap.Logger) {
-	now := time.Now()
+func runBreachCheck(ctx context.Context, repo tickets.Repository, svc *tickets.Service, log *zap.Logger, now time.Time) {
 	due, err := repo.ListTicketsPendingBreach(ctx, now, breachBatch)
 	if err != nil {
 		log.Error("breach check: failed to list pending breaches", zap.Error(err))
@@ -112,6 +130,44 @@ func runBreachCheck(ctx context.Context, repo tickets.Repository, svc *tickets.S
 		}
 		if changed {
 			log.Info("breach recorded", zap.String("ticket_id", t.ID.String()))
+		}
+	}
+}
+
+// runWarnings records each due pre-breach warning once per ticket and target.
+func runWarnings(ctx context.Context, repo tickets.Repository, svc *tickets.Service, log *zap.Logger, now time.Time) {
+	due, err := repo.ListBreachWarnings(ctx, now, warningBatch)
+	if err != nil {
+		log.Error("warning scan: failed to list", zap.Error(err))
+		return
+	}
+	for _, w := range due {
+		changed, err := svc.RecordBreachWarning(ctx, w, now)
+		if err != nil {
+			log.Error("warning scan: failed to record", zap.String("ticket_id", w.TicketID.String()), zap.Error(err))
+			continue
+		}
+		if changed {
+			log.Info("breach warning recorded", zap.String("ticket_id", w.TicketID.String()), zap.String("target", w.Target))
+		}
+	}
+}
+
+// runEscalations applies each due escalation rule once, a bounded batch per tick.
+func runEscalations(ctx context.Context, repo tickets.Repository, svc *tickets.Service, log *zap.Logger, now time.Time) {
+	due, err := repo.ListEscalationsDue(ctx, now, escalationBatch)
+	if err != nil {
+		log.Error("escalation scan: failed to list", zap.Error(err))
+		return
+	}
+	for _, e := range due {
+		changed, err := svc.ApplyEscalation(ctx, e, now)
+		if err != nil {
+			log.Error("escalation scan: failed to apply", zap.String("ticket_id", e.TicketID.String()), zap.Error(err))
+			continue
+		}
+		if changed {
+			log.Info("ticket escalated", zap.String("ticket_id", e.TicketID.String()), zap.Int("level", e.Level+1))
 		}
 	}
 }

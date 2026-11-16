@@ -24,7 +24,7 @@ erDiagram
     ticketing_users ||--o{ user_role_assignments : "user_id"
 ```
 
-`ticket_sequences`, `sla_policies`, `routing_rules`, `kb_articles` and `outbox_events` stand alone and relate by `tenant_id` only. `tickets.assigned_team_id` and `ticket_attachments.comment_id` are plain columns with no foreign key.
+`ticket_sequences`, `sla_policies`, `business_calendars`, `routing_rules`, `kb_articles` and `outbox_events` stand alone and relate by `tenant_id` only. `tickets.assigned_team_id` and `ticket_attachments.comment_id` are plain columns with no foreign key.
 
 ## Tickets
 
@@ -49,11 +49,15 @@ erDiagram
 | `crm_contact_id`, `crm_lead_id` | uuid | marketflow CRM references |
 | `sla_response_due_at`, `sla_resolution_due_at` | timestamptz | SLA deadlines |
 | `sla_response_breached`, `sla_resolution_breached` | boolean | Default false |
+| `sla_policy_id` | uuid | Policy that set the deadlines, no FK; the worker joins it |
+| `sla_paused_at` | timestamptz | Set while a pending status stops the SLA clock |
+| `sla_paused_minutes` | bigint | Default 0. Total paused minutes in the policy's clock |
+| `sla_first_response_minutes`, `sla_resolution_minutes` | bigint | Elapsed minutes in the policy's clock, net of pauses; the SLA report averages them |
 | `first_response_at`, `resolved_at`, `closed_at`, `reopened_at` | timestamptz | Lifecycle times |
-| `escalation_level` | bigint | Default 0. Not written yet (sprint 10) |
-| `escalated_at` | timestamptz | Not written yet (sprint 10) |
+| `escalation_level` | bigint | Default 0. Raised by the worker's escalation rules |
+| `escalated_at` | timestamptz | Last escalation |
 | `tags` | jsonb | String list |
-| `metadata` | jsonb | Requester contact (`requester_name`, `requester_email`, `requester_phone`), `source`, `source_ref`, `category`, `contact_hash` |
+| `metadata` | jsonb | Requester contact (`requester_name`, `requester_email`, `requester_phone`), `source`, `source_ref`, `category`, `contact_hash`, `sla_warnings` (target to warning time) |
 | `created_at`, `updated_at`, `deleted_at` | timestamptz | |
 
 Indexes:
@@ -238,13 +242,27 @@ Unique `(tenant_id, user_id, role_id)`.
 | `description` | text | |
 | `priority` | varchar | Matched against the ticket priority |
 | `category_id` | uuid | Optional category match, no FK |
-| `first_response_minutes`, `resolution_minutes` | bigint | Targets |
-| `first_response_business_hours`, `resolution_business_hours` | boolean | Default true. Stored, not applied yet (sprint 10) |
-| `business_hours` | jsonb | Stored, not applied yet (sprint 10) |
+| `first_response_minutes`, `resolution_minutes` | bigint | Targets in the policy's clock |
+| `calendar_id` | uuid | Business calendar, no FK; null counts every minute. Index `(tenant_id, calendar_id)` |
 | `is_active` | boolean | Default true |
 | `sort_order` | bigint | |
-| `metadata` | jsonb | |
+| `metadata` | jsonb | `notify_before_breach_min`, `pause_on_pending_internal`, `escalation_rules` |
 | `created_at`, `updated_at` | timestamptz | |
+
+### business_calendars
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | Not null |
+| `name` | varchar | Unique per tenant |
+| `timezone` | varchar | IANA zone, default `Africa/Nairobi` |
+| `weekly_hours` | jsonb | Working periods per weekday, `{"mon": [{"start": "08:00", "end": "17:00"}]}` |
+| `holidays` | jsonb | `[{"date": "2026-12-25", "name": "Christmas Day", "moon_dependent": false}]` |
+| `is_default` | boolean | Default false; one default per tenant, kept by the service |
+| `created_at`, `updated_at` | timestamptz | |
+
+Indexes: unique `(tenant_id, name)`, `(tenant_id, is_default)`.
 
 ### routing_rules
 

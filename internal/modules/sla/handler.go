@@ -1,6 +1,7 @@
 package sla
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -12,16 +13,23 @@ import (
 	"go.uber.org/zap"
 )
 
-// Handler handles HTTP requests for SLA policy management.
+// Reporter runs the SLA report (ReportRepository).
+type Reporter interface {
+	Report(ctx context.Context, f ReportFilter) (*Report, error)
+}
+
+// Handler handles HTTP requests for SLA policies, business calendars and the SLA report.
 type Handler struct {
 	service *Service
+	reports Reporter
 	logger  *zap.Logger
 }
 
 // NewHandler creates a new SLA handler.
-func NewHandler(service *Service, logger *zap.Logger) *Handler {
+func NewHandler(service *Service, reports Reporter, logger *zap.Logger) *Handler {
 	return &Handler{
 		service: service,
+		reports: reports,
 		logger:  logger.Named("sla-handler"),
 	}
 }
@@ -36,6 +44,14 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 			policies.With(access.RequirePermission("ticketing.sla.change")).Put("/{policyId}", h.UpdatePolicy)
 			policies.With(access.RequirePermission("ticketing.sla.delete")).Delete("/{policyId}", h.DeletePolicy)
 		})
+		sla.Route("/calendars", func(cals chi.Router) {
+			cals.With(access.RequirePermission("ticketing.sla.add")).Post("/", h.CreateCalendar)
+			cals.With(access.RequirePermission("ticketing.sla.view")).Get("/", h.ListCalendars)
+			cals.With(access.RequirePermission("ticketing.sla.view")).Get("/{calendarId}", h.GetCalendar)
+			cals.With(access.RequirePermission("ticketing.sla.change")).Put("/{calendarId}", h.UpdateCalendar)
+			cals.With(access.RequirePermission("ticketing.sla.delete")).Delete("/{calendarId}", h.DeleteCalendar)
+		})
+		sla.With(access.RequirePermission("ticketing.analytics.view")).Get("/reports", h.GetReport)
 	})
 }
 
@@ -204,8 +220,14 @@ func (h *Handler) handleError(w http.ResponseWriter, err error) {
 		respondError(w, http.StatusNotFound, "sla policy not found")
 	case errors.Is(err, ErrPolicyInUse):
 		respondError(w, http.StatusConflict, "sla policy is in use")
-	case errors.Is(err, ErrInvalidPolicy):
+	case errors.Is(err, ErrInvalidPolicy), errors.Is(err, ErrInvalidCalendar), errors.Is(err, ErrInvalidReport):
 		respondError(w, http.StatusBadRequest, err.Error())
+	case errors.Is(err, ErrCalendarNotFound):
+		respondError(w, http.StatusNotFound, "business calendar not found")
+	case errors.Is(err, ErrCalendarInUse):
+		respondError(w, http.StatusConflict, "business calendar is used by an sla policy")
+	case errors.Is(err, ErrCalendarExists):
+		respondError(w, http.StatusConflict, "a business calendar with this name already exists")
 	default:
 		h.logger.Error("sla handler error", zap.Error(err))
 		respondError(w, http.StatusInternalServerError, "internal server error")

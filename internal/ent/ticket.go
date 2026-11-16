@@ -59,6 +59,16 @@ type Ticket struct {
 	SLAResponseBreached bool `json:"sla_response_breached,omitempty"`
 	// Whether resolution SLA was breached
 	SLAResolutionBreached bool `json:"sla_resolution_breached,omitempty"`
+	// SLA policy that set the deadlines; the worker joins it for warnings and escalation
+	SLAPolicyID *uuid.UUID `json:"sla_policy_id,omitempty"`
+	// When the SLA clock stopped (pending status); null while it runs
+	SLAPausedAt *time.Time `json:"sla_paused_at,omitempty"`
+	// Total minutes the SLA clock was stopped, in the policy's clock
+	SLAPausedMinutes int `json:"sla_paused_minutes,omitempty"`
+	// Minutes from creation to first response in the policy's clock, net of pauses
+	SLAFirstResponseMinutes *int `json:"sla_first_response_minutes,omitempty"`
+	// Minutes from creation to resolution in the policy's clock, net of pauses
+	SLAResolutionMinutes *int `json:"sla_resolution_minutes,omitempty"`
 	// When first agent response was made
 	FirstResponseAt *time.Time `json:"first_response_at,omitempty"`
 	// When ticket was resolved
@@ -147,17 +157,17 @@ func (*Ticket) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case ticket.FieldCategoryID, ticket.FieldAssignedAgentID, ticket.FieldAssignedTeamID, ticket.FieldOrderID, ticket.FieldCrmContactID, ticket.FieldCrmLeadID:
+		case ticket.FieldCategoryID, ticket.FieldAssignedAgentID, ticket.FieldAssignedTeamID, ticket.FieldOrderID, ticket.FieldCrmContactID, ticket.FieldCrmLeadID, ticket.FieldSLAPolicyID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case ticket.FieldTags, ticket.FieldMetadata:
 			values[i] = new([]byte)
 		case ticket.FieldSLAResponseBreached, ticket.FieldSLAResolutionBreached:
 			values[i] = new(sql.NullBool)
-		case ticket.FieldEscalationLevel:
+		case ticket.FieldSLAPausedMinutes, ticket.FieldSLAFirstResponseMinutes, ticket.FieldSLAResolutionMinutes, ticket.FieldEscalationLevel:
 			values[i] = new(sql.NullInt64)
 		case ticket.FieldTicketNumber, ticket.FieldSubject, ticket.FieldDescription, ticket.FieldStatus, ticket.FieldPriority, ticket.FieldChannel, ticket.FieldExternalReference:
 			values[i] = new(sql.NullString)
-		case ticket.FieldSLAResponseDueAt, ticket.FieldSLAResolutionDueAt, ticket.FieldFirstResponseAt, ticket.FieldResolvedAt, ticket.FieldClosedAt, ticket.FieldReopenedAt, ticket.FieldEscalatedAt, ticket.FieldCreatedAt, ticket.FieldUpdatedAt, ticket.FieldDeletedAt:
+		case ticket.FieldSLAResponseDueAt, ticket.FieldSLAResolutionDueAt, ticket.FieldSLAPausedAt, ticket.FieldFirstResponseAt, ticket.FieldResolvedAt, ticket.FieldClosedAt, ticket.FieldReopenedAt, ticket.FieldEscalatedAt, ticket.FieldCreatedAt, ticket.FieldUpdatedAt, ticket.FieldDeletedAt:
 			values[i] = new(sql.NullTime)
 		case ticket.FieldID, ticket.FieldTenantID, ticket.FieldCustomerID:
 			values[i] = new(uuid.UUID)
@@ -303,6 +313,40 @@ func (_m *Ticket) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field sla_resolution_breached", values[i])
 			} else if value.Valid {
 				_m.SLAResolutionBreached = value.Bool
+			}
+		case ticket.FieldSLAPolicyID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field sla_policy_id", values[i])
+			} else if value.Valid {
+				_m.SLAPolicyID = new(uuid.UUID)
+				*_m.SLAPolicyID = *value.S.(*uuid.UUID)
+			}
+		case ticket.FieldSLAPausedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field sla_paused_at", values[i])
+			} else if value.Valid {
+				_m.SLAPausedAt = new(time.Time)
+				*_m.SLAPausedAt = value.Time
+			}
+		case ticket.FieldSLAPausedMinutes:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field sla_paused_minutes", values[i])
+			} else if value.Valid {
+				_m.SLAPausedMinutes = int(value.Int64)
+			}
+		case ticket.FieldSLAFirstResponseMinutes:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field sla_first_response_minutes", values[i])
+			} else if value.Valid {
+				_m.SLAFirstResponseMinutes = new(int)
+				*_m.SLAFirstResponseMinutes = int(value.Int64)
+			}
+		case ticket.FieldSLAResolutionMinutes:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field sla_resolution_minutes", values[i])
+			} else if value.Valid {
+				_m.SLAResolutionMinutes = new(int)
+				*_m.SLAResolutionMinutes = int(value.Int64)
 			}
 		case ticket.FieldFirstResponseAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -508,6 +552,29 @@ func (_m *Ticket) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("sla_resolution_breached=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SLAResolutionBreached))
+	builder.WriteString(", ")
+	if v := _m.SLAPolicyID; v != nil {
+		builder.WriteString("sla_policy_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.SLAPausedAt; v != nil {
+		builder.WriteString("sla_paused_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("sla_paused_minutes=")
+	builder.WriteString(fmt.Sprintf("%v", _m.SLAPausedMinutes))
+	builder.WriteString(", ")
+	if v := _m.SLAFirstResponseMinutes; v != nil {
+		builder.WriteString("sla_first_response_minutes=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.SLAResolutionMinutes; v != nil {
+		builder.WriteString("sla_resolution_minutes=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	if v := _m.FirstResponseAt; v != nil {
 		builder.WriteString("first_response_at=")

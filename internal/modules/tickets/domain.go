@@ -84,16 +84,23 @@ type Ticket struct {
 	SLAResolutionDueAt    *time.Time     `json:"sla_resolution_due_at,omitempty"`
 	SLAResponseBreached   bool           `json:"sla_response_breached"`
 	SLAResolutionBreached bool           `json:"sla_resolution_breached"`
-	FirstResponseAt       *time.Time     `json:"first_response_at,omitempty"`
-	ResolvedAt            *time.Time     `json:"resolved_at,omitempty"`
-	ClosedAt              *time.Time     `json:"closed_at,omitempty"`
-	ReopenedAt            *time.Time     `json:"reopened_at,omitempty"`
-	EscalationLevel       int            `json:"escalation_level"`
-	EscalatedAt           *time.Time     `json:"escalated_at,omitempty"`
-	Tags                  []string       `json:"tags,omitempty"`
-	Metadata              map[string]any `json:"metadata,omitempty"`
-	CreatedAt             time.Time      `json:"created_at"`
-	UpdatedAt             time.Time      `json:"updated_at"`
+	SLAPolicyID           *uuid.UUID     `json:"sla_policy_id,omitempty"`
+	// SLAPausedAt is set while a pending status stops the SLA clock.
+	SLAPausedAt      *time.Time `json:"sla_paused_at,omitempty"`
+	SLAPausedMinutes int        `json:"sla_paused_minutes"`
+	// The elapsed minutes to first response and to resolution in the policy's clock, net of pauses.
+	SLAFirstResponseMinutes *int           `json:"sla_first_response_minutes,omitempty"`
+	SLAResolutionMinutes    *int           `json:"sla_resolution_minutes,omitempty"`
+	FirstResponseAt         *time.Time     `json:"first_response_at,omitempty"`
+	ResolvedAt              *time.Time     `json:"resolved_at,omitempty"`
+	ClosedAt                *time.Time     `json:"closed_at,omitempty"`
+	ReopenedAt              *time.Time     `json:"reopened_at,omitempty"`
+	EscalationLevel         int            `json:"escalation_level"`
+	EscalatedAt             *time.Time     `json:"escalated_at,omitempty"`
+	Tags                    []string       `json:"tags,omitempty"`
+	Metadata                map[string]any `json:"metadata,omitempty"`
+	CreatedAt               time.Time      `json:"created_at"`
+	UpdatedAt               time.Time      `json:"updated_at"`
 }
 
 // TicketComment represents a comment on a ticket.

@@ -80,19 +80,14 @@ func FirstResponseMinutes(v int) predicate.SLAPolicy {
 	return predicate.SLAPolicy(sql.FieldEQ(FieldFirstResponseMinutes, v))
 }
 
-// FirstResponseBusinessHours applies equality check predicate on the "first_response_business_hours" field. It's identical to FirstResponseBusinessHoursEQ.
-func FirstResponseBusinessHours(v bool) predicate.SLAPolicy {
-	return predicate.SLAPolicy(sql.FieldEQ(FieldFirstResponseBusinessHours, v))
-}
-
 // ResolutionMinutes applies equality check predicate on the "resolution_minutes" field. It's identical to ResolutionMinutesEQ.
 func ResolutionMinutes(v int) predicate.SLAPolicy {
 	return predicate.SLAPolicy(sql.FieldEQ(FieldResolutionMinutes, v))
 }
 
-// ResolutionBusinessHours applies equality check predicate on the "resolution_business_hours" field. It's identical to ResolutionBusinessHoursEQ.
-func ResolutionBusinessHours(v bool) predicate.SLAPolicy {
-	return predicate.SLAPolicy(sql.FieldEQ(FieldResolutionBusinessHours, v))
+// CalendarID applies equality check predicate on the "calendar_id" field. It's identical to CalendarIDEQ.
+func CalendarID(v uuid.UUID) predicate.SLAPolicy {
+	return predicate.SLAPolicy(sql.FieldEQ(FieldCalendarID, v))
 }
 
 // IsActive applies equality check predicate on the "is_active" field. It's identical to IsActiveEQ.
@@ -405,16 +400,6 @@ func FirstResponseMinutesLTE(v int) predicate.SLAPolicy {
 	return predicate.SLAPolicy(sql.FieldLTE(FieldFirstResponseMinutes, v))
 }
 
-// FirstResponseBusinessHoursEQ applies the EQ predicate on the "first_response_business_hours" field.
-func FirstResponseBusinessHoursEQ(v bool) predicate.SLAPolicy {
-	return predicate.SLAPolicy(sql.FieldEQ(FieldFirstResponseBusinessHours, v))
-}
-
-// FirstResponseBusinessHoursNEQ applies the NEQ predicate on the "first_response_business_hours" field.
-func FirstResponseBusinessHoursNEQ(v bool) predicate.SLAPolicy {
-	return predicate.SLAPolicy(sql.FieldNEQ(FieldFirstResponseBusinessHours, v))
-}
-
 // ResolutionMinutesEQ applies the EQ predicate on the "resolution_minutes" field.
 func ResolutionMinutesEQ(v int) predicate.SLAPolicy {
 	return predicate.SLAPolicy(sql.FieldEQ(FieldResolutionMinutes, v))
@@ -455,14 +440,54 @@ func ResolutionMinutesLTE(v int) predicate.SLAPolicy {
 	return predicate.SLAPolicy(sql.FieldLTE(FieldResolutionMinutes, v))
 }
 
-// ResolutionBusinessHoursEQ applies the EQ predicate on the "resolution_business_hours" field.
-func ResolutionBusinessHoursEQ(v bool) predicate.SLAPolicy {
-	return predicate.SLAPolicy(sql.FieldEQ(FieldResolutionBusinessHours, v))
+// CalendarIDEQ applies the EQ predicate on the "calendar_id" field.
+func CalendarIDEQ(v uuid.UUID) predicate.SLAPolicy {
+	return predicate.SLAPolicy(sql.FieldEQ(FieldCalendarID, v))
 }
 
-// ResolutionBusinessHoursNEQ applies the NEQ predicate on the "resolution_business_hours" field.
-func ResolutionBusinessHoursNEQ(v bool) predicate.SLAPolicy {
-	return predicate.SLAPolicy(sql.FieldNEQ(FieldResolutionBusinessHours, v))
+// CalendarIDNEQ applies the NEQ predicate on the "calendar_id" field.
+func CalendarIDNEQ(v uuid.UUID) predicate.SLAPolicy {
+	return predicate.SLAPolicy(sql.FieldNEQ(FieldCalendarID, v))
+}
+
+// CalendarIDIn applies the In predicate on the "calendar_id" field.
+func CalendarIDIn(vs ...uuid.UUID) predicate.SLAPolicy {
+	return predicate.SLAPolicy(sql.FieldIn(FieldCalendarID, vs...))
+}
+
+// CalendarIDNotIn applies the NotIn predicate on the "calendar_id" field.
+func CalendarIDNotIn(vs ...uuid.UUID) predicate.SLAPolicy {
+	return predicate.SLAPolicy(sql.FieldNotIn(FieldCalendarID, vs...))
+}
+
+// CalendarIDGT applies the GT predicate on the "calendar_id" field.
+func CalendarIDGT(v uuid.UUID) predicate.SLAPolicy {
+	return predicate.SLAPolicy(sql.FieldGT(FieldCalendarID, v))
+}
+
+// CalendarIDGTE applies the GTE predicate on the "calendar_id" field.
+func CalendarIDGTE(v uuid.UUID) predicate.SLAPolicy {
+	return predicate.SLAPolicy(sql.FieldGTE(FieldCalendarID, v))
+}
+
+// CalendarIDLT applies the LT predicate on the "calendar_id" field.
+func CalendarIDLT(v uuid.UUID) predicate.SLAPolicy {
+	return predicate.SLAPolicy(sql.FieldLT(FieldCalendarID, v))
+}
+
+// CalendarIDLTE applies the LTE predicate on the "calendar_id" field.
+func CalendarIDLTE(v uuid.UUID) predicate.SLAPolicy {
+	return predicate.SLAPolicy(sql.FieldLTE(FieldCalendarID, v))
+}
+
+// CalendarIDIsNil applies the IsNil predicate on the "calendar_id" field.
+func CalendarIDIsNil() predicate.SLAPolicy {
+	return predicate.SLAPolicy(sql.FieldIsNull(FieldCalendarID))
+}
+
+// CalendarIDNotNil applies the NotNil predicate on the "calendar_id" field.
+func CalendarIDNotNil() predicate.SLAPolicy {
+	return predicate.SLAPolicy(sql.FieldNotNull(FieldCalendarID))
 }
 
 // IsActiveEQ applies the EQ predicate on the "is_active" field.
@@ -513,16 +538,6 @@ func SortOrderLT(v int) predicate.SLAPolicy {
 // SortOrderLTE applies the LTE predicate on the "sort_order" field.
 func SortOrderLTE(v int) predicate.SLAPolicy {
 	return predicate.SLAPolicy(sql.FieldLTE(FieldSortOrder, v))
-}
-
-// BusinessHoursIsNil applies the IsNil predicate on the "business_hours" field.
-func BusinessHoursIsNil() predicate.SLAPolicy {
-	return predicate.SLAPolicy(sql.FieldIsNull(FieldBusinessHours))
-}
-
-// BusinessHoursNotNil applies the NotNil predicate on the "business_hours" field.
-func BusinessHoursNotNil() predicate.SLAPolicy {
-	return predicate.SLAPolicy(sql.FieldNotNull(FieldBusinessHours))
 }
 
 // MetadataIsNil applies the IsNil predicate on the "metadata" field.

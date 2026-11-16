@@ -13,10 +13,12 @@ import (
 	entsql "entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"go.uber.org/zap"
 
 	"github.com/bengobox/ticketing-service/internal/ent"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketcategory"
+	"github.com/bengobox/ticketing-service/internal/modules/sla"
 )
 
 // slugify converts a name to a URL-friendly slug.
@@ -200,9 +202,7 @@ func main() {
 			SetName(pol.name).
 			SetPriority(pol.priority).
 			SetFirstResponseMinutes(pol.firstResponseMinutes).
-			SetFirstResponseBusinessHours(false).
 			SetResolutionMinutes(pol.resolutionMinutes).
-			SetResolutionBusinessHours(false).
 			SetSortOrder(pol.sortOrder).
 			SetIsActive(true).
 			Save(ctx)
@@ -211,6 +211,19 @@ func main() {
 		}
 		log.Printf("  created SLA policy %q (priority: %s)", pol.name, pol.priority)
 		slaCreated++
+	}
+
+	// The tenant's first business calendar: Monday to Friday 08:00 to 17:00 in Africa/Nairobi with
+	// this year's and next year's Kenyan public holidays. The seeded policies stay 24x7 until an
+	// admin points them at it.
+	calCreated, err := sla.NewService(sla.NewEntRepository(client), zap.NewNop()).EnsureDefaultCalendar(ctx, tenantID)
+	if err != nil {
+		log.Fatalf("failed to seed the business calendar: %v", err)
+	}
+	if calCreated {
+		log.Printf("  created business calendar %q with Kenyan public holidays", sla.DefaultCalendarName)
+	} else {
+		log.Printf("  business calendar already exists, skipping")
 	}
 
 	totalSkipped := catSkipped + slaSkipped

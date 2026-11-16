@@ -76,12 +76,20 @@ func (a *routingAdapter) EvaluateRules(ctx context.Context, tenantID uuid.UUID, 
 	}
 }
 
-func (a *slaAdapter) ComputeDeadlines(ctx context.Context, tenantID uuid.UUID, priorityStr string, categoryID *uuid.UUID, createdAt time.Time) (*time.Time, *time.Time, error) {
-	result, err := a.svc.ComputeDeadlines(ctx, tenantID, sla.Priority(priorityStr), categoryID, createdAt)
+func (a *slaAdapter) ComputeDeadlines(ctx context.Context, tenantID uuid.UUID, priority string, categoryID *uuid.UUID, start time.Time) (*tickets.SLAPlan, error) {
+	result, err := a.svc.ComputeDeadlines(ctx, tenantID, sla.Priority(priority), categoryID, start)
 	if err != nil || result == nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return &result.ResponseDueAt, &result.ResolutionDueAt, nil
+	return &tickets.SLAPlan{PolicyID: result.PolicyID, ResponseDueAt: result.ResponseDueAt, ResolutionDueAt: result.ResolutionDueAt}, nil
+}
+
+func (a *slaAdapter) PolicyClock(ctx context.Context, tenantID uuid.UUID, policyID *uuid.UUID) (tickets.SLAClock, error) {
+	c, err := a.svc.PolicyClock(ctx, tenantID, policyID)
+	if err != nil {
+		return tickets.SLAClock{}, err
+	}
+	return tickets.SLAClock{Calendar: c.Calendar, PauseOnPendingInternal: c.PauseOnPendingInternal}, nil
 }
 
 type dbCloser interface {
@@ -230,7 +238,7 @@ func New(ctx context.Context) (*App, error) {
 	// Initialize SLA module
 	slaRepo := sla.NewEntRepository(ormClient)
 	slaService := sla.NewService(slaRepo, log)
-	slaHandler := sla.NewHandler(slaService, log)
+	slaHandler := sla.NewHandler(slaService, sla.NewReportRepository(sqlDB), log)
 
 	// Initialize routing module (auto-routing rules)
 	routingRepo := routing.NewEntRepository(ormClient)

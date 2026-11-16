@@ -39,31 +39,23 @@ func (SLAPolicy) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			Comment("Category this policy applies to (null = all categories)"),
-		// Response SLA
 		field.Int("first_response_minutes").
-			Comment("Target first response time in minutes"),
-		field.Bool("first_response_business_hours").
-			Default(true).
-			Comment("Whether response SLA counts business hours only"),
-		// Resolution SLA
+			Comment("Target first response time in minutes of the policy's clock"),
 		field.Int("resolution_minutes").
-			Comment("Target resolution time in minutes"),
-		field.Bool("resolution_business_hours").
-			Default(true).
-			Comment("Whether resolution SLA counts business hours only"),
-		// Configuration
+			Comment("Target resolution time in minutes of the policy's clock"),
+		field.UUID("calendar_id", uuid.UUID{}).
+			Optional().
+			Nillable().
+			Comment("Business calendar both targets count in; null counts every minute (24x7)"),
 		field.Bool("is_active").
 			Default(true).
 			Comment("Whether policy is active"),
 		field.Int("sort_order").
 			Default(0).
 			Comment("Priority for policy matching (lower = higher priority)"),
-		field.JSON("business_hours", map[string]any{}).
-			Optional().
-			Comment("Business hours configuration (JSON)"),
 		field.JSON("metadata", map[string]any{}).
 			Optional().
-			Comment("Additional policy metadata"),
+			Comment("Policy settings: notify_before_breach_min, pause_on_pending_internal, escalation_rules"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -93,6 +85,8 @@ func (SLAPolicy) Indexes() []ent.Index {
 		index.Fields("tenant_id", "priority"),
 		index.Fields("tenant_id", "category_id"),
 		index.Fields("tenant_id", "is_active"),
+		// A calendar in use by a policy cannot be deleted.
+		index.Fields("tenant_id", "calendar_id"),
 		index.Fields("sort_order"),
 	}
 }

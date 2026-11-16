@@ -254,6 +254,76 @@ func (_c *TicketCreate) SetNillableSLAResolutionBreached(v *bool) *TicketCreate 
 	return _c
 }
 
+// SetSLAPolicyID sets the "sla_policy_id" field.
+func (_c *TicketCreate) SetSLAPolicyID(v uuid.UUID) *TicketCreate {
+	_c.mutation.SetSLAPolicyID(v)
+	return _c
+}
+
+// SetNillableSLAPolicyID sets the "sla_policy_id" field if the given value is not nil.
+func (_c *TicketCreate) SetNillableSLAPolicyID(v *uuid.UUID) *TicketCreate {
+	if v != nil {
+		_c.SetSLAPolicyID(*v)
+	}
+	return _c
+}
+
+// SetSLAPausedAt sets the "sla_paused_at" field.
+func (_c *TicketCreate) SetSLAPausedAt(v time.Time) *TicketCreate {
+	_c.mutation.SetSLAPausedAt(v)
+	return _c
+}
+
+// SetNillableSLAPausedAt sets the "sla_paused_at" field if the given value is not nil.
+func (_c *TicketCreate) SetNillableSLAPausedAt(v *time.Time) *TicketCreate {
+	if v != nil {
+		_c.SetSLAPausedAt(*v)
+	}
+	return _c
+}
+
+// SetSLAPausedMinutes sets the "sla_paused_minutes" field.
+func (_c *TicketCreate) SetSLAPausedMinutes(v int) *TicketCreate {
+	_c.mutation.SetSLAPausedMinutes(v)
+	return _c
+}
+
+// SetNillableSLAPausedMinutes sets the "sla_paused_minutes" field if the given value is not nil.
+func (_c *TicketCreate) SetNillableSLAPausedMinutes(v *int) *TicketCreate {
+	if v != nil {
+		_c.SetSLAPausedMinutes(*v)
+	}
+	return _c
+}
+
+// SetSLAFirstResponseMinutes sets the "sla_first_response_minutes" field.
+func (_c *TicketCreate) SetSLAFirstResponseMinutes(v int) *TicketCreate {
+	_c.mutation.SetSLAFirstResponseMinutes(v)
+	return _c
+}
+
+// SetNillableSLAFirstResponseMinutes sets the "sla_first_response_minutes" field if the given value is not nil.
+func (_c *TicketCreate) SetNillableSLAFirstResponseMinutes(v *int) *TicketCreate {
+	if v != nil {
+		_c.SetSLAFirstResponseMinutes(*v)
+	}
+	return _c
+}
+
+// SetSLAResolutionMinutes sets the "sla_resolution_minutes" field.
+func (_c *TicketCreate) SetSLAResolutionMinutes(v int) *TicketCreate {
+	_c.mutation.SetSLAResolutionMinutes(v)
+	return _c
+}
+
+// SetNillableSLAResolutionMinutes sets the "sla_resolution_minutes" field if the given value is not nil.
+func (_c *TicketCreate) SetNillableSLAResolutionMinutes(v *int) *TicketCreate {
+	if v != nil {
+		_c.SetSLAResolutionMinutes(*v)
+	}
+	return _c
+}
+
 // SetFirstResponseAt sets the "first_response_at" field.
 func (_c *TicketCreate) SetFirstResponseAt(v time.Time) *TicketCreate {
 	_c.mutation.SetFirstResponseAt(v)
@@ -501,6 +571,10 @@ func (_c *TicketCreate) defaults() {
 		v := ticket.DefaultSLAResolutionBreached
 		_c.mutation.SetSLAResolutionBreached(v)
 	}
+	if _, ok := _c.mutation.SLAPausedMinutes(); !ok {
+		v := ticket.DefaultSLAPausedMinutes
+		_c.mutation.SetSLAPausedMinutes(v)
+	}
 	if _, ok := _c.mutation.EscalationLevel(); !ok {
 		v := ticket.DefaultEscalationLevel
 		_c.mutation.SetEscalationLevel(v)
@@ -585,6 +659,9 @@ func (_c *TicketCreate) check() error {
 	}
 	if _, ok := _c.mutation.SLAResolutionBreached(); !ok {
 		return &ValidationError{Name: "sla_resolution_breached", err: errors.New(`ent: missing required field "Ticket.sla_resolution_breached"`)}
+	}
+	if _, ok := _c.mutation.SLAPausedMinutes(); !ok {
+		return &ValidationError{Name: "sla_paused_minutes", err: errors.New(`ent: missing required field "Ticket.sla_paused_minutes"`)}
 	}
 	if _, ok := _c.mutation.EscalationLevel(); !ok {
 		return &ValidationError{Name: "escalation_level", err: errors.New(`ent: missing required field "Ticket.escalation_level"`)}
@@ -698,6 +775,26 @@ func (_c *TicketCreate) createSpec() (*Ticket, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.SLAResolutionBreached(); ok {
 		_spec.SetField(ticket.FieldSLAResolutionBreached, field.TypeBool, value)
 		_node.SLAResolutionBreached = value
+	}
+	if value, ok := _c.mutation.SLAPolicyID(); ok {
+		_spec.SetField(ticket.FieldSLAPolicyID, field.TypeUUID, value)
+		_node.SLAPolicyID = &value
+	}
+	if value, ok := _c.mutation.SLAPausedAt(); ok {
+		_spec.SetField(ticket.FieldSLAPausedAt, field.TypeTime, value)
+		_node.SLAPausedAt = &value
+	}
+	if value, ok := _c.mutation.SLAPausedMinutes(); ok {
+		_spec.SetField(ticket.FieldSLAPausedMinutes, field.TypeInt, value)
+		_node.SLAPausedMinutes = value
+	}
+	if value, ok := _c.mutation.SLAFirstResponseMinutes(); ok {
+		_spec.SetField(ticket.FieldSLAFirstResponseMinutes, field.TypeInt, value)
+		_node.SLAFirstResponseMinutes = &value
+	}
+	if value, ok := _c.mutation.SLAResolutionMinutes(); ok {
+		_spec.SetField(ticket.FieldSLAResolutionMinutes, field.TypeInt, value)
+		_node.SLAResolutionMinutes = &value
 	}
 	if value, ok := _c.mutation.FirstResponseAt(); ok {
 		_spec.SetField(ticket.FieldFirstResponseAt, field.TypeTime, value)
@@ -1140,6 +1237,108 @@ func (u *TicketUpsert) SetSLAResolutionBreached(v bool) *TicketUpsert {
 // UpdateSLAResolutionBreached sets the "sla_resolution_breached" field to the value that was provided on create.
 func (u *TicketUpsert) UpdateSLAResolutionBreached() *TicketUpsert {
 	u.SetExcluded(ticket.FieldSLAResolutionBreached)
+	return u
+}
+
+// SetSLAPolicyID sets the "sla_policy_id" field.
+func (u *TicketUpsert) SetSLAPolicyID(v uuid.UUID) *TicketUpsert {
+	u.Set(ticket.FieldSLAPolicyID, v)
+	return u
+}
+
+// UpdateSLAPolicyID sets the "sla_policy_id" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateSLAPolicyID() *TicketUpsert {
+	u.SetExcluded(ticket.FieldSLAPolicyID)
+	return u
+}
+
+// ClearSLAPolicyID clears the value of the "sla_policy_id" field.
+func (u *TicketUpsert) ClearSLAPolicyID() *TicketUpsert {
+	u.SetNull(ticket.FieldSLAPolicyID)
+	return u
+}
+
+// SetSLAPausedAt sets the "sla_paused_at" field.
+func (u *TicketUpsert) SetSLAPausedAt(v time.Time) *TicketUpsert {
+	u.Set(ticket.FieldSLAPausedAt, v)
+	return u
+}
+
+// UpdateSLAPausedAt sets the "sla_paused_at" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateSLAPausedAt() *TicketUpsert {
+	u.SetExcluded(ticket.FieldSLAPausedAt)
+	return u
+}
+
+// ClearSLAPausedAt clears the value of the "sla_paused_at" field.
+func (u *TicketUpsert) ClearSLAPausedAt() *TicketUpsert {
+	u.SetNull(ticket.FieldSLAPausedAt)
+	return u
+}
+
+// SetSLAPausedMinutes sets the "sla_paused_minutes" field.
+func (u *TicketUpsert) SetSLAPausedMinutes(v int) *TicketUpsert {
+	u.Set(ticket.FieldSLAPausedMinutes, v)
+	return u
+}
+
+// UpdateSLAPausedMinutes sets the "sla_paused_minutes" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateSLAPausedMinutes() *TicketUpsert {
+	u.SetExcluded(ticket.FieldSLAPausedMinutes)
+	return u
+}
+
+// AddSLAPausedMinutes adds v to the "sla_paused_minutes" field.
+func (u *TicketUpsert) AddSLAPausedMinutes(v int) *TicketUpsert {
+	u.Add(ticket.FieldSLAPausedMinutes, v)
+	return u
+}
+
+// SetSLAFirstResponseMinutes sets the "sla_first_response_minutes" field.
+func (u *TicketUpsert) SetSLAFirstResponseMinutes(v int) *TicketUpsert {
+	u.Set(ticket.FieldSLAFirstResponseMinutes, v)
+	return u
+}
+
+// UpdateSLAFirstResponseMinutes sets the "sla_first_response_minutes" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateSLAFirstResponseMinutes() *TicketUpsert {
+	u.SetExcluded(ticket.FieldSLAFirstResponseMinutes)
+	return u
+}
+
+// AddSLAFirstResponseMinutes adds v to the "sla_first_response_minutes" field.
+func (u *TicketUpsert) AddSLAFirstResponseMinutes(v int) *TicketUpsert {
+	u.Add(ticket.FieldSLAFirstResponseMinutes, v)
+	return u
+}
+
+// ClearSLAFirstResponseMinutes clears the value of the "sla_first_response_minutes" field.
+func (u *TicketUpsert) ClearSLAFirstResponseMinutes() *TicketUpsert {
+	u.SetNull(ticket.FieldSLAFirstResponseMinutes)
+	return u
+}
+
+// SetSLAResolutionMinutes sets the "sla_resolution_minutes" field.
+func (u *TicketUpsert) SetSLAResolutionMinutes(v int) *TicketUpsert {
+	u.Set(ticket.FieldSLAResolutionMinutes, v)
+	return u
+}
+
+// UpdateSLAResolutionMinutes sets the "sla_resolution_minutes" field to the value that was provided on create.
+func (u *TicketUpsert) UpdateSLAResolutionMinutes() *TicketUpsert {
+	u.SetExcluded(ticket.FieldSLAResolutionMinutes)
+	return u
+}
+
+// AddSLAResolutionMinutes adds v to the "sla_resolution_minutes" field.
+func (u *TicketUpsert) AddSLAResolutionMinutes(v int) *TicketUpsert {
+	u.Add(ticket.FieldSLAResolutionMinutes, v)
+	return u
+}
+
+// ClearSLAResolutionMinutes clears the value of the "sla_resolution_minutes" field.
+func (u *TicketUpsert) ClearSLAResolutionMinutes() *TicketUpsert {
+	u.SetNull(ticket.FieldSLAResolutionMinutes)
 	return u
 }
 
@@ -1694,6 +1893,125 @@ func (u *TicketUpsertOne) SetSLAResolutionBreached(v bool) *TicketUpsertOne {
 func (u *TicketUpsertOne) UpdateSLAResolutionBreached() *TicketUpsertOne {
 	return u.Update(func(s *TicketUpsert) {
 		s.UpdateSLAResolutionBreached()
+	})
+}
+
+// SetSLAPolicyID sets the "sla_policy_id" field.
+func (u *TicketUpsertOne) SetSLAPolicyID(v uuid.UUID) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAPolicyID(v)
+	})
+}
+
+// UpdateSLAPolicyID sets the "sla_policy_id" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateSLAPolicyID() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAPolicyID()
+	})
+}
+
+// ClearSLAPolicyID clears the value of the "sla_policy_id" field.
+func (u *TicketUpsertOne) ClearSLAPolicyID() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearSLAPolicyID()
+	})
+}
+
+// SetSLAPausedAt sets the "sla_paused_at" field.
+func (u *TicketUpsertOne) SetSLAPausedAt(v time.Time) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAPausedAt(v)
+	})
+}
+
+// UpdateSLAPausedAt sets the "sla_paused_at" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateSLAPausedAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAPausedAt()
+	})
+}
+
+// ClearSLAPausedAt clears the value of the "sla_paused_at" field.
+func (u *TicketUpsertOne) ClearSLAPausedAt() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearSLAPausedAt()
+	})
+}
+
+// SetSLAPausedMinutes sets the "sla_paused_minutes" field.
+func (u *TicketUpsertOne) SetSLAPausedMinutes(v int) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAPausedMinutes(v)
+	})
+}
+
+// AddSLAPausedMinutes adds v to the "sla_paused_minutes" field.
+func (u *TicketUpsertOne) AddSLAPausedMinutes(v int) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.AddSLAPausedMinutes(v)
+	})
+}
+
+// UpdateSLAPausedMinutes sets the "sla_paused_minutes" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateSLAPausedMinutes() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAPausedMinutes()
+	})
+}
+
+// SetSLAFirstResponseMinutes sets the "sla_first_response_minutes" field.
+func (u *TicketUpsertOne) SetSLAFirstResponseMinutes(v int) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAFirstResponseMinutes(v)
+	})
+}
+
+// AddSLAFirstResponseMinutes adds v to the "sla_first_response_minutes" field.
+func (u *TicketUpsertOne) AddSLAFirstResponseMinutes(v int) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.AddSLAFirstResponseMinutes(v)
+	})
+}
+
+// UpdateSLAFirstResponseMinutes sets the "sla_first_response_minutes" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateSLAFirstResponseMinutes() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAFirstResponseMinutes()
+	})
+}
+
+// ClearSLAFirstResponseMinutes clears the value of the "sla_first_response_minutes" field.
+func (u *TicketUpsertOne) ClearSLAFirstResponseMinutes() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearSLAFirstResponseMinutes()
+	})
+}
+
+// SetSLAResolutionMinutes sets the "sla_resolution_minutes" field.
+func (u *TicketUpsertOne) SetSLAResolutionMinutes(v int) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAResolutionMinutes(v)
+	})
+}
+
+// AddSLAResolutionMinutes adds v to the "sla_resolution_minutes" field.
+func (u *TicketUpsertOne) AddSLAResolutionMinutes(v int) *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.AddSLAResolutionMinutes(v)
+	})
+}
+
+// UpdateSLAResolutionMinutes sets the "sla_resolution_minutes" field to the value that was provided on create.
+func (u *TicketUpsertOne) UpdateSLAResolutionMinutes() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAResolutionMinutes()
+	})
+}
+
+// ClearSLAResolutionMinutes clears the value of the "sla_resolution_minutes" field.
+func (u *TicketUpsertOne) ClearSLAResolutionMinutes() *TicketUpsertOne {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearSLAResolutionMinutes()
 	})
 }
 
@@ -2444,6 +2762,125 @@ func (u *TicketUpsertBulk) SetSLAResolutionBreached(v bool) *TicketUpsertBulk {
 func (u *TicketUpsertBulk) UpdateSLAResolutionBreached() *TicketUpsertBulk {
 	return u.Update(func(s *TicketUpsert) {
 		s.UpdateSLAResolutionBreached()
+	})
+}
+
+// SetSLAPolicyID sets the "sla_policy_id" field.
+func (u *TicketUpsertBulk) SetSLAPolicyID(v uuid.UUID) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAPolicyID(v)
+	})
+}
+
+// UpdateSLAPolicyID sets the "sla_policy_id" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateSLAPolicyID() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAPolicyID()
+	})
+}
+
+// ClearSLAPolicyID clears the value of the "sla_policy_id" field.
+func (u *TicketUpsertBulk) ClearSLAPolicyID() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearSLAPolicyID()
+	})
+}
+
+// SetSLAPausedAt sets the "sla_paused_at" field.
+func (u *TicketUpsertBulk) SetSLAPausedAt(v time.Time) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAPausedAt(v)
+	})
+}
+
+// UpdateSLAPausedAt sets the "sla_paused_at" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateSLAPausedAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAPausedAt()
+	})
+}
+
+// ClearSLAPausedAt clears the value of the "sla_paused_at" field.
+func (u *TicketUpsertBulk) ClearSLAPausedAt() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearSLAPausedAt()
+	})
+}
+
+// SetSLAPausedMinutes sets the "sla_paused_minutes" field.
+func (u *TicketUpsertBulk) SetSLAPausedMinutes(v int) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAPausedMinutes(v)
+	})
+}
+
+// AddSLAPausedMinutes adds v to the "sla_paused_minutes" field.
+func (u *TicketUpsertBulk) AddSLAPausedMinutes(v int) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.AddSLAPausedMinutes(v)
+	})
+}
+
+// UpdateSLAPausedMinutes sets the "sla_paused_minutes" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateSLAPausedMinutes() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAPausedMinutes()
+	})
+}
+
+// SetSLAFirstResponseMinutes sets the "sla_first_response_minutes" field.
+func (u *TicketUpsertBulk) SetSLAFirstResponseMinutes(v int) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAFirstResponseMinutes(v)
+	})
+}
+
+// AddSLAFirstResponseMinutes adds v to the "sla_first_response_minutes" field.
+func (u *TicketUpsertBulk) AddSLAFirstResponseMinutes(v int) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.AddSLAFirstResponseMinutes(v)
+	})
+}
+
+// UpdateSLAFirstResponseMinutes sets the "sla_first_response_minutes" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateSLAFirstResponseMinutes() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAFirstResponseMinutes()
+	})
+}
+
+// ClearSLAFirstResponseMinutes clears the value of the "sla_first_response_minutes" field.
+func (u *TicketUpsertBulk) ClearSLAFirstResponseMinutes() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearSLAFirstResponseMinutes()
+	})
+}
+
+// SetSLAResolutionMinutes sets the "sla_resolution_minutes" field.
+func (u *TicketUpsertBulk) SetSLAResolutionMinutes(v int) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.SetSLAResolutionMinutes(v)
+	})
+}
+
+// AddSLAResolutionMinutes adds v to the "sla_resolution_minutes" field.
+func (u *TicketUpsertBulk) AddSLAResolutionMinutes(v int) *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.AddSLAResolutionMinutes(v)
+	})
+}
+
+// UpdateSLAResolutionMinutes sets the "sla_resolution_minutes" field to the value that was provided on create.
+func (u *TicketUpsertBulk) UpdateSLAResolutionMinutes() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.UpdateSLAResolutionMinutes()
+	})
+}
+
+// ClearSLAResolutionMinutes clears the value of the "sla_resolution_minutes" field.
+func (u *TicketUpsertBulk) ClearSLAResolutionMinutes() *TicketUpsertBulk {
+	return u.Update(func(s *TicketUpsert) {
+		s.ClearSLAResolutionMinutes()
 	})
 }
 

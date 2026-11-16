@@ -354,6 +354,121 @@ func (_u *TicketUpdate) SetNillableSLAResolutionBreached(v *bool) *TicketUpdate 
 	return _u
 }
 
+// SetSLAPolicyID sets the "sla_policy_id" field.
+func (_u *TicketUpdate) SetSLAPolicyID(v uuid.UUID) *TicketUpdate {
+	_u.mutation.SetSLAPolicyID(v)
+	return _u
+}
+
+// SetNillableSLAPolicyID sets the "sla_policy_id" field if the given value is not nil.
+func (_u *TicketUpdate) SetNillableSLAPolicyID(v *uuid.UUID) *TicketUpdate {
+	if v != nil {
+		_u.SetSLAPolicyID(*v)
+	}
+	return _u
+}
+
+// ClearSLAPolicyID clears the value of the "sla_policy_id" field.
+func (_u *TicketUpdate) ClearSLAPolicyID() *TicketUpdate {
+	_u.mutation.ClearSLAPolicyID()
+	return _u
+}
+
+// SetSLAPausedAt sets the "sla_paused_at" field.
+func (_u *TicketUpdate) SetSLAPausedAt(v time.Time) *TicketUpdate {
+	_u.mutation.SetSLAPausedAt(v)
+	return _u
+}
+
+// SetNillableSLAPausedAt sets the "sla_paused_at" field if the given value is not nil.
+func (_u *TicketUpdate) SetNillableSLAPausedAt(v *time.Time) *TicketUpdate {
+	if v != nil {
+		_u.SetSLAPausedAt(*v)
+	}
+	return _u
+}
+
+// ClearSLAPausedAt clears the value of the "sla_paused_at" field.
+func (_u *TicketUpdate) ClearSLAPausedAt() *TicketUpdate {
+	_u.mutation.ClearSLAPausedAt()
+	return _u
+}
+
+// SetSLAPausedMinutes sets the "sla_paused_minutes" field.
+func (_u *TicketUpdate) SetSLAPausedMinutes(v int) *TicketUpdate {
+	_u.mutation.ResetSLAPausedMinutes()
+	_u.mutation.SetSLAPausedMinutes(v)
+	return _u
+}
+
+// SetNillableSLAPausedMinutes sets the "sla_paused_minutes" field if the given value is not nil.
+func (_u *TicketUpdate) SetNillableSLAPausedMinutes(v *int) *TicketUpdate {
+	if v != nil {
+		_u.SetSLAPausedMinutes(*v)
+	}
+	return _u
+}
+
+// AddSLAPausedMinutes adds value to the "sla_paused_minutes" field.
+func (_u *TicketUpdate) AddSLAPausedMinutes(v int) *TicketUpdate {
+	_u.mutation.AddSLAPausedMinutes(v)
+	return _u
+}
+
+// SetSLAFirstResponseMinutes sets the "sla_first_response_minutes" field.
+func (_u *TicketUpdate) SetSLAFirstResponseMinutes(v int) *TicketUpdate {
+	_u.mutation.ResetSLAFirstResponseMinutes()
+	_u.mutation.SetSLAFirstResponseMinutes(v)
+	return _u
+}
+
+// SetNillableSLAFirstResponseMinutes sets the "sla_first_response_minutes" field if the given value is not nil.
+func (_u *TicketUpdate) SetNillableSLAFirstResponseMinutes(v *int) *TicketUpdate {
+	if v != nil {
+		_u.SetSLAFirstResponseMinutes(*v)
+	}
+	return _u
+}
+
+// AddSLAFirstResponseMinutes adds value to the "sla_first_response_minutes" field.
+func (_u *TicketUpdate) AddSLAFirstResponseMinutes(v int) *TicketUpdate {
+	_u.mutation.AddSLAFirstResponseMinutes(v)
+	return _u
+}
+
+// ClearSLAFirstResponseMinutes clears the value of the "sla_first_response_minutes" field.
+func (_u *TicketUpdate) ClearSLAFirstResponseMinutes() *TicketUpdate {
+	_u.mutation.ClearSLAFirstResponseMinutes()
+	return _u
+}
+
+// SetSLAResolutionMinutes sets the "sla_resolution_minutes" field.
+func (_u *TicketUpdate) SetSLAResolutionMinutes(v int) *TicketUpdate {
+	_u.mutation.ResetSLAResolutionMinutes()
+	_u.mutation.SetSLAResolutionMinutes(v)
+	return _u
+}
+
+// SetNillableSLAResolutionMinutes sets the "sla_resolution_minutes" field if the given value is not nil.
+func (_u *TicketUpdate) SetNillableSLAResolutionMinutes(v *int) *TicketUpdate {
+	if v != nil {
+		_u.SetSLAResolutionMinutes(*v)
+	}
+	return _u
+}
+
+// AddSLAResolutionMinutes adds value to the "sla_resolution_minutes" field.
+func (_u *TicketUpdate) AddSLAResolutionMinutes(v int) *TicketUpdate {
+	_u.mutation.AddSLAResolutionMinutes(v)
+	return _u
+}
+
+// ClearSLAResolutionMinutes clears the value of the "sla_resolution_minutes" field.
+func (_u *TicketUpdate) ClearSLAResolutionMinutes() *TicketUpdate {
+	_u.mutation.ClearSLAResolutionMinutes()
+	return _u
+}
+
 // SetFirstResponseAt sets the "first_response_at" field.
 func (_u *TicketUpdate) SetFirstResponseAt(v time.Time) *TicketUpdate {
 	_u.mutation.SetFirstResponseAt(v)
@@ -789,6 +904,42 @@ func (_u *TicketUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.SLAResolutionBreached(); ok {
 		_spec.SetField(ticket.FieldSLAResolutionBreached, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.SLAPolicyID(); ok {
+		_spec.SetField(ticket.FieldSLAPolicyID, field.TypeUUID, value)
+	}
+	if _u.mutation.SLAPolicyIDCleared() {
+		_spec.ClearField(ticket.FieldSLAPolicyID, field.TypeUUID)
+	}
+	if value, ok := _u.mutation.SLAPausedAt(); ok {
+		_spec.SetField(ticket.FieldSLAPausedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SLAPausedAtCleared() {
+		_spec.ClearField(ticket.FieldSLAPausedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.SLAPausedMinutes(); ok {
+		_spec.SetField(ticket.FieldSLAPausedMinutes, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedSLAPausedMinutes(); ok {
+		_spec.AddField(ticket.FieldSLAPausedMinutes, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.SLAFirstResponseMinutes(); ok {
+		_spec.SetField(ticket.FieldSLAFirstResponseMinutes, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedSLAFirstResponseMinutes(); ok {
+		_spec.AddField(ticket.FieldSLAFirstResponseMinutes, field.TypeInt, value)
+	}
+	if _u.mutation.SLAFirstResponseMinutesCleared() {
+		_spec.ClearField(ticket.FieldSLAFirstResponseMinutes, field.TypeInt)
+	}
+	if value, ok := _u.mutation.SLAResolutionMinutes(); ok {
+		_spec.SetField(ticket.FieldSLAResolutionMinutes, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedSLAResolutionMinutes(); ok {
+		_spec.AddField(ticket.FieldSLAResolutionMinutes, field.TypeInt, value)
+	}
+	if _u.mutation.SLAResolutionMinutesCleared() {
+		_spec.ClearField(ticket.FieldSLAResolutionMinutes, field.TypeInt)
 	}
 	if value, ok := _u.mutation.FirstResponseAt(); ok {
 		_spec.SetField(ticket.FieldFirstResponseAt, field.TypeTime, value)
@@ -1340,6 +1491,121 @@ func (_u *TicketUpdateOne) SetNillableSLAResolutionBreached(v *bool) *TicketUpda
 	return _u
 }
 
+// SetSLAPolicyID sets the "sla_policy_id" field.
+func (_u *TicketUpdateOne) SetSLAPolicyID(v uuid.UUID) *TicketUpdateOne {
+	_u.mutation.SetSLAPolicyID(v)
+	return _u
+}
+
+// SetNillableSLAPolicyID sets the "sla_policy_id" field if the given value is not nil.
+func (_u *TicketUpdateOne) SetNillableSLAPolicyID(v *uuid.UUID) *TicketUpdateOne {
+	if v != nil {
+		_u.SetSLAPolicyID(*v)
+	}
+	return _u
+}
+
+// ClearSLAPolicyID clears the value of the "sla_policy_id" field.
+func (_u *TicketUpdateOne) ClearSLAPolicyID() *TicketUpdateOne {
+	_u.mutation.ClearSLAPolicyID()
+	return _u
+}
+
+// SetSLAPausedAt sets the "sla_paused_at" field.
+func (_u *TicketUpdateOne) SetSLAPausedAt(v time.Time) *TicketUpdateOne {
+	_u.mutation.SetSLAPausedAt(v)
+	return _u
+}
+
+// SetNillableSLAPausedAt sets the "sla_paused_at" field if the given value is not nil.
+func (_u *TicketUpdateOne) SetNillableSLAPausedAt(v *time.Time) *TicketUpdateOne {
+	if v != nil {
+		_u.SetSLAPausedAt(*v)
+	}
+	return _u
+}
+
+// ClearSLAPausedAt clears the value of the "sla_paused_at" field.
+func (_u *TicketUpdateOne) ClearSLAPausedAt() *TicketUpdateOne {
+	_u.mutation.ClearSLAPausedAt()
+	return _u
+}
+
+// SetSLAPausedMinutes sets the "sla_paused_minutes" field.
+func (_u *TicketUpdateOne) SetSLAPausedMinutes(v int) *TicketUpdateOne {
+	_u.mutation.ResetSLAPausedMinutes()
+	_u.mutation.SetSLAPausedMinutes(v)
+	return _u
+}
+
+// SetNillableSLAPausedMinutes sets the "sla_paused_minutes" field if the given value is not nil.
+func (_u *TicketUpdateOne) SetNillableSLAPausedMinutes(v *int) *TicketUpdateOne {
+	if v != nil {
+		_u.SetSLAPausedMinutes(*v)
+	}
+	return _u
+}
+
+// AddSLAPausedMinutes adds value to the "sla_paused_minutes" field.
+func (_u *TicketUpdateOne) AddSLAPausedMinutes(v int) *TicketUpdateOne {
+	_u.mutation.AddSLAPausedMinutes(v)
+	return _u
+}
+
+// SetSLAFirstResponseMinutes sets the "sla_first_response_minutes" field.
+func (_u *TicketUpdateOne) SetSLAFirstResponseMinutes(v int) *TicketUpdateOne {
+	_u.mutation.ResetSLAFirstResponseMinutes()
+	_u.mutation.SetSLAFirstResponseMinutes(v)
+	return _u
+}
+
+// SetNillableSLAFirstResponseMinutes sets the "sla_first_response_minutes" field if the given value is not nil.
+func (_u *TicketUpdateOne) SetNillableSLAFirstResponseMinutes(v *int) *TicketUpdateOne {
+	if v != nil {
+		_u.SetSLAFirstResponseMinutes(*v)
+	}
+	return _u
+}
+
+// AddSLAFirstResponseMinutes adds value to the "sla_first_response_minutes" field.
+func (_u *TicketUpdateOne) AddSLAFirstResponseMinutes(v int) *TicketUpdateOne {
+	_u.mutation.AddSLAFirstResponseMinutes(v)
+	return _u
+}
+
+// ClearSLAFirstResponseMinutes clears the value of the "sla_first_response_minutes" field.
+func (_u *TicketUpdateOne) ClearSLAFirstResponseMinutes() *TicketUpdateOne {
+	_u.mutation.ClearSLAFirstResponseMinutes()
+	return _u
+}
+
+// SetSLAResolutionMinutes sets the "sla_resolution_minutes" field.
+func (_u *TicketUpdateOne) SetSLAResolutionMinutes(v int) *TicketUpdateOne {
+	_u.mutation.ResetSLAResolutionMinutes()
+	_u.mutation.SetSLAResolutionMinutes(v)
+	return _u
+}
+
+// SetNillableSLAResolutionMinutes sets the "sla_resolution_minutes" field if the given value is not nil.
+func (_u *TicketUpdateOne) SetNillableSLAResolutionMinutes(v *int) *TicketUpdateOne {
+	if v != nil {
+		_u.SetSLAResolutionMinutes(*v)
+	}
+	return _u
+}
+
+// AddSLAResolutionMinutes adds value to the "sla_resolution_minutes" field.
+func (_u *TicketUpdateOne) AddSLAResolutionMinutes(v int) *TicketUpdateOne {
+	_u.mutation.AddSLAResolutionMinutes(v)
+	return _u
+}
+
+// ClearSLAResolutionMinutes clears the value of the "sla_resolution_minutes" field.
+func (_u *TicketUpdateOne) ClearSLAResolutionMinutes() *TicketUpdateOne {
+	_u.mutation.ClearSLAResolutionMinutes()
+	return _u
+}
+
 // SetFirstResponseAt sets the "first_response_at" field.
 func (_u *TicketUpdateOne) SetFirstResponseAt(v time.Time) *TicketUpdateOne {
 	_u.mutation.SetFirstResponseAt(v)
@@ -1805,6 +2071,42 @@ func (_u *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err erro
 	}
 	if value, ok := _u.mutation.SLAResolutionBreached(); ok {
 		_spec.SetField(ticket.FieldSLAResolutionBreached, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.SLAPolicyID(); ok {
+		_spec.SetField(ticket.FieldSLAPolicyID, field.TypeUUID, value)
+	}
+	if _u.mutation.SLAPolicyIDCleared() {
+		_spec.ClearField(ticket.FieldSLAPolicyID, field.TypeUUID)
+	}
+	if value, ok := _u.mutation.SLAPausedAt(); ok {
+		_spec.SetField(ticket.FieldSLAPausedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SLAPausedAtCleared() {
+		_spec.ClearField(ticket.FieldSLAPausedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.SLAPausedMinutes(); ok {
+		_spec.SetField(ticket.FieldSLAPausedMinutes, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedSLAPausedMinutes(); ok {
+		_spec.AddField(ticket.FieldSLAPausedMinutes, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.SLAFirstResponseMinutes(); ok {
+		_spec.SetField(ticket.FieldSLAFirstResponseMinutes, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedSLAFirstResponseMinutes(); ok {
+		_spec.AddField(ticket.FieldSLAFirstResponseMinutes, field.TypeInt, value)
+	}
+	if _u.mutation.SLAFirstResponseMinutesCleared() {
+		_spec.ClearField(ticket.FieldSLAFirstResponseMinutes, field.TypeInt)
+	}
+	if value, ok := _u.mutation.SLAResolutionMinutes(); ok {
+		_spec.SetField(ticket.FieldSLAResolutionMinutes, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedSLAResolutionMinutes(); ok {
+		_spec.AddField(ticket.FieldSLAResolutionMinutes, field.TypeInt, value)
+	}
+	if _u.mutation.SLAResolutionMinutesCleared() {
+		_spec.ClearField(ticket.FieldSLAResolutionMinutes, field.TypeInt)
 	}
 	if value, ok := _u.mutation.FirstResponseAt(); ok {
 		_spec.SetField(ticket.FieldFirstResponseAt, field.TypeTime, value)

@@ -29,21 +29,17 @@ type SLAPolicy struct {
 	Priority slapolicy.Priority `json:"priority,omitempty"`
 	// Category this policy applies to (null = all categories)
 	CategoryID *uuid.UUID `json:"category_id,omitempty"`
-	// Target first response time in minutes
+	// Target first response time in minutes of the policy's clock
 	FirstResponseMinutes int `json:"first_response_minutes,omitempty"`
-	// Whether response SLA counts business hours only
-	FirstResponseBusinessHours bool `json:"first_response_business_hours,omitempty"`
-	// Target resolution time in minutes
+	// Target resolution time in minutes of the policy's clock
 	ResolutionMinutes int `json:"resolution_minutes,omitempty"`
-	// Whether resolution SLA counts business hours only
-	ResolutionBusinessHours bool `json:"resolution_business_hours,omitempty"`
+	// Business calendar both targets count in; null counts every minute (24x7)
+	CalendarID *uuid.UUID `json:"calendar_id,omitempty"`
 	// Whether policy is active
 	IsActive bool `json:"is_active,omitempty"`
 	// Priority for policy matching (lower = higher priority)
 	SortOrder int `json:"sort_order,omitempty"`
-	// Business hours configuration (JSON)
-	BusinessHours map[string]interface{} `json:"business_hours,omitempty"`
-	// Additional policy metadata
+	// Policy settings: notify_before_breach_min, pause_on_pending_internal, escalation_rules
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
@@ -57,11 +53,11 @@ func (*SLAPolicy) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case slapolicy.FieldCategoryID:
+		case slapolicy.FieldCategoryID, slapolicy.FieldCalendarID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case slapolicy.FieldBusinessHours, slapolicy.FieldMetadata:
+		case slapolicy.FieldMetadata:
 			values[i] = new([]byte)
-		case slapolicy.FieldFirstResponseBusinessHours, slapolicy.FieldResolutionBusinessHours, slapolicy.FieldIsActive:
+		case slapolicy.FieldIsActive:
 			values[i] = new(sql.NullBool)
 		case slapolicy.FieldFirstResponseMinutes, slapolicy.FieldResolutionMinutes, slapolicy.FieldSortOrder:
 			values[i] = new(sql.NullInt64)
@@ -129,23 +125,18 @@ func (_m *SLAPolicy) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.FirstResponseMinutes = int(value.Int64)
 			}
-		case slapolicy.FieldFirstResponseBusinessHours:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field first_response_business_hours", values[i])
-			} else if value.Valid {
-				_m.FirstResponseBusinessHours = value.Bool
-			}
 		case slapolicy.FieldResolutionMinutes:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field resolution_minutes", values[i])
 			} else if value.Valid {
 				_m.ResolutionMinutes = int(value.Int64)
 			}
-		case slapolicy.FieldResolutionBusinessHours:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field resolution_business_hours", values[i])
+		case slapolicy.FieldCalendarID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field calendar_id", values[i])
 			} else if value.Valid {
-				_m.ResolutionBusinessHours = value.Bool
+				_m.CalendarID = new(uuid.UUID)
+				*_m.CalendarID = *value.S.(*uuid.UUID)
 			}
 		case slapolicy.FieldIsActive:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -158,14 +149,6 @@ func (_m *SLAPolicy) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field sort_order", values[i])
 			} else if value.Valid {
 				_m.SortOrder = int(value.Int64)
-			}
-		case slapolicy.FieldBusinessHours:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field business_hours", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.BusinessHours); err != nil {
-					return fmt.Errorf("unmarshal field business_hours: %w", err)
-				}
 			}
 		case slapolicy.FieldMetadata:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -243,23 +226,19 @@ func (_m *SLAPolicy) String() string {
 	builder.WriteString("first_response_minutes=")
 	builder.WriteString(fmt.Sprintf("%v", _m.FirstResponseMinutes))
 	builder.WriteString(", ")
-	builder.WriteString("first_response_business_hours=")
-	builder.WriteString(fmt.Sprintf("%v", _m.FirstResponseBusinessHours))
-	builder.WriteString(", ")
 	builder.WriteString("resolution_minutes=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ResolutionMinutes))
 	builder.WriteString(", ")
-	builder.WriteString("resolution_business_hours=")
-	builder.WriteString(fmt.Sprintf("%v", _m.ResolutionBusinessHours))
+	if v := _m.CalendarID; v != nil {
+		builder.WriteString("calendar_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("is_active=")
 	builder.WriteString(fmt.Sprintf("%v", _m.IsActive))
 	builder.WriteString(", ")
 	builder.WriteString("sort_order=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SortOrder))
-	builder.WriteString(", ")
-	builder.WriteString("business_hours=")
-	builder.WriteString(fmt.Sprintf("%v", _m.BusinessHours))
 	builder.WriteString(", ")
 	builder.WriteString("metadata=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Metadata))

@@ -212,25 +212,10 @@ func SLABreachPayload(t *Ticket, agentEmail string, responseBreached, resolution
 	if resolutionBreached {
 		eventType = "sla.resolution_breached"
 	}
-	agentID := ""
-	if t.AssignedAgentID != nil {
-		agentID = t.AssignedAgentID.String()
-	}
-	teamID := ""
-	if t.AssignedTeamID != nil {
-		teamID = t.AssignedTeamID.String()
-	}
-	return map[string]any{
-		"ticket_id":           t.ID.String(),
-		"ticket_number":       t.TicketNumber,
-		"subject":             t.Subject,
-		"priority":            string(t.Priority),
-		"status":              string(t.Status),
-		"agent_id":            agentID,
-		"agent_email":         agentEmail,
-		"team_id":             teamID,
-		"response_breached":   responseBreached,
-		"resolution_breached": resolutionBreached,
-		"event_type":          eventType,
-	}
+	p := slaEventBase(t)
+	p["agent_email"] = agentEmail
+	p["response_breached"] = responseBreached
+	p["resolution_breached"] = resolutionBreached
+	p["event_type"] = eventType
+	return p
 }

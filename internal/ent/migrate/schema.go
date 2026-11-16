@@ -70,6 +70,36 @@ var (
 			},
 		},
 	}
+	// BusinessCalendarsColumns holds the columns for the "business_calendars" table.
+	BusinessCalendarsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString, Size: 100},
+		{Name: "timezone", Type: field.TypeString, Size: 64, Default: "Africa/Nairobi"},
+		{Name: "weekly_hours", Type: field.TypeJSON},
+		{Name: "holidays", Type: field.TypeJSON, Nullable: true},
+		{Name: "is_default", Type: field.TypeBool, Default: false},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// BusinessCalendarsTable holds the schema information for the "business_calendars" table.
+	BusinessCalendarsTable = &schema.Table{
+		Name:       "business_calendars",
+		Columns:    BusinessCalendarsColumns,
+		PrimaryKey: []*schema.Column{BusinessCalendarsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "businesscalendar_tenant_id_name",
+				Unique:  true,
+				Columns: []*schema.Column{BusinessCalendarsColumns[1], BusinessCalendarsColumns[2]},
+			},
+			{
+				Name:    "businesscalendar_tenant_id_is_default",
+				Unique:  false,
+				Columns: []*schema.Column{BusinessCalendarsColumns[1], BusinessCalendarsColumns[6]},
+			},
+		},
+	}
 	// KBArticlesColumns holds the columns for the "kb_articles" table.
 	KBArticlesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -304,12 +334,10 @@ var (
 		{Name: "priority", Type: field.TypeEnum, Enums: []string{"low", "normal", "high", "urgent", "critical"}},
 		{Name: "category_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "first_response_minutes", Type: field.TypeInt},
-		{Name: "first_response_business_hours", Type: field.TypeBool, Default: true},
 		{Name: "resolution_minutes", Type: field.TypeInt},
-		{Name: "resolution_business_hours", Type: field.TypeBool, Default: true},
+		{Name: "calendar_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "is_active", Type: field.TypeBool, Default: true},
 		{Name: "sort_order", Type: field.TypeInt, Default: 0},
-		{Name: "business_hours", Type: field.TypeJSON, Nullable: true},
 		{Name: "metadata", Type: field.TypeJSON, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
@@ -333,12 +361,17 @@ var (
 			{
 				Name:    "slapolicy_tenant_id_is_active",
 				Unique:  false,
-				Columns: []*schema.Column{SLAPoliciesColumns[1], SLAPoliciesColumns[10]},
+				Columns: []*schema.Column{SLAPoliciesColumns[1], SLAPoliciesColumns[9]},
+			},
+			{
+				Name:    "slapolicy_tenant_id_calendar_id",
+				Unique:  false,
+				Columns: []*schema.Column{SLAPoliciesColumns[1], SLAPoliciesColumns[8]},
 			},
 			{
 				Name:    "slapolicy_sort_order",
 				Unique:  false,
-				Columns: []*schema.Column{SLAPoliciesColumns[11]},
+				Columns: []*schema.Column{SLAPoliciesColumns[10]},
 			},
 		},
 	}
@@ -397,6 +430,11 @@ var (
 		{Name: "sla_resolution_due_at", Type: field.TypeTime, Nullable: true},
 		{Name: "sla_response_breached", Type: field.TypeBool, Default: false},
 		{Name: "sla_resolution_breached", Type: field.TypeBool, Default: false},
+		{Name: "sla_policy_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "sla_paused_at", Type: field.TypeTime, Nullable: true},
+		{Name: "sla_paused_minutes", Type: field.TypeInt, Default: 0},
+		{Name: "sla_first_response_minutes", Type: field.TypeInt, Nullable: true},
+		{Name: "sla_resolution_minutes", Type: field.TypeInt, Nullable: true},
 		{Name: "first_response_at", Type: field.TypeTime, Nullable: true},
 		{Name: "resolved_at", Type: field.TypeTime, Nullable: true},
 		{Name: "closed_at", Type: field.TypeTime, Nullable: true},
@@ -419,13 +457,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "tickets_agents_assigned_tickets",
-				Columns:    []*schema.Column{TicketsColumns[29]},
+				Columns:    []*schema.Column{TicketsColumns[34]},
 				RefColumns: []*schema.Column{AgentsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "tickets_ticket_categories_tickets",
-				Columns:    []*schema.Column{TicketsColumns[30]},
+				Columns:    []*schema.Column{TicketsColumns[35]},
 				RefColumns: []*schema.Column{TicketCategoriesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -439,7 +477,7 @@ var (
 			{
 				Name:    "ticket_tenant_id_created_at_id",
 				Unique:  false,
-				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[26], TicketsColumns[0]},
+				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[31], TicketsColumns[0]},
 			},
 			{
 				Name:    "ticket_tenant_id_channel",
@@ -449,12 +487,12 @@ var (
 			{
 				Name:    "ticket_tenant_id_category_id",
 				Unique:  false,
-				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[30]},
+				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[35]},
 			},
 			{
 				Name:    "ticket_tenant_id_resolved_at",
 				Unique:  false,
-				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[19]},
+				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[24]},
 			},
 			{
 				Name:    "ticket_subject_trgm",
@@ -481,7 +519,7 @@ var (
 			{
 				Name:    "ticket_tags_gin",
 				Unique:  false,
-				Columns: []*schema.Column{TicketsColumns[24]},
+				Columns: []*schema.Column{TicketsColumns[29]},
 				Annotation: &entsql.IndexAnnotation{
 					Types: map[string]string{
 						"postgres": "GIN",
@@ -506,7 +544,7 @@ var (
 			{
 				Name:    "ticket_tenant_id_assigned_agent_id",
 				Unique:  false,
-				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[29]},
+				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[34]},
 			},
 			{
 				Name:    "ticket_tenant_id_assigned_team_id",
@@ -516,7 +554,7 @@ var (
 			{
 				Name:    "ticket_category_id",
 				Unique:  false,
-				Columns: []*schema.Column{TicketsColumns[30]},
+				Columns: []*schema.Column{TicketsColumns[35]},
 			},
 			{
 				Name:    "ticket_order_id",
@@ -551,12 +589,12 @@ var (
 			{
 				Name:    "ticket_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{TicketsColumns[26]},
+				Columns: []*schema.Column{TicketsColumns[31]},
 			},
 			{
 				Name:    "ticket_deleted_at",
 				Unique:  false,
-				Columns: []*schema.Column{TicketsColumns[28]},
+				Columns: []*schema.Column{TicketsColumns[33]},
 			},
 		},
 	}
@@ -920,6 +958,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AgentsTable,
+		BusinessCalendarsTable,
 		KBArticlesTable,
 		MacrosTable,
 		OutboxEventsTable,
@@ -945,6 +984,9 @@ func init() {
 	AgentsTable.ForeignKeys[0].RefTable = TeamsTable
 	AgentsTable.Annotation = &entsql.Annotation{
 		Table: "agents",
+	}
+	BusinessCalendarsTable.Annotation = &entsql.Annotation{
+		Table: "business_calendars",
 	}
 	KBArticlesTable.Annotation = &entsql.Annotation{
 		Table: "kb_articles",

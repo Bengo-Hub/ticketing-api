@@ -80,14 +80,14 @@ The features the leaders share make up the baseline:
 | [0](sprints/sprint-0-foundation.md) | Foundation | Partial | Tracing, Testcontainers tests |
 | [1](sprints/sprint-1-identity.md) | Identity and access | Done | |
 | [2](sprints/sprint-2-tickets.md) | Ticket management | Partial | Attachment upload, ticket search, clearing fields on update |
-| [3](sprints/sprint-3-sla.md) | SLA management | Partial | Business hours, pauses, escalation, SLA report |
+| [3](sprints/sprint-3-sla.md) | SLA management | Done | Finished by sprint 10 |
 | [4](sprints/sprint-4-public-api.md) | Public API and email codes | Done | |
 | [5](sprints/sprint-5-knowledge-base.md) | Knowledge base | Partial | Full-text search, category list, suggestions |
 | [6](sprints/sprint-6-analytics.md) | Analytics | Partial | Agent, SLA and CSAT reports, export, rollups, `resolved_at` trend |
 | [7](sprints/sprint-7-notifications.md) | Notifications | Partial | Preferences, @mentions, SMS and WhatsApp |
 | [8](sprints/sprint-8-routing.md) | Routing and classification | Partial | Least-loaded fallback, ticket counts, escalation, AI classification |
 | [9](sprints/sprint-9-agent-productivity.md) | Agent productivity | Pending | Keyset paging, full-text search, views, tags, macros, merge, parent-child, bulk, collision presence, @mentions, attachments on R2 |
-| [10](sprints/sprint-10-sla-leaders.md) | SLA that matches the leaders | Pending | Business-hours calendars with Kenyan holidays, pause on pending, pre-breach, escalation, SLA report |
+| [10](sprints/sprint-10-sla-leaders.md) | SLA that matches the leaders | Built, not deployed | Testcontainers tests for the scans and the report; the notifications-api consumer for warnings and escalations |
 | [11](sprints/sprint-11-channels.md) | Channels | Pending | WhatsApp through `notifications.whatsapp.tenant_inbound`, email through forwarding addresses and the support mailbox over JMAP, ingest rules |
 | [12](sprints/sprint-12-analytics-csat.md) | Analytics and CSAT | Pending | Rollups under `RunOnce`, `resolved_at` trends, CSAT, export through the reports module, 200k benchmark |
 | [13](sprints/sprint-13-ai-vera.md) | AI with Vera | Pending | Classify, summarize, suggested reply, KB suggestions, AI wallet credits, `IsGatingExempt` for codevertex only |
@@ -101,7 +101,7 @@ After sprint 13 comes the integration review and test pass: auth-api (including 
 | GitHub reports 57 Dependabot alerts on ticketing-ui | UI | Integration review and test pass |
 | No service worker ships in production: next-pwa runs only under webpack and the Docker build uses Turbopack | UI | UI sprint 8, app shell and offline |
 | The public support pages still use native form fields and a plain textarea | UI | UI sprint 8 |
-| `SLASidebar` always says business hours apply, though deadlines are wall-clock | UI | UI sprint 9, with API sprint 10 |
+| `SLASidebar` and the policy form still use the removed `first_response_business_hours`, `resolution_business_hours` and `business_hours`; the API now takes `calendar_id` (null is 24x7) and `clear_calendar` | UI | UI sprint 9 |
 | Update requests cannot clear a field, because `UpdateTicketRequest` uses pointers with `omitempty` | API | Sprint 9 |
 | Fields the UI needs and the API lacks: stats `resolved_today` and `overdue`, previous-period figures, a tenant user directory for people not yet provisioned in ticketing (`GET /ticketing/users` lists only provisioned users), a KB category list, comment author names | API | Sprints 9 and 12 |
 | The OTP client is not on shared-service-client, because a retried call could replay a one-time code | API | Kept as is by design |
@@ -115,7 +115,7 @@ After sprint 13 comes the integration review and test pass: auth-api (including 
 
 - API on `HTTP_PORT`, default 4009. Metrics on `METRICS_PORT`, default 9090.
 - Public host `ticketingapi.codevertexafrica.com`.
-- Migrations run from `scripts/entrypoint.sh` at every pod start. The SLA scan runs only in the `ticketing-worker` Deployment.
+- Migrations run from `scripts/entrypoint.sh` at every pod start. The SLA scans (breaches, warnings, escalations) run only in the `ticketing-worker` Deployment, every minute.
 
 ## References
 

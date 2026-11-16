@@ -9,6 +9,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent"
 	entagent "github.com/bengobox/ticketing-service/internal/ent/agent"
 	"github.com/bengobox/ticketing-service/internal/ent/macro"
+	"github.com/bengobox/ticketing-service/internal/ent/predicate"
 	"github.com/bengobox/ticketing-service/internal/ent/team"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketlink"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketview"
@@ -32,6 +33,23 @@ func (r *EntRepository) AgentEmails(ctx context.Context, tenantID uuid.UUID, age
 		out[a.ID] = a.Email
 	}
 	return out, nil
+}
+
+// maxTeamAlertEmails bounds one alert's recipients.
+const maxTeamAlertEmails = 20
+
+func (r *EntRepository) TeamAlertEmails(ctx context.Context, tenantID uuid.UUID, teamID uuid.UUID) ([]string, error) {
+	base := []predicate.Agent{
+		entagent.TenantID(tenantID), entagent.TeamID(teamID), entagent.IsActive(true), entagent.EmailNEQ(""),
+	}
+	leads, err := r.client.Agent.Query().
+		Where(append(base, entagent.RoleIn(entagent.RoleSupervisor, entagent.RoleAdmin))...).
+		Limit(maxTeamAlertEmails).Select(entagent.FieldEmail).Strings(ctx)
+	if err != nil || len(leads) > 0 {
+		return leads, err
+	}
+	return r.client.Agent.Query().Where(base...).
+		Limit(maxTeamAlertEmails).Select(entagent.FieldEmail).Strings(ctx)
 }
 
 func (r *EntRepository) TeamExists(ctx context.Context, tenantID uuid.UUID, teamID uuid.UUID) (bool, error) {

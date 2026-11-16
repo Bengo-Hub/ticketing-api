@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Agent is the client for interacting with the Agent builders.
 	Agent *AgentClient
+	// BusinessCalendar is the client for interacting with the BusinessCalendar builders.
+	BusinessCalendar *BusinessCalendarClient
 	// KBArticle is the client for interacting with the KBArticle builders.
 	KBArticle *KBArticleClient
 	// Macro is the client for interacting with the Macro builders.
@@ -182,6 +184,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Agent = NewAgentClient(tx.config)
+	tx.BusinessCalendar = NewBusinessCalendarClient(tx.config)
 	tx.KBArticle = NewKBArticleClient(tx.config)
 	tx.Macro = NewMacroClient(tx.config)
 	tx.OutboxEvent = NewOutboxEventClient(tx.config)

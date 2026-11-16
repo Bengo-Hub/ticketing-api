@@ -9,9 +9,20 @@ import (
 	"go.uber.org/zap"
 )
 
-// SLAComputer computes SLA deadlines for new tickets.
+// SLAComputer is the SLA module seen from tickets: the deadlines of a new ticket and the clock of
+// a ticket's policy.
 type SLAComputer interface {
-	ComputeDeadlines(ctx context.Context, tenantID uuid.UUID, priorityStr string, categoryID *uuid.UUID, createdAt time.Time) (*time.Time, *time.Time, error)
+	// ComputeDeadlines returns nil when no policy matches (the ticket has no SLA).
+	ComputeDeadlines(ctx context.Context, tenantID uuid.UUID, priority string, categoryID *uuid.UUID, start time.Time) (*SLAPlan, error)
+	// PolicyClock returns the clock of the policy; a nil or missing policy counts 24x7.
+	PolicyClock(ctx context.Context, tenantID uuid.UUID, policyID *uuid.UUID) (SLAClock, error)
+}
+
+// SLAPlan is the policy and deadlines a new ticket starts with.
+type SLAPlan struct {
+	PolicyID        uuid.UUID
+	ResponseDueAt   time.Time
+	ResolutionDueAt time.Time
 }
 
 // RulesEvaluator evaluates auto-routing rules against a new ticket.
@@ -98,11 +109,14 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 		}),
 	}
 	if s.sla != nil {
-		responseDue, resolutionDue, err := s.sla.ComputeDeadlines(ctx, req.TenantID, string(ticket.Priority), ticket.CategoryID, s.now())
-		if err != nil {
+		plan, err := s.sla.ComputeDeadlines(ctx, req.TenantID, string(ticket.Priority), ticket.CategoryID, s.now())
+		switch {
+		case err != nil:
 			s.logger.Warn("sla deadlines not computed", zap.Error(err))
-		} else {
-			ticket.SLAResponseDueAt, ticket.SLAResolutionDueAt = responseDue, resolutionDue
+		case plan != nil:
+			policyID, responseDue, resolutionDue := plan.PolicyID, plan.ResponseDueAt, plan.ResolutionDueAt
+			ticket.SLAPolicyID = &policyID
+			ticket.SLAResponseDueAt, ticket.SLAResolutionDueAt = &responseDue, &resolutionDue
 		}
 	}
 

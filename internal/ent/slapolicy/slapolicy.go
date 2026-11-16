@@ -27,18 +27,14 @@ const (
 	FieldCategoryID = "category_id"
 	// FieldFirstResponseMinutes holds the string denoting the first_response_minutes field in the database.
 	FieldFirstResponseMinutes = "first_response_minutes"
-	// FieldFirstResponseBusinessHours holds the string denoting the first_response_business_hours field in the database.
-	FieldFirstResponseBusinessHours = "first_response_business_hours"
 	// FieldResolutionMinutes holds the string denoting the resolution_minutes field in the database.
 	FieldResolutionMinutes = "resolution_minutes"
-	// FieldResolutionBusinessHours holds the string denoting the resolution_business_hours field in the database.
-	FieldResolutionBusinessHours = "resolution_business_hours"
+	// FieldCalendarID holds the string denoting the calendar_id field in the database.
+	FieldCalendarID = "calendar_id"
 	// FieldIsActive holds the string denoting the is_active field in the database.
 	FieldIsActive = "is_active"
 	// FieldSortOrder holds the string denoting the sort_order field in the database.
 	FieldSortOrder = "sort_order"
-	// FieldBusinessHours holds the string denoting the business_hours field in the database.
-	FieldBusinessHours = "business_hours"
 	// FieldMetadata holds the string denoting the metadata field in the database.
 	FieldMetadata = "metadata"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -58,12 +54,10 @@ var Columns = []string{
 	FieldPriority,
 	FieldCategoryID,
 	FieldFirstResponseMinutes,
-	FieldFirstResponseBusinessHours,
 	FieldResolutionMinutes,
-	FieldResolutionBusinessHours,
+	FieldCalendarID,
 	FieldIsActive,
 	FieldSortOrder,
-	FieldBusinessHours,
 	FieldMetadata,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -82,10 +76,6 @@ func ValidColumn(column string) bool {
 var (
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
-	// DefaultFirstResponseBusinessHours holds the default value on creation for the "first_response_business_hours" field.
-	DefaultFirstResponseBusinessHours bool
-	// DefaultResolutionBusinessHours holds the default value on creation for the "resolution_business_hours" field.
-	DefaultResolutionBusinessHours bool
 	// DefaultIsActive holds the default value on creation for the "is_active" field.
 	DefaultIsActive bool
 	// DefaultSortOrder holds the default value on creation for the "sort_order" field.
@@ -164,19 +154,14 @@ func ByFirstResponseMinutes(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldFirstResponseMinutes, opts...).ToFunc()
 }
 
-// ByFirstResponseBusinessHours orders the results by the first_response_business_hours field.
-func ByFirstResponseBusinessHours(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldFirstResponseBusinessHours, opts...).ToFunc()
-}
-
 // ByResolutionMinutes orders the results by the resolution_minutes field.
 func ByResolutionMinutes(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldResolutionMinutes, opts...).ToFunc()
 }
 
-// ByResolutionBusinessHours orders the results by the resolution_business_hours field.
-func ByResolutionBusinessHours(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldResolutionBusinessHours, opts...).ToFunc()
+// ByCalendarID orders the results by the calendar_id field.
+func ByCalendarID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCalendarID, opts...).ToFunc()
 }
 
 // ByIsActive orders the results by the is_active field.

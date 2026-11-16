@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
+	"github.com/bengobox/ticketing-service/internal/ent/businesscalendar"
 	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
 	"github.com/bengobox/ticketing-service/internal/ent/macro"
 	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
@@ -85,6 +86,50 @@ func init() {
 	agentDescID := agentFields[0].Descriptor()
 	// agent.DefaultID holds the default value on creation for the id field.
 	agent.DefaultID = agentDescID.Default.(func() uuid.UUID)
+	businesscalendarFields := schema.BusinessCalendar{}.Fields()
+	_ = businesscalendarFields
+	// businesscalendarDescName is the schema descriptor for name field.
+	businesscalendarDescName := businesscalendarFields[2].Descriptor()
+	// businesscalendar.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	businesscalendar.NameValidator = func() func(string) error {
+		validators := businesscalendarDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// businesscalendarDescTimezone is the schema descriptor for timezone field.
+	businesscalendarDescTimezone := businesscalendarFields[3].Descriptor()
+	// businesscalendar.DefaultTimezone holds the default value on creation for the timezone field.
+	businesscalendar.DefaultTimezone = businesscalendarDescTimezone.Default.(string)
+	// businesscalendar.TimezoneValidator is a validator for the "timezone" field. It is called by the builders before save.
+	businesscalendar.TimezoneValidator = businesscalendarDescTimezone.Validators[0].(func(string) error)
+	// businesscalendarDescIsDefault is the schema descriptor for is_default field.
+	businesscalendarDescIsDefault := businesscalendarFields[6].Descriptor()
+	// businesscalendar.DefaultIsDefault holds the default value on creation for the is_default field.
+	businesscalendar.DefaultIsDefault = businesscalendarDescIsDefault.Default.(bool)
+	// businesscalendarDescCreatedAt is the schema descriptor for created_at field.
+	businesscalendarDescCreatedAt := businesscalendarFields[7].Descriptor()
+	// businesscalendar.DefaultCreatedAt holds the default value on creation for the created_at field.
+	businesscalendar.DefaultCreatedAt = businesscalendarDescCreatedAt.Default.(func() time.Time)
+	// businesscalendarDescUpdatedAt is the schema descriptor for updated_at field.
+	businesscalendarDescUpdatedAt := businesscalendarFields[8].Descriptor()
+	// businesscalendar.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	businesscalendar.DefaultUpdatedAt = businesscalendarDescUpdatedAt.Default.(func() time.Time)
+	// businesscalendar.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	businesscalendar.UpdateDefaultUpdatedAt = businesscalendarDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// businesscalendarDescID is the schema descriptor for id field.
+	businesscalendarDescID := businesscalendarFields[0].Descriptor()
+	// businesscalendar.DefaultID holds the default value on creation for the id field.
+	businesscalendar.DefaultID = businesscalendarDescID.Default.(func() uuid.UUID)
 	kbarticleFields := schema.KBArticle{}.Fields()
 	_ = kbarticleFields
 	// kbarticleDescTitle is the schema descriptor for title field.
@@ -291,28 +336,20 @@ func init() {
 			return nil
 		}
 	}()
-	// slapolicyDescFirstResponseBusinessHours is the schema descriptor for first_response_business_hours field.
-	slapolicyDescFirstResponseBusinessHours := slapolicyFields[7].Descriptor()
-	// slapolicy.DefaultFirstResponseBusinessHours holds the default value on creation for the first_response_business_hours field.
-	slapolicy.DefaultFirstResponseBusinessHours = slapolicyDescFirstResponseBusinessHours.Default.(bool)
-	// slapolicyDescResolutionBusinessHours is the schema descriptor for resolution_business_hours field.
-	slapolicyDescResolutionBusinessHours := slapolicyFields[9].Descriptor()
-	// slapolicy.DefaultResolutionBusinessHours holds the default value on creation for the resolution_business_hours field.
-	slapolicy.DefaultResolutionBusinessHours = slapolicyDescResolutionBusinessHours.Default.(bool)
 	// slapolicyDescIsActive is the schema descriptor for is_active field.
-	slapolicyDescIsActive := slapolicyFields[10].Descriptor()
+	slapolicyDescIsActive := slapolicyFields[9].Descriptor()
 	// slapolicy.DefaultIsActive holds the default value on creation for the is_active field.
 	slapolicy.DefaultIsActive = slapolicyDescIsActive.Default.(bool)
 	// slapolicyDescSortOrder is the schema descriptor for sort_order field.
-	slapolicyDescSortOrder := slapolicyFields[11].Descriptor()
+	slapolicyDescSortOrder := slapolicyFields[10].Descriptor()
 	// slapolicy.DefaultSortOrder holds the default value on creation for the sort_order field.
 	slapolicy.DefaultSortOrder = slapolicyDescSortOrder.Default.(int)
 	// slapolicyDescCreatedAt is the schema descriptor for created_at field.
-	slapolicyDescCreatedAt := slapolicyFields[14].Descriptor()
+	slapolicyDescCreatedAt := slapolicyFields[12].Descriptor()
 	// slapolicy.DefaultCreatedAt holds the default value on creation for the created_at field.
 	slapolicy.DefaultCreatedAt = slapolicyDescCreatedAt.Default.(func() time.Time)
 	// slapolicyDescUpdatedAt is the schema descriptor for updated_at field.
-	slapolicyDescUpdatedAt := slapolicyFields[15].Descriptor()
+	slapolicyDescUpdatedAt := slapolicyFields[13].Descriptor()
 	// slapolicy.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	slapolicy.DefaultUpdatedAt = slapolicyDescUpdatedAt.Default.(func() time.Time)
 	// slapolicy.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -399,16 +436,20 @@ func init() {
 	ticketDescSLAResolutionBreached := ticketFields[19].Descriptor()
 	// ticket.DefaultSLAResolutionBreached holds the default value on creation for the sla_resolution_breached field.
 	ticket.DefaultSLAResolutionBreached = ticketDescSLAResolutionBreached.Default.(bool)
+	// ticketDescSLAPausedMinutes is the schema descriptor for sla_paused_minutes field.
+	ticketDescSLAPausedMinutes := ticketFields[22].Descriptor()
+	// ticket.DefaultSLAPausedMinutes holds the default value on creation for the sla_paused_minutes field.
+	ticket.DefaultSLAPausedMinutes = ticketDescSLAPausedMinutes.Default.(int)
 	// ticketDescEscalationLevel is the schema descriptor for escalation_level field.
-	ticketDescEscalationLevel := ticketFields[24].Descriptor()
+	ticketDescEscalationLevel := ticketFields[29].Descriptor()
 	// ticket.DefaultEscalationLevel holds the default value on creation for the escalation_level field.
 	ticket.DefaultEscalationLevel = ticketDescEscalationLevel.Default.(int)
 	// ticketDescCreatedAt is the schema descriptor for created_at field.
-	ticketDescCreatedAt := ticketFields[28].Descriptor()
+	ticketDescCreatedAt := ticketFields[33].Descriptor()
 	// ticket.DefaultCreatedAt holds the default value on creation for the created_at field.
 	ticket.DefaultCreatedAt = ticketDescCreatedAt.Default.(func() time.Time)
 	// ticketDescUpdatedAt is the schema descriptor for updated_at field.
-	ticketDescUpdatedAt := ticketFields[29].Descriptor()
+	ticketDescUpdatedAt := ticketFields[34].Descriptor()
 	// ticket.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	ticket.DefaultUpdatedAt = ticketDescUpdatedAt.Default.(func() time.Time)
 	// ticket.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

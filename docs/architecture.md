@@ -24,8 +24,8 @@ The image holds four binaries, built by the `Dockerfile`.
 |---|---|
 | `ticketing-api` | HTTP API on `HTTP_PORT` (default 4009) and Prometheus metrics on `METRICS_PORT` (default 9090). It also drains the outbox to JetStream. |
 | `ticketing-migrate` | Applies the versioned migrations. `scripts/entrypoint.sh` runs it before the API starts. |
-| `ticketing-worker` | The SLA breach scan. It runs as its own Deployment and is the only process that runs the scan. |
-| `ticketing-seed` | Per-tenant seed of categories, SLA policies and knowledge base sets. It is a manual step. |
+| `ticketing-worker` | The SLA scans: breaches, pre-breach warnings and escalations. It runs as its own Deployment and is the only process that runs them. |
+| `ticketing-seed` | Per-tenant seed of categories, SLA policies, the default business calendar and knowledge base sets. It is a manual step. |
 
 ## Module layout
 
@@ -33,7 +33,7 @@ The image holds four binaries, built by the `Dockerfile`.
 cmd/
   api/        HTTP server
   migrate/    versioned migrations under the advisory lock
-  worker/     SLA breach scan
+  worker/     SLA breach, warning and escalation scans
   seed/       per-tenant seed and knowledge base sets (kb/<set>/*.json)
 internal/
   app/        wiring of every dependency
@@ -49,7 +49,8 @@ internal/
     kb/       knowledge base articles
     rbac/     permission catalogue, roles, ticketing users, auth/me
     routing/  routing rules
-    sla/      SLA policies and deadline calculation
+    sla/      SLA policies, business calendars, deadline calculation, the SLA report
+      clock/  business-time arithmetic, Kenyan holidays, policy settings (no internal imports)
     tickets/  tickets, comments, attachments, categories, public and internal routes, SSE, outbox
   platform/
     access/   resolved caller, tenant guard, RequirePermission
@@ -183,7 +184,7 @@ The row lock is held until the transaction ends, so concurrent creates queue on 
 
 ## Transactional outbox
 
-Ticket changes and their events commit in one transaction: the repository writes `outbox_events` rows inside the change's own transaction, whether or not NATS is up. The shared-events background publisher in each API pod relays pending rows to JetStream. The SLA worker writes breach events to the outbox the same way, and the API pods relay them.
+Ticket changes and their events commit in one transaction: the repository writes `outbox_events` rows inside the change's own transaction, whether or not NATS is up. The shared-events background publisher in each API pod relays pending rows to JetStream. The SLA worker writes breach, warning and escalation events to the outbox the same way, and the API pods relay them.
 
 ## Events
 
@@ -195,6 +196,8 @@ Ticket changes and their events commit in one transaction: the repository writes
 | `ticketing.ticket.status_changed` | outbox, every change except to resolved | notifications-api, to the requester |
 | `ticketing.ticket.resolved` | outbox | notifications-api, to the requester |
 | `ticketing.sla.first_response_breached`, `ticketing.sla.resolution_breached` | outbox, from the worker | notifications-api, to the agent |
+| `ticketing.sla.breach_warning` | outbox, from the worker, once per ticket and target | notifications-api, to the agent (consumer not built yet) |
+| `ticketing.ticket.escalated` | outbox, from the worker, once per escalation level | notifications-api, to the agent or team (consumer not built yet) |
 | `crm.activity.log_requested` | outbox | marketflow CRM |
 | `auth.user.created`, `auth.user.updated` | auth-api | ticketing-api, queue subscription, provisions or refreshes the ticketing user and agent |
 | `tenant.purge` (stream `tenant`) | auth-api (deleted or declined tenant), subscriptions-api (confirmed dormant account) | ticketing-api, the shared `TenantPurger` deletes every row held for the tenant |
@@ -210,7 +213,13 @@ Payloads are built in `internal/modules/tickets/events.go` and covered by `event
 | `ticket.status_changed` | `old_status`, `new_status` |
 | `ticket.resolved` | `old_status`, `new_status` (`resolved`), `resolved_at` |
 
-SLA events carry `ticket_id`, `ticket_number`, `subject`, `priority`, `status`, `agent_id`, `agent_email`, `team_id`, `response_breached`, `resolution_breached` and `event_type`, and never the requester's contact.
+SLA events and `ticket.escalated` carry `ticket_id`, `ticket_number`, `subject`, `priority`, `status`, `agent_id` and `team_id`, and never the requester's contact. On top of that:
+
+| Event | Extra keys |
+|---|---|
+| `sla.first_response_breached`, `sla.resolution_breached` | `agent_email`, `response_breached`, `resolution_breached`, `event_type` |
+| `sla.breach_warning` | `agent_email`, `target` (`first_response` or `resolution`), `due_at`, `minutes_left`, `event_type` |
+| `ticket.escalated` | `escalation_level`, `escalated_at`, `old_priority`, `old_team_id`, `target`, `when`, `minutes`, `event_type`; `priority`, `team_id` and `agent_id` are the values after the escalation |
 
 ## Support routing
 
@@ -236,15 +245,60 @@ Schema changes are versioned Atlas migrations in `internal/ent/migrate/migration
 - Each file runs with its revision record in a single transaction, so a failed statement leaves neither partial DDL nor a partial revision.
 - **Baseline rule.** `20261116090000_baseline.sql` is the schema that Ent auto-migrate built up to commit c0d863b. A database that has the `tickets` table but no revision history records the baseline as applied without running it, and only later files run. Any other database without history is new and runs every file.
 - `20261116090100_phase0.sql` adds per-tenant ticket numbers, the internal-create idempotency index, `tenant_id` on comments and attachments, agents unique per tenant and the RBAC tables.
+- `20261117090000_sprint10.sql` adds `business_calendars`, replaces the policy business-hours flags and map with `calendar_id`, adds `sla_policy_id`, `sla_paused_at`, `sla_paused_minutes`, `sla_first_response_minutes` and `sla_resolution_minutes` to tickets, and gives open tickets with deadlines the policy that set them.
 - `RESET_DB=true` drops and recreates the public schema before migrating. It exists for local development only.
 
 The API never auto-migrates. In production (commit 4f03d8e, deployed 2026-11-16) the baseline was recorded as applied, `20261116090100_phase0.sql` ran, and the API seeded the 108 permission codes on start.
 
 ## SLA worker
 
-`ticketing-worker` scans every 5 minutes for tickets past a response or resolution deadline, 200 at a time. Each tick is claimed fleet-wide through the shared cache `RunOnce` (key `ticketing:sla-breach-scan` per period), so a second replica or a restart inside the period never repeats a scan. Without Redis (local development) a single worker runs every tick. Each breach is recorded once, with its event, in one transaction per ticket. The API pods never run the scan.
+`ticketing-worker` runs three scans every minute. Each scan of each tick is claimed fleet-wide through the shared cache `RunOnce` under its own period key (`ticketing:sla-breach-scan`, `ticketing:sla-warning-scan`, `ticketing:sla-escalation-scan`), so a second replica or a restart inside the period never repeats one. Without Redis (local development) a single worker runs every tick. The API pods never run a scan. Every scan skips deleted tickets, closed statuses and tickets whose clock is paused, and records each change with its event in one transaction per ticket.
 
-Deadlines are wall-clock minutes from creation today. The policy's business-hours flags and `business_hours` map are stored but not applied yet (sprint 10).
+- **Breaches**, 200 per tick: tickets past a response or resolution deadline. Each breach is recorded once.
+- **Warnings**, 200 per tick: targets due within the policy's `notify_before_breach_min`. The lead is wall-clock minutes before the deadline. The ticket's `metadata.sla_warnings.<target>` records the warning, and the update only matches an unwarned target, so each target is warned once.
+- **Escalations**, 100 per tick: tickets whose next rule (the rule at index `escalation_level`) has fired. The update only matches the expected level, so each level is applied once.
+
+The warning and escalation scans join `sla_policies` on `(id, tenant_id)` and read each deadline through its own index within a bounded range: up to 7 days ahead, and for escalations no further back than 30 days, so old tickets are never read.
+
+## SLA clocks
+
+**Calendars.** `business_calendars` holds a tenant's working week (`weekly_hours`, periods per weekday in local time), its holidays (a JSON list of dates with names, `moon_dependent` marking dates to confirm) and an IANA timezone, `Africa/Nairobi` by default. A tenant's first calendar becomes its default and is seeded with the Kenyan public holidays of the current and the next year: New Year, Good Friday and Easter Monday (computed), Labour Day, Madaraka Day, Mazingira Day (10 October, called Utamaduni Day until the 2024 amendment), Mashujaa Day, Jamhuri Day, Christmas and Boxing Day, a holiday falling on a Sunday also observed on the next free day, and Idd ul-Fitr flagged as moon-dependent for the years with a published date (2026 and 2027). `ticketing-seed` creates this calendar for a tenant that has none.
+
+**Policies.** A policy's `calendar_id` makes both targets count business minutes in that calendar; a null `calendar_id` counts every minute. The business-hours flags and the `business_hours` map are gone. Policy metadata carries the settings the worker reads, validated on save:
+
+| Key | Meaning |
+|---|---|
+| `notify_before_breach_min` | Minutes before a deadline to publish `ticketing.sla.breach_warning`, 0 to 10080 |
+| `pause_on_pending_internal` | `true` stops the clock in `pending_internal` too |
+| `escalation_rules` | Up to 5 rules, applied in order: `target` (`first_response` or `resolution`), `when` (`before_breach` or `after_breach`), `minutes`, `raise_priority`, `team_id` |
+
+An escalation raises the priority one level (up to critical), assigns the rule's team and clears the agent, writes `escalation_level` and `escalated_at`, leaves an internal system note and publishes `ticketing.ticket.escalated`. A team deleted since the rule was saved is skipped.
+
+**Deadlines.** On create the matching policy's targets are added to the creation time in business minutes (`internal/modules/sla/clock`), skipping nights, days without working periods and holidays, and the ticket keeps `sla_policy_id`.
+
+**Pause.** `pending_customer` stops the clock, and so does `pending_internal` when the policy says so. Entering the status sets `sla_paused_at`. Leaving it measures the pause in the policy's clock, moves each deadline not yet met by that many business minutes, adds them to `sla_paused_minutes` and clears `sla_paused_at`. A ticket resolved straight from a pending status restarts first, so its breach check uses the moved deadline.
+
+**Elapsed time.** The first public agent reply writes `sla_first_response_minutes` and resolving writes `sla_resolution_minutes`: the minutes since creation in the policy's clock, less every pause.
+
+## SLA report
+
+`GET /api/v1/{tenant}/sla/reports?from&to&team_id&agent_id&priority` (`ticketing.analytics.view`) covers the tickets created in `[from, to)`, by default the last 30 days and at most 366. One `GROUP BY GROUPING SETS ((priority), (assigned_team_id), ())` query over the `(tenant_id, created_at, id)` index returns the overall, per-priority and per-team rows; no ticket row is loaded into Go. A target counts as met when it was answered or resolved without a breach and as breached when its flag is set; tickets still inside their deadline are in neither count.
+
+```json
+{
+  "from": "2026-10-18T00:00:00Z",
+  "to": "2026-11-17T00:00:00Z",
+  "overall": {
+    "tickets": 120,
+    "first_response": {"met": 104, "breached": 6, "compliance_pct": 94.5, "avg_minutes": 38.2, "p90_minutes": 95},
+    "resolution": {"met": 88, "breached": 9, "compliance_pct": 90.7, "avg_minutes": 412.5, "p90_minutes": 960}
+  },
+  "by_priority": [{"priority": "high", "tickets": 30, "first_response": {}, "resolution": {}}],
+  "by_team": [{"team_id": null, "tickets": 12, "first_response": {}, "resolution": {}}]
+}
+```
+
+`compliance_pct`, `avg_minutes` and `p90_minutes` are null when nothing was measured. The minutes are business minutes in each ticket's policy clock, net of pauses.
 
 ## Health and metrics
 

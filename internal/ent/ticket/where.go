@@ -136,6 +136,31 @@ func SLAResolutionBreached(v bool) predicate.Ticket {
 	return predicate.Ticket(sql.FieldEQ(FieldSLAResolutionBreached, v))
 }
 
+// SLAPolicyID applies equality check predicate on the "sla_policy_id" field. It's identical to SLAPolicyIDEQ.
+func SLAPolicyID(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldEQ(FieldSLAPolicyID, v))
+}
+
+// SLAPausedAt applies equality check predicate on the "sla_paused_at" field. It's identical to SLAPausedAtEQ.
+func SLAPausedAt(v time.Time) predicate.Ticket {
+	return predicate.Ticket(sql.FieldEQ(FieldSLAPausedAt, v))
+}
+
+// SLAPausedMinutes applies equality check predicate on the "sla_paused_minutes" field. It's identical to SLAPausedMinutesEQ.
+func SLAPausedMinutes(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldEQ(FieldSLAPausedMinutes, v))
+}
+
+// SLAFirstResponseMinutes applies equality check predicate on the "sla_first_response_minutes" field. It's identical to SLAFirstResponseMinutesEQ.
+func SLAFirstResponseMinutes(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldEQ(FieldSLAFirstResponseMinutes, v))
+}
+
+// SLAResolutionMinutes applies equality check predicate on the "sla_resolution_minutes" field. It's identical to SLAResolutionMinutesEQ.
+func SLAResolutionMinutes(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldEQ(FieldSLAResolutionMinutes, v))
+}
+
 // FirstResponseAt applies equality check predicate on the "first_response_at" field. It's identical to FirstResponseAtEQ.
 func FirstResponseAt(v time.Time) predicate.Ticket {
 	return predicate.Ticket(sql.FieldEQ(FieldFirstResponseAt, v))
@@ -969,6 +994,246 @@ func SLAResolutionBreachedEQ(v bool) predicate.Ticket {
 // SLAResolutionBreachedNEQ applies the NEQ predicate on the "sla_resolution_breached" field.
 func SLAResolutionBreachedNEQ(v bool) predicate.Ticket {
 	return predicate.Ticket(sql.FieldNEQ(FieldSLAResolutionBreached, v))
+}
+
+// SLAPolicyIDEQ applies the EQ predicate on the "sla_policy_id" field.
+func SLAPolicyIDEQ(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldEQ(FieldSLAPolicyID, v))
+}
+
+// SLAPolicyIDNEQ applies the NEQ predicate on the "sla_policy_id" field.
+func SLAPolicyIDNEQ(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldNEQ(FieldSLAPolicyID, v))
+}
+
+// SLAPolicyIDIn applies the In predicate on the "sla_policy_id" field.
+func SLAPolicyIDIn(vs ...uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldIn(FieldSLAPolicyID, vs...))
+}
+
+// SLAPolicyIDNotIn applies the NotIn predicate on the "sla_policy_id" field.
+func SLAPolicyIDNotIn(vs ...uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldNotIn(FieldSLAPolicyID, vs...))
+}
+
+// SLAPolicyIDGT applies the GT predicate on the "sla_policy_id" field.
+func SLAPolicyIDGT(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldGT(FieldSLAPolicyID, v))
+}
+
+// SLAPolicyIDGTE applies the GTE predicate on the "sla_policy_id" field.
+func SLAPolicyIDGTE(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldGTE(FieldSLAPolicyID, v))
+}
+
+// SLAPolicyIDLT applies the LT predicate on the "sla_policy_id" field.
+func SLAPolicyIDLT(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldLT(FieldSLAPolicyID, v))
+}
+
+// SLAPolicyIDLTE applies the LTE predicate on the "sla_policy_id" field.
+func SLAPolicyIDLTE(v uuid.UUID) predicate.Ticket {
+	return predicate.Ticket(sql.FieldLTE(FieldSLAPolicyID, v))
+}
+
+// SLAPolicyIDIsNil applies the IsNil predicate on the "sla_policy_id" field.
+func SLAPolicyIDIsNil() predicate.Ticket {
+	return predicate.Ticket(sql.FieldIsNull(FieldSLAPolicyID))
+}
+
+// SLAPolicyIDNotNil applies the NotNil predicate on the "sla_policy_id" field.
+func SLAPolicyIDNotNil() predicate.Ticket {
+	return predicate.Ticket(sql.FieldNotNull(FieldSLAPolicyID))
+}
+
+// SLAPausedAtEQ applies the EQ predicate on the "sla_paused_at" field.
+func SLAPausedAtEQ(v time.Time) predicate.Ticket {
+	return predicate.Ticket(sql.FieldEQ(FieldSLAPausedAt, v))
+}
+
+// SLAPausedAtNEQ applies the NEQ predicate on the "sla_paused_at" field.
+func SLAPausedAtNEQ(v time.Time) predicate.Ticket {
+	return predicate.Ticket(sql.FieldNEQ(FieldSLAPausedAt, v))
+}
+
+// SLAPausedAtIn applies the In predicate on the "sla_paused_at" field.
+func SLAPausedAtIn(vs ...time.Time) predicate.Ticket {
+	return predicate.Ticket(sql.FieldIn(FieldSLAPausedAt, vs...))
+}
+
+// SLAPausedAtNotIn applies the NotIn predicate on the "sla_paused_at" field.
+func SLAPausedAtNotIn(vs ...time.Time) predicate.Ticket {
+	return predicate.Ticket(sql.FieldNotIn(FieldSLAPausedAt, vs...))
+}
+
+// SLAPausedAtGT applies the GT predicate on the "sla_paused_at" field.
+func SLAPausedAtGT(v time.Time) predicate.Ticket {
+	return predicate.Ticket(sql.FieldGT(FieldSLAPausedAt, v))
+}
+
+// SLAPausedAtGTE applies the GTE predicate on the "sla_paused_at" field.
+func SLAPausedAtGTE(v time.Time) predicate.Ticket {
+	return predicate.Ticket(sql.FieldGTE(FieldSLAPausedAt, v))
+}
+
+// SLAPausedAtLT applies the LT predicate on the "sla_paused_at" field.
+func SLAPausedAtLT(v time.Time) predicate.Ticket {
+	return predicate.Ticket(sql.FieldLT(FieldSLAPausedAt, v))
+}
+
+// SLAPausedAtLTE applies the LTE predicate on the "sla_paused_at" field.
+func SLAPausedAtLTE(v time.Time) predicate.Ticket {
+	return predicate.Ticket(sql.FieldLTE(FieldSLAPausedAt, v))
+}
+
+// SLAPausedAtIsNil applies the IsNil predicate on the "sla_paused_at" field.
+func SLAPausedAtIsNil() predicate.Ticket {
+	return predicate.Ticket(sql.FieldIsNull(FieldSLAPausedAt))
+}
+
+// SLAPausedAtNotNil applies the NotNil predicate on the "sla_paused_at" field.
+func SLAPausedAtNotNil() predicate.Ticket {
+	return predicate.Ticket(sql.FieldNotNull(FieldSLAPausedAt))
+}
+
+// SLAPausedMinutesEQ applies the EQ predicate on the "sla_paused_minutes" field.
+func SLAPausedMinutesEQ(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldEQ(FieldSLAPausedMinutes, v))
+}
+
+// SLAPausedMinutesNEQ applies the NEQ predicate on the "sla_paused_minutes" field.
+func SLAPausedMinutesNEQ(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldNEQ(FieldSLAPausedMinutes, v))
+}
+
+// SLAPausedMinutesIn applies the In predicate on the "sla_paused_minutes" field.
+func SLAPausedMinutesIn(vs ...int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldIn(FieldSLAPausedMinutes, vs...))
+}
+
+// SLAPausedMinutesNotIn applies the NotIn predicate on the "sla_paused_minutes" field.
+func SLAPausedMinutesNotIn(vs ...int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldNotIn(FieldSLAPausedMinutes, vs...))
+}
+
+// SLAPausedMinutesGT applies the GT predicate on the "sla_paused_minutes" field.
+func SLAPausedMinutesGT(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldGT(FieldSLAPausedMinutes, v))
+}
+
+// SLAPausedMinutesGTE applies the GTE predicate on the "sla_paused_minutes" field.
+func SLAPausedMinutesGTE(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldGTE(FieldSLAPausedMinutes, v))
+}
+
+// SLAPausedMinutesLT applies the LT predicate on the "sla_paused_minutes" field.
+func SLAPausedMinutesLT(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldLT(FieldSLAPausedMinutes, v))
+}
+
+// SLAPausedMinutesLTE applies the LTE predicate on the "sla_paused_minutes" field.
+func SLAPausedMinutesLTE(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldLTE(FieldSLAPausedMinutes, v))
+}
+
+// SLAFirstResponseMinutesEQ applies the EQ predicate on the "sla_first_response_minutes" field.
+func SLAFirstResponseMinutesEQ(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldEQ(FieldSLAFirstResponseMinutes, v))
+}
+
+// SLAFirstResponseMinutesNEQ applies the NEQ predicate on the "sla_first_response_minutes" field.
+func SLAFirstResponseMinutesNEQ(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldNEQ(FieldSLAFirstResponseMinutes, v))
+}
+
+// SLAFirstResponseMinutesIn applies the In predicate on the "sla_first_response_minutes" field.
+func SLAFirstResponseMinutesIn(vs ...int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldIn(FieldSLAFirstResponseMinutes, vs...))
+}
+
+// SLAFirstResponseMinutesNotIn applies the NotIn predicate on the "sla_first_response_minutes" field.
+func SLAFirstResponseMinutesNotIn(vs ...int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldNotIn(FieldSLAFirstResponseMinutes, vs...))
+}
+
+// SLAFirstResponseMinutesGT applies the GT predicate on the "sla_first_response_minutes" field.
+func SLAFirstResponseMinutesGT(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldGT(FieldSLAFirstResponseMinutes, v))
+}
+
+// SLAFirstResponseMinutesGTE applies the GTE predicate on the "sla_first_response_minutes" field.
+func SLAFirstResponseMinutesGTE(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldGTE(FieldSLAFirstResponseMinutes, v))
+}
+
+// SLAFirstResponseMinutesLT applies the LT predicate on the "sla_first_response_minutes" field.
+func SLAFirstResponseMinutesLT(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldLT(FieldSLAFirstResponseMinutes, v))
+}
+
+// SLAFirstResponseMinutesLTE applies the LTE predicate on the "sla_first_response_minutes" field.
+func SLAFirstResponseMinutesLTE(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldLTE(FieldSLAFirstResponseMinutes, v))
+}
+
+// SLAFirstResponseMinutesIsNil applies the IsNil predicate on the "sla_first_response_minutes" field.
+func SLAFirstResponseMinutesIsNil() predicate.Ticket {
+	return predicate.Ticket(sql.FieldIsNull(FieldSLAFirstResponseMinutes))
+}
+
+// SLAFirstResponseMinutesNotNil applies the NotNil predicate on the "sla_first_response_minutes" field.
+func SLAFirstResponseMinutesNotNil() predicate.Ticket {
+	return predicate.Ticket(sql.FieldNotNull(FieldSLAFirstResponseMinutes))
+}
+
+// SLAResolutionMinutesEQ applies the EQ predicate on the "sla_resolution_minutes" field.
+func SLAResolutionMinutesEQ(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldEQ(FieldSLAResolutionMinutes, v))
+}
+
+// SLAResolutionMinutesNEQ applies the NEQ predicate on the "sla_resolution_minutes" field.
+func SLAResolutionMinutesNEQ(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldNEQ(FieldSLAResolutionMinutes, v))
+}
+
+// SLAResolutionMinutesIn applies the In predicate on the "sla_resolution_minutes" field.
+func SLAResolutionMinutesIn(vs ...int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldIn(FieldSLAResolutionMinutes, vs...))
+}
+
+// SLAResolutionMinutesNotIn applies the NotIn predicate on the "sla_resolution_minutes" field.
+func SLAResolutionMinutesNotIn(vs ...int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldNotIn(FieldSLAResolutionMinutes, vs...))
+}
+
+// SLAResolutionMinutesGT applies the GT predicate on the "sla_resolution_minutes" field.
+func SLAResolutionMinutesGT(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldGT(FieldSLAResolutionMinutes, v))
+}
+
+// SLAResolutionMinutesGTE applies the GTE predicate on the "sla_resolution_minutes" field.
+func SLAResolutionMinutesGTE(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldGTE(FieldSLAResolutionMinutes, v))
+}
+
+// SLAResolutionMinutesLT applies the LT predicate on the "sla_resolution_minutes" field.
+func SLAResolutionMinutesLT(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldLT(FieldSLAResolutionMinutes, v))
+}
+
+// SLAResolutionMinutesLTE applies the LTE predicate on the "sla_resolution_minutes" field.
+func SLAResolutionMinutesLTE(v int) predicate.Ticket {
+	return predicate.Ticket(sql.FieldLTE(FieldSLAResolutionMinutes, v))
+}
+
+// SLAResolutionMinutesIsNil applies the IsNil predicate on the "sla_resolution_minutes" field.
+func SLAResolutionMinutesIsNil() predicate.Ticket {
+	return predicate.Ticket(sql.FieldIsNull(FieldSLAResolutionMinutes))
+}
+
+// SLAResolutionMinutesNotNil applies the NotNil predicate on the "sla_resolution_minutes" field.
+func SLAResolutionMinutesNotNil() predicate.Ticket {
+	return predicate.Ticket(sql.FieldNotNull(FieldSLAResolutionMinutes))
 }
 
 // FirstResponseAtEQ applies the EQ predicate on the "first_response_at" field.

@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
+	"github.com/bengobox/ticketing-service/internal/ent/businesscalendar"
 	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
 	"github.com/bengobox/ticketing-service/internal/ent/macro"
 	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
@@ -31,6 +32,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/ticketsequence"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketview"
 	"github.com/bengobox/ticketing-service/internal/ent/userroleassignment"
+	"github.com/bengobox/ticketing-service/internal/modules/sla/clock"
 	"github.com/google/uuid"
 )
 
@@ -44,6 +46,7 @@ const (
 
 	// Node types.
 	TypeAgent               = "Agent"
+	TypeBusinessCalendar    = "BusinessCalendar"
 	TypeKBArticle           = "KBArticle"
 	TypeMacro               = "Macro"
 	TypeOutboxEvent         = "OutboxEvent"
@@ -1527,6 +1530,755 @@ func (m *AgentMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Agent edge %s", name)
+}
+
+// BusinessCalendarMutation represents an operation that mutates the BusinessCalendar nodes in the graph.
+type BusinessCalendarMutation struct {
+	config
+	op             Op
+	typ            string
+	id             *uuid.UUID
+	tenant_id      *uuid.UUID
+	name           *string
+	timezone       *string
+	weekly_hours   *clock.Week
+	holidays       *[]clock.Holiday
+	appendholidays []clock.Holiday
+	is_default     *bool
+	created_at     *time.Time
+	updated_at     *time.Time
+	clearedFields  map[string]struct{}
+	done           bool
+	oldValue       func(context.Context) (*BusinessCalendar, error)
+	predicates     []predicate.BusinessCalendar
+}
+
+var _ ent.Mutation = (*BusinessCalendarMutation)(nil)
+
+// businesscalendarOption allows management of the mutation configuration using functional options.
+type businesscalendarOption func(*BusinessCalendarMutation)
+
+// newBusinessCalendarMutation creates new mutation for the BusinessCalendar entity.
+func newBusinessCalendarMutation(c config, op Op, opts ...businesscalendarOption) *BusinessCalendarMutation {
+	m := &BusinessCalendarMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeBusinessCalendar,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withBusinessCalendarID sets the ID field of the mutation.
+func withBusinessCalendarID(id uuid.UUID) businesscalendarOption {
+	return func(m *BusinessCalendarMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *BusinessCalendar
+		)
+		m.oldValue = func(ctx context.Context) (*BusinessCalendar, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().BusinessCalendar.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withBusinessCalendar sets the old BusinessCalendar of the mutation.
+func withBusinessCalendar(node *BusinessCalendar) businesscalendarOption {
+	return func(m *BusinessCalendarMutation) {
+		m.oldValue = func(context.Context) (*BusinessCalendar, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m BusinessCalendarMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m BusinessCalendarMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of BusinessCalendar entities.
+func (m *BusinessCalendarMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *BusinessCalendarMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *BusinessCalendarMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().BusinessCalendar.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (m *BusinessCalendarMutation) SetTenantID(u uuid.UUID) {
+	m.tenant_id = &u
+}
+
+// TenantID returns the value of the "tenant_id" field in the mutation.
+func (m *BusinessCalendarMutation) TenantID() (r uuid.UUID, exists bool) {
+	v := m.tenant_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTenantID returns the old "tenant_id" field's value of the BusinessCalendar entity.
+// If the BusinessCalendar object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BusinessCalendarMutation) OldTenantID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTenantID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTenantID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTenantID: %w", err)
+	}
+	return oldValue.TenantID, nil
+}
+
+// ResetTenantID resets all changes to the "tenant_id" field.
+func (m *BusinessCalendarMutation) ResetTenantID() {
+	m.tenant_id = nil
+}
+
+// SetName sets the "name" field.
+func (m *BusinessCalendarMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *BusinessCalendarMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the BusinessCalendar entity.
+// If the BusinessCalendar object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BusinessCalendarMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *BusinessCalendarMutation) ResetName() {
+	m.name = nil
+}
+
+// SetTimezone sets the "timezone" field.
+func (m *BusinessCalendarMutation) SetTimezone(s string) {
+	m.timezone = &s
+}
+
+// Timezone returns the value of the "timezone" field in the mutation.
+func (m *BusinessCalendarMutation) Timezone() (r string, exists bool) {
+	v := m.timezone
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTimezone returns the old "timezone" field's value of the BusinessCalendar entity.
+// If the BusinessCalendar object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BusinessCalendarMutation) OldTimezone(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTimezone is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTimezone requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTimezone: %w", err)
+	}
+	return oldValue.Timezone, nil
+}
+
+// ResetTimezone resets all changes to the "timezone" field.
+func (m *BusinessCalendarMutation) ResetTimezone() {
+	m.timezone = nil
+}
+
+// SetWeeklyHours sets the "weekly_hours" field.
+func (m *BusinessCalendarMutation) SetWeeklyHours(c clock.Week) {
+	m.weekly_hours = &c
+}
+
+// WeeklyHours returns the value of the "weekly_hours" field in the mutation.
+func (m *BusinessCalendarMutation) WeeklyHours() (r clock.Week, exists bool) {
+	v := m.weekly_hours
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWeeklyHours returns the old "weekly_hours" field's value of the BusinessCalendar entity.
+// If the BusinessCalendar object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BusinessCalendarMutation) OldWeeklyHours(ctx context.Context) (v clock.Week, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWeeklyHours is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWeeklyHours requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWeeklyHours: %w", err)
+	}
+	return oldValue.WeeklyHours, nil
+}
+
+// ResetWeeklyHours resets all changes to the "weekly_hours" field.
+func (m *BusinessCalendarMutation) ResetWeeklyHours() {
+	m.weekly_hours = nil
+}
+
+// SetHolidays sets the "holidays" field.
+func (m *BusinessCalendarMutation) SetHolidays(c []clock.Holiday) {
+	m.holidays = &c
+	m.appendholidays = nil
+}
+
+// Holidays returns the value of the "holidays" field in the mutation.
+func (m *BusinessCalendarMutation) Holidays() (r []clock.Holiday, exists bool) {
+	v := m.holidays
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHolidays returns the old "holidays" field's value of the BusinessCalendar entity.
+// If the BusinessCalendar object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BusinessCalendarMutation) OldHolidays(ctx context.Context) (v []clock.Holiday, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHolidays is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHolidays requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHolidays: %w", err)
+	}
+	return oldValue.Holidays, nil
+}
+
+// AppendHolidays adds c to the "holidays" field.
+func (m *BusinessCalendarMutation) AppendHolidays(c []clock.Holiday) {
+	m.appendholidays = append(m.appendholidays, c...)
+}
+
+// AppendedHolidays returns the list of values that were appended to the "holidays" field in this mutation.
+func (m *BusinessCalendarMutation) AppendedHolidays() ([]clock.Holiday, bool) {
+	if len(m.appendholidays) == 0 {
+		return nil, false
+	}
+	return m.appendholidays, true
+}
+
+// ClearHolidays clears the value of the "holidays" field.
+func (m *BusinessCalendarMutation) ClearHolidays() {
+	m.holidays = nil
+	m.appendholidays = nil
+	m.clearedFields[businesscalendar.FieldHolidays] = struct{}{}
+}
+
+// HolidaysCleared returns if the "holidays" field was cleared in this mutation.
+func (m *BusinessCalendarMutation) HolidaysCleared() bool {
+	_, ok := m.clearedFields[businesscalendar.FieldHolidays]
+	return ok
+}
+
+// ResetHolidays resets all changes to the "holidays" field.
+func (m *BusinessCalendarMutation) ResetHolidays() {
+	m.holidays = nil
+	m.appendholidays = nil
+	delete(m.clearedFields, businesscalendar.FieldHolidays)
+}
+
+// SetIsDefault sets the "is_default" field.
+func (m *BusinessCalendarMutation) SetIsDefault(b bool) {
+	m.is_default = &b
+}
+
+// IsDefault returns the value of the "is_default" field in the mutation.
+func (m *BusinessCalendarMutation) IsDefault() (r bool, exists bool) {
+	v := m.is_default
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsDefault returns the old "is_default" field's value of the BusinessCalendar entity.
+// If the BusinessCalendar object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BusinessCalendarMutation) OldIsDefault(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsDefault is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsDefault requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsDefault: %w", err)
+	}
+	return oldValue.IsDefault, nil
+}
+
+// ResetIsDefault resets all changes to the "is_default" field.
+func (m *BusinessCalendarMutation) ResetIsDefault() {
+	m.is_default = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *BusinessCalendarMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *BusinessCalendarMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the BusinessCalendar entity.
+// If the BusinessCalendar object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BusinessCalendarMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *BusinessCalendarMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *BusinessCalendarMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *BusinessCalendarMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the BusinessCalendar entity.
+// If the BusinessCalendar object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BusinessCalendarMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *BusinessCalendarMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// Where appends a list predicates to the BusinessCalendarMutation builder.
+func (m *BusinessCalendarMutation) Where(ps ...predicate.BusinessCalendar) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the BusinessCalendarMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *BusinessCalendarMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.BusinessCalendar, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *BusinessCalendarMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *BusinessCalendarMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (BusinessCalendar).
+func (m *BusinessCalendarMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *BusinessCalendarMutation) Fields() []string {
+	fields := make([]string, 0, 8)
+	if m.tenant_id != nil {
+		fields = append(fields, businesscalendar.FieldTenantID)
+	}
+	if m.name != nil {
+		fields = append(fields, businesscalendar.FieldName)
+	}
+	if m.timezone != nil {
+		fields = append(fields, businesscalendar.FieldTimezone)
+	}
+	if m.weekly_hours != nil {
+		fields = append(fields, businesscalendar.FieldWeeklyHours)
+	}
+	if m.holidays != nil {
+		fields = append(fields, businesscalendar.FieldHolidays)
+	}
+	if m.is_default != nil {
+		fields = append(fields, businesscalendar.FieldIsDefault)
+	}
+	if m.created_at != nil {
+		fields = append(fields, businesscalendar.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, businesscalendar.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *BusinessCalendarMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case businesscalendar.FieldTenantID:
+		return m.TenantID()
+	case businesscalendar.FieldName:
+		return m.Name()
+	case businesscalendar.FieldTimezone:
+		return m.Timezone()
+	case businesscalendar.FieldWeeklyHours:
+		return m.WeeklyHours()
+	case businesscalendar.FieldHolidays:
+		return m.Holidays()
+	case businesscalendar.FieldIsDefault:
+		return m.IsDefault()
+	case businesscalendar.FieldCreatedAt:
+		return m.CreatedAt()
+	case businesscalendar.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *BusinessCalendarMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case businesscalendar.FieldTenantID:
+		return m.OldTenantID(ctx)
+	case businesscalendar.FieldName:
+		return m.OldName(ctx)
+	case businesscalendar.FieldTimezone:
+		return m.OldTimezone(ctx)
+	case businesscalendar.FieldWeeklyHours:
+		return m.OldWeeklyHours(ctx)
+	case businesscalendar.FieldHolidays:
+		return m.OldHolidays(ctx)
+	case businesscalendar.FieldIsDefault:
+		return m.OldIsDefault(ctx)
+	case businesscalendar.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case businesscalendar.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown BusinessCalendar field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *BusinessCalendarMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case businesscalendar.FieldTenantID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTenantID(v)
+		return nil
+	case businesscalendar.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case businesscalendar.FieldTimezone:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTimezone(v)
+		return nil
+	case businesscalendar.FieldWeeklyHours:
+		v, ok := value.(clock.Week)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWeeklyHours(v)
+		return nil
+	case businesscalendar.FieldHolidays:
+		v, ok := value.([]clock.Holiday)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHolidays(v)
+		return nil
+	case businesscalendar.FieldIsDefault:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsDefault(v)
+		return nil
+	case businesscalendar.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case businesscalendar.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown BusinessCalendar field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *BusinessCalendarMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *BusinessCalendarMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *BusinessCalendarMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown BusinessCalendar numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *BusinessCalendarMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(businesscalendar.FieldHolidays) {
+		fields = append(fields, businesscalendar.FieldHolidays)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *BusinessCalendarMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *BusinessCalendarMutation) ClearField(name string) error {
+	switch name {
+	case businesscalendar.FieldHolidays:
+		m.ClearHolidays()
+		return nil
+	}
+	return fmt.Errorf("unknown BusinessCalendar nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *BusinessCalendarMutation) ResetField(name string) error {
+	switch name {
+	case businesscalendar.FieldTenantID:
+		m.ResetTenantID()
+		return nil
+	case businesscalendar.FieldName:
+		m.ResetName()
+		return nil
+	case businesscalendar.FieldTimezone:
+		m.ResetTimezone()
+		return nil
+	case businesscalendar.FieldWeeklyHours:
+		m.ResetWeeklyHours()
+		return nil
+	case businesscalendar.FieldHolidays:
+		m.ResetHolidays()
+		return nil
+	case businesscalendar.FieldIsDefault:
+		m.ResetIsDefault()
+		return nil
+	case businesscalendar.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case businesscalendar.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown BusinessCalendar field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *BusinessCalendarMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *BusinessCalendarMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *BusinessCalendarMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *BusinessCalendarMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *BusinessCalendarMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *BusinessCalendarMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *BusinessCalendarMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown BusinessCalendar unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *BusinessCalendarMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown BusinessCalendar edge %s", name)
 }
 
 // KBArticleMutation represents an operation that mutates the KBArticle nodes in the graph.
@@ -6055,31 +6807,29 @@ func (m *RoutingRuleMutation) ResetEdge(name string) error {
 // SLAPolicyMutation represents an operation that mutates the SLAPolicy nodes in the graph.
 type SLAPolicyMutation struct {
 	config
-	op                            Op
-	typ                           string
-	id                            *uuid.UUID
-	tenant_id                     *uuid.UUID
-	name                          *string
-	description                   *string
-	priority                      *slapolicy.Priority
-	category_id                   *uuid.UUID
-	first_response_minutes        *int
-	addfirst_response_minutes     *int
-	first_response_business_hours *bool
-	resolution_minutes            *int
-	addresolution_minutes         *int
-	resolution_business_hours     *bool
-	is_active                     *bool
-	sort_order                    *int
-	addsort_order                 *int
-	business_hours                *map[string]interface{}
-	metadata                      *map[string]interface{}
-	created_at                    *time.Time
-	updated_at                    *time.Time
-	clearedFields                 map[string]struct{}
-	done                          bool
-	oldValue                      func(context.Context) (*SLAPolicy, error)
-	predicates                    []predicate.SLAPolicy
+	op                        Op
+	typ                       string
+	id                        *uuid.UUID
+	tenant_id                 *uuid.UUID
+	name                      *string
+	description               *string
+	priority                  *slapolicy.Priority
+	category_id               *uuid.UUID
+	first_response_minutes    *int
+	addfirst_response_minutes *int
+	resolution_minutes        *int
+	addresolution_minutes     *int
+	calendar_id               *uuid.UUID
+	is_active                 *bool
+	sort_order                *int
+	addsort_order             *int
+	metadata                  *map[string]interface{}
+	created_at                *time.Time
+	updated_at                *time.Time
+	clearedFields             map[string]struct{}
+	done                      bool
+	oldValue                  func(context.Context) (*SLAPolicy, error)
+	predicates                []predicate.SLAPolicy
 }
 
 var _ ent.Mutation = (*SLAPolicyMutation)(nil)
@@ -6448,42 +7198,6 @@ func (m *SLAPolicyMutation) ResetFirstResponseMinutes() {
 	m.addfirst_response_minutes = nil
 }
 
-// SetFirstResponseBusinessHours sets the "first_response_business_hours" field.
-func (m *SLAPolicyMutation) SetFirstResponseBusinessHours(b bool) {
-	m.first_response_business_hours = &b
-}
-
-// FirstResponseBusinessHours returns the value of the "first_response_business_hours" field in the mutation.
-func (m *SLAPolicyMutation) FirstResponseBusinessHours() (r bool, exists bool) {
-	v := m.first_response_business_hours
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldFirstResponseBusinessHours returns the old "first_response_business_hours" field's value of the SLAPolicy entity.
-// If the SLAPolicy object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SLAPolicyMutation) OldFirstResponseBusinessHours(ctx context.Context) (v bool, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldFirstResponseBusinessHours is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldFirstResponseBusinessHours requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldFirstResponseBusinessHours: %w", err)
-	}
-	return oldValue.FirstResponseBusinessHours, nil
-}
-
-// ResetFirstResponseBusinessHours resets all changes to the "first_response_business_hours" field.
-func (m *SLAPolicyMutation) ResetFirstResponseBusinessHours() {
-	m.first_response_business_hours = nil
-}
-
 // SetResolutionMinutes sets the "resolution_minutes" field.
 func (m *SLAPolicyMutation) SetResolutionMinutes(i int) {
 	m.resolution_minutes = &i
@@ -6540,40 +7254,53 @@ func (m *SLAPolicyMutation) ResetResolutionMinutes() {
 	m.addresolution_minutes = nil
 }
 
-// SetResolutionBusinessHours sets the "resolution_business_hours" field.
-func (m *SLAPolicyMutation) SetResolutionBusinessHours(b bool) {
-	m.resolution_business_hours = &b
+// SetCalendarID sets the "calendar_id" field.
+func (m *SLAPolicyMutation) SetCalendarID(u uuid.UUID) {
+	m.calendar_id = &u
 }
 
-// ResolutionBusinessHours returns the value of the "resolution_business_hours" field in the mutation.
-func (m *SLAPolicyMutation) ResolutionBusinessHours() (r bool, exists bool) {
-	v := m.resolution_business_hours
+// CalendarID returns the value of the "calendar_id" field in the mutation.
+func (m *SLAPolicyMutation) CalendarID() (r uuid.UUID, exists bool) {
+	v := m.calendar_id
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldResolutionBusinessHours returns the old "resolution_business_hours" field's value of the SLAPolicy entity.
+// OldCalendarID returns the old "calendar_id" field's value of the SLAPolicy entity.
 // If the SLAPolicy object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SLAPolicyMutation) OldResolutionBusinessHours(ctx context.Context) (v bool, err error) {
+func (m *SLAPolicyMutation) OldCalendarID(ctx context.Context) (v *uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldResolutionBusinessHours is only allowed on UpdateOne operations")
+		return v, errors.New("OldCalendarID is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldResolutionBusinessHours requires an ID field in the mutation")
+		return v, errors.New("OldCalendarID requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldResolutionBusinessHours: %w", err)
+		return v, fmt.Errorf("querying old value for OldCalendarID: %w", err)
 	}
-	return oldValue.ResolutionBusinessHours, nil
+	return oldValue.CalendarID, nil
 }
 
-// ResetResolutionBusinessHours resets all changes to the "resolution_business_hours" field.
-func (m *SLAPolicyMutation) ResetResolutionBusinessHours() {
-	m.resolution_business_hours = nil
+// ClearCalendarID clears the value of the "calendar_id" field.
+func (m *SLAPolicyMutation) ClearCalendarID() {
+	m.calendar_id = nil
+	m.clearedFields[slapolicy.FieldCalendarID] = struct{}{}
+}
+
+// CalendarIDCleared returns if the "calendar_id" field was cleared in this mutation.
+func (m *SLAPolicyMutation) CalendarIDCleared() bool {
+	_, ok := m.clearedFields[slapolicy.FieldCalendarID]
+	return ok
+}
+
+// ResetCalendarID resets all changes to the "calendar_id" field.
+func (m *SLAPolicyMutation) ResetCalendarID() {
+	m.calendar_id = nil
+	delete(m.clearedFields, slapolicy.FieldCalendarID)
 }
 
 // SetIsActive sets the "is_active" field.
@@ -6666,55 +7393,6 @@ func (m *SLAPolicyMutation) AddedSortOrder() (r int, exists bool) {
 func (m *SLAPolicyMutation) ResetSortOrder() {
 	m.sort_order = nil
 	m.addsort_order = nil
-}
-
-// SetBusinessHours sets the "business_hours" field.
-func (m *SLAPolicyMutation) SetBusinessHours(value map[string]interface{}) {
-	m.business_hours = &value
-}
-
-// BusinessHours returns the value of the "business_hours" field in the mutation.
-func (m *SLAPolicyMutation) BusinessHours() (r map[string]interface{}, exists bool) {
-	v := m.business_hours
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldBusinessHours returns the old "business_hours" field's value of the SLAPolicy entity.
-// If the SLAPolicy object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SLAPolicyMutation) OldBusinessHours(ctx context.Context) (v map[string]interface{}, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldBusinessHours is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldBusinessHours requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldBusinessHours: %w", err)
-	}
-	return oldValue.BusinessHours, nil
-}
-
-// ClearBusinessHours clears the value of the "business_hours" field.
-func (m *SLAPolicyMutation) ClearBusinessHours() {
-	m.business_hours = nil
-	m.clearedFields[slapolicy.FieldBusinessHours] = struct{}{}
-}
-
-// BusinessHoursCleared returns if the "business_hours" field was cleared in this mutation.
-func (m *SLAPolicyMutation) BusinessHoursCleared() bool {
-	_, ok := m.clearedFields[slapolicy.FieldBusinessHours]
-	return ok
-}
-
-// ResetBusinessHours resets all changes to the "business_hours" field.
-func (m *SLAPolicyMutation) ResetBusinessHours() {
-	m.business_hours = nil
-	delete(m.clearedFields, slapolicy.FieldBusinessHours)
 }
 
 // SetMetadata sets the "metadata" field.
@@ -6872,7 +7550,7 @@ func (m *SLAPolicyMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SLAPolicyMutation) Fields() []string {
-	fields := make([]string, 0, 15)
+	fields := make([]string, 0, 13)
 	if m.tenant_id != nil {
 		fields = append(fields, slapolicy.FieldTenantID)
 	}
@@ -6891,23 +7569,17 @@ func (m *SLAPolicyMutation) Fields() []string {
 	if m.first_response_minutes != nil {
 		fields = append(fields, slapolicy.FieldFirstResponseMinutes)
 	}
-	if m.first_response_business_hours != nil {
-		fields = append(fields, slapolicy.FieldFirstResponseBusinessHours)
-	}
 	if m.resolution_minutes != nil {
 		fields = append(fields, slapolicy.FieldResolutionMinutes)
 	}
-	if m.resolution_business_hours != nil {
-		fields = append(fields, slapolicy.FieldResolutionBusinessHours)
+	if m.calendar_id != nil {
+		fields = append(fields, slapolicy.FieldCalendarID)
 	}
 	if m.is_active != nil {
 		fields = append(fields, slapolicy.FieldIsActive)
 	}
 	if m.sort_order != nil {
 		fields = append(fields, slapolicy.FieldSortOrder)
-	}
-	if m.business_hours != nil {
-		fields = append(fields, slapolicy.FieldBusinessHours)
 	}
 	if m.metadata != nil {
 		fields = append(fields, slapolicy.FieldMetadata)
@@ -6938,18 +7610,14 @@ func (m *SLAPolicyMutation) Field(name string) (ent.Value, bool) {
 		return m.CategoryID()
 	case slapolicy.FieldFirstResponseMinutes:
 		return m.FirstResponseMinutes()
-	case slapolicy.FieldFirstResponseBusinessHours:
-		return m.FirstResponseBusinessHours()
 	case slapolicy.FieldResolutionMinutes:
 		return m.ResolutionMinutes()
-	case slapolicy.FieldResolutionBusinessHours:
-		return m.ResolutionBusinessHours()
+	case slapolicy.FieldCalendarID:
+		return m.CalendarID()
 	case slapolicy.FieldIsActive:
 		return m.IsActive()
 	case slapolicy.FieldSortOrder:
 		return m.SortOrder()
-	case slapolicy.FieldBusinessHours:
-		return m.BusinessHours()
 	case slapolicy.FieldMetadata:
 		return m.Metadata()
 	case slapolicy.FieldCreatedAt:
@@ -6977,18 +7645,14 @@ func (m *SLAPolicyMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldCategoryID(ctx)
 	case slapolicy.FieldFirstResponseMinutes:
 		return m.OldFirstResponseMinutes(ctx)
-	case slapolicy.FieldFirstResponseBusinessHours:
-		return m.OldFirstResponseBusinessHours(ctx)
 	case slapolicy.FieldResolutionMinutes:
 		return m.OldResolutionMinutes(ctx)
-	case slapolicy.FieldResolutionBusinessHours:
-		return m.OldResolutionBusinessHours(ctx)
+	case slapolicy.FieldCalendarID:
+		return m.OldCalendarID(ctx)
 	case slapolicy.FieldIsActive:
 		return m.OldIsActive(ctx)
 	case slapolicy.FieldSortOrder:
 		return m.OldSortOrder(ctx)
-	case slapolicy.FieldBusinessHours:
-		return m.OldBusinessHours(ctx)
 	case slapolicy.FieldMetadata:
 		return m.OldMetadata(ctx)
 	case slapolicy.FieldCreatedAt:
@@ -7046,13 +7710,6 @@ func (m *SLAPolicyMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetFirstResponseMinutes(v)
 		return nil
-	case slapolicy.FieldFirstResponseBusinessHours:
-		v, ok := value.(bool)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetFirstResponseBusinessHours(v)
-		return nil
 	case slapolicy.FieldResolutionMinutes:
 		v, ok := value.(int)
 		if !ok {
@@ -7060,12 +7717,12 @@ func (m *SLAPolicyMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetResolutionMinutes(v)
 		return nil
-	case slapolicy.FieldResolutionBusinessHours:
-		v, ok := value.(bool)
+	case slapolicy.FieldCalendarID:
+		v, ok := value.(uuid.UUID)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetResolutionBusinessHours(v)
+		m.SetCalendarID(v)
 		return nil
 	case slapolicy.FieldIsActive:
 		v, ok := value.(bool)
@@ -7080,13 +7737,6 @@ func (m *SLAPolicyMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSortOrder(v)
-		return nil
-	case slapolicy.FieldBusinessHours:
-		v, ok := value.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetBusinessHours(v)
 		return nil
 	case slapolicy.FieldMetadata:
 		v, ok := value.(map[string]interface{})
@@ -7184,8 +7834,8 @@ func (m *SLAPolicyMutation) ClearedFields() []string {
 	if m.FieldCleared(slapolicy.FieldCategoryID) {
 		fields = append(fields, slapolicy.FieldCategoryID)
 	}
-	if m.FieldCleared(slapolicy.FieldBusinessHours) {
-		fields = append(fields, slapolicy.FieldBusinessHours)
+	if m.FieldCleared(slapolicy.FieldCalendarID) {
+		fields = append(fields, slapolicy.FieldCalendarID)
 	}
 	if m.FieldCleared(slapolicy.FieldMetadata) {
 		fields = append(fields, slapolicy.FieldMetadata)
@@ -7210,8 +7860,8 @@ func (m *SLAPolicyMutation) ClearField(name string) error {
 	case slapolicy.FieldCategoryID:
 		m.ClearCategoryID()
 		return nil
-	case slapolicy.FieldBusinessHours:
-		m.ClearBusinessHours()
+	case slapolicy.FieldCalendarID:
+		m.ClearCalendarID()
 		return nil
 	case slapolicy.FieldMetadata:
 		m.ClearMetadata()
@@ -7242,23 +7892,17 @@ func (m *SLAPolicyMutation) ResetField(name string) error {
 	case slapolicy.FieldFirstResponseMinutes:
 		m.ResetFirstResponseMinutes()
 		return nil
-	case slapolicy.FieldFirstResponseBusinessHours:
-		m.ResetFirstResponseBusinessHours()
-		return nil
 	case slapolicy.FieldResolutionMinutes:
 		m.ResetResolutionMinutes()
 		return nil
-	case slapolicy.FieldResolutionBusinessHours:
-		m.ResetResolutionBusinessHours()
+	case slapolicy.FieldCalendarID:
+		m.ResetCalendarID()
 		return nil
 	case slapolicy.FieldIsActive:
 		m.ResetIsActive()
 		return nil
 	case slapolicy.FieldSortOrder:
 		m.ResetSortOrder()
-		return nil
-	case slapolicy.FieldBusinessHours:
-		m.ResetBusinessHours()
 		return nil
 	case slapolicy.FieldMetadata:
 		m.ResetMetadata()
@@ -8187,53 +8831,61 @@ func (m *TeamMutation) ResetEdge(name string) error {
 // TicketMutation represents an operation that mutates the Ticket nodes in the graph.
 type TicketMutation struct {
 	config
-	op                      Op
-	typ                     string
-	id                      *uuid.UUID
-	tenant_id               *uuid.UUID
-	ticket_number           *string
-	customer_id             *uuid.UUID
-	assigned_team_id        *uuid.UUID
-	subject                 *string
-	description             *string
-	status                  *ticket.Status
-	priority                *ticket.Priority
-	channel                 *ticket.Channel
-	order_id                *uuid.UUID
-	external_reference      *string
-	crm_contact_id          *uuid.UUID
-	crm_lead_id             *uuid.UUID
-	sla_response_due_at     *time.Time
-	sla_resolution_due_at   *time.Time
-	sla_response_breached   *bool
-	sla_resolution_breached *bool
-	first_response_at       *time.Time
-	resolved_at             *time.Time
-	closed_at               *time.Time
-	reopened_at             *time.Time
-	escalation_level        *int
-	addescalation_level     *int
-	escalated_at            *time.Time
-	tags                    *[]string
-	appendtags              []string
-	metadata                *map[string]interface{}
-	created_at              *time.Time
-	updated_at              *time.Time
-	deleted_at              *time.Time
-	clearedFields           map[string]struct{}
-	category                *uuid.UUID
-	clearedcategory         bool
-	assigned_agent          *uuid.UUID
-	clearedassigned_agent   bool
-	comments                map[uuid.UUID]struct{}
-	removedcomments         map[uuid.UUID]struct{}
-	clearedcomments         bool
-	attachments             map[uuid.UUID]struct{}
-	removedattachments      map[uuid.UUID]struct{}
-	clearedattachments      bool
-	done                    bool
-	oldValue                func(context.Context) (*Ticket, error)
-	predicates              []predicate.Ticket
+	op                            Op
+	typ                           string
+	id                            *uuid.UUID
+	tenant_id                     *uuid.UUID
+	ticket_number                 *string
+	customer_id                   *uuid.UUID
+	assigned_team_id              *uuid.UUID
+	subject                       *string
+	description                   *string
+	status                        *ticket.Status
+	priority                      *ticket.Priority
+	channel                       *ticket.Channel
+	order_id                      *uuid.UUID
+	external_reference            *string
+	crm_contact_id                *uuid.UUID
+	crm_lead_id                   *uuid.UUID
+	sla_response_due_at           *time.Time
+	sla_resolution_due_at         *time.Time
+	sla_response_breached         *bool
+	sla_resolution_breached       *bool
+	sla_policy_id                 *uuid.UUID
+	sla_paused_at                 *time.Time
+	sla_paused_minutes            *int
+	addsla_paused_minutes         *int
+	sla_first_response_minutes    *int
+	addsla_first_response_minutes *int
+	sla_resolution_minutes        *int
+	addsla_resolution_minutes     *int
+	first_response_at             *time.Time
+	resolved_at                   *time.Time
+	closed_at                     *time.Time
+	reopened_at                   *time.Time
+	escalation_level              *int
+	addescalation_level           *int
+	escalated_at                  *time.Time
+	tags                          *[]string
+	appendtags                    []string
+	metadata                      *map[string]interface{}
+	created_at                    *time.Time
+	updated_at                    *time.Time
+	deleted_at                    *time.Time
+	clearedFields                 map[string]struct{}
+	category                      *uuid.UUID
+	clearedcategory               bool
+	assigned_agent                *uuid.UUID
+	clearedassigned_agent         bool
+	comments                      map[uuid.UUID]struct{}
+	removedcomments               map[uuid.UUID]struct{}
+	clearedcomments               bool
+	attachments                   map[uuid.UUID]struct{}
+	removedattachments            map[uuid.UUID]struct{}
+	clearedattachments            bool
+	done                          bool
+	oldValue                      func(context.Context) (*Ticket, error)
+	predicates                    []predicate.Ticket
 }
 
 var _ ent.Mutation = (*TicketMutation)(nil)
@@ -9141,6 +9793,300 @@ func (m *TicketMutation) ResetSLAResolutionBreached() {
 	m.sla_resolution_breached = nil
 }
 
+// SetSLAPolicyID sets the "sla_policy_id" field.
+func (m *TicketMutation) SetSLAPolicyID(u uuid.UUID) {
+	m.sla_policy_id = &u
+}
+
+// SLAPolicyID returns the value of the "sla_policy_id" field in the mutation.
+func (m *TicketMutation) SLAPolicyID() (r uuid.UUID, exists bool) {
+	v := m.sla_policy_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSLAPolicyID returns the old "sla_policy_id" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldSLAPolicyID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSLAPolicyID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSLAPolicyID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSLAPolicyID: %w", err)
+	}
+	return oldValue.SLAPolicyID, nil
+}
+
+// ClearSLAPolicyID clears the value of the "sla_policy_id" field.
+func (m *TicketMutation) ClearSLAPolicyID() {
+	m.sla_policy_id = nil
+	m.clearedFields[ticket.FieldSLAPolicyID] = struct{}{}
+}
+
+// SLAPolicyIDCleared returns if the "sla_policy_id" field was cleared in this mutation.
+func (m *TicketMutation) SLAPolicyIDCleared() bool {
+	_, ok := m.clearedFields[ticket.FieldSLAPolicyID]
+	return ok
+}
+
+// ResetSLAPolicyID resets all changes to the "sla_policy_id" field.
+func (m *TicketMutation) ResetSLAPolicyID() {
+	m.sla_policy_id = nil
+	delete(m.clearedFields, ticket.FieldSLAPolicyID)
+}
+
+// SetSLAPausedAt sets the "sla_paused_at" field.
+func (m *TicketMutation) SetSLAPausedAt(t time.Time) {
+	m.sla_paused_at = &t
+}
+
+// SLAPausedAt returns the value of the "sla_paused_at" field in the mutation.
+func (m *TicketMutation) SLAPausedAt() (r time.Time, exists bool) {
+	v := m.sla_paused_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSLAPausedAt returns the old "sla_paused_at" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldSLAPausedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSLAPausedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSLAPausedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSLAPausedAt: %w", err)
+	}
+	return oldValue.SLAPausedAt, nil
+}
+
+// ClearSLAPausedAt clears the value of the "sla_paused_at" field.
+func (m *TicketMutation) ClearSLAPausedAt() {
+	m.sla_paused_at = nil
+	m.clearedFields[ticket.FieldSLAPausedAt] = struct{}{}
+}
+
+// SLAPausedAtCleared returns if the "sla_paused_at" field was cleared in this mutation.
+func (m *TicketMutation) SLAPausedAtCleared() bool {
+	_, ok := m.clearedFields[ticket.FieldSLAPausedAt]
+	return ok
+}
+
+// ResetSLAPausedAt resets all changes to the "sla_paused_at" field.
+func (m *TicketMutation) ResetSLAPausedAt() {
+	m.sla_paused_at = nil
+	delete(m.clearedFields, ticket.FieldSLAPausedAt)
+}
+
+// SetSLAPausedMinutes sets the "sla_paused_minutes" field.
+func (m *TicketMutation) SetSLAPausedMinutes(i int) {
+	m.sla_paused_minutes = &i
+	m.addsla_paused_minutes = nil
+}
+
+// SLAPausedMinutes returns the value of the "sla_paused_minutes" field in the mutation.
+func (m *TicketMutation) SLAPausedMinutes() (r int, exists bool) {
+	v := m.sla_paused_minutes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSLAPausedMinutes returns the old "sla_paused_minutes" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldSLAPausedMinutes(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSLAPausedMinutes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSLAPausedMinutes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSLAPausedMinutes: %w", err)
+	}
+	return oldValue.SLAPausedMinutes, nil
+}
+
+// AddSLAPausedMinutes adds i to the "sla_paused_minutes" field.
+func (m *TicketMutation) AddSLAPausedMinutes(i int) {
+	if m.addsla_paused_minutes != nil {
+		*m.addsla_paused_minutes += i
+	} else {
+		m.addsla_paused_minutes = &i
+	}
+}
+
+// AddedSLAPausedMinutes returns the value that was added to the "sla_paused_minutes" field in this mutation.
+func (m *TicketMutation) AddedSLAPausedMinutes() (r int, exists bool) {
+	v := m.addsla_paused_minutes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSLAPausedMinutes resets all changes to the "sla_paused_minutes" field.
+func (m *TicketMutation) ResetSLAPausedMinutes() {
+	m.sla_paused_minutes = nil
+	m.addsla_paused_minutes = nil
+}
+
+// SetSLAFirstResponseMinutes sets the "sla_first_response_minutes" field.
+func (m *TicketMutation) SetSLAFirstResponseMinutes(i int) {
+	m.sla_first_response_minutes = &i
+	m.addsla_first_response_minutes = nil
+}
+
+// SLAFirstResponseMinutes returns the value of the "sla_first_response_minutes" field in the mutation.
+func (m *TicketMutation) SLAFirstResponseMinutes() (r int, exists bool) {
+	v := m.sla_first_response_minutes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSLAFirstResponseMinutes returns the old "sla_first_response_minutes" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldSLAFirstResponseMinutes(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSLAFirstResponseMinutes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSLAFirstResponseMinutes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSLAFirstResponseMinutes: %w", err)
+	}
+	return oldValue.SLAFirstResponseMinutes, nil
+}
+
+// AddSLAFirstResponseMinutes adds i to the "sla_first_response_minutes" field.
+func (m *TicketMutation) AddSLAFirstResponseMinutes(i int) {
+	if m.addsla_first_response_minutes != nil {
+		*m.addsla_first_response_minutes += i
+	} else {
+		m.addsla_first_response_minutes = &i
+	}
+}
+
+// AddedSLAFirstResponseMinutes returns the value that was added to the "sla_first_response_minutes" field in this mutation.
+func (m *TicketMutation) AddedSLAFirstResponseMinutes() (r int, exists bool) {
+	v := m.addsla_first_response_minutes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSLAFirstResponseMinutes clears the value of the "sla_first_response_minutes" field.
+func (m *TicketMutation) ClearSLAFirstResponseMinutes() {
+	m.sla_first_response_minutes = nil
+	m.addsla_first_response_minutes = nil
+	m.clearedFields[ticket.FieldSLAFirstResponseMinutes] = struct{}{}
+}
+
+// SLAFirstResponseMinutesCleared returns if the "sla_first_response_minutes" field was cleared in this mutation.
+func (m *TicketMutation) SLAFirstResponseMinutesCleared() bool {
+	_, ok := m.clearedFields[ticket.FieldSLAFirstResponseMinutes]
+	return ok
+}
+
+// ResetSLAFirstResponseMinutes resets all changes to the "sla_first_response_minutes" field.
+func (m *TicketMutation) ResetSLAFirstResponseMinutes() {
+	m.sla_first_response_minutes = nil
+	m.addsla_first_response_minutes = nil
+	delete(m.clearedFields, ticket.FieldSLAFirstResponseMinutes)
+}
+
+// SetSLAResolutionMinutes sets the "sla_resolution_minutes" field.
+func (m *TicketMutation) SetSLAResolutionMinutes(i int) {
+	m.sla_resolution_minutes = &i
+	m.addsla_resolution_minutes = nil
+}
+
+// SLAResolutionMinutes returns the value of the "sla_resolution_minutes" field in the mutation.
+func (m *TicketMutation) SLAResolutionMinutes() (r int, exists bool) {
+	v := m.sla_resolution_minutes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSLAResolutionMinutes returns the old "sla_resolution_minutes" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldSLAResolutionMinutes(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSLAResolutionMinutes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSLAResolutionMinutes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSLAResolutionMinutes: %w", err)
+	}
+	return oldValue.SLAResolutionMinutes, nil
+}
+
+// AddSLAResolutionMinutes adds i to the "sla_resolution_minutes" field.
+func (m *TicketMutation) AddSLAResolutionMinutes(i int) {
+	if m.addsla_resolution_minutes != nil {
+		*m.addsla_resolution_minutes += i
+	} else {
+		m.addsla_resolution_minutes = &i
+	}
+}
+
+// AddedSLAResolutionMinutes returns the value that was added to the "sla_resolution_minutes" field in this mutation.
+func (m *TicketMutation) AddedSLAResolutionMinutes() (r int, exists bool) {
+	v := m.addsla_resolution_minutes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSLAResolutionMinutes clears the value of the "sla_resolution_minutes" field.
+func (m *TicketMutation) ClearSLAResolutionMinutes() {
+	m.sla_resolution_minutes = nil
+	m.addsla_resolution_minutes = nil
+	m.clearedFields[ticket.FieldSLAResolutionMinutes] = struct{}{}
+}
+
+// SLAResolutionMinutesCleared returns if the "sla_resolution_minutes" field was cleared in this mutation.
+func (m *TicketMutation) SLAResolutionMinutesCleared() bool {
+	_, ok := m.clearedFields[ticket.FieldSLAResolutionMinutes]
+	return ok
+}
+
+// ResetSLAResolutionMinutes resets all changes to the "sla_resolution_minutes" field.
+func (m *TicketMutation) ResetSLAResolutionMinutes() {
+	m.sla_resolution_minutes = nil
+	m.addsla_resolution_minutes = nil
+	delete(m.clearedFields, ticket.FieldSLAResolutionMinutes)
+}
+
 // SetFirstResponseAt sets the "first_response_at" field.
 func (m *TicketMutation) SetFirstResponseAt(t time.Time) {
 	m.first_response_at = &t
@@ -9873,7 +10819,7 @@ func (m *TicketMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TicketMutation) Fields() []string {
-	fields := make([]string, 0, 30)
+	fields := make([]string, 0, 35)
 	if m.tenant_id != nil {
 		fields = append(fields, ticket.FieldTenantID)
 	}
@@ -9930,6 +10876,21 @@ func (m *TicketMutation) Fields() []string {
 	}
 	if m.sla_resolution_breached != nil {
 		fields = append(fields, ticket.FieldSLAResolutionBreached)
+	}
+	if m.sla_policy_id != nil {
+		fields = append(fields, ticket.FieldSLAPolicyID)
+	}
+	if m.sla_paused_at != nil {
+		fields = append(fields, ticket.FieldSLAPausedAt)
+	}
+	if m.sla_paused_minutes != nil {
+		fields = append(fields, ticket.FieldSLAPausedMinutes)
+	}
+	if m.sla_first_response_minutes != nil {
+		fields = append(fields, ticket.FieldSLAFirstResponseMinutes)
+	}
+	if m.sla_resolution_minutes != nil {
+		fields = append(fields, ticket.FieldSLAResolutionMinutes)
 	}
 	if m.first_response_at != nil {
 		fields = append(fields, ticket.FieldFirstResponseAt)
@@ -10010,6 +10971,16 @@ func (m *TicketMutation) Field(name string) (ent.Value, bool) {
 		return m.SLAResponseBreached()
 	case ticket.FieldSLAResolutionBreached:
 		return m.SLAResolutionBreached()
+	case ticket.FieldSLAPolicyID:
+		return m.SLAPolicyID()
+	case ticket.FieldSLAPausedAt:
+		return m.SLAPausedAt()
+	case ticket.FieldSLAPausedMinutes:
+		return m.SLAPausedMinutes()
+	case ticket.FieldSLAFirstResponseMinutes:
+		return m.SLAFirstResponseMinutes()
+	case ticket.FieldSLAResolutionMinutes:
+		return m.SLAResolutionMinutes()
 	case ticket.FieldFirstResponseAt:
 		return m.FirstResponseAt()
 	case ticket.FieldResolvedAt:
@@ -10079,6 +11050,16 @@ func (m *TicketMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldSLAResponseBreached(ctx)
 	case ticket.FieldSLAResolutionBreached:
 		return m.OldSLAResolutionBreached(ctx)
+	case ticket.FieldSLAPolicyID:
+		return m.OldSLAPolicyID(ctx)
+	case ticket.FieldSLAPausedAt:
+		return m.OldSLAPausedAt(ctx)
+	case ticket.FieldSLAPausedMinutes:
+		return m.OldSLAPausedMinutes(ctx)
+	case ticket.FieldSLAFirstResponseMinutes:
+		return m.OldSLAFirstResponseMinutes(ctx)
+	case ticket.FieldSLAResolutionMinutes:
+		return m.OldSLAResolutionMinutes(ctx)
 	case ticket.FieldFirstResponseAt:
 		return m.OldFirstResponseAt(ctx)
 	case ticket.FieldResolvedAt:
@@ -10243,6 +11224,41 @@ func (m *TicketMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetSLAResolutionBreached(v)
 		return nil
+	case ticket.FieldSLAPolicyID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSLAPolicyID(v)
+		return nil
+	case ticket.FieldSLAPausedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSLAPausedAt(v)
+		return nil
+	case ticket.FieldSLAPausedMinutes:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSLAPausedMinutes(v)
+		return nil
+	case ticket.FieldSLAFirstResponseMinutes:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSLAFirstResponseMinutes(v)
+		return nil
+	case ticket.FieldSLAResolutionMinutes:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSLAResolutionMinutes(v)
+		return nil
 	case ticket.FieldFirstResponseAt:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -10328,6 +11344,15 @@ func (m *TicketMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *TicketMutation) AddedFields() []string {
 	var fields []string
+	if m.addsla_paused_minutes != nil {
+		fields = append(fields, ticket.FieldSLAPausedMinutes)
+	}
+	if m.addsla_first_response_minutes != nil {
+		fields = append(fields, ticket.FieldSLAFirstResponseMinutes)
+	}
+	if m.addsla_resolution_minutes != nil {
+		fields = append(fields, ticket.FieldSLAResolutionMinutes)
+	}
 	if m.addescalation_level != nil {
 		fields = append(fields, ticket.FieldEscalationLevel)
 	}
@@ -10339,6 +11364,12 @@ func (m *TicketMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *TicketMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case ticket.FieldSLAPausedMinutes:
+		return m.AddedSLAPausedMinutes()
+	case ticket.FieldSLAFirstResponseMinutes:
+		return m.AddedSLAFirstResponseMinutes()
+	case ticket.FieldSLAResolutionMinutes:
+		return m.AddedSLAResolutionMinutes()
 	case ticket.FieldEscalationLevel:
 		return m.AddedEscalationLevel()
 	}
@@ -10350,6 +11381,27 @@ func (m *TicketMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *TicketMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case ticket.FieldSLAPausedMinutes:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSLAPausedMinutes(v)
+		return nil
+	case ticket.FieldSLAFirstResponseMinutes:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSLAFirstResponseMinutes(v)
+		return nil
+	case ticket.FieldSLAResolutionMinutes:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSLAResolutionMinutes(v)
+		return nil
 	case ticket.FieldEscalationLevel:
 		v, ok := value.(int)
 		if !ok {
@@ -10391,6 +11443,18 @@ func (m *TicketMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(ticket.FieldSLAResolutionDueAt) {
 		fields = append(fields, ticket.FieldSLAResolutionDueAt)
+	}
+	if m.FieldCleared(ticket.FieldSLAPolicyID) {
+		fields = append(fields, ticket.FieldSLAPolicyID)
+	}
+	if m.FieldCleared(ticket.FieldSLAPausedAt) {
+		fields = append(fields, ticket.FieldSLAPausedAt)
+	}
+	if m.FieldCleared(ticket.FieldSLAFirstResponseMinutes) {
+		fields = append(fields, ticket.FieldSLAFirstResponseMinutes)
+	}
+	if m.FieldCleared(ticket.FieldSLAResolutionMinutes) {
+		fields = append(fields, ticket.FieldSLAResolutionMinutes)
 	}
 	if m.FieldCleared(ticket.FieldFirstResponseAt) {
 		fields = append(fields, ticket.FieldFirstResponseAt)
@@ -10456,6 +11520,18 @@ func (m *TicketMutation) ClearField(name string) error {
 		return nil
 	case ticket.FieldSLAResolutionDueAt:
 		m.ClearSLAResolutionDueAt()
+		return nil
+	case ticket.FieldSLAPolicyID:
+		m.ClearSLAPolicyID()
+		return nil
+	case ticket.FieldSLAPausedAt:
+		m.ClearSLAPausedAt()
+		return nil
+	case ticket.FieldSLAFirstResponseMinutes:
+		m.ClearSLAFirstResponseMinutes()
+		return nil
+	case ticket.FieldSLAResolutionMinutes:
+		m.ClearSLAResolutionMinutes()
 		return nil
 	case ticket.FieldFirstResponseAt:
 		m.ClearFirstResponseAt()
@@ -10545,6 +11621,21 @@ func (m *TicketMutation) ResetField(name string) error {
 		return nil
 	case ticket.FieldSLAResolutionBreached:
 		m.ResetSLAResolutionBreached()
+		return nil
+	case ticket.FieldSLAPolicyID:
+		m.ResetSLAPolicyID()
+		return nil
+	case ticket.FieldSLAPausedAt:
+		m.ResetSLAPausedAt()
+		return nil
+	case ticket.FieldSLAPausedMinutes:
+		m.ResetSLAPausedMinutes()
+		return nil
+	case ticket.FieldSLAFirstResponseMinutes:
+		m.ResetSLAFirstResponseMinutes()
+		return nil
+	case ticket.FieldSLAResolutionMinutes:
+		m.ResetSLAResolutionMinutes()
 		return nil
 	case ticket.FieldFirstResponseAt:
 		m.ResetFirstResponseAt()
