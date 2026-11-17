@@ -48,7 +48,7 @@ func (in *ViewInput) Validate() error {
 	case in.Name == "" || len([]rune(in.Name)) > 100:
 		return invalid("name is required (at most 100 characters)")
 	case !ValidSort(in.Sort):
-		return invalid("sort must be created_desc or created_asc")
+		return invalid("sort must be created_desc, created_asc or sla_due")
 	}
 	return nil
 }

@@ -110,6 +110,8 @@ func (KBArticle) Indexes() []ent.Index {
 		trgmIndex("content", "kbarticle_content_trgm"),
 		index.Fields("author_id"),
 		index.Fields("created_at"),
+		// Serves the keyset lists, newest first: (created_at, id) < cursor within a tenant.
+		index.Fields("tenant_id", "created_at", "id"),
 		index.Fields("deleted_at"),
 	}
 }

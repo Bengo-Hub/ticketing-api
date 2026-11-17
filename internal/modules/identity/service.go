@@ -55,10 +55,17 @@ func (s *Service) GetTeam(ctx context.Context, tenantID uuid.UUID, teamID uuid.U
 	return s.repo.GetTeam(ctx, tenantID, teamID)
 }
 
-// ListTeams lists teams with optional filtering.
-func (s *Service) ListTeams(ctx context.Context, tenantID uuid.UUID, filter TeamFilter) ([]*Team, int, error) {
+// ListTeams returns one keyset page of teams, newest first.
+func (s *Service) ListTeams(ctx context.Context, tenantID uuid.UUID, filter TeamFilter) (Page[*Team], error) {
 	filter.TenantID = tenantID
-	return s.repo.ListTeams(ctx, tenantID, filter)
+	if filter.Limit <= 0 {
+		filter.Limit = defaultPageLimit
+	}
+	rows, err := s.repo.ListTeams(ctx, tenantID, filter)
+	if err != nil {
+		return Page[*Team]{}, err
+	}
+	return pageFrom(rows, filter.Limit, teamKey), nil
 }
 
 // UpdateTeam updates a team.
@@ -145,10 +152,17 @@ func (s *Service) GetAgentByUserID(ctx context.Context, tenantID uuid.UUID, user
 	return s.repo.GetAgentByUserID(ctx, tenantID, userID)
 }
 
-// ListAgents lists agents with optional filtering.
-func (s *Service) ListAgents(ctx context.Context, tenantID uuid.UUID, filter AgentFilter) ([]*Agent, int, error) {
+// ListAgents returns one keyset page of agents, newest first.
+func (s *Service) ListAgents(ctx context.Context, tenantID uuid.UUID, filter AgentFilter) (Page[*Agent], error) {
 	filter.TenantID = tenantID
-	return s.repo.ListAgents(ctx, tenantID, filter)
+	if filter.Limit <= 0 {
+		filter.Limit = defaultPageLimit
+	}
+	rows, err := s.repo.ListAgents(ctx, tenantID, filter)
+	if err != nil {
+		return Page[*Agent]{}, err
+	}
+	return pageFrom(rows, filter.Limit, agentKey), nil
 }
 
 // UpdateAgent updates an agent.

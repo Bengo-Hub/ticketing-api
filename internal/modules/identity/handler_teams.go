@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	pagination "github.com/Bengo-Hub/pagination"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -66,15 +65,15 @@ func (h *Handler) GetTeam(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, team)
 }
 
-// ListTeams lists teams with pagination.
+// ListTeams lists teams a keyset page at a time, newest first.
 // @Summary      List teams
-// @Description  List support teams for the authenticated tenant
+// @Description  List support teams for the authenticated tenant, newest first, as {data, next_cursor, has_more}
 // @Tags         identity
 // @Produce      json
 // @Param        tenant path  string false "Tenant slug"
 // @Param        active query bool   false "Filter by active status"
-// @Param        page   query int    false "Page number"
-// @Param        limit  query int    false "Results per page"
+// @Param        cursor query string false "next_cursor of the previous page"
+// @Param        limit  query int    false "Page size (default 25, max 100)"
 // @Success      200 {object} map[string]interface{}
 // @Failure      400 {object} map[string]string
 // @Failure      401 {object} map[string]string
@@ -86,21 +85,25 @@ func (h *Handler) ListTeams(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p := pagination.Parse(r)
-	filter := TeamFilter{TenantID: *tenantID, Limit: p.Limit, Offset: p.Offset}
+	after, limit, err := parsePage(r)
+	if err != nil {
+		h.handleError(w, err)
+		return
+	}
+	filter := TeamFilter{TenantID: *tenantID, After: after, Limit: limit}
 
 	if v := r.URL.Query().Get("active"); v != "" {
 		isActive := v == "true"
 		filter.IsActive = &isActive
 	}
 
-	teams, total, err := h.service.ListTeams(r.Context(), *tenantID, filter)
+	page, err := h.service.ListTeams(r.Context(), *tenantID, filter)
 	if err != nil {
 		h.handleError(w, err)
 		return
 	}
 
-	respondJSON(w, http.StatusOK, pagination.NewResponse(teams, total, p))
+	respondJSON(w, http.StatusOK, page)
 }
 
 // UpdateTeam updates a team.

@@ -73,6 +73,7 @@ Indexes:
 | `ticket_tenant_id_resolved_at`, `ticket_tenant_id_first_response_at`, `ticket_tenant_id_sla_response_due_at`, `ticket_tenant_id_sla_resolution_due_at` | The analytics rollup rebuilds an hour from each moment; resolved_at also serves the live resolved today figure (sprint 12) |
 | `ticket_updated_at_id` | `(updated_at, id)`, the rollup's cross-tenant read of changed tickets from its watermark (sprint 12) |
 | `ticket_open_backlog` | Partial `(tenant_id, status, assigned_team_id, assigned_agent_id, category_id, channel, priority, sla_resolution_due_at, sla_paused_at)` where `deleted_at IS NULL AND status IN ('new', 'open', 'in_progress', 'pending_customer', 'pending_internal')`, written in Postgres' normalised form. The live backlog, overdue, unassigned and open per agent as index-only scans (sprint 12) |
+| `ticket_tenant_sla_due` | Partial expression index `(tenant_id, rank, due key, id)` where `deleted_at IS NULL`, the `sort=sla_due` order and its keyset condition. The due time is the nearer of the response target (only while `first_response_at` is null) and the resolution target; the rank is 0 for a running clock with a due time, 1 running with none, 2 paused with a due time, 3 paused with none; the due key is the due time, or the Unix epoch when there is none. It exists only in the migration, and `internal/modules/tickets/sla_sort.go` holds the exact SQL the list repeats. |
 
 ### ticket_sequences
 
@@ -152,6 +153,8 @@ Indexes: `ticketattachment_tenant_id_ticket_id`, `ticketattachment_ticket_id`, `
 | `metadata` | jsonb | |
 | `created_at`, `updated_at`, `deleted_at` | timestamptz | |
 
+`team_tenant_id_created_at_id` on `(tenant_id, created_at, id)` serves the keyset team list, newest first.
+
 ### agents
 
 | Column | Type | Notes |
@@ -168,6 +171,8 @@ Indexes: `ticketattachment_tenant_id_ticket_id`, `ticketattachment_ticket_id`, `
 | `skills`, `metadata` | jsonb | |
 | `is_active` | boolean | Default true |
 | `last_active_at`, `created_at`, `updated_at` | timestamptz | |
+
+`agent_tenant_id_created_at_id` on `(tenant_id, created_at, id)` serves the keyset agent list, newest first. The unique `(tenant_id, user_id)` index also serves the comment author name lookup.
 
 ## Local RBAC
 

@@ -24,7 +24,7 @@
 
 ### Not in this sprint
 
-- Keyset pagination moves to sprint 9. Lists use offset paging from pagination v0.5.0 today.
+- Keyset pagination moved to sprint 9. The agent and team lists page by keyset since 2026-11-17.
 - `auth.user.deleted` handling is part of the integration review.
 
 ## Acceptance criteria

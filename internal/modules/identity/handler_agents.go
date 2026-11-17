@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strconv"
 
-	pagination "github.com/Bengo-Hub/pagination"
 	"github.com/bengobox/ticketing-service/internal/platform/access"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -90,9 +89,9 @@ func (h *Handler) GetAgentByUserID(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, agent)
 }
 
-// ListAgents lists agents with pagination.
+// ListAgents lists agents a keyset page at a time, newest first.
 // @Summary      List agents
-// @Description  List support agents for the authenticated tenant
+// @Description  List support agents for the authenticated tenant, newest first, as {data, next_cursor, has_more}
 // @Tags         identity
 // @Produce      json
 // @Param        tenant path  string false "Tenant slug"
@@ -100,8 +99,8 @@ func (h *Handler) GetAgentByUserID(w http.ResponseWriter, r *http.Request) {
 // @Param        status query string false "Filter by agent status"
 // @Param        role   query string false "Filter by agent role"
 // @Param        active query bool   false "Filter by active status"
-// @Param        page   query int    false "Page number"
-// @Param        limit  query int    false "Results per page"
+// @Param        cursor query string false "next_cursor of the previous page"
+// @Param        limit  query int    false "Page size (default 25, max 100)"
 // @Success      200 {object} map[string]interface{}
 // @Failure      400 {object} map[string]string
 // @Failure      401 {object} map[string]string
@@ -113,8 +112,12 @@ func (h *Handler) ListAgents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p := pagination.Parse(r)
-	filter := AgentFilter{TenantID: *tenantID, Limit: p.Limit, Offset: p.Offset}
+	after, limit, err := parsePage(r)
+	if err != nil {
+		h.handleError(w, err)
+		return
+	}
+	filter := AgentFilter{TenantID: *tenantID, After: after, Limit: limit}
 
 	q := r.URL.Query()
 	if v := q.Get("teamId"); v != "" {
@@ -135,13 +138,13 @@ func (h *Handler) ListAgents(w http.ResponseWriter, r *http.Request) {
 		filter.IsActive = &isActive
 	}
 
-	agents, total, err := h.service.ListAgents(r.Context(), *tenantID, filter)
+	page, err := h.service.ListAgents(r.Context(), *tenantID, filter)
 	if err != nil {
 		h.handleError(w, err)
 		return
 	}
 
-	respondJSON(w, http.StatusOK, pagination.NewResponse(agents, total, p))
+	respondJSON(w, http.StatusOK, page)
 }
 
 // UpdateAgent updates an agent.

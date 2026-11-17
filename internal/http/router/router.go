@@ -17,6 +17,7 @@ import (
 	_ "github.com/bengobox/ticketing-service/docs"
 	"github.com/bengobox/ticketing-service/internal/http/handlers"
 	"github.com/bengobox/ticketing-service/internal/http/metrics"
+	"github.com/bengobox/ticketing-service/internal/http/visitorip"
 	"github.com/bengobox/ticketing-service/internal/modules/ai"
 	"github.com/bengobox/ticketing-service/internal/modules/analytics"
 	"github.com/bengobox/ticketing-service/internal/modules/identity"
@@ -33,10 +34,12 @@ import (
 
 // Config holds all module handlers for the router.
 type Config struct {
-	Log                  *zap.Logger
-	HealthHandler        *handlers.HealthHandler
-	AuthMiddleware       *authclient.AuthMiddleware
-	Limiter              *ratelimit.Limiter
+	Log            *zap.Logger
+	HealthHandler  *handlers.HealthHandler
+	AuthMiddleware *authclient.AuthMiddleware
+	Limiter        *ratelimit.Limiter
+	// VisitorIPForwardKey makes X-Visitor-IP trusted on requests that carry it (visitorip).
+	VisitorIPForwardKey  string
 	AllowedOrigins       []string
 	IdentityHandler      *identity.Handler
 	TicketsHandler       *tickets.Handler
@@ -67,6 +70,9 @@ func New(cfg Config) http.Handler {
 	r.Use(middleware.RequestID)
 	// Never chi RealIP: it trusts client-sent True-Client-IP/X-Forwarded-For.
 	r.Use(ratelimit.TrustedRealIP)
+	// ticketing-ui's server names the visitor it reads for, with a shared key; without the key the
+	// header is dropped and the ingress address stands. Before the limiter and the request log.
+	r.Use(visitorip.Middleware(cfg.VisitorIPForwardKey))
 	r.Use(httpware.RequestID)
 	r.Use(httpware.Logging(cfg.Log))
 	r.Use(httpware.Recover(cfg.Log))

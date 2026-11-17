@@ -23,6 +23,13 @@ On 2026-11-17 I also wrote sprint 14: treasury-api's user management and role ad
 
 On 2026-11-17 I also built sprint 12: hourly and daily rollups filled by the worker, the `/analytics/tickets`, `/analytics/agents`, `/analytics/sla` and `/analytics/csat` routes read only from them, export through the shared reports module, and CSAT surveys sent on resolve with a single-use link. The route contract is [analytics.md](analytics.md). It is not deployed yet.
 
+On 2026-11-17 I also wrote the sprint 9 carry-over, not yet built or deployed:
+
+- **Keyset agent and team lists.** `GET /{tenant}/agents` and `GET /{tenant}/teams` take `cursor` and `limit` (default 25, at most 100) and answer `{data, next_cursor, has_more}`, newest first by `(created_at, id)`. `page`, `total` and the offset paging are gone. New indexes `agent_tenant_id_created_at_id` and `team_tenant_id_created_at_id`.
+- **Comment author names.** Every comment the ticket routes return carries `author_name`: the agent's display name for staff, the channel sender, the ticketing user's name or the ticket's requester name for a customer, and "System" for a system comment. One query per page resolves the distinct authors through the unique `(tenant_id, user_id)` indexes of `agents` and `ticketing_users`.
+- **SLA names on the ticket.** Tickets carry `sla_policy_name` and `sla_calendar_name` (empty for 24x7), from one query per list page or ticket.
+- **SLA due order.** `GET /{tenant}/tickets?sort=sla_due` lists the nearest open SLA target first, running clocks before paused ones and tickets with no target last in each group, keyset paged through the new expression index `ticket_tenant_sla_due`. A cursor from another order answers 400. Saved views accept `sla_due` as their sort.
+
 The sprint list below gives the status of each sprint against the code.
 
 ## Find, Flip, Fix (read 2026-11-16)
@@ -88,32 +95,40 @@ The features the leaders share make up the baseline:
 | [2](sprints/sprint-2-tickets.md) | Ticket management | Partial | Attachment upload, ticket search, clearing fields on update |
 | [3](sprints/sprint-3-sla.md) | SLA management | Done | Finished by sprint 10 |
 | [4](sprints/sprint-4-public-api.md) | Public API and email codes | Done | |
-| [5](sprints/sprint-5-knowledge-base.md) | Knowledge base | Partial | Full-text search, category list, suggestions |
+| [5](sprints/sprint-5-knowledge-base.md) | Knowledge base | Written, not built | Build and tests, the `(tenant_id, created_at, id)` index migration, swagger regeneration; ranked full-text search on the list |
 | [6](sprints/sprint-6-analytics.md) | Analytics | Done | Finished by sprint 12 |
 | [7](sprints/sprint-7-notifications.md) | Notifications | Partial | Preferences, @mentions, SMS and WhatsApp |
 | [8](sprints/sprint-8-routing.md) | Routing and classification | Partial | Least-loaded fallback, ticket counts (escalation came in sprint 10, AI classification in sprint 13) |
-| [9](sprints/sprint-9-agent-productivity.md) | Agent productivity | Pending | Keyset paging, full-text search, views, tags, macros, merge, parent-child, bulk, collision presence, @mentions, attachments on R2 |
-| [10](sprints/sprint-10-sla-leaders.md) | SLA that matches the leaders | Built, not deployed | Testcontainers tests for the scans and the report; the notifications-api consumer for warnings and escalations |
-| [11](sprints/sprint-11-channels.md) | Channels | Ingest, publishers and the settings page deployed; remainder in progress | The Stalwart support domain, ingest mailbox and DNS (need the owner to run the keyed calls), CRM contact link at ingest, WhatsApp agent replies and the 24-hour window, forwarding verify step, channel badge and filter, the web widget, and Convert to ticket in the notifications inbox |
-| [12](sprints/sprint-12-analytics-csat.md) | Analytics and CSAT | Built, not deployed | The migration for the compact series and the backlog index, a passing 200k benchmark run, the notifications-api survey email |
-| [13](sprints/sprint-13-ai-vera.md) | AI with Vera | Built, not deployed | Build and tests, swagger regeneration, the ticketing-ui AI panels (UI sprint 12) |
-| [14](sprints/sprint-14-user-management.md) | User management and role administration (treasury port) | Built, not deployed | Ent generation and the `audit_logs` migration, build and tests, the ticketing-ui pages |
+| [9](sprints/sprint-9-agent-productivity.md) | Agent productivity | Live (c8e8631b); the 2026-11-17 carry-over is written, not deployed | Ent generation and the migration for the agent, team and SLA due indexes, then build and tests of the carry-over; clearing fields on update; the handler split |
+| [10](sprints/sprint-10-sla-leaders.md) | SLA that matches the leaders | Live (2f0a568) | The Postgres scan tests are written (`-tags integration`), not yet run |
+| [11](sprints/sprint-11-channels.md) | Channels | Live (a67e2e6, 065c0da, f10e12a); email intake live 2026-11-17 | The CRM link for Convert to ticket is written, not deployed. WhatsApp replies stay email-only by owner decision |
+| [12](sprints/sprint-12-analytics-csat.md) | Analytics and CSAT | Live (1c9f8fb); 200k benchmark under 128 ms p95 | The rollup overlap re-read for late commits is written, not deployed |
+| [13](sprints/sprint-13-ai-vera.md) | AI with Vera | Live (359150e) | |
+| [14](sprints/sprint-14-user-management.md) | User management and role administration (treasury port) | Live (cfbac20) | Member-add response handling (see known issues) |
 
-After sprint 13 comes the integration review and test pass: auth-api (including `auth.user.deleted`), notifications-api, marketflow, subscriptions-api, marketflow-ai, projects-api end to end, and the pos, ordering and treasury links shown on a ticket, with Testcontainers repository tests and Playwright e2e tests for the five Fix requirements.
+The integration review ran on 2026-11-17; its findings are in the known issues below. The Postgres repository tests and the Playwright tests for the five Fix requirements are written and run in the next build batch.
 
 ## Known issues and pending
 
 | Item | Repo | Where it is fixed |
 |---|---|---|
-| GitHub reports 57 Dependabot alerts on ticketing-ui | UI | Integration review and test pass |
+| GitHub reports Dependabot alerts on ticketing-ui (28 open on 2026-11-17: next, postcss, zod and transitive) | UI | Bumps and pnpm overrides written 2026-11-17, ship in the next build batch |
+| Plan entitlement: writes are not gated on the tenant's plan including ticketing (any active plan can write) | API | Owner decision 2026-11-17: gate writes on the ticketing service, codevertex exempt, reads open. Queued |
+| Agent alert emails (assigned, breach, mention, warning, escalation) link to the tenant website instead of the console | notifications-api | Queued: build the link from the ticketing service URL and slug |
+| auth user events: the `services` relevance and revoke are ignored, and `auth.user.deleted` and `auth.user.deactivated` are not consumed | API | Queued |
+| S2S member add: 202 invited is answered as created, and 409 or 422 become a generic 500 | API | Queued |
+| Escalation and resolved notices read `team_name`, `reason`, `resolution_summary` and `resolved_by`, which the payloads do not carry | API or notifications-api | Queued |
+| hadia-api's KB client decodes PascalCase and offset pages; since 359150e the KB answers snake_case | hadia-api | Fix in progress 2026-11-17, ships with the next ticketing deploy |
+| Help-center article views share the UI server's per-IP rate bucket | UI and API | Fix in progress 2026-11-17 |
+| Ingress CORS refused X-Tenant-Slug, X-Ticket-Access-Token and Idempotency-Key | devops-k8s | Fixed 2026-11-17 (1b0fd39f5) |
 | No service worker ships in production: next-pwa runs only under webpack and the Docker build uses Turbopack | UI | UI sprint 8, app shell and offline |
 | The public support pages still use native form fields and a plain textarea | UI | UI sprint 8 |
 | `SLASidebar` and the policy form still use the removed `first_response_business_hours`, `resolution_business_hours` and `business_hours`; the API now takes `calendar_id` (null is 24x7) and `clear_calendar` | UI | UI sprint 9 |
 | Update requests cannot clear a field, because `UpdateTicketRequest` uses pointers with `omitempty` | API | Sprint 9 |
-| Fields the UI needs and the API lacks: a KB category list, comment author names (`resolved_today`, `overdue` and previous-period figures are in `/analytics/tickets` since sprint 12) | API | Sprint 9 |
+| Fields the UI needed and the API lacked: comment author names (`author_name`) and the SLA policy and calendar names on a ticket are written 2026-11-17; the KB category list is `GET /kb/categories` since 2026-11-17; `resolved_today`, `overdue` and previous-period figures are in `/analytics/tickets` since sprint 12 | API | Written 2026-11-17, not deployed |
 | The OTP client is not on shared-service-client, because a retried call could replay a one-time code | API | Kept as is by design |
 | `internal/modules/tickets/handler.go` (469 lines) and `internal/modules/identity/handler.go` (465 lines) are over 400 lines | API | Sprint 9 |
-| `ListTickets` does not read the `search` parameter yet | API | Sprint 9 |
+| `ListTickets` did not read the `search` parameter | API | Fixed in sprint 9: it matches the ticket number, subject, description and requester through trigram indexes |
 | Turbopack on Windows refuses the shared-ui-lib `@source` path through the pnpm junction, so local verification uses `next build --webpack` while CI builds with Turbopack on Linux | UI | Open |
 | `IncrementAgentTicketCount`, `DecrementAgentTicketCount` and `GetLeastLoadedAgent` exist and the ticket flow does not call them | API | Sprint 8 follow-up |
 

@@ -63,17 +63,70 @@ type UpdateArticleRequest struct {
 	Metadata map[string]any
 }
 
+// ArticleFilter narrows an article list. Lists are keyset paged, newest first: After is the
+// position of the last row of the previous page (nil for the first page) and Limit the page size.
 type ArticleFilter struct {
 	TenantID uuid.UUID
 	Status   ArticleStatus
 	Category string
 	IsPublic *bool
 	Search   string
+	After    *Cursor
 	Limit    int
-	Offset   int
 }
 
+// ArticleList is one keyset page. There is no total; the next page is asked for with NextCursor
+// while HasMore is true.
 type ArticleList struct {
-	Articles []*Article
-	Total    int
+	Articles   []*Article
+	NextCursor string
+	HasMore    bool
+}
+
+// PublicArticle is all the public routes show of an article. Tenant, author, status, visibility
+// and metadata (an AI draft records the ticket it came from) never leave through them. Content is
+// set only on the article page, not in lists or suggestions.
+type PublicArticle struct {
+	ID              uuid.UUID  `json:"id"`
+	Slug            string     `json:"slug"`
+	Title           string     `json:"title"`
+	Excerpt         string     `json:"excerpt"`
+	Category        string     `json:"category"`
+	Tags            []string   `json:"tags"`
+	Content         string     `json:"content,omitempty"`
+	ViewCount       int        `json:"view_count"`
+	HelpfulCount    int        `json:"helpful_count"`
+	NotHelpfulCount int        `json:"not_helpful_count"`
+	PublishedAt     *time.Time `json:"published_at,omitempty"`
+	UpdatedAt       time.Time  `json:"updated_at"`
+}
+
+// ToPublic is the public view of a, with the body only when withContent is set.
+func ToPublic(a *Article, withContent bool) PublicArticle {
+	p := PublicArticle{
+		ID:              a.ID,
+		Slug:            a.Slug,
+		Title:           a.Title,
+		Excerpt:         a.Excerpt,
+		Category:        a.Category,
+		Tags:            a.Tags,
+		ViewCount:       a.ViewCount,
+		HelpfulCount:    a.HelpfulCount,
+		NotHelpfulCount: a.NotHelpfulCount,
+		PublishedAt:     a.PublishedAt,
+		UpdatedAt:       a.UpdatedAt,
+	}
+	if p.Tags == nil {
+		p.Tags = []string{}
+	}
+	if withContent {
+		p.Content = a.Content
+	}
+	return p
+}
+
+// CategoryCount is one category of the public knowledge base and how many articles it holds.
+type CategoryCount struct {
+	Name  string `json:"name"`
+	Count int    `json:"count"`
 }

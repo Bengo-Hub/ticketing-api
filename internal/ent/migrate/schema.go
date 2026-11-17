@@ -49,6 +49,11 @@ var (
 				Columns: []*schema.Column{AgentsColumns[1], AgentsColumns[2]},
 			},
 			{
+				Name:    "agent_tenant_id_created_at_id",
+				Unique:  false,
+				Columns: []*schema.Column{AgentsColumns[1], AgentsColumns[14], AgentsColumns[0]},
+			},
+			{
 				Name:    "agent_tenant_id_status",
 				Unique:  false,
 				Columns: []*schema.Column{AgentsColumns[1], AgentsColumns[7]},
@@ -254,6 +259,11 @@ var (
 				Name:    "kbarticle_created_at",
 				Unique:  false,
 				Columns: []*schema.Column{KBArticlesColumns[16]},
+			},
+			{
+				Name:    "kbarticle_tenant_id_created_at_id",
+				Unique:  false,
+				Columns: []*schema.Column{KBArticlesColumns[1], KBArticlesColumns[16], KBArticlesColumns[0]},
 			},
 			{
 				Name:    "kbarticle_deleted_at",
@@ -476,6 +486,11 @@ var (
 				Name:    "team_tenant_id_name",
 				Unique:  true,
 				Columns: []*schema.Column{TeamsColumns[1], TeamsColumns[2]},
+			},
+			{
+				Name:    "team_tenant_id_created_at_id",
+				Unique:  false,
+				Columns: []*schema.Column{TeamsColumns[1], TeamsColumns[6], TeamsColumns[0]},
 			},
 			{
 				Name:    "team_tenant_id_is_active",

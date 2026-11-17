@@ -52,7 +52,9 @@ type Service struct {
 	files   FileStore
 	csat    CSATConfig
 	created CreatedObserver
-	now     func() time.Time
+	// contacts links a ticket opened by Convert to ticket to the requester's marketflow contact.
+	contacts ContactUpserter
+	now      func() time.Time
 }
 
 // CreatedObserver hears about a ticket after its create committed (the AI auto-classify). It is
@@ -221,11 +223,22 @@ func (s *Service) GetTicketByNumber(ctx context.Context, tenantID uuid.UUID, tic
 	return s.repo.GetTicketByNumber(ctx, tenantID, ticketNumber)
 }
 
-// ListTickets returns one keyset page of the tenant's tickets.
+// WithSLALabels sets the SLA policy and calendar names on a ticket loaded without them (the
+// ticket routes; internal paths that only act on a ticket skip the lookup).
+func (s *Service) WithSLALabels(ctx context.Context, tenantID uuid.UUID, t *Ticket) *Ticket {
+	s.withSLALabels(ctx, tenantID, []*Ticket{t})
+	return t
+}
+
+// ListTickets returns one keyset page of the tenant's tickets, each with its SLA policy and
+// calendar names (one lookup for the page). A cursor from another order is refused.
 func (s *Service) ListTickets(ctx context.Context, tenantID uuid.UUID, filter TicketFilter) (Page[*Ticket], error) {
 	filter.TenantID = tenantID
 	if !ValidSort(filter.Sort) {
 		filter.Sort = SortCreatedDesc
+	}
+	if c := filter.Page.After; c != nil && c.Ranked != (filter.Sort == SortSLADue) {
+		return Page[*Ticket]{}, ErrInvalidCursor
 	}
 	if filter.Page.Limit <= 0 {
 		filter.Page.Limit = defaultPageLimit
@@ -234,7 +247,14 @@ func (s *Service) ListTickets(ctx context.Context, tenantID uuid.UUID, filter Ti
 	if err != nil {
 		return Page[*Ticket]{}, err
 	}
-	return pageFrom(rows, filter.Page.Limit, ticketKey), nil
+	var page Page[*Ticket]
+	if filter.Sort == SortSLADue {
+		page = pageWithCursor(rows, filter.Page.Limit, slaCursor)
+	} else {
+		page = pageFrom(rows, filter.Page.Limit, ticketKey)
+	}
+	s.withSLALabels(ctx, tenantID, page.Data)
+	return page, nil
 }
 
 func ticketKey(t *Ticket) (time.Time, uuid.UUID) { return t.CreatedAt, t.ID }
@@ -334,13 +354,35 @@ func (s *Service) ListComments(ctx context.Context, tenantID uuid.UUID, ticketID
 	return rows, nil
 }
 
-// PageComments returns one keyset page of a ticket's comments, oldest first.
+// PageComments returns one keyset page of a ticket's comments, oldest first, with author names
+// (no requester-name fallback, since the ticket is not at hand).
 func (s *Service) PageComments(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, q CommentQuery) (Page[*TicketComment], error) {
+	return s.pageComments(ctx, tenantID, ticketID, nil, q)
+}
+
+// PageTicketComments is PageComments for a ticket already loaded, whose requester name names
+// customer comments that have no other name.
+func (s *Service) PageTicketComments(ctx context.Context, t *Ticket, q CommentQuery) (Page[*TicketComment], error) {
+	return s.pageComments(ctx, t.TenantID, t.ID, t, q)
+}
+
+func (s *Service) pageComments(ctx context.Context, tenantID, ticketID uuid.UUID, t *Ticket, q CommentQuery) (Page[*TicketComment], error) {
+	if c := q.Page.After; c != nil && c.Ranked {
+		return Page[*TicketComment]{}, ErrInvalidCursor
+	}
 	rows, err := s.repo.ListComments(ctx, tenantID, ticketID, q)
 	if err != nil {
 		return Page[*TicketComment]{}, err
 	}
-	return pageFrom(rows, q.Page.Limit, func(c *TicketComment) (time.Time, uuid.UUID) { return c.CreatedAt, c.ID }), nil
+	page := pageFrom(rows, q.Page.Limit, func(c *TicketComment) (time.Time, uuid.UUID) { return c.CreatedAt, c.ID })
+	s.withAuthorNames(ctx, tenantID, t, page.Data)
+	return page, nil
+}
+
+// WithAuthorName sets the author name on one comment of the ticket (the create response).
+func (s *Service) WithAuthorName(ctx context.Context, t *Ticket, c *TicketComment) *TicketComment {
+	s.withAuthorNames(ctx, t.TenantID, t, []*TicketComment{c})
+	return c
 }
 
 // UpdateComment updates a comment's content.

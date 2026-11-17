@@ -3,6 +3,7 @@ package tickets
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Bengo-Hub/shared-service-client/crm"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -319,5 +321,65 @@ func TestChannelMessageKey(t *testing.T) {
 		if _, ok := channelMessageKey(c.source, c.ref); ok {
 			t.Errorf("%s %+v treated as a channel message", c.source, c.ref)
 		}
+	}
+}
+
+// fakeContacts answers like marketflow's contact upsert.
+type fakeContacts struct {
+	id    uuid.UUID
+	err   error
+	calls int
+	got   crm.UpsertInput
+}
+
+func (f *fakeContacts) UpsertStrict(_ context.Context, in crm.UpsertInput) (crm.Contact, error) {
+	f.calls++
+	f.got = in
+	if f.err != nil {
+		return crm.Contact{}, f.err
+	}
+	return crm.Contact{ID: f.id}, nil
+}
+
+// Convert to ticket links the new ticket to the requester's marketflow contact, as the ingest does;
+// a failed lookup still opens the ticket, and other sources never call marketflow.
+func TestConvertedWhatsAppTicketIsLinkedToItsContact(t *testing.T) {
+	ctx, tenant := context.Background(), uuid.New()
+	wa := func(id string) *SourceRef { return &SourceRef{Type: "wa_message", ID: id} }
+	req := func() *CreateTicketRequest {
+		return &CreateTicketRequest{TenantID: tenant, Subject: "Order late", Description: "Where is my order?",
+			RequesterName: "Amina Otieno", RequesterPhone: "+254700000001"}
+	}
+
+	contact := uuid.New()
+	ok := &fakeContacts{id: contact}
+	// The WhatsApp key reaches the comment lookup, so these use the waRepo fake.
+	wa1 := &waRepo{sourceRepo: newSourceRepo(), threaded: map[string]*Ticket{}}
+	s := NewService(wa1, zap.NewNop())
+	s.SetContacts(ok)
+	tk, created, err := s.CreateInternalTicket(ctx, req(), "notifications.whatsapp", wa("wamid.1"))
+	if err != nil || !created || tk.CRMContactID == nil || *tk.CRMContactID != contact {
+		t.Fatalf("converted ticket %+v created=%v err=%v, want contact %s", tk, created, err, contact)
+	}
+	if ok.got.TenantID != tenant || ok.got.Phone != "+254700000001" || ok.got.FirstName != "Amina" || ok.got.LastName != "Otieno" {
+		t.Fatalf("upsert input %+v", ok.got)
+	}
+
+	down := &fakeContacts{err: errors.New("marketflow unavailable")}
+	s2 := NewService(&waRepo{sourceRepo: newSourceRepo(), threaded: map[string]*Ticket{}}, zap.NewNop())
+	s2.SetContacts(down)
+	tk, created, err = s2.CreateInternalTicket(ctx, req(), "notifications.whatsapp", wa("wamid.2"))
+	if err != nil || !created || tk.CRMContactID != nil {
+		t.Fatalf("a failed lookup must still open the ticket without a link: %+v %v %v", tk, created, err)
+	}
+
+	other := &fakeContacts{id: uuid.New()}
+	s3 := NewService(newSourceRepo(), zap.NewNop())
+	s3.SetContacts(other)
+	if _, _, err := s3.CreateInternalTicket(ctx, req(), "projects.qa", &SourceRef{Type: "qa_defect", ID: "d-9"}); err != nil {
+		t.Fatal(err)
+	}
+	if other.calls != 0 {
+		t.Fatal("only channel messages are linked; other internal sources never call marketflow")
 	}
 }

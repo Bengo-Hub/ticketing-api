@@ -118,18 +118,26 @@ func (r *EntRepository) ListTickets(ctx context.Context, tenantID uuid.UUID, fil
 	if plan, ok := PlanSearch(filter.Search); ok {
 		query = query.Where(ticketSearch(plan))
 	}
-	asc := filter.Sort == SortCreatedAsc
-	if c := filter.Page.After; c != nil {
-		query = query.Where(func(s *entsql.Selector) {
-			s.Where(afterRow(s, ticket.FieldCreatedAt, ticket.FieldID, c, asc))
-		})
-	}
-	order := ent.Desc
-	if asc {
-		order = ent.Asc
+	if filter.Sort == SortSLADue {
+		// (rank, due key, id) through the ticket_tenant_sla_due expression index (sla_sort.go).
+		if c := filter.Page.After; c != nil {
+			query = query.Where(func(s *entsql.Selector) { s.Where(afterSLARow(s, c)) })
+		}
+		query = query.Order(orderBySLADue)
+	} else {
+		asc := filter.Sort == SortCreatedAsc
+		if c := filter.Page.After; c != nil {
+			query = query.Where(func(s *entsql.Selector) {
+				s.Where(afterRow(s, ticket.FieldCreatedAt, ticket.FieldID, c, asc))
+			})
+		}
+		order := ent.Desc
+		if asc {
+			order = ent.Asc
+		}
+		query = query.Order(order(ticket.FieldCreatedAt), order(ticket.FieldID))
 	}
 	rows, err := query.
-		Order(order(ticket.FieldCreatedAt), order(ticket.FieldID)).
 		Limit(filter.Page.Limit + 1).
 		All(ctx)
 	if err != nil {

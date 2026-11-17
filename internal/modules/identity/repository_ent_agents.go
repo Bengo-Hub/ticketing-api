@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	entsql "entgo.io/ent/dialect/sql"
+
 	"github.com/bengobox/ticketing-service/internal/ent"
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
 	"github.com/google/uuid"
@@ -83,7 +85,7 @@ func (r *EntRepository) GetAgentByUserID(ctx context.Context, tenantID uuid.UUID
 	return entAgentToModel(a), nil
 }
 
-func (r *EntRepository) ListAgents(ctx context.Context, tenantID uuid.UUID, filter AgentFilter) ([]*Agent, int, error) {
+func (r *EntRepository) ListAgents(ctx context.Context, tenantID uuid.UUID, filter AgentFilter) ([]*Agent, error) {
 	query := r.client.Agent.Query().
 		Where(agent.TenantID(tenantID))
 
@@ -100,28 +102,23 @@ func (r *EntRepository) ListAgents(ctx context.Context, tenantID uuid.UUID, filt
 		query = query.Where(agent.IsActive(*filter.IsActive))
 	}
 
-	total, err := query.Clone().Count(ctx)
-	if err != nil {
-		return nil, 0, err
+	if c := filter.After; c != nil {
+		query = query.Where(func(s *entsql.Selector) { s.Where(beforeRow(s, c)) })
 	}
 
-	if filter.Offset > 0 {
-		query = query.Offset(filter.Offset)
-	}
-	if filter.Limit > 0 {
-		query = query.Limit(filter.Limit)
-	}
-
-	agents, err := query.Order(agent.ByDisplayName()).All(ctx)
+	agents, err := query.
+		Order(ent.Desc(agent.FieldCreatedAt), ent.Desc(agent.FieldID)).
+		Limit(filter.Limit + 1).
+		All(ctx)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	result := make([]*Agent, len(agents))
 	for i, a := range agents {
 		result[i] = entAgentToModel(a)
 	}
-	return result, total, nil
+	return result, nil
 }
 
 func (r *EntRepository) UpdateAgent(ctx context.Context, tenantID uuid.UUID, agentID uuid.UUID, updates *UpdateAgentRequest) error {

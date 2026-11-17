@@ -25,6 +25,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/http/handlers"
 	"github.com/bengobox/ticketing-service/internal/http/metrics"
 	httprouter "github.com/bengobox/ticketing-service/internal/http/router"
+	"github.com/bengobox/ticketing-service/internal/http/visitorip"
 	"github.com/bengobox/ticketing-service/internal/modules/ai"
 	"github.com/bengobox/ticketing-service/internal/modules/analytics"
 	"github.com/bengobox/ticketing-service/internal/modules/identity"
@@ -216,6 +217,9 @@ func New(ctx context.Context) (*App, error) {
 
 	// Initialize rate limiter for public endpoints
 	rl := ratelimit.NewLimiter(redisClient, log, "ticketing")
+	if k := cfg.HTTP.VisitorIPForwardKey; k != "" && len(k) < visitorip.MinKeyLength {
+		log.Warn("app: VISITOR_IP_FORWARD_KEY is shorter than 32 characters, visitor IP forwarding is off")
+	}
 
 	// Initialize identity module (teams, agents)
 	identityRepo := identity.NewEntRepository(ormClient)
@@ -241,6 +245,7 @@ func New(ctx context.Context) (*App, error) {
 	kbService := kb.NewService(kbRepo, log)
 	kbHandler := kb.NewHandler(kbService, log)
 	kbHandler.SetTenantLookup(tenantResolver)
+	kbHandler.SetLimiter(rl)
 
 	// Initialize SLA module
 	slaRepo := sla.NewEntRepository(ormClient)
@@ -317,15 +322,18 @@ func New(ctx context.Context) (*App, error) {
 	}, log)
 	ticketsService.SetCreatedObserver(aiService)
 	aiHandler := ai.NewHandler(aiService, log)
+	// The requester of a ticket opened from a channel message (the ingest, or Convert to ticket
+	// through the internal create) is linked to their marketflow contact. Best effort: an empty URL
+	// or service key turns the lookup off.
+	contacts := crm.New(cfg.Marketflow.URL, cfg.Auth.InternalServiceKey, log.Named("crm"))
+	ticketsService.SetContacts(contacts)
 	if natsConn != nil && cfg.Channels.Enabled {
 		if js, jsErr := natsConn.JetStream(); jsErr != nil {
 			log.Warn("channel ingest not started", zap.Error(jsErr))
 		} else {
 			ingestService := ingest.NewService(ticketsService, log)
 			ingestService.SetThreadWindow(cfg.Channels.WhatsAppWindow)
-			// The requester of a new ticket is linked to their marketflow contact (best effort; an
-			// empty URL or service key turns the lookup off).
-			ingestService.SetContacts(crm.New(cfg.Marketflow.URL, cfg.Auth.InternalServiceKey, log.Named("crm")))
+			ingestService.SetContacts(contacts)
 			ingest.NewConsumers(ingestService, ingest.NewTenantResolver(supportAddresses, tenantResolver), settingsService, supportAddresses,
 				ingest.ConsumerConfig{
 					EmailStream: cfg.Channels.EmailStream, EmailSubject: cfg.Channels.EmailSubject,
@@ -357,6 +365,7 @@ func New(ctx context.Context) (*App, error) {
 		HealthHandler:        healthHandler,
 		AuthMiddleware:       authMiddleware,
 		Limiter:              rl,
+		VisitorIPForwardKey:  cfg.HTTP.VisitorIPForwardKey,
 		RBACHandler:          rbacHandler,
 		AccessResolver:       rbacService,
 		AllowedOrigins:       cfg.HTTP.AllowedOrigins,

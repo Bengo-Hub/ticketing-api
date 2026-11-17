@@ -236,7 +236,7 @@ Ticket changes and their events commit in one transaction: the repository writes
 | `auth.user.created`, `auth.user.updated` | auth-api | ticketing-api, queue subscription, provisions or refreshes the ticketing user and agent |
 | `tenant.purge` (stream `tenant`) | auth-api (deleted or declined tenant), subscriptions-api (confirmed dormant account) | ticketing-api, the shared `TenantPurger` deletes every row held for the tenant |
 | `apikey.changed` (auth broadcast) | auth-api | ticketing-api, drops the key from the validator cache |
-| `email.inbound.support` (stream `INGEST_EMAIL_STREAM`, default `email`) | email-provisioner, once per message read from the support mailboxes | ticketing-api, durable and deliver group `ticketing-email-ingest` |
+| `email.inbound.support` (stream `INGEST_EMAIL_STREAM`, default `subscription`) | email-provisioner, once per message read from the support mailboxes | ticketing-api, durable and deliver group `ticketing-email-ingest` |
 | `notifications.whatsapp.tenant_inbound` (stream `notifications`) | notifications-api, once per message to a tenant's own number | ticketing-api, durable and deliver group `ticketing-whatsapp-ingest` |
 
 Payloads are built in `internal/modules/tickets/events.go` and covered by `events_test.go`. Every ticket event carries `ticket_id`, `ticket_number`, `subject`, `status`, `priority`, `channel`, `source`, `agent_id`, `requester_name`, `requester_email` and `requester_phone`, each key always present and empty when unknown. On top of that:
@@ -308,9 +308,12 @@ Schema changes are versioned Atlas migrations in `internal/ent/migrate/migration
 - `20261116090100_phase0.sql` adds per-tenant ticket numbers, the internal-create idempotency index, `tenant_id` on comments and attachments, agents unique per tenant and the RBAC tables.
 - `20261117090000_sprint10.sql` adds `business_calendars`, replaces the policy business-hours flags and map with `calendar_id`, adds `sla_policy_id`, `sla_paused_at`, `sla_paused_minutes`, `sla_first_response_minutes` and `sla_resolution_minutes` to tickets, and gives open tickets with deadlines the policy that set them.
 - `20261117120000_sprint11.sql` adds `tenant_settings` (one settings document per tenant), the unique expression index `ticketcomment_tenant_channel_external_id` that stores each channel message once, and the expression index `ticket_tenant_requester_phone` behind the WhatsApp threading lookup.
+- The next migration (written 2026-11-17, not yet generated) adds `agent_tenant_id_created_at_id` and `team_tenant_id_created_at_id` for the keyset agent and team lists, and the partial expression index `ticket_tenant_sla_due` behind `sort=sla_due`, whose SQL is in `internal/modules/tickets/sla_sort.go`.
 - `RESET_DB=true` drops and recreates the public schema before migrating. It exists for local development only.
 
 The API never auto-migrates. In production (commit 4f03d8e, deployed 2026-11-16) the baseline was recorded as applied, `20261116090100_phase0.sql` ran, and the API seeded the 108 permission codes on start.
+
+The integration tests (build tag `integration`) apply these same files to a fresh schema and check that the result matches the Ent schema; how to run them is in [testing.md](testing.md).
 
 ## SLA worker
 
@@ -341,6 +344,10 @@ An escalation raises the priority one level (up to critical), assigns the rule's
 **Pause.** `pending_customer` stops the clock, and so does `pending_internal` when the policy says so. Entering the status sets `sla_paused_at`. Leaving it measures the pause in the policy's clock, moves each deadline not yet met by that many business minutes, adds them to `sla_paused_minutes` and clears `sla_paused_at`. A ticket resolved straight from a pending status restarts first, so its breach check uses the moved deadline.
 
 **Elapsed time.** The first public agent reply writes `sla_first_response_minutes` and resolving writes `sla_resolution_minutes`: the minutes since creation in the policy's clock, less every pause.
+
+**Names on the ticket.** The ticket routes and the ticket list return `sla_policy_name` and `sla_calendar_name` (empty for a 24x7 policy). They are never stored: one query joins `sla_policies` to `business_calendars` for the distinct policies of a page, so a list of 25 tickets costs one extra query. A failed lookup leaves the names empty and the list still answers.
+
+**SLA due order.** `GET /tickets?sort=sla_due` lists the nearest open target first. A ticket's due time is the nearer of the response target, while it has no first response, and the resolution target. Running clocks come first by due time, then running tickets with no target, then paused clocks by due time, then paused tickets with no target, with the id breaking ties. The list pages by keyset on `(rank, due key, id)` through the partial expression index `ticket_tenant_sla_due`; its cursor is the rank, a dot and the shared pagination cursor of the due key, and a cursor from another order answers 400.
 
 ## SLA report
 
@@ -386,9 +393,17 @@ Windows up to 31 days read hour rows and longer ones day rows, so a series read 
 4. Per tenant, deletes those hour cells and rebuilds them from `tickets` and `csat_responses` with one `INSERT ... SELECT ... GROUP BY ... ON CONFLICT DO UPDATE`. Each moment is a range scan of its own `(tenant_id, moment)` index per hour.
 5. Deletes and rebuilds the same hours' series rows from the fine cells just written, in one `GROUPING SETS` pass.
 6. Rebuilds the UTC-day fine cells of those hours from their hour cells, then the day series rows, team pairs included, from those day cells in one `GROUPING SETS` pass.
-7. Stores the new marks and moves the watermark to the last ticket read; a step that read less than a full batch sets `caught_up_at`.
+7. Stores the new marks and moves the watermark to the last ticket read; a step that read less than a full batch sets `caught_up_at`. Each mark keeps, in its `updated_at` column, the ticket's own `updated_at` at the version the step counted.
 
 A run steps until it reaches the two-minute horizon or has spent 40 seconds, so the first run after deploy (the backfill, from the epoch) spreads over as many ticks as it needs. A failed step rolls back whole and the next tick repeats it. Rebuilding a bucket replaces it, so a repeated step gives the same rows, and the series always agree with the fine cells because they are derived from them in the same transaction. Ticket writes all move `updated_at`, including a CSAT submit, which is how a new response reaches its hour.
+
+**The overlap re-read.** The two-minute horizon only covers a transaction that commits shortly after its `updated_at`. One held open longer (a bulk update, a slow request) commits rows whose `updated_at` the watermark has already passed, and the steps above never read them. So every run ends with one overlap step, in its own transaction under the same `FOR UPDATE` lock on the watermark row:
+
+1. Reads the tickets with `updated_at` from `ANALYTICS_ROLLUP_OVERLAP` (default 15 minutes) behind the watermark up to the watermark itself, oldest first, at most 20000 of them, through the same `(updated_at, id)` index, each with its mark's `updated_at` by primary key.
+2. Keeps the tickets whose mark is missing or holds a different `updated_at`, that is the versions no step has counted, at most `ANALYTICS_ROLLUP_OVERLAP_LIMIT` (default 2000) of them. A window with nothing late in it stops here.
+3. Reads those tickets as they are now and rebuilds their hours, now and at their marks, exactly as steps 3 to 7 do, then stores their marks. The watermark does not move.
+
+Rebuilding a touched hour is a delete and a recompute from `tickets`, so rebuilding one a step already counted is harmless, and a late ticket the overlap rebuilds is never rebuilt again unless it changes. The cost per tick is therefore bounded: one index range read of at most 20000 entries with as many primary key probes into `ticket_rollup_marks`, and at most 2000 tickets rebuilt. When more late tickets than that are waiting, the next runs take the rest, since a rebuilt ticket's mark then matches. The reads go oldest first so a ticket near the bottom of a busy window is examined before the window passes it. A transaction held open longer than the overlap window is still missed; raise `ANALYTICS_ROLLUP_OVERLAP` if the database allows transactions that long. The first run after this change rebuilds the tickets of the last window once, because older marks held the time they were written rather than the ticket's `updated_at`.
 
 The routes add live figures counted on `tickets`. The open backlog by status, with overdue and unassigned, and the open count per agent are an index-only scan of the partial index `ticket_open_backlog` (`(tenant_id, status, assigned_team_id, assigned_agent_id, category_id, channel, priority, sla_resolution_due_at, sla_paused_at)` over undeleted tickets in an open status), which holds every filter column, so a filtered backlog never visits the heap either. Today's created and resolved use the `(tenant_id, created_at, id)` and `(tenant_id, resolved_at)` indexes. The old `GET /tickets/stats` and `GET /tickets/analytics` are removed; their figures are in `GET /analytics/tickets`.
 
@@ -417,7 +432,7 @@ CI (`.github/workflows/deploy.yml`) runs `go vet ./...` and `go test -timeout 30
 | `github.com/Bengo-Hub/httpware` | v0.20.0 | `TenantV2`, request id, logging, recovery, CORS, `ValidServiceKey`, outlet header |
 | `github.com/Bengo-Hub/shared-events` | v0.11.1 | Outbox publisher, queue subscriptions, broadcaster, `TenantPurger` |
 | `github.com/Bengo-Hub/cache` | v0.5.10 | Redis client, tenant cache, `RunOnce`, local caches |
-| `github.com/Bengo-Hub/pagination` | v0.5.0 | `Parse` and `NewResponse` on every list (offset paging today, keyset in sprint 9) |
+| `github.com/Bengo-Hub/pagination` | v0.5.0 | `EncodeCursor` and `DecodeCursor` for the keyset lists (tickets, comments, attachments, agents, teams, KB; the SLA order prefixes its rank to the cursor), `SearchTerm` and `EscapeLike` for search; `Parse` and `NewResponse` remain on the lists not yet moved to keyset |
 | `github.com/Bengo-Hub/reports` | v0.2.0 | PDF, CSV and Excel export of the analytics views |
 | `github.com/Bengo-Hub/shared-ratelimit` | v0.3.1 | Global and public limits, `TrustedRealIP` |
 | `github.com/Bengo-Hub/shared-service-client` | v0.5.0 | S2S calls to auth-api members, marketflow-ai and subscriptions-api credits (circuit breaker, retries only with an idempotency key); its `crm` package for marketflow contacts |
@@ -439,13 +454,14 @@ CI (`.github/workflows/deploy.yml`) runs `go vet ./...` and `go test -timeout 30
 | `AUTH_AUDIENCE` | `codevertex` | JWT audience |
 | `AUTH_ENABLE_API_KEY` | `true` | Accept auth-api API keys on protected routes |
 | `INTERNAL_SERVICE_KEY` | empty | S2S key for internal routes, also the root of the ticket access token key |
+| `VISITOR_IP_FORWARD_KEY` | empty | Shared with ticketing-ui's server only (at least 32 characters). Makes `X-Visitor-IP` trusted so the help center's server-side reads are limited per visitor; empty turns it off. See integrations.md, Client IP and the help center's server-side reads |
 | `TENANT_CACHE_TTL` | `5m` | Tenant cache lifetime |
 | `HTTP_PORT` | `4009` | API port |
 | `METRICS_PORT` | `9090` | Metrics port |
 | `HTTP_ALLOWED_ORIGINS` | fleet UI origins | CORS allow list |
 | `RESET_DB` | unset | Migrate only: drop the public schema first (local use) |
 | `INGEST_ENABLED` | `true` | Run the email and WhatsApp ingest consumers |
-| `INGEST_EMAIL_STREAM`, `INGEST_EMAIL_SUBJECT` | `email`, `email.inbound.support` | Stream and subject of the inbound email event; the stream name follows email-provisioner's publisher |
+| `INGEST_EMAIL_STREAM`, `INGEST_EMAIL_SUBJECT` | `subscription`, `email.inbound.support` | Stream and subject of the inbound email event; the `subscription` stream already owns `email.>`, which is where email-provisioner publishes |
 | `INGEST_SUPPORT_DOMAIN` | `support.codevertexafrica.com` | Catch-all forwarding domain, `<slug>@` this domain |
 | `INGEST_PLATFORM_ADDRESS`, `INGEST_PLATFORM_SLUG` | `support@codevertexafrica.com`, `codevertex` | The platform tenant's support mailbox and slug |
 | `INGEST_WHATSAPP_STREAM`, `INGEST_WHATSAPP_SUBJECT` | `notifications`, `notifications.whatsapp.tenant_inbound` | Stream and subject of the tenant inbound WhatsApp event |
@@ -455,6 +471,8 @@ CI (`.github/workflows/deploy.yml`) runs `go vet ./...` and `go test -timeout 30
 | `MARKETFLOW_AI_URL` | `http://marketflow-ai.marketflow.svc.cluster.local:4001` | marketflow-ai (Vera), which runs every AI model call |
 | `AI_TIMEOUT` | `30s` | Limit of one AI call; AI calls are never retried |
 | `SUBSCRIPTION_BASE_URL` | `http://subscription-api.subscriptions.svc.cluster.local:4000` | subscriptions-api, owner of the prepaid AI credit wallet |
+| `ANALYTICS_ROLLUP_OVERLAP` | `15m` | Worker only: how far behind its watermark each analytics rollup run re-reads changed tickets (see Analytics rollups); `0` turns the re-read off |
+| `ANALYTICS_ROLLUP_OVERLAP_LIMIT` | `2000` | Worker only: the most tickets that re-read rebuilds per run |
 
 ## Seed
 

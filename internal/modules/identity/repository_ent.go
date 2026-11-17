@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	entsql "entgo.io/ent/dialect/sql"
+
 	"github.com/bengobox/ticketing-service/internal/ent"
 	"github.com/bengobox/ticketing-service/internal/ent/team"
 	"github.com/google/uuid"
@@ -76,7 +78,7 @@ func (r *EntRepository) GetTeamByName(ctx context.Context, tenantID uuid.UUID, n
 	return entTeamToModel(t), nil
 }
 
-func (r *EntRepository) ListTeams(ctx context.Context, tenantID uuid.UUID, filter TeamFilter) ([]*Team, int, error) {
+func (r *EntRepository) ListTeams(ctx context.Context, tenantID uuid.UUID, filter TeamFilter) ([]*Team, error) {
 	query := r.client.Team.Query().
 		Where(
 			team.TenantID(tenantID),
@@ -86,29 +88,23 @@ func (r *EntRepository) ListTeams(ctx context.Context, tenantID uuid.UUID, filte
 	if filter.IsActive != nil {
 		query = query.Where(team.IsActive(*filter.IsActive))
 	}
+	if c := filter.After; c != nil {
+		query = query.Where(func(s *entsql.Selector) { s.Where(beforeRow(s, c)) })
+	}
 
-	total, err := query.Clone().Count(ctx)
+	teams, err := query.
+		Order(ent.Desc(team.FieldCreatedAt), ent.Desc(team.FieldID)).
+		Limit(filter.Limit + 1).
+		All(ctx)
 	if err != nil {
-		return nil, 0, err
-	}
-
-	if filter.Offset > 0 {
-		query = query.Offset(filter.Offset)
-	}
-	if filter.Limit > 0 {
-		query = query.Limit(filter.Limit)
-	}
-
-	teams, err := query.Order(team.ByName()).All(ctx)
-	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	result := make([]*Team, len(teams))
 	for i, t := range teams {
 		result[i] = entTeamToModel(t)
 	}
-	return result, total, nil
+	return result, nil
 }
 
 func (r *EntRepository) UpdateTeam(ctx context.Context, tenantID uuid.UUID, teamID uuid.UUID, updates *UpdateTeamRequest) error {

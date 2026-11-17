@@ -48,7 +48,7 @@ Services raise tickets on a tenant's desk through this route. It takes no user t
 
 **Idempotency.** The key is (tenant, `source`, `source_ref.type`, `source_ref.id`), enforced by the unique expression index `ticket_tenant_source_ref`. `source_ref.parent` is not part of the key. A repeat for the same key returns the existing ticket. When two calls race, the loser of the insert reads back the winner's ticket. Without `source_ref`, every call creates a new ticket.
 
-**A WhatsApp message.** `source: "notifications.whatsapp"` with `source_ref: {type: "wa_message", id: <wa_message_id>}` is the key the WhatsApp ingest gives a ticket opened from that message, and the notifications inbox's Convert to ticket sends exactly that. Such a create is the ingest's ticket in every way: the customer id comes from the requester's phone as at ingest, and the ticket records the message as its origin with the WhatsApp reply window (`whatsapp_last_inbound_at`, `whatsapp_last_message_id`, `whatsapp_phone_number_id`). When the ingest already added the message to an open ticket as a comment, the create answers 200 with that ticket instead of opening a second one. The requester is not linked to a marketflow contact on this path; the ingest does that only for the tickets it opens itself.
+**A WhatsApp message.** `source: "notifications.whatsapp"` with `source_ref: {type: "wa_message", id: <wa_message_id>}` is the key the WhatsApp ingest gives a ticket opened from that message, and the notifications inbox's Convert to ticket sends exactly that. Such a create is the ingest's ticket in every way: the customer id comes from the requester's phone as at ingest, and the ticket records the message as its origin with the WhatsApp reply window (`whatsapp_last_inbound_at`, `whatsapp_last_message_id`, `whatsapp_phone_number_id`). When the ingest already added the message to an open ticket as a comment, the create answers 200 with that ticket instead of opening a second one. A new ticket opened this way is linked to the requester's marketflow contact through the same resolver the ingest uses (`tickets.ResolveContact`, best effort: a failed lookup opens the ticket without a link). Other internal sources never call marketflow.
 
 **Responses**
 
@@ -138,7 +138,7 @@ notifications-api's ticketing consumer needs a case for `ticket.csat_requested` 
 | `phone_number_id` | The tenant number the customer wrote to (`whatsapp_phone_number_id`) |
 | `whatsapp_text` | The whole reply as plain text with its line breaks, at most 4096 characters |
 
-The window comes from ticket metadata the WhatsApp ingest writes: `whatsapp_last_inbound_at`, `whatsapp_last_message_id` and `whatsapp_phone_number_id`. notifications-api sends the reply as free-form text from the tenant's own number while the window is open. Outside it nothing goes on WhatsApp, because no approved Meta template carries a ticket reply yet; the email copy still goes when the requester has an address.
+The window comes from ticket metadata the WhatsApp ingest writes: `whatsapp_last_inbound_at`, `whatsapp_last_message_id` and `whatsapp_phone_number_id`. Ticket replies go by email only for now (owner decision 2026-11-17): notifications-api's `TICKETING_WHATSAPP_REPLIES` is off. With it on, the reply goes as free-form text from the tenant's own number while the window is open, and outside the window as the approved UTILITY template `ticketing_ticket_reply_v1_btn` (a "View reply" button to the public tracking page, never the reply text). The email copy always goes when the requester has an address.
 
 **Threaded replies (sprint 11).** Every ticket event carries `email_message_token`, `email_thread_token`, `email_in_reply_to`, `email_references`, `email_subject_tag` and `email_reply_subject`. For a reply to come back to its ticket, notifications-api's ticketing consumer and email worker need these changes, which are agreed with its owner first and not made from here:
 
@@ -213,9 +213,71 @@ Threading, dedupe and the ingest rules are in [architecture.md](architecture.md)
 
 Messages to the platform WhatsApp number go out from notifications-api as `notifications.whatsapp.inbound` with no tenant, and only marketflow-api's WhatsApp assistant consumes them. Messages to a tenant's own number land in notifications-api's shared inbox.
 
-notifications-api is to publish `notifications.whatsapp.tenant_inbound` on its `notifications` stream once per inbound tenant message, through its outbox, never for a STOP reply: `{tenant_id, phone_number_id, wa_message_id, from, type, text, contact_name, received_at, reply_id}`. ticketing-api consumes it on the durable `ticketing-whatsapp-ingest`, gated by the tenant setting `channels.whatsapp.auto_ticket` (off by default, `GET` and `PUT /{tenant}/settings/channels`, `ticketing.settings.manage`). With it on, a message continues the sender's latest open WhatsApp ticket from the last 7 days or opens one; with it off, a message only continues such a ticket. Dedupe is on the WhatsApp message id. A ticket opened here has source `notifications.whatsapp` and source_ref `{type: "wa_message", id: <wa_message_id>}`, so the inbox's Convert to ticket action (notifications-api `POST /api/v1/whatsapp/conversations/{conversationId}/ticket`, described in its api-contracts.md) calls the internal create with the same source and ref and the two paths never open two tickets for one message.
+notifications-api publishes `notifications.whatsapp.tenant_inbound` on its `notifications` stream once per stored inbound text message to a tenant number, as a direct JetStream publish (not through an outbox), never for a STOP reply: `{tenant_id, phone_number_id, wa_message_id, from, type, text, contact_name, received_at, reply_id}`. ticketing-api consumes it on the durable `ticketing-whatsapp-ingest`, gated by the tenant setting `channels.whatsapp.auto_ticket` (off by default, `GET` and `PUT /{tenant}/settings/channels`, `ticketing.settings.manage`). With it on, a message continues the sender's latest open WhatsApp ticket from the last 7 days or opens one; with it off, a message only continues such a ticket. Dedupe is on the WhatsApp message id. A ticket opened here has source `notifications.whatsapp` and source_ref `{type: "wa_message", id: <wa_message_id>}`, so the inbox's Convert to ticket action (notifications-api `POST /api/v1/whatsapp/conversations/{conversationId}/ticket`, described in its api-contracts.md) calls the internal create with the same source and ref and the two paths never open two tickets for one message.
 
 Comments from a channel carry what the agent thread shows, read from the comment metadata and never stored apart: `channel` (`email` or `whatsapp`), `external_id` (the Message-ID or WhatsApp message id), `sender` (`{name, email, phone}`, from the `from_name`, `from_email` and `from_phone` metadata the ingest writes) and, for email, `email_subject` (the subject the customer wrote under, collapsed to one line, at most 300 characters). Every other comment has none of them. WhatsApp comments stored before 17 November 2026 have no sender, and email comments from before then have the sender's email but no name or subject. Agent replies go back on WhatsApp through `ticketing.ticket.comment_added` as described under notifications-api above.
+
+## Public routes
+
+The public support pages, the embeddable widget and the public help center call these from the browser with no sign-in. The `{tenant}` path segment is the tenant slug (or its auth-api UUID), resolved through the shared tenant cache; an unknown slug answers 404. Every route also sits under the router's global limit of 300 requests a minute per IP.
+
+| Route | Credential | Limit | Notes |
+|---|---|---|---|
+| `POST /api/v1/{tenant}/public/tickets` | `X-OTP-Token` | 5 an hour per IP, 10 a day per email | Opens a ticket |
+| `POST /api/v1/{tenant}/public/tickets/{number}/access` | `X-OTP-Token` | | Trades the code for a ticket access token |
+| `GET /api/v1/{tenant}/public/tickets/{number}` | `X-Ticket-Access-Token` | | The slim public view |
+| `POST /api/v1/{tenant}/public/tickets/{number}/comments` | either | | The requester's reply |
+| `POST /api/v1/{tenant}/public/csat/check`, `/public/csat` | survey token | 20 an hour per IP | CSAT survey |
+| `GET /api/v1/{tenant}/kb/articles` | none | 120 a minute per tenant and IP | Public KB list |
+| `GET /api/v1/{tenant}/kb/articles/{slug}` | none | 120 a minute per tenant and IP | One article, counts a view unless `?count_view=false` |
+| `GET /api/v1/{tenant}/kb/categories` | none | 120 a minute per tenant and IP | Category counts |
+| `GET /api/v1/{tenant}/kb/suggestions?q=` | none | 60 a minute per tenant and IP | Deflection on the public form |
+| `POST /api/v1/{tenant}/kb/articles/{id}/vote` | none | 30 an hour per tenant and IP | Helpful or not helpful |
+| `POST /api/v1/{tenant}/kb/articles/{id}/view` | none | 60 a minute per tenant and IP | Counts one view, answers 204 |
+
+A limited request answers 429 with `Retry-After` in seconds.
+
+### Client IP and the help center's server-side reads
+
+The IP every limit keys on is the one `ratelimit.TrustedRealIP` establishes: the `X-Real-IP` the ingress sets from Cloudflare's `CF-Connecting-IP`, or the peer address for an in-cluster call. A client-sent `X-Forwarded-For` is never read, and the ingress overwrites any `X-Real-IP` a browser sends.
+
+ticketing-ui's help center article page reads the article on the UI server, so without help every visitor's read would arrive from the UI server's address and share one bucket. The UI server therefore names the visitor it reads for: it sends the visitor's IP in `X-Visitor-IP` together with a shared key in `X-Visitor-IP-Key`. The middleware in `internal/http/visitorip`, mounted right after `TrustedRealIP` and before the global limiter and the request log, honours `X-Visitor-IP` only when `X-Visitor-IP-Key` matches `VISITOR_IP_FORWARD_KEY` (a constant-time comparison of SHA-256 digests) and the value is a single valid IPv4 or IPv6 address. It then replaces `X-Real-IP` and the peer address with the visitor's, so the global limit, the per-tenant KB limits and the log all see the visitor. Without the key, with a wrong key, or with a malformed address, the header is ignored and the ingress address stands. Both headers are removed from every request before it goes further, whether trusted or not, so no handler sees them.
+
+`VISITOR_IP_FORWARD_KEY` is a random secret of at least 32 characters held only by ticketing-api and ticketing-ui's server (never a `NEXT_PUBLIC_` value). Empty turns forwarding off; shorter than 32 characters also turns it off and logs a warning at startup. The key lets its holder choose the IP that requests are limited under on any route, so it belongs only to the UI server and is rotated like any other service secret: set the new value in both places, then restart both.
+
+The UI server keeps each article in a 60 second page cache and reads it with `?count_view=false`, so a cache miss is not a view. The page then calls `POST .../kb/articles/{id}/view` once from the visitor's browser, which reaches the API through the ingress under the visitor's own IP. A view is therefore one rendered page in a browser: crawlers that do not run scripts are no longer counted, and the `view_count` a visitor sees may be up to a minute old. Any other caller of the article route still counts a view per read, as before.
+
+### Public knowledge base
+
+The KB routes only ever show the tenant's published, public articles. The query filters on tenant, `status = published`, `is_public = true` and not deleted, and the service checks every row again before it leaves, so a draft, an archived article, a private article or another tenant's article is never listed, suggested, read or voted on; reading one by slug answers 404.
+
+A public article has this shape, with no tenant, author, status, visibility or metadata (an AI draft records the ticket it came from in metadata):
+
+```json
+{
+  "id": "uuid",
+  "slug": "reset-your-password",
+  "title": "Reset your password",
+  "excerpt": "Use the link on the sign-in page.",
+  "category": "Account",
+  "tags": ["password"],
+  "content": "<p>Sanitised HTML, only on the article route</p>",
+  "view_count": 12,
+  "helpful_count": 4,
+  "not_helpful_count": 0,
+  "published_at": "2026-11-17T09:00:00Z",
+  "updated_at": "2026-11-17T09:00:00Z"
+}
+```
+
+- **List.** `?search=` (the same trigram search as the staff list over title, excerpt and body), `?category=`, `?limit=` (default 20, at most 100) and `?cursor=`. Newest first, keyset paged: `{"data": [...], "next_cursor": "...", "has_more": true}`; ask again with `cursor=next_cursor` while `has_more` is true. There is no total. List rows carry no `content`. A cursor the API did not hand out answers 400.
+- **Article.** `content` is the HTML the editor saved, sanitised on save with httpware/richtext. Each read adds one view, except a read with `?count_view=false`.
+- **View.** No body, answers 204. Counts one view of a published public article of the tenant; anything else answers 404 and is not counted.
+- **Categories.** `{"data": [{"name": "Account", "count": 3}]}`, by name, empty categories left out.
+- **Suggestions.** `?q=` is the subject typed so far (`subject` and `search` are also read), `?limit=` at most 5. The subject is split into words of three or more letters, common English and Swahili filler words dropped, at most six words kept; articles holding any of them in the title, excerpt or body are ranked by matches (title weighs most), then helpful votes, then newest. The answer is `{"data": [...]}` without `content`. It is a plain database search: it never calls marketflow-ai and never spends AI credits. A subject with no useful word returns an empty list without a query.
+- **Vote.** Body `{"helpful": true}`, answers 204.
+
+The staff list at `GET /api/v1/{tenant}/kb/admin/articles` (`ticketing.kb.view`) is keyset paged the same way, with `?status=` as well, and returns full articles of every status and visibility.
 
 ## Order, invoice and project links
 
@@ -225,7 +287,7 @@ Tickets carry `order_id`, `external_reference`, `crm_contact_id` and `crm_lead_i
 
 - Internal routes check `X-API-Key` with `httpware.ValidServiceKey` and require `X-Tenant-ID`.
 - Protected routes run the full auth chain, including the tenant guard that refuses a URL tenant other than the token's.
-- Public routes need an OTP token or a ticket access token, and public creates are rate limited per IP and per verified email. The CSAT survey routes take only their single-use survey token, stored as a SHA-256 hash, and are rate limited per IP.
+- Public ticket routes need an OTP token or a ticket access token, and public creates are rate limited per IP and per verified email. The CSAT survey routes take only their single-use survey token, stored as a SHA-256 hash, and are rate limited per IP. The public KB routes take no credential, show only published public articles of the tenant in the path, and are rate limited per tenant and IP (see Public routes above). A forwarded visitor IP is trusted only with `VISITOR_IP_FORWARD_KEY` (see Client IP and the help center's server-side reads).
 - Secrets come from Kubernetes secrets as environment variables. Nothing in this repository holds a real key.
 
 ## References

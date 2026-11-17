@@ -102,21 +102,22 @@ type UpdateAgentRequest struct {
 	Metadata             map[string]interface{} `json:"metadata,omitempty"`
 }
 
-// TeamFilter defines filters for listing teams.
+// TeamFilter defines filters for listing teams. The list pages by keyset (keyset.go): After is
+// the previous page's last row and Limit the page size.
 type TeamFilter struct {
 	TenantID uuid.UUID
 	IsActive *bool
+	After    *Cursor
 	Limit    int
-	Offset   int
 }
 
-// AgentFilter defines filters for listing agents.
+// AgentFilter defines filters for listing agents, a keyset page at a time like TeamFilter.
 type AgentFilter struct {
 	TenantID uuid.UUID
 	TeamID   *uuid.UUID
 	Status   *AgentStatus
 	Role     *AgentRole
 	IsActive *bool
+	After    *Cursor
 	Limit    int
-	Offset   int
 }

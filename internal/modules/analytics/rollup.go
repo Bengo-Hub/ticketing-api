@@ -26,7 +26,16 @@ const RollupName = "ticket_rollups"
 //
 // The first run starts at the epoch: that is the backfill, bounded per tick by Budget. Tickets
 // changed in the last Settle are left for a later run, so a transaction that commits a moment
-// after its updated_at is never skipped.
+// after its updated_at is not skipped.
+//
+// A transaction held open longer than Settle (a bulk update, a slow request) commits rows whose
+// updated_at the watermark has already passed. So each run ends with one overlap step: it
+// re-reads the tickets with updated_at in the last Overlap behind the watermark, keeps those
+// whose mark does not hold their current updated_at (the rollup has not counted that version),
+// and rebuilds their hours like any step. The overlap step takes the same row lock and its own
+// transaction, and leaves the watermark where it is. It examines at most OverlapScan tickets,
+// oldest first, and rebuilds at most OverlapLimit of them, so a busy window costs one bounded
+// index read per tick; what is left over is rebuilt by the next runs.
 type Rollup struct {
 	db  *sql.DB
 	log *zap.Logger
@@ -38,18 +47,33 @@ type Rollup struct {
 	Settle time.Duration
 	// HourChunk is the most hours recomputed per statement.
 	HourChunk int
-	now       func() time.Time
+	// Overlap is how far behind the watermark the overlap step re-reads; zero turns it off.
+	Overlap time.Duration
+	// OverlapScan is the most tickets the overlap step examines per run.
+	OverlapScan int
+	// OverlapLimit is the most tickets the overlap step rebuilds per run.
+	OverlapLimit int
+	now          func() time.Time
 }
+
+// Overlap defaults. DefaultOverlap is also the default of ANALYTICS_ROLLUP_OVERLAP.
+const (
+	DefaultOverlap      = 15 * time.Minute
+	DefaultOverlapScan  = 20000
+	DefaultOverlapLimit = 2000
+)
 
 // NewRollup creates the job with its defaults: 2000 tickets per step, 40 seconds per run (the
-// worker ticks every minute), a two-minute settle and 500 hours per statement.
+// worker ticks every minute), a two-minute settle, 500 hours per statement and a 15-minute
+// overlap that examines at most 20000 tickets and rebuilds at most 2000 per run.
 func NewRollup(db *sql.DB, log *zap.Logger) *Rollup {
 	return &Rollup{db: db, log: log.Named("analytics-rollup"), Batch: 2000, Budget: 40 * time.Second,
-		Settle: 2 * time.Minute, HourChunk: 500, now: time.Now}
+		Settle: 2 * time.Minute, HourChunk: 500, Overlap: DefaultOverlap, OverlapScan: DefaultOverlapScan,
+		OverlapLimit: DefaultOverlapLimit, now: time.Now}
 }
 
-// Run steps until it has caught up to the settle horizon or used its budget, and returns how many
-// ticket changes it read.
+// Run steps until it has caught up to the settle horizon or used its budget, then runs the
+// overlap step once, and returns how many ticket changes it read and rebuilt.
 func (r *Rollup) Run(ctx context.Context) (int, error) {
 	start := r.now()
 	total := 0
@@ -60,9 +84,15 @@ func (r *Rollup) Run(ctx context.Context) (int, error) {
 			return total, err
 		}
 		if !more || ctx.Err() != nil || r.now().Sub(start) >= r.Budget {
-			return total, ctx.Err()
+			break
 		}
 	}
+	if err := ctx.Err(); err != nil {
+		return total, err
+	}
+	n, err := r.overlap(ctx)
+	total += n
+	return total, err
 }
 
 // changedTicket is what the rollup reads of a changed ticket: its tenant and the moments it can
@@ -79,11 +109,38 @@ type changedTicket struct {
 	Deleted         bool
 }
 
-// mark is a ticket's hours as stored in ticket_rollup_marks.
+// mark is a ticket's hours as stored in ticket_rollup_marks. UpdatedAt is the ticket's
+// updated_at the rollup counted, stored in the mark's updated_at column, which the overlap step
+// compares with the ticket's current updated_at.
 type mark struct {
-	ID       uuid.UUID   `json:"id"`
-	TenantID uuid.UUID   `json:"tenant_id"`
-	Hours    []time.Time `json:"hours"`
+	ID        uuid.UUID   `json:"id"`
+	TenantID  uuid.UUID   `json:"tenant_id"`
+	Hours     []time.Time `json:"hours"`
+	UpdatedAt time.Time   `json:"updated_at"`
+}
+
+// overlapCandidate is a ticket in the overlap window: its updated_at now and the updated_at its
+// mark holds, nil when it has no mark.
+type overlapCandidate struct {
+	ID        uuid.UUID
+	UpdatedAt time.Time
+	MarkedAt  *time.Time
+}
+
+// pickOverlap keeps the candidates the rollup has not counted at their current updated_at, in
+// the order given, at most limit of them.
+func pickOverlap(cands []overlapCandidate, limit int) []uuid.UUID {
+	var out []uuid.UUID
+	for _, c := range cands {
+		if len(out) >= limit {
+			break
+		}
+		if c.MarkedAt != nil && c.MarkedAt.Equal(c.UpdatedAt) {
+			continue
+		}
+		out = append(out, c.ID)
+	}
+	return out
 }
 
 // batchPlan is what one step recomputes: the hours per tenant and the new marks.
@@ -139,7 +196,7 @@ func planBatch(changed []changedTicket, csat map[uuid.UUID][]time.Time, old map[
 		for _, h := range old[t.ID] {
 			set[hourOf(h)] = true
 		}
-		plan.Marks = append(plan.Marks, mark{ID: t.ID, TenantID: t.TenantID, Hours: hours})
+		plan.Marks = append(plan.Marks, mark{ID: t.ID, TenantID: t.TenantID, Hours: hours, UpdatedAt: t.UpdatedAt})
 	}
 	for tenant, set := range touched {
 		if len(set) > 0 {
@@ -209,34 +266,8 @@ func (r *Rollup) step(ctx context.Context) (n int, more bool, err error) {
 		}
 		return 0, false, tx.Commit()
 	}
-	ids := make([]string, len(changed))
-	for i, t := range changed {
-		ids[i] = t.ID.String()
-	}
-	idsJSON, err := jsonParam(ids)
-	if err != nil {
+	if err = r.apply(ctx, tx, changed); err != nil {
 		return 0, false, err
-	}
-	csat, err := loadHourLists(ctx, tx, csatHoursSQL, idsJSON, false)
-	if err != nil {
-		return 0, false, fmt.Errorf("rollup: csat hours: %w", err)
-	}
-	old, err := loadHourLists(ctx, tx, marksSQL, idsJSON, true)
-	if err != nil {
-		return 0, false, fmt.Errorf("rollup: marks: %w", err)
-	}
-	plan := planBatch(changed, csat, old)
-	for tenant, hours := range plan.Hours {
-		if err = r.recompute(ctx, tx, tenant, hours); err != nil {
-			return 0, false, err
-		}
-	}
-	marksJSON, err := jsonParam(plan.Marks)
-	if err != nil {
-		return 0, false, err
-	}
-	if _, err = tx.ExecContext(ctx, saveMarksSQL, marksJSON); err != nil {
-		return 0, false, fmt.Errorf("rollup: save marks: %w", err)
 	}
 	last := changed[len(changed)-1]
 	full := len(changed) == r.Batch
@@ -247,6 +278,123 @@ func (r *Rollup) step(ctx context.Context) (n int, more bool, err error) {
 		return 0, false, fmt.Errorf("rollup: commit: %w", err)
 	}
 	return len(changed), full, nil
+}
+
+// apply recomputes the hours of the changed tickets, now and at their last marks, and stores
+// their new marks.
+func (r *Rollup) apply(ctx context.Context, tx *sql.Tx, changed []changedTicket) error {
+	ids := make([]string, len(changed))
+	for i, t := range changed {
+		ids[i] = t.ID.String()
+	}
+	idsJSON, err := jsonParam(ids)
+	if err != nil {
+		return err
+	}
+	csat, err := loadHourLists(ctx, tx, csatHoursSQL, idsJSON, false)
+	if err != nil {
+		return fmt.Errorf("rollup: csat hours: %w", err)
+	}
+	old, err := loadHourLists(ctx, tx, marksSQL, idsJSON, true)
+	if err != nil {
+		return fmt.Errorf("rollup: marks: %w", err)
+	}
+	plan := planBatch(changed, csat, old)
+	for tenant, hours := range plan.Hours {
+		if err := r.recompute(ctx, tx, tenant, hours); err != nil {
+			return err
+		}
+	}
+	marksJSON, err := jsonParam(plan.Marks)
+	if err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, saveMarksSQL, marksJSON); err != nil {
+		return fmt.Errorf("rollup: save marks: %w", err)
+	}
+	return nil
+}
+
+// overlap is the overlap step: in one transaction under the watermark's row lock, it re-reads
+// the tickets with updated_at in the last Overlap up to the watermark, oldest first and at most
+// OverlapScan of them, and rebuilds those whose mark does not hold their current updated_at, at
+// most OverlapLimit. It leaves the watermark as it is and returns how many tickets it rebuilt.
+func (r *Rollup) overlap(ctx context.Context) (n int, err error) {
+	if r.Overlap <= 0 || r.OverlapLimit <= 0 {
+		return 0, nil
+	}
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, fmt.Errorf("rollup overlap: begin: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+	var wmAt time.Time
+	var wmID uuid.UUID
+	if err = tx.QueryRowContext(ctx, lockWatermarkSQL, RollupName).Scan(&wmAt, &wmID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = nil
+			return 0, tx.Rollback()
+		}
+		return 0, fmt.Errorf("rollup overlap: lock watermark: %w", err)
+	}
+	scan := max(r.OverlapScan, r.OverlapLimit)
+	cands, err := loadOverlap(ctx, tx, wmAt.Add(-r.Overlap), wmAt, wmID, scan)
+	if err != nil {
+		return 0, err
+	}
+	picked := pickOverlap(cands, r.OverlapLimit)
+	if len(picked) == 0 {
+		return 0, tx.Commit()
+	}
+	ids := make([]string, len(picked))
+	for i, id := range picked {
+		ids[i] = id.String()
+	}
+	idsJSON, err := jsonParam(ids)
+	if err != nil {
+		return 0, err
+	}
+	changed, err := loadTickets(ctx, tx, ticketsByIDSQL, idsJSON)
+	if err != nil {
+		return 0, fmt.Errorf("rollup overlap: tickets: %w", err)
+	}
+	if len(changed) == 0 {
+		return 0, tx.Commit()
+	}
+	if err = r.apply(ctx, tx, changed); err != nil {
+		return 0, err
+	}
+	if err = tx.Commit(); err != nil {
+		return 0, fmt.Errorf("rollup overlap: commit: %w", err)
+	}
+	if r.log != nil {
+		r.log.Info("analytics rollup overlap rebuilt tickets committed behind the watermark",
+			zap.Int("tickets", len(changed)), zap.Time("watermark", wmAt))
+	}
+	return len(changed), nil
+}
+
+func loadOverlap(ctx context.Context, tx *sql.Tx, from, wmAt time.Time, wmID uuid.UUID, limit int) ([]overlapCandidate, error) {
+	rows, err := tx.QueryContext(ctx, overlapCandidatesSQL, from, wmAt, wmID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("rollup overlap: candidates: %w", err)
+	}
+	defer rows.Close()
+	var out []overlapCandidate
+	for rows.Next() {
+		var c overlapCandidate
+		var marked sql.NullTime
+		if err := rows.Scan(&c.ID, &c.UpdatedAt, &marked); err != nil {
+			return nil, err
+		}
+		c.MarkedAt = nullable(marked)
+		out = append(out, c)
+	}
+	return out, rows.Err()
 }
 
 // recompute replaces a tenant's fine hour cells for the hours and their compact rows, then the
@@ -286,9 +434,19 @@ func (r *Rollup) rebuild(ctx context.Context, tx *sql.Tx, tenant uuid.UUID, gran
 }
 
 func loadChanged(ctx context.Context, tx *sql.Tx, wmAt time.Time, wmID uuid.UUID, horizon time.Time, limit int) ([]changedTicket, error) {
-	rows, err := tx.QueryContext(ctx, changedTicketsSQL, wmAt, wmID, horizon, limit)
+	out, err := loadTickets(ctx, tx, changedTicketsSQL, wmAt, wmID, horizon, limit)
 	if err != nil {
 		return nil, fmt.Errorf("rollup: changed tickets: %w", err)
+	}
+	return out, nil
+}
+
+// loadTickets reads tickets as the rollup sees them, from a query selecting the columns of
+// changedTicketsSQL.
+func loadTickets(ctx context.Context, tx *sql.Tx, query string, args ...any) ([]changedTicket, error) {
+	rows, err := tx.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
 	}
 	defer rows.Close()
 	var out []changedTicket
@@ -368,14 +526,36 @@ WHERE (updated_at, id) > ($1, $2) AND updated_at < $3
 ORDER BY updated_at, id
 LIMIT $4`
 
+	// overlapCandidatesSQL reads the tickets at or behind the watermark with updated_at from $1,
+	// oldest first and at most $4, through the tickets (updated_at, id) index, with the
+	// updated_at their mark holds (a primary key read of ticket_rollup_marks).
+	overlapCandidatesSQL = `SELECT w.id, w.updated_at, m.updated_at
+FROM (
+  SELECT id, updated_at FROM tickets
+  WHERE updated_at >= $1 AND (updated_at, id) <= ($2, $3)
+  ORDER BY updated_at, id
+  LIMIT $4
+) w
+LEFT JOIN ticket_rollup_marks m ON m.id = w.id
+ORDER BY w.updated_at, w.id`
+
+	// ticketsByIDSQL reads the overlap step's tickets as they are now.
+	ticketsByIDSQL = `SELECT id, tenant_id, updated_at, created_at, resolved_at, first_response_at,
+  sla_response_due_at, sla_resolution_due_at, deleted_at IS NOT NULL
+FROM tickets
+WHERE id IN (SELECT jsonb_array_elements_text($1::jsonb)::uuid)
+ORDER BY updated_at, id`
+
 	csatHoursSQL = `SELECT ticket_id, submitted_at FROM csat_responses
 WHERE ticket_id IN (SELECT jsonb_array_elements_text($1::jsonb)::uuid)`
 
 	marksSQL = `SELECT id, hours FROM ticket_rollup_marks
 WHERE id IN (SELECT jsonb_array_elements_text($1::jsonb)::uuid)`
 
+	// The mark's updated_at is the ticket's updated_at the rollup counted, not the time of the
+	// write: the overlap step skips a ticket whose mark holds its current updated_at.
 	saveMarksSQL = `INSERT INTO ticket_rollup_marks (id, tenant_id, hours, updated_at)
-SELECT (m ->> 'id')::uuid, (m ->> 'tenant_id')::uuid, m -> 'hours', now()
+SELECT (m ->> 'id')::uuid, (m ->> 'tenant_id')::uuid, m -> 'hours', (m ->> 'updated_at')::timestamptz
 FROM jsonb_array_elements($1::jsonb) AS m
 ON CONFLICT (id) DO UPDATE SET hours = EXCLUDED.hours, updated_at = EXCLUDED.updated_at`
 

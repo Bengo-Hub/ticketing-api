@@ -178,7 +178,7 @@ func (f *fakeKB) ListArticles(_ context.Context, filter kb.ArticleFilter) (*kb.A
 			out = append(out, a)
 		}
 	}
-	return &kb.ArticleList{Articles: out, Total: len(out)}, nil
+	return &kb.ArticleList{Articles: out}, nil
 }
 
 func (f *fakeKB) CreateArticle(_ context.Context, req kb.CreateArticleRequest) (*kb.Article, error) {

@@ -22,7 +22,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "List support agents for the authenticated tenant",
+                "description": "List support agents for the authenticated tenant, newest first, as {data, next_cursor, has_more}",
                 "produces": [
                     "application/json"
                 ],
@@ -62,14 +62,14 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "description": "Page number",
-                        "name": "page",
+                        "type": "string",
+                        "description": "next_cursor of the previous page",
+                        "name": "cursor",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Results per page",
+                        "description": "Page size (default 25, max 100)",
                         "name": "limit",
                         "in": "query"
                     }
@@ -662,22 +662,28 @@ const docTemplate = `{
                 }
             }
         },
-        "/{tenant}/kb/articles": {
+        "/{tenant}/kb/admin/articles": {
             "get": {
-                "description": "List publicly visible knowledge base articles — no authentication required",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Staff list of knowledge base articles, keyset paged: pass next_cursor back as cursor while has_more is true",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "kb-public"
+                    "kb"
                 ],
-                "summary": "List public KB articles",
+                "summary": "List KB articles",
                 "parameters": [
                     {
                         "type": "string",
                         "description": "Tenant slug",
                         "name": "tenant",
-                        "in": "path"
+                        "in": "path",
+                        "required": true
                     },
                     {
                         "type": "string",
@@ -692,14 +698,20 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "description": "Page number",
-                        "name": "page",
+                        "type": "string",
+                        "description": "Filter by status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "next_cursor of the previous page",
+                        "name": "cursor",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Results per page",
+                        "description": "Page size (default 20, at most 100)",
                         "name": "limit",
                         "in": "query"
                     }
@@ -710,6 +722,105 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/kb/articles": {
+            "get": {
+                "description": "Published public articles of the tenant, newest first, without the body. Pass next_cursor back as cursor while has_more is true",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kb-public"
+                ],
+                "summary": "List public KB articles",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search text",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by category",
+                        "name": "category",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "next_cursor of the previous page",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size (default 20, at most 100)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -845,9 +956,126 @@ const docTemplate = `{
                 }
             }
         },
+        "/{tenant}/kb/articles/{articleId}/view": {
+            "post": {
+                "description": "The help center page calls this once per page view from the visitor's browser, since the page itself reads the article through a short server-side cache. Drafts, archived and private articles are not found",
+                "tags": [
+                    "kb-public"
+                ],
+                "summary": "Count a public KB article view",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Article UUID",
+                        "name": "articleId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/kb/articles/{articleId}/vote": {
+            "post": {
+                "description": "Counts a helpful or not helpful vote. Drafts, archived and private articles are not found",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kb-public"
+                ],
+                "summary": "Vote on a public KB article",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Article UUID",
+                        "name": "articleId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/{tenant}/kb/articles/{slug}": {
             "get": {
-                "description": "Retrieve a publicly visible knowledge base article by slug",
+                "description": "A published public article of the tenant with its sanitised HTML body. Drafts, archived and private articles are not found. Counts a view unless count_view=false",
                 "produces": [
                     "application/json"
                 ],
@@ -869,17 +1097,141 @@ const docTemplate = `{
                         "name": "slug",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "false reads without counting a view (default true)",
+                        "name": "count_view",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_modules_kb.Article"
+                            "$ref": "#/definitions/internal_modules_kb.PublicArticle"
                         }
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/kb/categories": {
+            "get": {
+                "description": "Categories of the tenant's published public articles with their article counts, by name",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kb-public"
+                ],
+                "summary": "List public KB categories",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/kb/suggestions": {
+            "get": {
+                "description": "Up to 5 published public articles matching the words of a ticket subject, best first, without the body. No AI and no credits",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kb-public"
+                ],
+                "summary": "Suggest public KB articles",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The subject typed so far",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "At most 5",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1968,7 +2320,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "List support teams for the authenticated tenant",
+                "description": "List support teams for the authenticated tenant, newest first, as {data, next_cursor, has_more}",
                 "produces": [
                     "application/json"
                 ],
@@ -1990,14 +2342,14 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "description": "Page number",
-                        "name": "page",
+                        "type": "string",
+                        "description": "next_cursor of the previous page",
+                        "name": "cursor",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Results per page",
+                        "description": "Page size (default 25, max 100)",
                         "name": "limit",
                         "in": "query"
                     }
@@ -2190,7 +2542,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "created_desc (default) or created_asc",
+                        "description": "created_desc (default), created_asc or sla_due",
                         "name": "sort",
                         "in": "query"
                     }
@@ -3764,6 +4116,50 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_modules_kb.PublicArticle": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "excerpt": {
+                    "type": "string"
+                },
+                "helpful_count": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "not_helpful_count": {
+                    "type": "integer"
+                },
+                "published_at": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "view_count": {
+                    "type": "integer"
+                }
+            }
+        },
         "internal_modules_rbac.Me": {
             "type": "object",
             "properties": {
@@ -4633,6 +5029,9 @@ const docTemplate = `{
                 "resolved_at": {
                     "type": "string"
                 },
+                "sla_calendar_name": {
+                    "type": "string"
+                },
                 "sla_first_response_minutes": {
                     "description": "The elapsed minutes to first response and to resolution in the policy's clock, net of pauses.",
                     "type": "integer"
@@ -4645,6 +5044,10 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "sla_policy_id": {
+                    "type": "string"
+                },
+                "sla_policy_name": {
+                    "description": "SLAPolicyName and SLACalendarName name the policy and the business calendar its clock counts\nin. They are read with the ticket (one batched lookup per page, never stored on the ticket).\nSLACalendarName is empty for a policy that counts every minute (24x7).",
                     "type": "string"
                 },
                 "sla_resolution_breached": {
@@ -4793,6 +5196,10 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "author_id": {
+                    "type": "string"
+                },
+                "author_name": {
+                    "description": "AuthorName is who the conversation shows: the agent's display name for staff, the\nrequester's name for a customer and \"System\" for a system comment. It is resolved when the\ncomments are read (one batched lookup per page), never stored. Empty when no name is known.",
                     "type": "string"
                 },
                 "author_type": {

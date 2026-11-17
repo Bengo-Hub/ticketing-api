@@ -84,7 +84,7 @@ func (h *Handler) GetTicket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if t, ok := h.visibleTicket(w, r, a, ticketID); ok {
-		respondJSON(w, http.StatusOK, t)
+		respondJSON(w, http.StatusOK, h.service.WithSLALabels(r.Context(), a.TenantID, t))
 	}
 }
 
@@ -102,11 +102,13 @@ func (h *Handler) GetTicketByNumber(w http.ResponseWriter, r *http.Request) {
 		h.handleError(w, err)
 		return
 	}
-	respondJSON(w, http.StatusOK, t)
+	respondJSON(w, http.StatusOK, h.service.WithSLALabels(r.Context(), a.TenantID, t))
 }
 
-// ListTickets lists tickets a keyset page at a time, newest first unless sort=created_asc. An
-// own-only caller sees their tickets.
+// ListTickets lists tickets a keyset page at a time, newest first unless sort=created_asc, or
+// nearest SLA target first with sort=sla_due (running clocks before paused ones, tickets with no
+// target last in each group). A cursor only continues the order that issued it. An own-only
+// caller sees their tickets.
 // @Summary      List tickets
 // @Tags         tickets
 // @Produce      json
@@ -116,7 +118,7 @@ func (h *Handler) GetTicketByNumber(w http.ResponseWriter, r *http.Request) {
 // @Param        search     query string false "Ticket number, subject, description or requester"
 // @Param        tags       query string false "Comma-separated tags; a ticket must carry all"
 // @Param        channel    query string false "web, email, api, chat, whatsapp, phone or internal"
-// @Param        sort       query string false "created_desc (default) or created_asc"
+// @Param        sort       query string false "created_desc (default), created_asc or sla_due"
 // @Success      200 {object} map[string]interface{}
 // @Security     BearerAuth
 // @Router       /{tenant}/tickets [get]

@@ -22,6 +22,17 @@ type Config struct {
 	CSAT          CSATConfig
 	AI            AIConfig
 	Subscriptions SubscriptionsConfig
+	Analytics     AnalyticsConfig
+}
+
+// AnalyticsConfig tunes the analytics rollup ticketing-worker runs. Each run re-reads the tickets
+// changed in the last RollupOverlap behind its watermark and rebuilds those it has not counted at
+// their current updated_at, at most RollupOverlapLimit per run, so a transaction that commits
+// after the watermark passed its updated_at still reaches the rollups. A zero overlap turns the
+// re-read off.
+type AnalyticsConfig struct {
+	RollupOverlap      time.Duration `envconfig:"ANALYTICS_ROLLUP_OVERLAP" default:"15m"`
+	RollupOverlapLimit int           `envconfig:"ANALYTICS_ROLLUP_OVERLAP_LIMIT" default:"2000"`
 }
 
 // AIConfig is marketflow-ai (Vera), which runs every model call. ticketing-api builds the prompts
@@ -84,6 +95,11 @@ type HTTPConfig struct {
 	// MetricsPort serves /metrics on its own listener, the port the devops values point
 	// Prometheus at (9090), so metrics never go out through the ingress.
 	MetricsPort int `envconfig:"METRICS_PORT" default:"9090"`
+	// VisitorIPForwardKey is the key ticketing-ui's server sends with X-Visitor-IP so its public
+	// help center reads are limited per visitor, not per UI server (internal/http/visitorip).
+	// Empty, or shorter than 32 characters, turns forwarding off. ticketing-ui holds the same
+	// value server side only.
+	VisitorIPForwardKey string `envconfig:"VISITOR_IP_FORWARD_KEY" default:""`
 }
 
 // PostgresConfig holds database configuration.

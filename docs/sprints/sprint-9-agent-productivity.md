@@ -4,7 +4,10 @@
 
 ## Tasks
 
-- [ ] Keyset pagination (pagination v0.5.0) on every list, ordered by `(tenant_id, created_at, id)`, with indexes on the filter columns
+- [x] Keyset pagination (pagination v0.5.0) on every list, ordered by `(tenant_id, created_at, id)`, with indexes on the filter columns. Tickets, comments and attachments since c8e8631b; the agent and team lists written on 2026-11-17 (newest first, `{data, next_cursor, has_more}`, indexes `agent_tenant_id_created_at_id` and `team_tenant_id_created_at_id`; offset paging and totals are gone)
+- [x] Ticket list order `sort=sla_due`: the nearest open SLA target first (the response target until the first response, and the resolution target), running clocks before paused ones and tickets with no target last in each group, keyset paged by `(rank, due key, id)` through the `ticket_tenant_sla_due` expression index (written 2026-11-17)
+- [x] Comment author names: every comment carries `author_name` (the agent's display name for staff, the channel sender, the ticketing user's name or the ticket's requester name for a customer, "System" for a system comment), resolved with one query per page (written 2026-11-17)
+- [x] Tickets carry `sla_policy_name` and `sla_calendar_name` (empty for 24x7), from one query per list page or ticket (written 2026-11-17)
 - [ ] Full-text search on tickets and KB articles: a generated `tsvector` column with a GIN index, or `pg_trgm` indexes for partial words, replacing the substring match
 - [ ] `ListTickets` reads `search`
 - [ ] Views and saved filters per agent, in metadata or a small `ticket_views` table
@@ -21,7 +24,8 @@
 ## Acceptance criteria
 
 - An agent finds a ticket by a word in its description, ranked, in under 200 ms at 200k tickets.
-- Paging through 200k tickets never uses `OFFSET`.
+- Paging through 200k tickets never uses `OFFSET`, in any order.
+- A page of 25 tickets or comments makes one extra query for its names, whatever the number of authors or policies on it. `TestSLADueKeysetWalkAndOneLabelLookupPerPage` and `TestPageCommentsNamesAuthorsInOneLookup` check the lookup count; `TestAgentKeysetWalksEveryAgentOnce` walks the agent list across pages with tied timestamps.
 - Two agents on one ticket each see the other's presence within 2 seconds.
 - A macro sets status and priority and posts its reply in one request.
 - Merging two tickets moves the comments and leaves the merged ticket closed with a link.

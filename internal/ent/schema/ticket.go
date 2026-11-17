@@ -191,7 +191,9 @@ func (Ticket) Indexes() []ent.Index {
 	// 20261116090100_phase0.sql as ticket_tenant_source_ref. The requester search index
 	// ticket_requester_trgm is an expression index too and lives in 20261116100000_sprint9.sql.
 	// ticket_tenant_requester_phone (tenant_id, metadata requester_phone), the WhatsApp threading
-	// lookup, lives in 20261117120000_sprint11.sql.
+	// lookup, lives in 20261117120000_sprint11.sql. ticket_tenant_sla_due (tenant_id, SLA rank,
+	// SLA due key, id) WHERE deleted_at IS NULL, the sort=sla_due order, is an expression index
+	// too; its exact definition is in internal/modules/tickets/sla_sort.go.
 	return []ent.Index{
 		index.Fields("tenant_id", "ticket_number").Unique(),
 		// Keyset paging of the ticket list: (created_at, id) within the tenant.

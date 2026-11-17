@@ -67,6 +67,12 @@ type Repository interface {
 	// AgentEmails returns the email of each id that is an agent of the tenant; ids of other
 	// tenants or unknown ids are absent from the map.
 	AgentEmails(ctx context.Context, tenantID uuid.UUID, agentIDs []uuid.UUID) (map[uuid.UUID]string, error)
+	// AuthorNames returns the display name of each auth-api user id in the tenant, in one query:
+	// the agent profile's display name, else the ticketing user's name. Ids with neither are absent.
+	AuthorNames(ctx context.Context, tenantID uuid.UUID, userIDs []uuid.UUID) (map[uuid.UUID]string, error)
+	// SLALabels returns the name of each SLA policy of the tenant and the name of the business
+	// calendar it counts in (empty for 24x7), in one query. Unknown ids are absent.
+	SLALabels(ctx context.Context, tenantID uuid.UUID, policyIDs []uuid.UUID) (map[uuid.UUID]SLALabel, error)
 	// TeamExists reports whether the team belongs to the tenant.
 	TeamExists(ctx context.Context, tenantID uuid.UUID, teamID uuid.UUID) (bool, error)
 	// TeamAlertEmails returns who hears about a team's SLA alerts: its active supervisors and

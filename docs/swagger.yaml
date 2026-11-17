@@ -430,6 +430,35 @@ definitions:
       title:
         type: string
     type: object
+  internal_modules_kb.PublicArticle:
+    properties:
+      category:
+        type: string
+      content:
+        type: string
+      excerpt:
+        type: string
+      helpful_count:
+        type: integer
+      id:
+        type: string
+      not_helpful_count:
+        type: integer
+      published_at:
+        type: string
+      slug:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      updated_at:
+        type: string
+      view_count:
+        type: integer
+    type: object
   internal_modules_rbac.Me:
     properties:
       agent_id:
@@ -1023,6 +1052,8 @@ definitions:
         type: string
       resolved_at:
         type: string
+      sla_calendar_name:
+        type: string
       sla_first_response_minutes:
         description: The elapsed minutes to first response and to resolution in the
           policy's clock, net of pauses.
@@ -1033,6 +1064,12 @@ definitions:
       sla_paused_minutes:
         type: integer
       sla_policy_id:
+        type: string
+      sla_policy_name:
+        description: |-
+          SLAPolicyName and SLACalendarName name the policy and the business calendar its clock counts
+          in. They are read with the ticket (one batched lookup per page, never stored on the ticket).
+          SLACalendarName is empty for a policy that counts every minute (24x7).
         type: string
       sla_resolution_breached:
         type: boolean
@@ -1140,6 +1177,12 @@ definitions:
   internal_modules_tickets.TicketComment:
     properties:
       author_id:
+        type: string
+      author_name:
+        description: |-
+          AuthorName is who the conversation shows: the agent's display name for staff, the
+          requester's name for a customer and "System" for a system comment. It is resolved when the
+          comments are read (one batched lookup per page), never stored. Empty when no name is known.
         type: string
       author_type:
         $ref: '#/definitions/internal_modules_tickets.AuthorType'
@@ -1270,7 +1313,8 @@ info:
 paths:
   /{tenant}/agents:
     get:
-      description: List support agents for the authenticated tenant
+      description: List support agents for the authenticated tenant, newest first,
+        as {data, next_cursor, has_more}
       parameters:
       - description: Tenant slug
         in: path
@@ -1292,11 +1336,11 @@ paths:
         in: query
         name: active
         type: boolean
-      - description: Page number
+      - description: next_cursor of the previous page
         in: query
-        name: page
-        type: integer
-      - description: Results per page
+        name: cursor
+        type: string
+      - description: Page size (default 25, max 100)
         in: query
         name: limit
         type: integer
@@ -1691,14 +1735,15 @@ paths:
       summary: Create category
       tags:
       - categories
-  /{tenant}/kb/articles:
+  /{tenant}/kb/admin/articles:
     get:
-      description: List publicly visible knowledge base articles — no authentication
-        required
+      description: 'Staff list of knowledge base articles, keyset paged: pass next_cursor
+        back as cursor while has_more is true'
       parameters:
       - description: Tenant slug
         in: path
         name: tenant
+        required: true
         type: string
       - description: Search text
         in: query
@@ -1708,11 +1753,15 @@ paths:
         in: query
         name: category
         type: string
-      - description: Page number
+      - description: Filter by status
         in: query
-        name: page
-        type: integer
-      - description: Results per page
+        name: status
+        type: string
+      - description: next_cursor of the previous page
+        in: query
+        name: cursor
+        type: string
+      - description: Page size (default 20, at most 100)
         in: query
         name: limit
         type: integer
@@ -1723,6 +1772,75 @@ paths:
           description: OK
           schema:
             additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List KB articles
+      tags:
+      - kb
+  /{tenant}/kb/articles:
+    get:
+      description: Published public articles of the tenant, newest first, without
+        the body. Pass next_cursor back as cursor while has_more is true
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Search text
+        in: query
+        name: search
+        type: string
+      - description: Filter by category
+        in: query
+        name: category
+        type: string
+      - description: next_cursor of the previous page
+        in: query
+        name: cursor
+        type: string
+      - description: Page size (default 20, at most 100)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "429":
+          description: Too Many Requests
+          schema:
+            additionalProperties:
+              type: string
             type: object
       summary: List public KB articles
       tags:
@@ -1811,9 +1929,92 @@ paths:
       summary: Get KB article
       tags:
       - kb
+  /{tenant}/kb/articles/{articleId}/view:
+    post:
+      description: The help center page calls this once per page view from the visitor's
+        browser, since the page itself reads the article through a short server-side
+        cache. Drafts, archived and private articles are not found
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Article UUID
+        in: path
+        name: articleId
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "429":
+          description: Too Many Requests
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Count a public KB article view
+      tags:
+      - kb-public
+  /{tenant}/kb/articles/{articleId}/vote:
+    post:
+      consumes:
+      - application/json
+      description: Counts a helpful or not helpful vote. Drafts, archived and private
+        articles are not found
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Article UUID
+        in: path
+        name: articleId
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "429":
+          description: Too Many Requests
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Vote on a public KB article
+      tags:
+      - kb-public
   /{tenant}/kb/articles/{slug}:
     get:
-      description: Retrieve a publicly visible knowledge base article by slug
+      description: A published public article of the tenant with its sanitised HTML
+        body. Drafts, archived and private articles are not found. Counts a view unless
+        count_view=false
       parameters:
       - description: Tenant slug
         in: path
@@ -1825,20 +2026,105 @@ paths:
         name: slug
         required: true
         type: string
+      - description: false reads without counting a view (default true)
+        in: query
+        name: count_view
+        type: boolean
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_modules_kb.Article'
+            $ref: '#/definitions/internal_modules_kb.PublicArticle'
         "404":
           description: Not Found
           schema:
             additionalProperties:
               type: string
             type: object
+        "429":
+          description: Too Many Requests
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       summary: Get public KB article by slug
+      tags:
+      - kb-public
+  /{tenant}/kb/categories:
+    get:
+      description: Categories of the tenant's published public articles with their
+        article counts, by name
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "429":
+          description: Too Many Requests
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List public KB categories
+      tags:
+      - kb-public
+  /{tenant}/kb/suggestions:
+    get:
+      description: Up to 5 published public articles matching the words of a ticket
+        subject, best first, without the body. No AI and no credits
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: The subject typed so far
+        in: query
+        name: q
+        required: true
+        type: string
+      - description: At most 5
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "429":
+          description: Too Many Requests
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Suggest public KB articles
       tags:
       - kb-public
   /{tenant}/macros:
@@ -2537,7 +2823,8 @@ paths:
       - sla
   /{tenant}/teams:
     get:
-      description: List support teams for the authenticated tenant
+      description: List support teams for the authenticated tenant, newest first,
+        as {data, next_cursor, has_more}
       parameters:
       - description: Tenant slug
         in: path
@@ -2547,11 +2834,11 @@ paths:
         in: query
         name: active
         type: boolean
-      - description: Page number
+      - description: next_cursor of the previous page
         in: query
-        name: page
-        type: integer
-      - description: Results per page
+        name: cursor
+        type: string
+      - description: Page size (default 25, max 100)
         in: query
         name: limit
         type: integer
@@ -2676,7 +2963,7 @@ paths:
         in: query
         name: channel
         type: string
-      - description: created_desc (default) or created_asc
+      - description: created_desc (default), created_asc or sla_due
         in: query
         name: sort
         type: string

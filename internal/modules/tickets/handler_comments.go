@@ -42,7 +42,8 @@ func (h *Handler) AddComment(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "content is required")
 		return
 	}
-	if _, ok := h.visibleTicket(w, r, a, ticketID); !ok {
+	t, ok := h.visibleTicket(w, r, a, ticketID)
+	if !ok {
 		return
 	}
 	req.TenantID, req.TicketID, req.AuthorID = a.TenantID, ticketID, a.AuthUserID
@@ -60,7 +61,7 @@ func (h *Handler) AddComment(w http.ResponseWriter, r *http.Request) {
 		h.handleError(w, err)
 		return
 	}
-	respondJSON(w, http.StatusCreated, comment)
+	respondJSON(w, http.StatusCreated, h.service.WithAuthorName(r.Context(), t, comment))
 }
 
 // ListComments lists a ticket's comments a keyset page at a time, oldest first, or newest first
@@ -84,7 +85,8 @@ func (h *Handler) ListComments(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if _, ok := h.visibleTicket(w, r, a, ticketID); !ok {
+	t, ok := h.visibleTicket(w, r, a, ticketID)
+	if !ok {
 		return
 	}
 	page, err := ParsePageParams(r)
@@ -93,7 +95,7 @@ func (h *Handler) ListComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	newest := r.URL.Query().Get("order") == "desc"
-	res, err := h.service.PageComments(r.Context(), a.TenantID, ticketID, CommentQuery{Page: page, PublicOnly: ownOnly(a), Newest: newest})
+	res, err := h.service.PageTicketComments(r.Context(), t, CommentQuery{Page: page, PublicOnly: ownOnly(a), Newest: newest})
 	if err != nil {
 		h.handleError(w, err)
 		return

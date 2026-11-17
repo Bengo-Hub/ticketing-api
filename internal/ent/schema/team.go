@@ -72,6 +72,8 @@ func (Team) Annotations() []schema.Annotation {
 func (Team) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("tenant_id", "name").Unique(),
+		// Keyset paging of the team list: (created_at, id) within the tenant, newest first.
+		index.Fields("tenant_id", "created_at", "id"),
 		index.Fields("tenant_id", "is_active"),
 		index.Fields("deleted_at"),
 	}

@@ -274,6 +274,12 @@ func (s *Service) CreateInternalTicket(ctx context.Context, req *CreateTicketReq
 		if threaded != nil {
 			return threaded, false, nil
 		}
+		// A new ticket from a channel message is linked to the requester's marketflow contact, as
+		// the ingest links the tickets it opens. A failed lookup leaves the link empty.
+		if req.CRMContactID == nil {
+			req.CRMContactID = ResolveContact(ctx, s.contacts, s.logger, req.TenantID, string(ChannelWhatsApp),
+				req.RequesterName, req.RequesterEmail, req.RequesterPhone)
+		}
 	}
 	t, err := s.CreateTicket(ctx, req)
 	if errors.Is(err, ErrDuplicateSourceRef) {

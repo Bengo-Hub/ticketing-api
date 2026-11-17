@@ -94,6 +94,11 @@ type Ticket struct {
 	SLAResponseBreached   bool           `json:"sla_response_breached"`
 	SLAResolutionBreached bool           `json:"sla_resolution_breached"`
 	SLAPolicyID           *uuid.UUID     `json:"sla_policy_id,omitempty"`
+	// SLAPolicyName and SLACalendarName name the policy and the business calendar its clock counts
+	// in. They are read with the ticket (one batched lookup per page, never stored on the ticket).
+	// SLACalendarName is empty for a policy that counts every minute (24x7).
+	SLAPolicyName   string `json:"sla_policy_name,omitempty"`
+	SLACalendarName string `json:"sla_calendar_name,omitempty"`
 	// SLAPausedAt is set while a pending status stops the SLA clock.
 	SLAPausedAt      *time.Time `json:"sla_paused_at,omitempty"`
 	SLAPausedMinutes int        `json:"sla_paused_minutes"`
@@ -118,11 +123,15 @@ type Ticket struct {
 
 // TicketComment represents a comment on a ticket.
 type TicketComment struct {
-	ID          uuid.UUID   `json:"id"`
-	TenantID    uuid.UUID   `json:"tenant_id"`
-	TicketID    uuid.UUID   `json:"ticket_id"`
-	AuthorID    uuid.UUID   `json:"author_id"`
-	AuthorType  AuthorType  `json:"author_type"`
+	ID         uuid.UUID  `json:"id"`
+	TenantID   uuid.UUID  `json:"tenant_id"`
+	TicketID   uuid.UUID  `json:"ticket_id"`
+	AuthorID   uuid.UUID  `json:"author_id"`
+	AuthorType AuthorType `json:"author_type"`
+	// AuthorName is who the conversation shows: the agent's display name for staff, the
+	// requester's name for a customer and "System" for a system comment. It is resolved when the
+	// comments are read (one batched lookup per page), never stored. Empty when no name is known.
+	AuthorName  string      `json:"author_name,omitempty"`
 	CommentType CommentType `json:"comment_type"`
 	Content     string      `json:"content"`
 	// Mentions are the agent ids the comment @mentions (staff comments only).
@@ -308,19 +317,23 @@ type TicketFilter struct {
 	CreatedBefore *time.Time
 	// Search is the normalised search term (pagination.SearchTerm).
 	Search string
-	// Sort is SortCreatedDesc (default) or SortCreatedAsc.
+	// Sort is SortCreatedDesc (default), SortCreatedAsc or SortSLADue.
 	Sort string
 	Page PageParams
 }
 
-// Ticket list orders. Both page by (created_at, id).
+// Ticket list orders. The created orders page by (created_at, id); SortSLADue pages by the SLA
+// rank, the SLA due key and id (sla_sort.go).
 const (
 	SortCreatedDesc = "created_desc"
 	SortCreatedAsc  = "created_asc"
+	// SortSLADue puts the nearest open SLA target first: running clocks by due time, then running
+	// tickets with no target, then paused clocks by due time, then paused tickets with no target.
+	SortSLADue = "sla_due"
 )
 
 // ValidSort reports whether s is a ticket list order.
-func ValidSort(s string) bool { return s == SortCreatedDesc || s == SortCreatedAsc }
+func ValidSort(s string) bool { return s == SortCreatedDesc || s == SortCreatedAsc || s == SortSLADue }
 
 // CommentQuery pages a ticket's comments oldest first. PublicOnly leaves out internal notes.
 type CommentQuery struct {

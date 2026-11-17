@@ -76,6 +76,7 @@ func main() {
 	repo := tickets.NewEntRepository(ormClient, db, events.NewOutbox(db))
 	svc := tickets.NewService(repo, log)
 	rollup := analytics.NewRollup(db, log)
+	rollup.Overlap, rollup.OverlapLimit = cfg.Analytics.RollupOverlap, cfg.Analytics.RollupOverlapLimit
 
 	scans := []scan{
 		{key: "ticketing:sla-breach-scan", run: func(c context.Context, now time.Time) { runBreachCheck(c, repo, svc, log, now) }},

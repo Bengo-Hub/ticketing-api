@@ -11,7 +11,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Bengo-Hub/shared-service-client/crm"
 	"github.com/google/uuid"
 
 	"github.com/bengobox/ticketing-service/internal/modules/tickets"
@@ -32,9 +31,7 @@ type Tickets interface {
 
 // Contacts resolves a requester to their marketflow CRM contact (the shared crm.Client), creating
 // the contact when marketflow has none for the email or phone.
-type Contacts interface {
-	UpsertStrict(ctx context.Context, in crm.UpsertInput) (crm.Contact, error)
-}
+type Contacts = tickets.ContactUpserter
 
 // Message is one inbound customer message, already read from its channel's event.
 type Message struct {

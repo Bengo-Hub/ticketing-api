@@ -106,6 +106,8 @@ func (Agent) Annotations() []schema.Annotation {
 func (Agent) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("tenant_id", "user_id").Unique(),
+		// Keyset paging of the agent list: (created_at, id) within the tenant, newest first.
+		index.Fields("tenant_id", "created_at", "id"),
 		index.Fields("tenant_id", "status"),
 		index.Fields("tenant_id", "is_active"),
 		index.Fields("team_id"),

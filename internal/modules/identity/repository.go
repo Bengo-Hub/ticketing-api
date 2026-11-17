@@ -12,7 +12,8 @@ type Repository interface {
 	CreateTeam(ctx context.Context, tenantID uuid.UUID, team *Team) error
 	GetTeam(ctx context.Context, tenantID uuid.UUID, teamID uuid.UUID) (*Team, error)
 	GetTeamByName(ctx context.Context, tenantID uuid.UUID, name string) (*Team, error)
-	ListTeams(ctx context.Context, tenantID uuid.UUID, filter TeamFilter) ([]*Team, int, error)
+	// ListTeams returns up to filter.Limit+1 teams after the cursor, newest first.
+	ListTeams(ctx context.Context, tenantID uuid.UUID, filter TeamFilter) ([]*Team, error)
 	UpdateTeam(ctx context.Context, tenantID uuid.UUID, teamID uuid.UUID, updates *UpdateTeamRequest) error
 	DeleteTeam(ctx context.Context, tenantID uuid.UUID, teamID uuid.UUID) error
 
@@ -20,7 +21,8 @@ type Repository interface {
 	CreateAgent(ctx context.Context, tenantID uuid.UUID, agent *Agent) error
 	GetAgent(ctx context.Context, tenantID uuid.UUID, agentID uuid.UUID) (*Agent, error)
 	GetAgentByUserID(ctx context.Context, tenantID uuid.UUID, userID uuid.UUID) (*Agent, error)
-	ListAgents(ctx context.Context, tenantID uuid.UUID, filter AgentFilter) ([]*Agent, int, error)
+	// ListAgents returns up to filter.Limit+1 agents after the cursor, newest first.
+	ListAgents(ctx context.Context, tenantID uuid.UUID, filter AgentFilter) ([]*Agent, error)
 	UpdateAgent(ctx context.Context, tenantID uuid.UUID, agentID uuid.UUID, updates *UpdateAgentRequest) error
 	UpdateAgentStatus(ctx context.Context, tenantID uuid.UUID, agentID uuid.UUID, status AgentStatus) error
 	UpdateAgentTicketCount(ctx context.Context, tenantID uuid.UUID, agentID uuid.UUID, delta int) error

@@ -49,6 +49,8 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 
 func (h *Handler) handleError(w http.ResponseWriter, err error) {
 	switch err {
+	case ErrInvalidCursor:
+		respondError(w, http.StatusBadRequest, err.Error())
 	case ErrTeamNotFound, ErrAgentNotFound:
 		respondError(w, http.StatusNotFound, err.Error())
 	case ErrTeamExists, ErrAgentExists:

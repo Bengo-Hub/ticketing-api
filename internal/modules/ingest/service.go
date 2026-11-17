@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Bengo-Hub/shared-service-client/crm"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
@@ -176,38 +175,14 @@ func (s *Service) create(ctx context.Context, m Message, key tickets.MessageKey,
 	return Result{Outcome: OutcomeCreated, TicketID: t.ID, TicketNumber: t.TicketNumber}, nil
 }
 
-// contactID resolves the requester to their marketflow contact, creating it when marketflow has
-// none. A failed lookup never holds the ticket back: it is logged with ids only and the ticket
-// opens without a contact id.
+// contactID resolves the requester to their marketflow contact through the tickets package's
+// shared resolver; a failed lookup never holds the ticket back.
 func (s *Service) contactID(ctx context.Context, m Message) *uuid.UUID {
 	if s.contacts == nil {
 		return nil
 	}
-	first, last := splitName(m.Requester.Name)
-	c, err := s.contacts.UpsertStrict(ctx, crm.UpsertInput{
-		TenantID: m.TenantID, Email: m.Requester.Email, Phone: m.Requester.Phone,
-		FirstName: first, LastName: last,
-	})
-	if err != nil {
-		if !errors.Is(err, crm.ErrDisabled) {
-			s.logger.Warn("requester not linked to a crm contact",
-				zap.String("tenant_id", m.TenantID.String()), zap.String("channel", string(m.Channel)), zap.Error(err))
-		}
-		return nil
-	}
-	if c.ID == uuid.Nil {
-		return nil
-	}
-	return &c.ID
-}
-
-// splitName splits a display name into the first word and the rest, the shape marketflow keeps.
-func splitName(name string) (first, last string) {
-	parts := strings.Fields(name)
-	if len(parts) == 0 {
-		return "", ""
-	}
-	return parts[0], strings.Join(parts[1:], " ")
+	return tickets.ResolveContact(ctx, s.contacts, s.logger, m.TenantID, string(m.Channel),
+		m.Requester.Name, m.Requester.Email, m.Requester.Phone)
 }
 
 // maxCommentSubject bounds the email subject kept on a threaded comment.
