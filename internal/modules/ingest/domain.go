@@ -11,6 +11,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Bengo-Hub/shared-service-client/crm"
 	"github.com/google/uuid"
 
 	"github.com/bengobox/ticketing-service/internal/modules/tickets"
@@ -27,6 +28,12 @@ type Tickets interface {
 	LatestChannelTicket(ctx context.Context, tenantID uuid.UUID, channel tickets.TicketChannel, phone string, since time.Time) (*tickets.Ticket, error)
 	CreateTicket(ctx context.Context, req *tickets.CreateTicketRequest) (*tickets.Ticket, error)
 	AddInboundMessage(ctx context.Context, in tickets.InboundMessage) (*tickets.TicketComment, error)
+}
+
+// Contacts resolves a requester to their marketflow CRM contact (the shared crm.Client), creating
+// the contact when marketflow has none for the email or phone.
+type Contacts interface {
+	UpsertStrict(ctx context.Context, in crm.UpsertInput) (crm.Contact, error)
 }
 
 // Message is one inbound customer message, already read from its channel's event.
@@ -51,8 +58,11 @@ type Message struct {
 	// ThreadOnly continues an open ticket but never opens one (WhatsApp with auto-ticketing off).
 	ThreadOnly bool
 	// Extra is channel detail kept on the comment, or on a new ticket's metadata.
-	Extra      map[string]any
-	ReceivedAt time.Time
+	Extra map[string]any
+	// PhoneNumberID is the tenant WhatsApp number the message came in on (WhatsApp only); the
+	// ticket keeps it with the reply window so an agent answers from the same number.
+	PhoneNumberID string
+	ReceivedAt    time.Time
 }
 
 // Outcome is what the ingest did with a message.

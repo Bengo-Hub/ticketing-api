@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Bengo-Hub/shared-service-client/crm"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
@@ -22,6 +23,7 @@ const maxThreadRefs = 20
 // Service decides, for every channel, whether a message continues a ticket or opens one.
 type Service struct {
 	tickets      Tickets
+	contacts     Contacts
 	threadWindow time.Duration
 	logger       *zap.Logger
 	now          func() time.Time
@@ -31,6 +33,10 @@ type Service struct {
 func NewService(t Tickets, logger *zap.Logger) *Service {
 	return &Service{tickets: t, threadWindow: DefaultThreadWindow, logger: logger.Named("ingest"), now: time.Now}
 }
+
+// SetContacts links each new ticket's requester to their marketflow contact. Without it a ticket
+// carries the requester fields only.
+func (s *Service) SetContacts(c Contacts) { s.contacts = c }
 
 // SetThreadWindow changes the WhatsApp conversation window (zero keeps the default).
 func (s *Service) SetThreadWindow(d time.Duration) {
@@ -130,6 +136,7 @@ func (s *Service) thread(ctx context.Context, m Message, key tickets.MessageKey,
 	_, err := s.tickets.AddInboundMessage(ctx, tickets.InboundMessage{
 		TenantID: m.TenantID, TicketID: t.ID, Key: key, From: m.Requester,
 		Content: messageBody(m, true), Metadata: s.extra(m), Files: m.Attachments,
+		PhoneNumberID: m.PhoneNumberID, ReceivedAt: m.ReceivedAt,
 	})
 	if errors.Is(err, tickets.ErrDuplicateMessage) {
 		return Result{Outcome: OutcomeDuplicate, TicketID: t.ID, TicketNumber: t.TicketNumber}, nil
@@ -155,7 +162,9 @@ func (s *Service) create(ctx context.Context, m Message, key tickets.MessageKey,
 		RequesterName:  m.Requester.Name,
 		RequesterEmail: m.Requester.Email,
 		RequesterPhone: m.Requester.Phone,
-		Inbound:        &tickets.InboundOrigin{Key: key, Files: m.Attachments},
+		CRMContactID:   s.contactID(ctx, m),
+		Inbound: &tickets.InboundOrigin{Key: key, Files: m.Attachments,
+			PhoneNumberID: m.PhoneNumberID, ReceivedAt: m.ReceivedAt},
 	}
 	t, err := s.tickets.CreateTicket(ctx, req)
 	if errors.Is(err, tickets.ErrDuplicateSourceRef) {
@@ -165,6 +174,40 @@ func (s *Service) create(ctx context.Context, m Message, key tickets.MessageKey,
 		return Result{}, err
 	}
 	return Result{Outcome: OutcomeCreated, TicketID: t.ID, TicketNumber: t.TicketNumber}, nil
+}
+
+// contactID resolves the requester to their marketflow contact, creating it when marketflow has
+// none. A failed lookup never holds the ticket back: it is logged with ids only and the ticket
+// opens without a contact id.
+func (s *Service) contactID(ctx context.Context, m Message) *uuid.UUID {
+	if s.contacts == nil {
+		return nil
+	}
+	first, last := splitName(m.Requester.Name)
+	c, err := s.contacts.UpsertStrict(ctx, crm.UpsertInput{
+		TenantID: m.TenantID, Email: m.Requester.Email, Phone: m.Requester.Phone,
+		FirstName: first, LastName: last,
+	})
+	if err != nil {
+		if !errors.Is(err, crm.ErrDisabled) {
+			s.logger.Warn("requester not linked to a crm contact",
+				zap.String("tenant_id", m.TenantID.String()), zap.String("channel", string(m.Channel)), zap.Error(err))
+		}
+		return nil
+	}
+	if c.ID == uuid.Nil {
+		return nil
+	}
+	return &c.ID
+}
+
+// splitName splits a display name into the first word and the rest, the shape marketflow keeps.
+func splitName(name string) (first, last string) {
+	parts := strings.Fields(name)
+	if len(parts) == 0 {
+		return "", ""
+	}
+	return parts[0], strings.Join(parts[1:], " ")
 }
 
 // extra copies the channel detail so the caller's map is never shared with a stored row.

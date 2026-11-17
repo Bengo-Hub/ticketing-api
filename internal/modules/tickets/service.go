@@ -112,6 +112,7 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 			Name: req.RequesterName, Email: req.RequesterEmail, Phone: req.RequesterPhone,
 		}),
 	}
+	ticket.WhatsAppWindowExpiresAt = WhatsAppWindowExpiresAt(ticket)
 	if s.sla != nil {
 		plan, err := s.sla.ComputeDeadlines(ctx, req.TenantID, string(ticket.Priority), ticket.CategoryID, s.now())
 		switch {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -120,7 +121,7 @@ func TestInboundCreateAndThreadPayload(t *testing.T) {
 		t.Fatalf("payload = %v", p)
 	}
 	c := &TicketComment{ID: uuid.New()}
-	if got := TicketCommentAddedPayload(repo.tickets[tk.ID], c, "")["email_message_token"]; got != c.ID.String() {
+	if got := TicketCommentAddedPayload(repo.tickets[tk.ID], c, "", time.Now())["email_message_token"]; got != c.ID.String() {
 		t.Fatalf("reply token = %v", got)
 	}
 }

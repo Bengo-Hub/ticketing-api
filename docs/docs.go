@@ -165,6 +165,51 @@ const docTemplate = `{
                 }
             }
         },
+        "/{tenant}/agents/available": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "identity"
+                ],
+                "summary": "Available agents",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by team UUID",
+                        "name": "teamId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "At most this many agents (default 50, max 200)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/{tenant}/categories": {
             "get": {
                 "security": [
@@ -172,7 +217,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "List ticket categories for the authenticated tenant",
                 "produces": [
                     "application/json"
                 ],
@@ -185,31 +229,8 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Tenant slug",
                         "name": "tenant",
-                        "in": "path"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by parent category UUID",
-                        "name": "parentId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Filter by active status",
-                        "name": "active",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Results per page",
-                        "name": "limit",
-                        "in": "query"
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -218,24 +239,6 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
                         }
                     }
                 }
@@ -246,7 +249,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new ticket category for the authenticated tenant",
                 "consumes": [
                     "application/json"
                 ],
@@ -280,24 +282,6 @@ const docTemplate = `{
                         "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/internal_modules_tickets.TicketCategory"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
                         }
                     }
                 }
@@ -526,6 +510,89 @@ const docTemplate = `{
                             "additionalProperties": {
                                 "type": "string"
                             }
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/macros": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "macros"
+                ],
+                "summary": "List macros",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Only active macros",
+                        "name": "active",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "macros"
+                ],
+                "summary": "Create macro",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Macro",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_tickets.MacroInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_tickets.Macro"
                         }
                     }
                 }
@@ -791,6 +858,368 @@ const docTemplate = `{
                 }
             }
         },
+        "/{tenant}/settings/channels": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "WhatsApp auto-ticketing, the email forwarding address and when the last forwarded email arrived",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Channel settings",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_settings.channelsView"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Turns WhatsApp auto-ticketing on or off for the tenant. email.last_received_at is read only.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Save channel settings",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Channel settings",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_settings.channelsInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_settings.channelsView"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/sla/calendars": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sla"
+                ],
+                "summary": "List business calendars",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Results per page",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a calendar of weekly working hours and holidays. A tenant's first calendar becomes the default and is seeded with Kenyan public holidays for this year and next.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sla"
+                ],
+                "summary": "Create business calendar",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Calendar",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_sla.CalendarInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_sla.Calendar"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/sla/calendars/{calendarId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sla"
+                ],
+                "summary": "Get business calendar",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Calendar UUID",
+                        "name": "calendarId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_sla.Calendar"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sla"
+                ],
+                "summary": "Update business calendar",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Calendar UUID",
+                        "name": "calendarId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Fields to change",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_sla.CalendarInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_sla.Calendar"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "sla"
+                ],
+                "summary": "Delete business calendar",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Calendar UUID",
+                        "name": "calendarId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/{tenant}/sla/policies": {
             "get": {
                 "security": [
@@ -997,6 +1426,79 @@ const docTemplate = `{
                 }
             }
         },
+        "/{tenant}/sla/reports": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Compliance, met and breached counts, and average and p90 business minutes for first response and resolution, overall, by priority and by team, for tickets created in [from, to). The window defaults to the last 30 days and is at most 366 days.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sla"
+                ],
+                "summary": "SLA report",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start, RFC 3339 or YYYY-MM-DD",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End (exclusive), RFC 3339 or YYYY-MM-DD",
+                        "name": "to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Team UUID",
+                        "name": "team_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Agent UUID",
+                        "name": "agent_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Priority",
+                        "name": "priority",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_sla.Report"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/{tenant}/teams": {
             "get": {
                 "security": [
@@ -1129,104 +1631,35 @@ const docTemplate = `{
                 }
             }
         },
-        "/{tenant}/tickets": {
+        "/{tenant}/ticketing/auth/me": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "List support tickets for the authenticated tenant with optional filters",
+                "description": "The caller's ticketing role, permissions and agent profile in the tenant",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "tickets"
+                    "rbac"
                 ],
-                "summary": "List tickets",
+                "summary": "Ticketing profile",
                 "parameters": [
                     {
                         "type": "string",
                         "description": "Tenant slug",
                         "name": "tenant",
-                        "in": "path"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by status",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by priority",
-                        "name": "priority",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by customer UUID",
-                        "name": "customerId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by assigned agent UUID",
-                        "name": "agentId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by assigned team UUID",
-                        "name": "teamId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by category UUID",
-                        "name": "categoryId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by order UUID",
-                        "name": "orderId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by channel",
-                        "name": "channel",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Results per page",
-                        "name": "limit",
-                        "in": "query"
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/internal_modules_rbac.Me"
                         }
                     },
                     "401": {
@@ -1239,6 +1672,76 @@ const docTemplate = `{
                         }
                     }
                 }
+            }
+        },
+        "/{tenant}/tickets": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tickets"
+                ],
+                "summary": "List tickets",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "next_cursor of the previous page",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size (default 25, max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ticket number, subject, description or requester",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comma-separated tags; a ticket must carry all",
+                        "name": "tags",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "web, email, api, chat, whatsapp, phone or internal",
+                        "name": "channel",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "created_desc (default) or created_asc",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
             },
             "post": {
                 "security": [
@@ -1246,7 +1749,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new support ticket for the authenticated tenant",
                 "consumes": [
                     "application/json"
                 ],
@@ -1281,24 +1783,6 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/internal_modules_tickets.Ticket"
                         }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
                     }
                 }
             }
@@ -1310,7 +1794,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Returns ticket counts by status and priority, plus a creation/resolution trend",
                 "produces": [
                     "application/json"
                 ],
@@ -1328,7 +1811,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "Number of days to include in trend (default 30, max 365)",
+                        "description": "Days in the trend (default 30, max 365)",
                         "name": "days",
                         "in": "query"
                     }
@@ -1339,14 +1822,97 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/internal_modules_tickets.AnalyticsResponse"
                         }
+                    }
+                }
+            }
+        },
+        "/{tenant}/tickets/bulk": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tickets"
+                ],
+                "summary": "Bulk update tickets",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    {
+                        "description": "Tickets and changes",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_tickets.BulkUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/tickets/tags": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tickets"
+                ],
+                "summary": "List ticket tags",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tag prefix",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "At most this many tags (default 50, max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 }
@@ -1359,7 +1925,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retrieve a support ticket by its UUID",
                 "produces": [
                     "application/json"
                 ],
@@ -1389,33 +1954,6 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/internal_modules_tickets.Ticket"
                         }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
                     }
                 }
             }
@@ -1427,7 +1965,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Assign a support ticket to an agent or team",
                 "consumes": [
                     "application/json"
                 ],
@@ -1472,32 +2009,200 @@ const docTemplate = `{
                                 "type": "string"
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/{tenant}/tickets/{ticketId}/attachments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tickets"
+                ],
+                "summary": "List attachments",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    {
+                        "type": "string",
+                        "description": "Ticket UUID",
+                        "name": "ticketId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "next_cursor of the previous page",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size (default 25, max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tickets"
+                ],
+                "summary": "Upload attachment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ticket UUID",
+                        "name": "ticketId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "The file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_tickets.TicketAttachment"
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/tickets/{ticketId}/attachments/{attachmentId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "tickets"
+                ],
+                "summary": "Delete attachment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ticket UUID",
+                        "name": "ticketId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Attachment UUID",
+                        "name": "attachmentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
                                 "type": "string"
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/{tenant}/tickets/{ticketId}/attachments/{attachmentId}/download": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tickets"
+                ],
+                "summary": "Attachment download link",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
                     },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
+                    {
+                        "type": "string",
+                        "description": "Ticket UUID",
+                        "name": "ticketId",
+                        "in": "path",
+                        "required": true
                     },
-                    "404": {
-                        "description": "Not Found",
+                    {
+                        "type": "string",
+                        "description": "Attachment UUID",
+                        "name": "attachmentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/internal_modules_tickets.AttachmentLink"
                         }
                     }
                 }
@@ -1510,7 +2215,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "List all comments for a support ticket",
                 "produces": [
                     "application/json"
                 ],
@@ -1532,6 +2236,18 @@ const docTemplate = `{
                         "name": "ticketId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "next_cursor of the previous page",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size (default 25, max 100)",
+                        "name": "limit",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1540,33 +2256,6 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
                         }
                     }
                 }
@@ -1577,7 +2266,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Add a comment to a support ticket",
                 "consumes": [
                     "application/json"
                 ],
@@ -1619,32 +2307,278 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/internal_modules_tickets.TicketComment"
                         }
+                    }
+                }
+            }
+        },
+        "/{tenant}/tickets/{ticketId}/links": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tickets"
+                ],
+                "summary": "List ticket links",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    {
+                        "type": "string",
+                        "description": "Ticket UUID",
+                        "name": "ticketId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "additionalProperties": true
                         }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tickets"
+                ],
+                "summary": "Link tickets",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    {
+                        "type": "string",
+                        "description": "Ticket UUID",
+                        "name": "ticketId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Link",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/internal_modules_tickets.CreateLinkRequest"
                         }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_tickets.TicketLink"
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/tickets/{ticketId}/macros/{macroId}/apply": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "macros"
+                ],
+                "summary": "Apply macro",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
                     },
-                    "404": {
-                        "description": "Not Found",
+                    {
+                        "type": "string",
+                        "description": "Ticket UUID",
+                        "name": "ticketId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Macro UUID",
+                        "name": "macroId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_tickets.MacroApplied"
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/tickets/{ticketId}/merge": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tickets"
+                ],
+                "summary": "Merge ticket",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ticket to merge (it closes)",
+                        "name": "ticketId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Target ticket",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_tickets.MergeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_tickets.Ticket"
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/tickets/{ticketId}/presence": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tickets"
+                ],
+                "summary": "Get presence",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ticket UUID",
+                        "name": "ticketId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tickets"
+                ],
+                "summary": "Set presence",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ticket UUID",
+                        "name": "ticketId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 }
@@ -1657,7 +2591,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Update the status of a support ticket",
                 "consumes": [
                     "application/json"
                 ],
@@ -1682,15 +2615,6 @@ const docTemplate = `{
                         "name": "ticketId",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "description": "Status payload",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "object"
-                        }
                     }
                 ],
                 "responses": {
@@ -1702,32 +2626,82 @@ const docTemplate = `{
                                 "type": "string"
                             }
                         }
-                    },
-                    "400": {
-                        "description": "Bad Request",
+                    }
+                }
+            }
+        },
+        "/{tenant}/views": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "views"
+                ],
+                "summary": "List saved views",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "additionalProperties": true
                         }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "views"
+                ],
+                "summary": "Create saved view",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    {
+                        "description": "View",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/internal_modules_tickets.ViewInput"
                         }
-                    },
-                    "404": {
-                        "description": "Not Found",
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/internal_modules_tickets.TicketView"
                         }
                     }
                 }
@@ -1735,6 +2709,40 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "github_com_bengobox_ticketing-service_internal_modules_sla_clock.Holiday": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "moon_dependent": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_bengobox_ticketing-service_internal_modules_sla_clock.Interval": {
+            "type": "object",
+            "properties": {
+                "end": {
+                    "type": "string"
+                },
+                "start": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_bengobox_ticketing-service_internal_modules_sla_clock.Week": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/definitions/github_com_bengobox_ticketing-service_internal_modules_sla_clock.Interval"
+                }
+            }
+        },
         "internal_modules_identity.Agent": {
             "type": "object",
             "properties": {
@@ -2031,6 +3039,47 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_modules_rbac.Me": {
+            "type": "object",
+            "properties": {
+                "agent_id": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "global_roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "is_platform_owner": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "service_role": {
+                    "type": "string"
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
+                "tenant_slug": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_modules_routing.Action": {
             "type": "object",
             "properties": {
@@ -2187,21 +3236,116 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_modules_settings.WhatsAppChannel": {
+            "type": "object",
+            "properties": {
+                "auto_ticket": {
+                    "description": "AutoTicket opens a ticket for a WhatsApp message that does not continue an open one. Off by\ndefault, so a tenant that answers WhatsApp from the notifications inbox is not flooded.",
+                    "type": "boolean"
+                }
+            }
+        },
+        "internal_modules_settings.channelsInput": {
+            "type": "object",
+            "properties": {
+                "whatsapp": {
+                    "$ref": "#/definitions/internal_modules_settings.WhatsAppChannel"
+                }
+            }
+        },
+        "internal_modules_settings.channelsView": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "$ref": "#/definitions/internal_modules_settings.emailView"
+                },
+                "whatsapp": {
+                    "$ref": "#/definitions/internal_modules_settings.WhatsAppChannel"
+                }
+            }
+        },
+        "internal_modules_settings.emailView": {
+            "type": "object",
+            "properties": {
+                "forwarding_address": {
+                    "description": "ForwardingAddress is where the tenant auto-forwards its support mailbox.",
+                    "type": "string"
+                },
+                "last_received_at": {
+                    "description": "LastReceivedAt is when the last forwarded email arrived, null until the first one: the\nforwarding verify step shows the address as working once it is set.",
+                    "type": "string"
+                }
+            }
+        },
+        "internal_modules_sla.Calendar": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "holidays": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_bengobox_ticketing-service_internal_modules_sla_clock.Holiday"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
+                "timezone": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "weekly_hours": {
+                    "$ref": "#/definitions/github_com_bengobox_ticketing-service_internal_modules_sla_clock.Week"
+                }
+            }
+        },
+        "internal_modules_sla.CalendarInput": {
+            "type": "object",
+            "properties": {
+                "holidays": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_bengobox_ticketing-service_internal_modules_sla_clock.Holiday"
+                    }
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "timezone": {
+                    "type": "string"
+                },
+                "weekly_hours": {
+                    "$ref": "#/definitions/github_com_bengobox_ticketing-service_internal_modules_sla_clock.Week"
+                }
+            }
+        },
         "internal_modules_sla.CreatePolicyRequest": {
             "type": "object",
             "properties": {
-                "business_hours": {
-                    "type": "object",
-                    "additionalProperties": {}
+                "calendar_id": {
+                    "type": "string"
                 },
                 "category_id": {
                     "type": "string"
                 },
                 "description": {
                     "type": "string"
-                },
-                "first_response_business_hours": {
-                    "type": "boolean"
                 },
                 "first_response_minutes": {
                     "type": "integer"
@@ -2216,9 +3360,6 @@ const docTemplate = `{
                 "priority": {
                     "$ref": "#/definitions/internal_modules_sla.Priority"
                 },
-                "resolution_business_hours": {
-                    "type": "boolean"
-                },
                 "resolution_minutes": {
                     "type": "integer"
                 },
@@ -2230,9 +3371,8 @@ const docTemplate = `{
         "internal_modules_sla.Policy": {
             "type": "object",
             "properties": {
-                "business_hours": {
-                    "type": "object",
-                    "additionalProperties": {}
+                "calendar_id": {
+                    "type": "string"
                 },
                 "category_id": {
                     "type": "string"
@@ -2242,9 +3382,6 @@ const docTemplate = `{
                 },
                 "description": {
                     "type": "string"
-                },
-                "first_response_business_hours": {
-                    "type": "boolean"
                 },
                 "first_response_minutes": {
                     "type": "integer"
@@ -2264,9 +3401,6 @@ const docTemplate = `{
                 },
                 "priority": {
                     "$ref": "#/definitions/internal_modules_sla.Priority"
-                },
-                "resolution_business_hours": {
-                    "type": "boolean"
                 },
                 "resolution_minutes": {
                     "type": "integer"
@@ -2299,15 +3433,103 @@ const docTemplate = `{
                 "PriorityCritical"
             ]
         },
+        "internal_modules_sla.PriorityStats": {
+            "type": "object",
+            "properties": {
+                "first_response": {
+                    "$ref": "#/definitions/internal_modules_sla.TargetStats"
+                },
+                "priority": {
+                    "$ref": "#/definitions/internal_modules_sla.Priority"
+                },
+                "resolution": {
+                    "$ref": "#/definitions/internal_modules_sla.TargetStats"
+                },
+                "tickets": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_modules_sla.Report": {
+            "type": "object",
+            "properties": {
+                "by_priority": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_modules_sla.PriorityStats"
+                    }
+                },
+                "by_team": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_modules_sla.TeamStats"
+                    }
+                },
+                "from": {
+                    "type": "string"
+                },
+                "overall": {
+                    "$ref": "#/definitions/internal_modules_sla.ReportStats"
+                },
+                "to": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_modules_sla.ReportStats": {
+            "type": "object",
+            "properties": {
+                "first_response": {
+                    "$ref": "#/definitions/internal_modules_sla.TargetStats"
+                },
+                "resolution": {
+                    "$ref": "#/definitions/internal_modules_sla.TargetStats"
+                },
+                "tickets": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_modules_sla.TargetStats": {
+            "type": "object",
+            "properties": {
+                "avg_minutes": {
+                    "type": "number"
+                },
+                "breached": {
+                    "type": "integer"
+                },
+                "compliance_pct": {
+                    "type": "number"
+                },
+                "met": {
+                    "type": "integer"
+                },
+                "p90_minutes": {
+                    "type": "number"
+                }
+            }
+        },
+        "internal_modules_sla.TeamStats": {
+            "type": "object",
+            "properties": {
+                "first_response": {
+                    "$ref": "#/definitions/internal_modules_sla.TargetStats"
+                },
+                "resolution": {
+                    "$ref": "#/definitions/internal_modules_sla.TargetStats"
+                },
+                "team_id": {
+                    "type": "string"
+                },
+                "tickets": {
+                    "type": "integer"
+                }
+            }
+        },
         "internal_modules_tickets.AddCommentRequest": {
             "type": "object",
             "properties": {
-                "author_id": {
-                    "type": "string"
-                },
-                "author_type": {
-                    "$ref": "#/definitions/internal_modules_tickets.AuthorType"
-                },
                 "comment_type": {
                     "$ref": "#/definitions/internal_modules_tickets.CommentType"
                 },
@@ -2350,6 +3572,20 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_modules_tickets.AttachmentLink": {
+            "type": "object",
+            "properties": {
+                "expires_at": {
+                    "type": "string"
+                },
+                "filename": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_modules_tickets.AuthorType": {
             "type": "string",
             "enum": [
@@ -2362,6 +3598,35 @@ const docTemplate = `{
                 "AuthorAgent",
                 "AuthorSystem"
             ]
+        },
+        "internal_modules_tickets.BulkUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "add_tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "agent_id": {
+                    "type": "string"
+                },
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "priority": {
+                    "$ref": "#/definitions/internal_modules_tickets.TicketPriority"
+                },
+                "status": {
+                    "$ref": "#/definitions/internal_modules_tickets.TicketStatus"
+                },
+                "team_id": {
+                    "type": "string"
+                }
+            }
         },
         "internal_modules_tickets.CommentType": {
             "type": "string",
@@ -2397,6 +3662,17 @@ const docTemplate = `{
                 },
                 "sort_order": {
                     "type": "integer"
+                }
+            }
+        },
+        "internal_modules_tickets.CreateLinkRequest": {
+            "type": "object",
+            "properties": {
+                "kind": {
+                    "type": "string"
+                },
+                "ticket_id": {
+                    "type": "string"
                 }
             }
         },
@@ -2440,6 +3716,16 @@ const docTemplate = `{
                 "priority": {
                     "$ref": "#/definitions/internal_modules_tickets.TicketPriority"
                 },
+                "requester_email": {
+                    "type": "string"
+                },
+                "requester_name": {
+                    "description": "Requester contact, stored in metadata as requester_name/requester_email/requester_phone on\nevery create path. Ticket events carry it so the requester is told by email, WhatsApp or SMS.",
+                    "type": "string"
+                },
+                "requester_phone": {
+                    "type": "string"
+                },
                 "subject": {
                     "type": "string"
                 },
@@ -2448,6 +3734,113 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "internal_modules_tickets.LinkKind": {
+            "type": "string",
+            "enum": [
+                "parent",
+                "related",
+                "duplicate"
+            ],
+            "x-enum-varnames": [
+                "LinkParent",
+                "LinkRelated",
+                "LinkDuplicate"
+            ]
+        },
+        "internal_modules_tickets.Macro": {
+            "type": "object",
+            "properties": {
+                "actions": {
+                    "$ref": "#/definitions/internal_modules_tickets.MacroActions"
+                },
+                "body": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_modules_tickets.MacroActions": {
+            "type": "object",
+            "properties": {
+                "add_tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "agent_id": {
+                    "type": "string"
+                },
+                "category_id": {
+                    "type": "string"
+                },
+                "comment_type": {
+                    "$ref": "#/definitions/internal_modules_tickets.CommentType"
+                },
+                "priority": {
+                    "$ref": "#/definitions/internal_modules_tickets.TicketPriority"
+                },
+                "status": {
+                    "$ref": "#/definitions/internal_modules_tickets.TicketStatus"
+                },
+                "team_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_modules_tickets.MacroApplied": {
+            "type": "object",
+            "properties": {
+                "comment": {
+                    "$ref": "#/definitions/internal_modules_tickets.TicketComment"
+                },
+                "ticket": {
+                    "$ref": "#/definitions/internal_modules_tickets.Ticket"
+                }
+            }
+        },
+        "internal_modules_tickets.MacroInput": {
+            "type": "object",
+            "properties": {
+                "actions": {
+                    "$ref": "#/definitions/internal_modules_tickets.MacroActions"
+                },
+                "body": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_modules_tickets.MergeRequest": {
+            "type": "object",
+            "properties": {
+                "into_ticket_id": {
+                    "type": "string"
                 }
             }
         },
@@ -2515,11 +3908,28 @@ const docTemplate = `{
                 "resolved_at": {
                     "type": "string"
                 },
+                "sla_first_response_minutes": {
+                    "description": "The elapsed minutes to first response and to resolution in the policy's clock, net of pauses.",
+                    "type": "integer"
+                },
+                "sla_paused_at": {
+                    "description": "SLAPausedAt is set while a pending status stops the SLA clock.",
+                    "type": "string"
+                },
+                "sla_paused_minutes": {
+                    "type": "integer"
+                },
+                "sla_policy_id": {
+                    "type": "string"
+                },
                 "sla_resolution_breached": {
                     "type": "boolean"
                 },
                 "sla_resolution_due_at": {
                     "type": "string"
+                },
+                "sla_resolution_minutes": {
+                    "type": "integer"
                 },
                 "sla_response_breached": {
                     "type": "boolean"
@@ -2546,6 +3956,50 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "updated_at": {
+                    "type": "string"
+                },
+                "whatsapp_window_expires_at": {
+                    "description": "WhatsAppWindowExpiresAt is when the 24-hour WhatsApp reply window closes (derived from\nmetadata whatsapp_last_inbound_at, never stored); null for other channels and for a\nWhatsApp ticket with no inbound message yet.",
+                    "type": "string"
+                }
+            }
+        },
+        "internal_modules_tickets.TicketAttachment": {
+            "type": "object",
+            "properties": {
+                "comment_id": {
+                    "type": "string"
+                },
+                "content_type": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "filename": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "internal": {
+                    "description": "Internal attachments belong to an internal note and are never shown to the customer.",
+                    "type": "boolean"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
+                "ticket_id": {
+                    "type": "string"
+                },
+                "uploaded_by_id": {
                     "type": "string"
                 }
             }
@@ -2596,6 +4050,7 @@ const docTemplate = `{
                 "email",
                 "api",
                 "chat",
+                "whatsapp",
                 "phone",
                 "internal"
             ],
@@ -2604,6 +4059,7 @@ const docTemplate = `{
                 "ChannelEmail",
                 "ChannelAPI",
                 "ChannelChat",
+                "ChannelWhatsApp",
                 "ChannelPhone",
                 "ChannelInternal"
             ]
@@ -2629,6 +4085,13 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "mentions": {
+                    "description": "Mentions are the agent ids the comment @mentions (staff comments only).",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": {}
@@ -2640,6 +4103,29 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_modules_tickets.TicketLink": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "from_ticket_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "kind": {
+                    "$ref": "#/definitions/internal_modules_tickets.LinkKind"
+                },
+                "to_ticket_id": {
                     "type": "string"
                 }
             }
@@ -2684,6 +4170,36 @@ const docTemplate = `{
                 "StatusCancelled"
             ]
         },
+        "internal_modules_tickets.TicketView": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "filters": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner_user_id": {
+                    "type": "string"
+                },
+                "shared": {
+                    "type": "boolean"
+                },
+                "sort": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_modules_tickets.TrendPoint": {
             "type": "object",
             "properties": {
@@ -2695,6 +4211,24 @@ const docTemplate = `{
                 },
                 "resolved": {
                     "type": "integer"
+                }
+            }
+        },
+        "internal_modules_tickets.ViewInput": {
+            "type": "object",
+            "properties": {
+                "filters": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "name": {
+                    "type": "string"
+                },
+                "shared": {
+                    "type": "boolean"
+                },
+                "sort": {
+                    "type": "string"
                 }
             }
         }

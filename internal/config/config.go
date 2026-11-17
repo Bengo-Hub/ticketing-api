@@ -10,14 +10,21 @@ import (
 
 // Config holds all application configuration.
 type Config struct {
-	App      AppConfig
-	HTTP     HTTPConfig
-	Postgres PostgresConfig
-	Redis    RedisConfig
-	Events   EventsConfig
-	Auth     AuthConfig
-	Tenant   TenantConfig
-	Channels ChannelsConfig
+	App        AppConfig
+	HTTP       HTTPConfig
+	Postgres   PostgresConfig
+	Redis      RedisConfig
+	Events     EventsConfig
+	Auth       AuthConfig
+	Tenant     TenantConfig
+	Channels   ChannelsConfig
+	Marketflow MarketflowConfig
+}
+
+// MarketflowConfig is marketflow-api, the CRM that owns customer identity. The channel ingest links
+// each new ticket's requester to a contact there through its internal contacts API.
+type MarketflowConfig struct {
+	URL string `envconfig:"MARKETFLOW_API_URL" default:"http://marketflow-api.marketflow.svc.cluster.local:4000"`
 }
 
 // ChannelsConfig holds the inbound channel consumers. email-provisioner publishes

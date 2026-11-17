@@ -8,7 +8,7 @@ This page lists every integration ticketing-api has in code today, the internal 
 |---|---|---|---|
 | auth-api | inbound and outbound | JWKS and API key validation, tenant lookups, public OTP token check, `auth.user.*` and `apikey.changed` events | Built |
 | notifications-api | outbound | `ticketing.>` events on the `ticketing` stream | Built |
-| marketflow CRM | outbound and inbound | `crm.activity.log_requested` events, the erasure link check | Built |
+| marketflow CRM | outbound and inbound | Contact upsert at channel ingest, `crm.activity.log_requested` events, the erasure link check | Built |
 | projects-api | inbound | Internal create for QA defects | Built |
 | hadia-api | inbound | Internal create and internal read for its support form | Built |
 | marketflow-ai (Vera) | inbound | Internal create from the `create_ticket` tool | Built |
@@ -92,7 +92,20 @@ Events only. Ticketing makes no direct call to notifications-api. notifications-
 | `ticketing.ticket.resolved` | Requester |
 | `ticketing.sla.first_response_breached`, `ticketing.sla.resolution_breached` | Assigned agent, else the tenant's support contact |
 
-Payloads are in [architecture.md](architecture.md). Mail goes out under the tenant's name with the tenant's support email as Reply-To. Platform tickets on the codevertex tenant use support@codevertexafrica.com. SMS, WhatsApp and CSAT surveys are not sent yet (sprints 11 and 12).
+Payloads are in [architecture.md](architecture.md). Mail goes out under the tenant's name with the tenant's support email as Reply-To. Platform tickets on the codevertex tenant use support@codevertexafrica.com. SMS and CSAT surveys are not sent yet (sprint 12).
+
+**WhatsApp replies (sprint 11).** `ticketing.ticket.comment_added` carries these fields on every event. They hold values only on a WhatsApp ticket with a requester phone and a recorded inbound message; otherwise they are false or empty.
+
+| Field | Meaning |
+|---|---|
+| `requester_phone` | The requester's phone, as on every ticket event |
+| `whatsapp_window_open` | True when the customer's last WhatsApp message is under 24 hours old at the time of the reply |
+| `whatsapp_window_expires_at` | When that window closes, RFC 3339, so a consumer can check a late event again |
+| `whatsapp_reply_to` | The WhatsApp message id of the customer's last message (`whatsapp_last_message_id`) |
+| `phone_number_id` | The tenant number the customer wrote to (`whatsapp_phone_number_id`) |
+| `whatsapp_text` | The whole reply as plain text with its line breaks, at most 4096 characters |
+
+The window comes from ticket metadata the WhatsApp ingest writes: `whatsapp_last_inbound_at`, `whatsapp_last_message_id` and `whatsapp_phone_number_id`. notifications-api sends the reply as free-form text from the tenant's own number while the window is open. Outside it nothing goes on WhatsApp, because no approved Meta template carries a ticket reply yet; the email copy still goes when the requester has an address.
 
 **Threaded replies (sprint 11).** Every ticket event carries `email_message_token`, `email_thread_token`, `email_in_reply_to`, `email_references`, `email_subject_tag` and `email_reply_subject`. For a reply to come back to its ticket, notifications-api's ticketing consumer and email worker need these changes, which are agreed with its owner first and not made from here:
 
@@ -106,6 +119,7 @@ Until then, a customer reply that quotes the subject tag still threads, and anyt
 
 ## marketflow CRM
 
+- **Contact at ingest.** A ticket opened from an email or WhatsApp message links its requester through `POST {MARKETFLOW_API_URL}/api/v1/internal/contacts/upsert` (`X-API-Key` is `INTERNAL_SERVICE_KEY`; the tenant goes as `tenant_id` in the body, which is how marketflow reads it). The call goes through the shared `shared-service-client/crm` client, sends the email or phone with the name split into first and last, is sent once and never retried, and times out after five seconds. The returned id becomes `crm_contact_id`. A failure is logged with ids only and the ticket opens without it. Ticketing keeps no other contact data than the requester fields it already had.
 - **Activity.** Ticket changes for a ticket with a CRM contact publish `crm.activity.log_requested` through the outbox. The CRM service's own stream captures it.
 - **Erasure link check.** `GET /api/v1/s2s/{tenant}/crm-links/{contactID}` with `X-API-Key` answers `{"referenced": true|false}`. It is true when any ticket in any tenant carries the contact in `tickets.crm_contact_id`: CRM contact ids are random UUIDs minted by marketflow, so a match anywhere is the same person, and a ticket held under a mismatched tenant can only answer "referenced", which keeps the contact. A tenant UUID is accepted as given and a slug resolves through auth-api (an unknown slug answers 404). A bad contact id answers 400 and a missing or wrong key 401. Only the flag is returned and logs carry ids only.
 
@@ -131,13 +145,15 @@ The event ticketing reads, bare or inside a shared-events envelope under `payloa
 | `attachments[]` | `{key, filename, content_type, size, scan_status}`; the key must be in the tenant's own prefix, `<service>/<tenant id or slug>/attachments/...` |
 | `auto_submitted`, `spam`, `virus`, `headers` | Optional loop and spam signals; `headers` holds other headers keyed in lower case (`x-autoreply`, `precedence`, `content-type`) |
 
+Every email that resolves to a tenant, refused or not, stores `channels.email.last_received_at` in that tenant's settings document, at most once a minute per tenant. `GET /{tenant}/settings/channels` returns it as `email.last_received_at` (null until the first forwarded email), which is the forwarding verify step; `PUT` cannot change it.
+
 Threading, dedupe and the ingest rules are in [architecture.md](architecture.md). The tenant's `support` address in auth-api metadata stays the Reply-To on outbound mail, so the customer's reply goes to the tenant's mailbox, is forwarded and comes back in.
 
 ## WhatsApp
 
 Messages to the platform WhatsApp number go out from notifications-api as `notifications.whatsapp.inbound` with no tenant, and only marketflow-api's WhatsApp assistant consumes them. Messages to a tenant's own number land in notifications-api's shared inbox.
 
-notifications-api is to publish `notifications.whatsapp.tenant_inbound` on its `notifications` stream once per inbound tenant message, through its outbox, never for a STOP reply: `{tenant_id, phone_number_id, wa_message_id, from, type, text, contact_name, received_at, reply_id}`. ticketing-api consumes it on the durable `ticketing-whatsapp-ingest`, gated by the tenant setting `channels.whatsapp.auto_ticket` (off by default, `GET` and `PUT /{tenant}/settings/channels`, `ticketing.settings.manage`). With it on, a message continues the sender's latest open WhatsApp ticket from the last 7 days or opens one; with it off, a message only continues such a ticket. Dedupe is on the WhatsApp message id. A ticket opened here has source `notifications.whatsapp` and source_ref `{type: "wa_message", id: <wa_message_id>}`, so the inbox's Convert to ticket action should call the internal create with the same source and ref and the two paths never open two tickets for one message. Agent replies on a WhatsApp ticket going out through the notifications send path are still to build.
+notifications-api is to publish `notifications.whatsapp.tenant_inbound` on its `notifications` stream once per inbound tenant message, through its outbox, never for a STOP reply: `{tenant_id, phone_number_id, wa_message_id, from, type, text, contact_name, received_at, reply_id}`. ticketing-api consumes it on the durable `ticketing-whatsapp-ingest`, gated by the tenant setting `channels.whatsapp.auto_ticket` (off by default, `GET` and `PUT /{tenant}/settings/channels`, `ticketing.settings.manage`). With it on, a message continues the sender's latest open WhatsApp ticket from the last 7 days or opens one; with it off, a message only continues such a ticket. Dedupe is on the WhatsApp message id. A ticket opened here has source `notifications.whatsapp` and source_ref `{type: "wa_message", id: <wa_message_id>}`, so the inbox's Convert to ticket action should call the internal create with the same source and ref and the two paths never open two tickets for one message. Agent replies go back on WhatsApp through `ticketing.ticket.comment_added` as described under notifications-api above.
 
 ## Order, invoice and project links
 

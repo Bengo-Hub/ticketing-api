@@ -44,6 +44,15 @@ const (
 	ChannelInternal TicketChannel = "internal"
 )
 
+// Valid reports whether c is one of the ticket channels.
+func (c TicketChannel) Valid() bool {
+	switch c {
+	case ChannelWeb, ChannelEmail, ChannelAPI, ChannelChat, ChannelWhatsApp, ChannelPhone, ChannelInternal:
+		return true
+	}
+	return false
+}
+
 // CommentType represents different types of comments.
 type CommentType string
 
@@ -99,8 +108,12 @@ type Ticket struct {
 	EscalatedAt             *time.Time     `json:"escalated_at,omitempty"`
 	Tags                    []string       `json:"tags,omitempty"`
 	Metadata                map[string]any `json:"metadata,omitempty"`
-	CreatedAt               time.Time      `json:"created_at"`
-	UpdatedAt               time.Time      `json:"updated_at"`
+	// WhatsAppWindowExpiresAt is when the 24-hour WhatsApp reply window closes (derived from
+	// metadata whatsapp_last_inbound_at, never stored); null for other channels and for a
+	// WhatsApp ticket with no inbound message yet.
+	WhatsAppWindowExpiresAt *time.Time `json:"whatsapp_window_expires_at"`
+	CreatedAt               time.Time  `json:"created_at"`
+	UpdatedAt               time.Time  `json:"updated_at"`
 }
 
 // TicketComment represents a comment on a ticket.

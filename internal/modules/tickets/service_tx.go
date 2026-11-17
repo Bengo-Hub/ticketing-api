@@ -167,7 +167,7 @@ func (s *Service) commentTx(ctx context.Context, repo Repository, out *Outbox, r
 	if err != nil {
 		return nil, err
 	}
-	out.Ticket(EventTicketCommentAdded, TicketCommentAddedPayload(ticket, comment, agentEmail))
+	out.Ticket(EventTicketCommentAdded, TicketCommentAddedPayload(ticket, comment, agentEmail, s.now()))
 	return comment, nil
 }
 

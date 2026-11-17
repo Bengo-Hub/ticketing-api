@@ -3,6 +3,7 @@ package settings
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
@@ -33,18 +34,27 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 
 // channelsView is the stored settings plus the email intake address, which is derived, never stored.
 type channelsView struct {
-	Channels
-	Email emailView `json:"email"`
+	WhatsApp WhatsAppChannel `json:"whatsapp"`
+	Email    emailView       `json:"email"`
 }
 
 type emailView struct {
 	// ForwardingAddress is where the tenant auto-forwards its support mailbox.
 	ForwardingAddress string `json:"forwarding_address"`
+	// LastReceivedAt is when the last forwarded email arrived, null until the first one: the
+	// forwarding verify step shows the address as working once it is set.
+	LastReceivedAt *time.Time `json:"last_received_at"`
+}
+
+// channelsInput is what a client may change. The email receipt is written by the ingest only, so
+// an email key in the body is ignored.
+type channelsInput struct {
+	WhatsApp WhatsAppChannel `json:"whatsapp"`
 }
 
 // GetChannels returns the tenant's channel settings.
 // @Summary      Channel settings
-// @Description  WhatsApp auto-ticketing and the email forwarding address of the tenant
+// @Description  WhatsApp auto-ticketing, the email forwarding address and when the last forwarded email arrived
 // @Tags         settings
 // @Produce      json
 // @Param        tenant path string true "Tenant slug"
@@ -68,12 +78,12 @@ func (h *Handler) GetChannels(w http.ResponseWriter, r *http.Request) {
 
 // PutChannels saves the tenant's channel settings.
 // @Summary      Save channel settings
-// @Description  Turns WhatsApp auto-ticketing on or off for the tenant
+// @Description  Turns WhatsApp auto-ticketing on or off for the tenant. email.last_received_at is read only.
 // @Tags         settings
 // @Accept       json
 // @Produce      json
 // @Param        tenant path string true "Tenant slug"
-// @Param        body   body Channels true "Channel settings"
+// @Param        body   body channelsInput true "Channel settings"
 // @Success      200 {object} channelsView
 // @Failure      400 {object} map[string]string
 // @Security     BearerAuth
@@ -84,21 +94,27 @@ func (h *Handler) PutChannels(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	var c Channels
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&c); err != nil {
+	var in channelsInput
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&in); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	if err := h.service.SetChannels(r.Context(), a.TenantID, c); err != nil {
+	if err := h.service.SetWhatsApp(r.Context(), a.TenantID, in.WhatsApp); err != nil {
 		h.logger.Error("save channel settings", zap.Error(err))
 		respondError(w, http.StatusInternalServerError, "failed to save settings")
+		return
+	}
+	c, err := h.service.Channels(r.Context(), a.TenantID)
+	if err != nil {
+		h.logger.Error("read channel settings", zap.Error(err))
+		respondError(w, http.StatusInternalServerError, "failed to read settings")
 		return
 	}
 	respondJSON(w, http.StatusOK, h.view(r, a, c))
 }
 
 func (h *Handler) view(r *http.Request, a *access.Access, c Channels) channelsView {
-	v := channelsView{Channels: c}
+	v := channelsView{WhatsApp: c.WhatsApp, Email: emailView{LastReceivedAt: c.Email.LastReceivedAt}}
 	slug := a.TenantSlug
 	if slug == "" {
 		slug = chi.URLParam(r, "tenant")

@@ -101,11 +101,10 @@ func (in *InternalCreateRequest) toCreateRequest(tenantID uuid.UUID) (*CreateTic
 		return nil, errors.New("priority must be one of low, normal, high, urgent, critical")
 	}
 	channel := TicketChannel(in.Channel)
-	switch channel {
-	case "":
+	if channel == "" {
 		channel = ChannelWeb
-	case ChannelWeb, ChannelEmail, ChannelAPI, ChannelChat, ChannelWhatsApp, ChannelPhone, ChannelInternal:
-	default:
+	}
+	if !channel.Valid() {
 		return nil, errors.New("invalid channel")
 	}
 	meta := map[string]any{}

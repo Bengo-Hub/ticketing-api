@@ -17,7 +17,7 @@ Commit 4f03d8e is live in production. The production migration recorded the base
 - The internal create contract with `source` and `source_ref`.
 - Shared libraries at auth-client v0.20.0, httpware v0.20.0, shared-events v0.11.1, cache v0.5.10, pagination v0.5.0 and shared-ratelimit v0.3.1.
 
-On 2026-11-17 Sprint 10 (2f0a568) is deploying and the Sprint 11 ingest is built in the API: one ingest service for email and WhatsApp, two durable consumers, the per-tenant settings document with `channels.whatsapp.auto_ticket`, the threading fields on every ticket event, migration `20261117120000_sprint11.sql`, and httpware v0.22.0 (`contact` and `richtext`). The publishers on the email-provisioner and notifications-api side are separate changes.
+On 2026-11-17 Sprint 10 (2f0a568) is live, and so is the Sprint 11 ingest (a67e2e6). It has one ingest service for email and WhatsApp, two durable consumers, the per-tenant settings document with `channels.whatsapp.auto_ticket`, the threading fields on every ticket event and migration `20261117120000_sprint11.sql`. Its publishers are deployed too. email-provisioner 3da3d72 reads the support mailboxes and publishes `email.inbound.support`. notifications-api bec16df publishes `notifications.whatsapp.tenant_inbound` and threads ticket emails. Email intake starts once the Stalwart support domain, the ingest mailbox and its DNS records exist.
 
 The sprint list below gives the status of each sprint against the code.
 
@@ -90,7 +90,7 @@ The features the leaders share make up the baseline:
 | [8](sprints/sprint-8-routing.md) | Routing and classification | Partial | Least-loaded fallback, ticket counts, escalation, AI classification |
 | [9](sprints/sprint-9-agent-productivity.md) | Agent productivity | Pending | Keyset paging, full-text search, views, tags, macros, merge, parent-child, bulk, collision presence, @mentions, attachments on R2 |
 | [10](sprints/sprint-10-sla-leaders.md) | SLA that matches the leaders | Built, not deployed | Testcontainers tests for the scans and the report; the notifications-api consumer for warnings and escalations |
-| [11](sprints/sprint-11-channels.md) | Channels | API ingest built, not deployed | The email-provisioner reader and publisher, the notifications-api tenant inbound event and threaded reply headers, the Stalwart support domain, WhatsApp agent replies, the web widget, the ticketing-ui settings page |
+| [11](sprints/sprint-11-channels.md) | Channels | Ingest, publishers and the settings page deployed; remainder in progress | The Stalwart support domain, ingest mailbox and DNS (need the owner to run the keyed calls), CRM contact link at ingest, WhatsApp agent replies and the 24-hour window, forwarding verify step, channel badge and filter, the web widget, and Convert to ticket in the notifications inbox |
 | [12](sprints/sprint-12-analytics-csat.md) | Analytics and CSAT | Pending | Rollups under `RunOnce`, `resolved_at` trends, CSAT, export through the reports module, 200k benchmark |
 | [13](sprints/sprint-13-ai-vera.md) | AI with Vera | Pending | Classify, summarize, suggested reply, KB suggestions, AI wallet credits, `IsGatingExempt` for codevertex only |
 

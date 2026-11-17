@@ -28,6 +28,19 @@ const (
 	MetaFollowUpOf = "follow_up_of"
 )
 
+// WhatsApp window keys in ticket metadata, written at WhatsApp ingest from the customer's latest
+// message: when it was received, its WhatsApp message id (the message an agent reply answers) and
+// the tenant number it came in on.
+const (
+	MetaWhatsAppLastInboundAt = "whatsapp_last_inbound_at"
+	MetaWhatsAppLastMessageID = "whatsapp_last_message_id"
+	MetaWhatsAppPhoneNumberID = "whatsapp_phone_number_id"
+)
+
+// WhatsAppWindow is Meta's customer service window: free-form text may go to the customer only
+// within 24 hours of their last message, and only an approved template after that.
+const WhatsAppWindow = 24 * time.Hour
+
 // Comment metadata keys of a channel message.
 const (
 	CommentMetaChannel    = "channel"
@@ -77,6 +90,10 @@ type InboundFile struct {
 type InboundOrigin struct {
 	Key   MessageKey
 	Files []InboundFile
+	// PhoneNumberID is the tenant WhatsApp number the message came in on (WhatsApp only).
+	PhoneNumberID string
+	// ReceivedAt is when the channel received the message; zero means now.
+	ReceivedAt time.Time
 }
 
 // InboundMessage is a customer's channel message added to an existing ticket.
@@ -89,6 +106,10 @@ type InboundMessage struct {
 	Content  string
 	Metadata map[string]any
 	Files    []InboundFile
+	// PhoneNumberID is the tenant WhatsApp number the message came in on (WhatsApp only).
+	PhoneNumberID string
+	// ReceivedAt is when the channel received the message; zero means now.
+	ReceivedAt time.Time
 }
 
 // CustomerIDFor is the customer id of a requester known only by email or phone, the same id the
@@ -192,9 +213,15 @@ func (s *Service) AddInboundMessage(ctx context.Context, in InboundMessage) (*Ti
 		if err := inboundFilesTx(ctx, repo, t, &comment.ID, authorID, in.Files); err != nil {
 			return err
 		}
-		patch := map[string]any{MetaLastInboundAt: s.now().UTC().Format(time.RFC3339)}
-		if in.Key.Channel == ChannelEmail {
+		now := s.now()
+		patch := map[string]any{MetaLastInboundAt: now.UTC().Format(time.RFC3339)}
+		switch in.Key.Channel {
+		case ChannelEmail:
 			patch[MetaEmailMessageIDs] = appendThreadID(t.Metadata, in.Key.ID)
+		case ChannelWhatsApp:
+			for k, v := range whatsAppInbound(t.Metadata, in.Key.ID, in.PhoneNumberID, receivedAt(in.ReceivedAt, now)) {
+				patch[k] = v
+			}
 		}
 		if err := repo.MergeTicketMetadata(ctx, in.TenantID, in.TicketID, patch); err != nil {
 			return err
@@ -224,10 +251,69 @@ func withInboundOrigin(meta map[string]any, o *InboundOrigin, now time.Time) map
 	meta["source"] = o.Key.Source()
 	meta["source_ref"] = ref.metadata()
 	meta[MetaLastInboundAt] = now.UTC().Format(time.RFC3339)
-	if o.Key.Channel == ChannelEmail {
+	switch o.Key.Channel {
+	case ChannelEmail:
 		meta[MetaEmailMessageIDs] = []string{o.Key.ID}
+	case ChannelWhatsApp:
+		for k, v := range whatsAppInbound(nil, o.Key.ID, o.PhoneNumberID, receivedAt(o.ReceivedAt, now)) {
+			meta[k] = v
+		}
 	}
 	return meta
+}
+
+// receivedAt is when a message was received, never later than now: a sender's clock ahead of ours
+// must not stretch the WhatsApp window.
+func receivedAt(at, now time.Time) time.Time {
+	if at.IsZero() || at.After(now) {
+		return now
+	}
+	return at
+}
+
+// whatsAppInbound is the WhatsApp window patch for a customer message received at the given
+// time, or nil when the ticket already records a later message, so a late delivery never moves
+// the window back.
+func whatsAppInbound(meta map[string]any, messageID, phoneNumberID string, at time.Time) map[string]any {
+	if last, ok := metaTime(meta, MetaWhatsAppLastInboundAt); ok && at.Before(last) {
+		return nil
+	}
+	p := map[string]any{
+		MetaWhatsAppLastInboundAt: at.UTC().Format(time.RFC3339),
+		MetaWhatsAppLastMessageID: messageID,
+	}
+	if phoneNumberID = strings.TrimSpace(phoneNumberID); phoneNumberID != "" {
+		p[MetaWhatsAppPhoneNumberID] = phoneNumberID
+	}
+	return p
+}
+
+// metaTime reads an RFC 3339 time from metadata.
+func metaTime(meta map[string]any, key string) (time.Time, bool) {
+	s, ok := meta[key].(string)
+	if !ok || strings.TrimSpace(s) == "" {
+		return time.Time{}, false
+	}
+	t, err := time.Parse(time.RFC3339, strings.TrimSpace(s))
+	if err != nil {
+		return time.Time{}, false
+	}
+	return t, true
+}
+
+// WhatsAppWindowExpiresAt is when the customer service window of a WhatsApp ticket closes, 24
+// hours after the customer's last WhatsApp message. It is nil for any other channel and for a
+// WhatsApp ticket with no inbound message recorded.
+func WhatsAppWindowExpiresAt(t *Ticket) *time.Time {
+	if t == nil || t.Channel != ChannelWhatsApp {
+		return nil
+	}
+	last, ok := metaTime(t.Metadata, MetaWhatsAppLastInboundAt)
+	if !ok {
+		return nil
+	}
+	exp := last.UTC().Add(WhatsAppWindow)
+	return &exp
 }
 
 // inboundFilesTx records files the sending service already stored; they are customer files, so

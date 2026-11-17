@@ -18,6 +18,7 @@ import (
 	authclient "github.com/Bengo-Hub/shared-auth-client"
 	eventslib "github.com/Bengo-Hub/shared-events"
 	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
+	"github.com/Bengo-Hub/shared-service-client/crm"
 	"github.com/bengobox/ticketing-service/internal/clients"
 	"github.com/bengobox/ticketing-service/internal/config"
 	"github.com/bengobox/ticketing-service/internal/ent"
@@ -296,6 +297,9 @@ func New(ctx context.Context) (*App, error) {
 		} else {
 			ingestService := ingest.NewService(ticketsService, log)
 			ingestService.SetThreadWindow(cfg.Channels.WhatsAppWindow)
+			// The requester of a new ticket is linked to their marketflow contact (best effort; an
+			// empty URL or service key turns the lookup off).
+			ingestService.SetContacts(crm.New(cfg.Marketflow.URL, cfg.Auth.InternalServiceKey, log.Named("crm")))
 			ingest.NewConsumers(ingestService, ingest.NewTenantResolver(supportAddresses, tenantResolver), settingsService, supportAddresses,
 				ingest.ConsumerConfig{
 					EmailStream: cfg.Channels.EmailStream, EmailSubject: cfg.Channels.EmailSubject,

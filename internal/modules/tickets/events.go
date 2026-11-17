@@ -220,9 +220,13 @@ func TicketCreatedPayload(t *Ticket) map[string]any {
 	return p
 }
 
+// whatsAppTextLimit is the most characters WhatsApp takes in one text message.
+const whatsAppTextLimit = 4096
+
 // TicketCommentAddedPayload is ticketing.ticket.comment_added: a public agent reply the requester
-// should see. Internal notes and customer comments never produce it.
-func TicketCommentAddedPayload(t *Ticket, c *TicketComment, agentEmail string) map[string]any {
+// should see. Internal notes and customer comments never produce it. now decides whether the
+// WhatsApp window is still open.
+func TicketCommentAddedPayload(t *Ticket, c *TicketComment, agentEmail string, now time.Time) map[string]any {
 	p := ticketEventPayload(t)
 	p["comment_id"] = c.ID.String()
 	p["comment"] = excerpt(c.Content, eventExcerptLen)
@@ -231,7 +235,52 @@ func TicketCommentAddedPayload(t *Ticket, c *TicketComment, agentEmail string) m
 	p["agent_email"] = agentEmail
 	// The reply email's Message-ID is the comment id, so an answer to it finds this ticket.
 	p["email_message_token"] = c.ID.String()
+	maps.Copy(p, whatsAppReply(t, c, now))
 	return p
+}
+
+// whatsAppReply is what notifications-api needs to answer on WhatsApp, from the tenant number the
+// customer wrote to:
+//   - whatsapp_window_open: the customer's last WhatsApp message is under 24 hours old, so the
+//     reply may go as free-form text;
+//   - whatsapp_window_expires_at: when that window closes (RFC 3339), so a late event is checked again;
+//   - whatsapp_reply_to: the WhatsApp message id of that last message;
+//   - phone_number_id: the tenant number it came in on;
+//   - whatsapp_text: the whole reply as plain text with its line breaks, cut to WhatsApp's limit.
+//
+// The keys are always present and empty unless the ticket is a WhatsApp ticket with a requester
+// phone and a recorded inbound message.
+func whatsAppReply(t *Ticket, c *TicketComment, now time.Time) map[string]any {
+	p := map[string]any{
+		"whatsapp_window_open":       false,
+		"whatsapp_window_expires_at": "",
+		"whatsapp_reply_to":          "",
+		"phone_number_id":            "",
+		"whatsapp_text":              "",
+	}
+	if t.Channel != ChannelWhatsApp || RequesterOf(t).Phone == "" {
+		return p
+	}
+	exp := WhatsAppWindowExpiresAt(t)
+	if exp == nil {
+		return p
+	}
+	p["whatsapp_window_open"] = now.Before(*exp)
+	p["whatsapp_window_expires_at"] = exp.UTC().Format(time.RFC3339)
+	p["whatsapp_reply_to"] = metaText(t.Metadata, MetaWhatsAppLastMessageID)
+	p["phone_number_id"] = metaText(t.Metadata, MetaWhatsAppPhoneNumberID)
+	p["whatsapp_text"] = whatsAppText(c.Content)
+	return p
+}
+
+// whatsAppText is a reply as WhatsApp plain text: paragraphs and list items keep their lines, and
+// a reply longer than one WhatsApp message is cut with "...".
+func whatsAppText(content string) string {
+	text := []rune(richtext.PlainTextBlocks(content))
+	if len(text) <= whatsAppTextLimit {
+		return string(text)
+	}
+	return strings.TrimSpace(string(text[:whatsAppTextLimit-3])) + "..."
 }
 
 // TicketStatusChangedPayload is ticketing.ticket.status_changed (every change except to resolved,

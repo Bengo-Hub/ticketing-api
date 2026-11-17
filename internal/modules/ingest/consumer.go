@@ -30,9 +30,11 @@ type ConsumerConfig struct {
 	WhatsAppSubject string
 }
 
-// ChannelSettings reads a tenant's channel settings (settings.Service).
+// ChannelSettings reads a tenant's channel settings and records the email receipt the forwarding
+// verify step shows (settings.Service).
 type ChannelSettings interface {
 	Channels(ctx context.Context, tenantID uuid.UUID) (settings.Channels, error)
+	EmailReceived(ctx context.Context, tenantID uuid.UUID) error
 }
 
 // Consumers feeds the email and WhatsApp events into the ingest service.
@@ -110,6 +112,11 @@ func (c *Consumers) HandleEmail(ctx context.Context, data []byte) error {
 	tenantID, slug, err := c.tenants.Resolve(ctx, candidates...)
 	if err != nil {
 		return err
+	}
+	// Any mail that reaches the tenant proves its forwarding works, even one the rules refuse
+	// below. The receipt is best effort and never holds the message back.
+	if err := c.settings.EmailReceived(ctx, tenantID); err != nil {
+		c.logger.Warn("email receipt not recorded", zap.String("tenant_id", tenantID.String()), zap.Error(err))
 	}
 	m, ok := EmailMessage(e, tenantID, slug, c.addrs)
 	if !ok {

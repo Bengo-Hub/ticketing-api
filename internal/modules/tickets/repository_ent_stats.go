@@ -110,7 +110,7 @@ func (r *EntRepository) ListTicketsPendingBreach(ctx context.Context, now time.T
 }
 
 func entTicketToModel(t *ent.Ticket) *Ticket {
-	return &Ticket{
+	m := &Ticket{
 		ID:                      t.ID,
 		TenantID:                t.TenantID,
 		TicketNumber:            t.TicketNumber,
@@ -147,4 +147,6 @@ func entTicketToModel(t *ent.Ticket) *Ticket {
 		CreatedAt:               t.CreatedAt,
 		UpdatedAt:               t.UpdatedAt,
 	}
+	m.WhatsAppWindowExpiresAt = WhatsAppWindowExpiresAt(m)
+	return m
 }

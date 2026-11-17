@@ -116,6 +116,7 @@ func (h *Handler) GetTicketByNumber(w http.ResponseWriter, r *http.Request) {
 // @Param        limit      query int    false "Page size (default 25, max 100)"
 // @Param        search     query string false "Ticket number, subject, description or requester"
 // @Param        tags       query string false "Comma-separated tags; a ticket must carry all"
+// @Param        channel    query string false "web, email, api, chat, whatsapp, phone or internal"
 // @Param        sort       query string false "created_desc (default) or created_asc"
 // @Success      200 {object} map[string]interface{}
 // @Security     BearerAuth
@@ -162,7 +163,11 @@ func (h *Handler) ListTickets(w http.ResponseWriter, r *http.Request) {
 	filter.CategoryID = parseID("categoryId")
 	filter.OrderID = parseID("orderId")
 	if v := q.Get("channel"); v != "" {
-		ch := TicketChannel(v)
+		ch := TicketChannel(strings.ToLower(strings.TrimSpace(v)))
+		if !ch.Valid() {
+			respondError(w, http.StatusBadRequest, "channel must be one of web, email, api, chat, whatsapp, phone, internal")
+			return
+		}
 		filter.Channel = &ch
 	}
 	if ownOnly(a) {

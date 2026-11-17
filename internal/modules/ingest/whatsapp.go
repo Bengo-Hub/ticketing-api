@@ -50,14 +50,15 @@ func WhatsAppMessage(e WhatsAppInbound, autoTicket bool) (Message, bool) {
 		}
 	}
 	m := Message{
-		TenantID:   tenantID,
-		Channel:    tickets.ChannelWhatsApp,
-		ExternalID: strings.TrimSpace(e.WAMessageID),
-		Requester:  tickets.RequesterContact{Name: strings.TrimSpace(e.ContactName), Phone: phone},
-		Text:       text,
-		ThreadOnly: !autoTicket,
-		Extra:      map[string]any{"phone_number_id": e.PhoneNumberID, "wa_type": kind},
-		ReceivedAt: parseTime(e.ReceivedAt),
+		TenantID:      tenantID,
+		Channel:       tickets.ChannelWhatsApp,
+		ExternalID:    strings.TrimSpace(e.WAMessageID),
+		Requester:     tickets.RequesterContact{Name: strings.TrimSpace(e.ContactName), Phone: phone},
+		Text:          text,
+		ThreadOnly:    !autoTicket,
+		Extra:         map[string]any{"phone_number_id": e.PhoneNumberID, "wa_type": kind},
+		PhoneNumberID: strings.TrimSpace(e.PhoneNumberID),
+		ReceivedAt:    parseTime(e.ReceivedAt),
 	}
 	if e.ReplyID != "" {
 		m.Extra["reply_to_wa_message_id"] = e.ReplyID

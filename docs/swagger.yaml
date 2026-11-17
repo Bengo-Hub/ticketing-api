@@ -1,5 +1,27 @@
 basePath: /api/v1
 definitions:
+  github_com_bengobox_ticketing-service_internal_modules_sla_clock.Holiday:
+    properties:
+      date:
+        type: string
+      moon_dependent:
+        type: boolean
+      name:
+        type: string
+    type: object
+  github_com_bengobox_ticketing-service_internal_modules_sla_clock.Interval:
+    properties:
+      end:
+        type: string
+      start:
+        type: string
+    type: object
+  github_com_bengobox_ticketing-service_internal_modules_sla_clock.Week:
+    additionalProperties:
+      items:
+        $ref: '#/definitions/github_com_bengobox_ticketing-service_internal_modules_sla_clock.Interval'
+      type: array
+    type: object
   internal_modules_identity.Agent:
     properties:
       avatar_url:
@@ -202,6 +224,33 @@ definitions:
       title:
         type: string
     type: object
+  internal_modules_rbac.Me:
+    properties:
+      agent_id:
+        type: string
+      email:
+        type: string
+      global_roles:
+        items:
+          type: string
+        type: array
+      is_platform_owner:
+        type: boolean
+      name:
+        type: string
+      permissions:
+        items:
+          type: string
+        type: array
+      service_role:
+        type: string
+      tenant_id:
+        type: string
+      tenant_slug:
+        type: string
+      user_id:
+        type: string
+    type: object
   internal_modules_routing.Action:
     properties:
       type:
@@ -310,17 +359,84 @@ definitions:
       sort_order:
         type: integer
     type: object
+  internal_modules_settings.WhatsAppChannel:
+    properties:
+      auto_ticket:
+        description: |-
+          AutoTicket opens a ticket for a WhatsApp message that does not continue an open one. Off by
+          default, so a tenant that answers WhatsApp from the notifications inbox is not flooded.
+        type: boolean
+    type: object
+  internal_modules_settings.channelsInput:
+    properties:
+      whatsapp:
+        $ref: '#/definitions/internal_modules_settings.WhatsAppChannel'
+    type: object
+  internal_modules_settings.channelsView:
+    properties:
+      email:
+        $ref: '#/definitions/internal_modules_settings.emailView'
+      whatsapp:
+        $ref: '#/definitions/internal_modules_settings.WhatsAppChannel'
+    type: object
+  internal_modules_settings.emailView:
+    properties:
+      forwarding_address:
+        description: ForwardingAddress is where the tenant auto-forwards its support
+          mailbox.
+        type: string
+      last_received_at:
+        description: |-
+          LastReceivedAt is when the last forwarded email arrived, null until the first one: the
+          forwarding verify step shows the address as working once it is set.
+        type: string
+    type: object
+  internal_modules_sla.Calendar:
+    properties:
+      created_at:
+        type: string
+      holidays:
+        items:
+          $ref: '#/definitions/github_com_bengobox_ticketing-service_internal_modules_sla_clock.Holiday'
+        type: array
+      id:
+        type: string
+      is_default:
+        type: boolean
+      name:
+        type: string
+      tenant_id:
+        type: string
+      timezone:
+        type: string
+      updated_at:
+        type: string
+      weekly_hours:
+        $ref: '#/definitions/github_com_bengobox_ticketing-service_internal_modules_sla_clock.Week'
+    type: object
+  internal_modules_sla.CalendarInput:
+    properties:
+      holidays:
+        items:
+          $ref: '#/definitions/github_com_bengobox_ticketing-service_internal_modules_sla_clock.Holiday'
+        type: array
+      is_default:
+        type: boolean
+      name:
+        type: string
+      timezone:
+        type: string
+      weekly_hours:
+        $ref: '#/definitions/github_com_bengobox_ticketing-service_internal_modules_sla_clock.Week'
+    type: object
   internal_modules_sla.CreatePolicyRequest:
     properties:
-      business_hours:
-        additionalProperties: {}
-        type: object
+      calendar_id:
+        type: string
       category_id:
         type: string
       description:
         type: string
-      first_response_business_hours:
-        type: boolean
       first_response_minutes:
         type: integer
       metadata:
@@ -330,8 +446,6 @@ definitions:
         type: string
       priority:
         $ref: '#/definitions/internal_modules_sla.Priority'
-      resolution_business_hours:
-        type: boolean
       resolution_minutes:
         type: integer
       sort_order:
@@ -339,17 +453,14 @@ definitions:
     type: object
   internal_modules_sla.Policy:
     properties:
-      business_hours:
-        additionalProperties: {}
-        type: object
+      calendar_id:
+        type: string
       category_id:
         type: string
       created_at:
         type: string
       description:
         type: string
-      first_response_business_hours:
-        type: boolean
       first_response_minutes:
         type: integer
       id:
@@ -363,8 +474,6 @@ definitions:
         type: string
       priority:
         $ref: '#/definitions/internal_modules_sla.Priority'
-      resolution_business_hours:
-        type: boolean
       resolution_minutes:
         type: integer
       sort_order:
@@ -388,12 +497,69 @@ definitions:
     - PriorityHigh
     - PriorityUrgent
     - PriorityCritical
+  internal_modules_sla.PriorityStats:
+    properties:
+      first_response:
+        $ref: '#/definitions/internal_modules_sla.TargetStats'
+      priority:
+        $ref: '#/definitions/internal_modules_sla.Priority'
+      resolution:
+        $ref: '#/definitions/internal_modules_sla.TargetStats'
+      tickets:
+        type: integer
+    type: object
+  internal_modules_sla.Report:
+    properties:
+      by_priority:
+        items:
+          $ref: '#/definitions/internal_modules_sla.PriorityStats'
+        type: array
+      by_team:
+        items:
+          $ref: '#/definitions/internal_modules_sla.TeamStats'
+        type: array
+      from:
+        type: string
+      overall:
+        $ref: '#/definitions/internal_modules_sla.ReportStats'
+      to:
+        type: string
+    type: object
+  internal_modules_sla.ReportStats:
+    properties:
+      first_response:
+        $ref: '#/definitions/internal_modules_sla.TargetStats'
+      resolution:
+        $ref: '#/definitions/internal_modules_sla.TargetStats'
+      tickets:
+        type: integer
+    type: object
+  internal_modules_sla.TargetStats:
+    properties:
+      avg_minutes:
+        type: number
+      breached:
+        type: integer
+      compliance_pct:
+        type: number
+      met:
+        type: integer
+      p90_minutes:
+        type: number
+    type: object
+  internal_modules_sla.TeamStats:
+    properties:
+      first_response:
+        $ref: '#/definitions/internal_modules_sla.TargetStats'
+      resolution:
+        $ref: '#/definitions/internal_modules_sla.TargetStats'
+      team_id:
+        type: string
+      tickets:
+        type: integer
+    type: object
   internal_modules_tickets.AddCommentRequest:
     properties:
-      author_id:
-        type: string
-      author_type:
-        $ref: '#/definitions/internal_modules_tickets.AuthorType'
       comment_type:
         $ref: '#/definitions/internal_modules_tickets.CommentType'
       content:
@@ -421,6 +587,15 @@ definitions:
       team_id:
         type: string
     type: object
+  internal_modules_tickets.AttachmentLink:
+    properties:
+      expires_at:
+        type: string
+      filename:
+        type: string
+      url:
+        type: string
+    type: object
   internal_modules_tickets.AuthorType:
     enum:
     - customer
@@ -431,6 +606,25 @@ definitions:
     - AuthorCustomer
     - AuthorAgent
     - AuthorSystem
+  internal_modules_tickets.BulkUpdateRequest:
+    properties:
+      add_tags:
+        items:
+          type: string
+        type: array
+      agent_id:
+        type: string
+      ids:
+        items:
+          type: string
+        type: array
+      priority:
+        $ref: '#/definitions/internal_modules_tickets.TicketPriority'
+      status:
+        $ref: '#/definitions/internal_modules_tickets.TicketStatus'
+      team_id:
+        type: string
+    type: object
   internal_modules_tickets.CommentType:
     enum:
     - public
@@ -456,6 +650,13 @@ definitions:
         type: string
       sort_order:
         type: integer
+    type: object
+  internal_modules_tickets.CreateLinkRequest:
+    properties:
+      kind:
+        type: string
+      ticket_id:
+        type: string
     type: object
   internal_modules_tickets.CreateTicketRequest:
     properties:
@@ -484,12 +685,92 @@ definitions:
         type: string
       priority:
         $ref: '#/definitions/internal_modules_tickets.TicketPriority'
+      requester_email:
+        type: string
+      requester_name:
+        description: |-
+          Requester contact, stored in metadata as requester_name/requester_email/requester_phone on
+          every create path. Ticket events carry it so the requester is told by email, WhatsApp or SMS.
+        type: string
+      requester_phone:
+        type: string
       subject:
         type: string
       tags:
         items:
           type: string
         type: array
+    type: object
+  internal_modules_tickets.LinkKind:
+    enum:
+    - parent
+    - related
+    - duplicate
+    type: string
+    x-enum-varnames:
+    - LinkParent
+    - LinkRelated
+    - LinkDuplicate
+  internal_modules_tickets.Macro:
+    properties:
+      actions:
+        $ref: '#/definitions/internal_modules_tickets.MacroActions'
+      body:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_modules_tickets.MacroActions:
+    properties:
+      add_tags:
+        items:
+          type: string
+        type: array
+      agent_id:
+        type: string
+      category_id:
+        type: string
+      comment_type:
+        $ref: '#/definitions/internal_modules_tickets.CommentType'
+      priority:
+        $ref: '#/definitions/internal_modules_tickets.TicketPriority'
+      status:
+        $ref: '#/definitions/internal_modules_tickets.TicketStatus'
+      team_id:
+        type: string
+    type: object
+  internal_modules_tickets.MacroApplied:
+    properties:
+      comment:
+        $ref: '#/definitions/internal_modules_tickets.TicketComment'
+      ticket:
+        $ref: '#/definitions/internal_modules_tickets.Ticket'
+    type: object
+  internal_modules_tickets.MacroInput:
+    properties:
+      actions:
+        $ref: '#/definitions/internal_modules_tickets.MacroActions'
+      body:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+    type: object
+  internal_modules_tickets.MergeRequest:
+    properties:
+      into_ticket_id:
+        type: string
     type: object
   internal_modules_tickets.Ticket:
     properties:
@@ -534,10 +815,23 @@ definitions:
         type: string
       resolved_at:
         type: string
+      sla_first_response_minutes:
+        description: The elapsed minutes to first response and to resolution in the
+          policy's clock, net of pauses.
+        type: integer
+      sla_paused_at:
+        description: SLAPausedAt is set while a pending status stops the SLA clock.
+        type: string
+      sla_paused_minutes:
+        type: integer
+      sla_policy_id:
+        type: string
       sla_resolution_breached:
         type: boolean
       sla_resolution_due_at:
         type: string
+      sla_resolution_minutes:
+        type: integer
       sla_response_breached:
         type: boolean
       sla_response_due_at:
@@ -555,6 +849,40 @@ definitions:
       ticket_number:
         type: string
       updated_at:
+        type: string
+      whatsapp_window_expires_at:
+        description: |-
+          WhatsAppWindowExpiresAt is when the 24-hour WhatsApp reply window closes (derived from
+          metadata whatsapp_last_inbound_at, never stored); null for other channels and for a
+          WhatsApp ticket with no inbound message yet.
+        type: string
+    type: object
+  internal_modules_tickets.TicketAttachment:
+    properties:
+      comment_id:
+        type: string
+      content_type:
+        type: string
+      created_at:
+        type: string
+      filename:
+        type: string
+      id:
+        type: string
+      internal:
+        description: Internal attachments belong to an internal note and are never
+          shown to the customer.
+        type: boolean
+      metadata:
+        additionalProperties: {}
+        type: object
+      size:
+        type: integer
+      tenant_id:
+        type: string
+      ticket_id:
+        type: string
+      uploaded_by_id:
         type: string
     type: object
   internal_modules_tickets.TicketCategory:
@@ -589,6 +917,7 @@ definitions:
     - email
     - api
     - chat
+    - whatsapp
     - phone
     - internal
     type: string
@@ -597,6 +926,7 @@ definitions:
     - ChannelEmail
     - ChannelAPI
     - ChannelChat
+    - ChannelWhatsApp
     - ChannelPhone
     - ChannelInternal
   internal_modules_tickets.TicketComment:
@@ -613,6 +943,12 @@ definitions:
         type: string
       id:
         type: string
+      mentions:
+        description: Mentions are the agent ids the comment @mentions (staff comments
+          only).
+        items:
+          type: string
+        type: array
       metadata:
         additionalProperties: {}
         type: object
@@ -621,6 +957,21 @@ definitions:
       ticket_id:
         type: string
       updated_at:
+        type: string
+    type: object
+  internal_modules_tickets.TicketLink:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: string
+      from_ticket_id:
+        type: string
+      id:
+        type: string
+      kind:
+        $ref: '#/definitions/internal_modules_tickets.LinkKind'
+      to_ticket_id:
         type: string
     type: object
   internal_modules_tickets.TicketPriority:
@@ -657,6 +1008,26 @@ definitions:
     - StatusResolved
     - StatusClosed
     - StatusCancelled
+  internal_modules_tickets.TicketView:
+    properties:
+      created_at:
+        type: string
+      filters:
+        additionalProperties: {}
+        type: object
+      id:
+        type: string
+      name:
+        type: string
+      owner_user_id:
+        type: string
+      shared:
+        type: boolean
+      sort:
+        type: string
+      updated_at:
+        type: string
+    type: object
   internal_modules_tickets.TrendPoint:
     properties:
       created:
@@ -665,6 +1036,18 @@ definitions:
         type: string
       resolved:
         type: integer
+    type: object
+  internal_modules_tickets.ViewInput:
+    properties:
+      filters:
+        additionalProperties: {}
+        type: object
+      name:
+        type: string
+      shared:
+        type: boolean
+      sort:
+        type: string
     type: object
 host: ticketingapi.codevertexafrica.com
 info:
@@ -771,27 +1154,18 @@ paths:
       summary: Create agent
       tags:
       - identity
-  /{tenant}/categories:
+  /{tenant}/agents/available:
     get:
-      description: List ticket categories for the authenticated tenant
       parameters:
       - description: Tenant slug
         in: path
         name: tenant
         type: string
-      - description: Filter by parent category UUID
+      - description: Filter by team UUID
         in: query
-        name: parentId
+        name: teamId
         type: string
-      - description: Filter by active status
-        in: query
-        name: active
-        type: boolean
-      - description: Page number
-        in: query
-        name: page
-        type: integer
-      - description: Results per page
+      - description: At most this many agents (default 50, max 200)
         in: query
         name: limit
         type: integer
@@ -803,17 +1177,26 @@ paths:
           schema:
             additionalProperties: true
             type: object
-        "400":
-          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: Available agents
+      tags:
+      - identity
+  /{tenant}/categories:
+    get:
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
+            additionalProperties: true
             type: object
       security:
       - BearerAuth: []
@@ -823,7 +1206,6 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new ticket category for the authenticated tenant
       parameters:
       - description: Tenant slug
         in: path
@@ -843,18 +1225,6 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/internal_modules_tickets.TicketCategory'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       security:
       - BearerAuth: []
       summary: Create category
@@ -1010,6 +1380,58 @@ paths:
       summary: Get public KB article by slug
       tags:
       - kb-public
+  /{tenant}/macros:
+    get:
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Only active macros
+        in: query
+        name: active
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List macros
+      tags:
+      - macros
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Macro
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_tickets.MacroInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_modules_tickets.Macro'
+      security:
+      - BearerAuth: []
+      summary: Create macro
+      tags:
+      - macros
   /{tenant}/routing/rules:
     get:
       description: List all routing rules for the authenticated tenant
@@ -1177,6 +1599,241 @@ paths:
       summary: Update routing rule
       tags:
       - routing
+  /{tenant}/settings/channels:
+    get:
+      description: WhatsApp auto-ticketing, the email forwarding address and when
+        the last forwarded email arrived
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_modules_settings.channelsView'
+      security:
+      - BearerAuth: []
+      summary: Channel settings
+      tags:
+      - settings
+    put:
+      consumes:
+      - application/json
+      description: Turns WhatsApp auto-ticketing on or off for the tenant. email.last_received_at
+        is read only.
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Channel settings
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_settings.channelsInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_modules_settings.channelsView'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Save channel settings
+      tags:
+      - settings
+  /{tenant}/sla/calendars:
+    get:
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Results per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List business calendars
+      tags:
+      - sla
+    post:
+      consumes:
+      - application/json
+      description: Create a calendar of weekly working hours and holidays. A tenant's
+        first calendar becomes the default and is seeded with Kenyan public holidays
+        for this year and next.
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Calendar
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_sla.CalendarInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_modules_sla.Calendar'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create business calendar
+      tags:
+      - sla
+  /{tenant}/sla/calendars/{calendarId}:
+    delete:
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Calendar UUID
+        in: path
+        name: calendarId
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete business calendar
+      tags:
+      - sla
+    get:
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Calendar UUID
+        in: path
+        name: calendarId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_modules_sla.Calendar'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get business calendar
+      tags:
+      - sla
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Calendar UUID
+        in: path
+        name: calendarId
+        required: true
+        type: string
+      - description: Fields to change
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_sla.CalendarInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_modules_sla.Calendar'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update business calendar
+      tags:
+      - sla
   /{tenant}/sla/policies:
     get:
       description: List SLA policies for the authenticated tenant
@@ -1310,6 +1967,56 @@ paths:
       summary: Get SLA policy
       tags:
       - sla
+  /{tenant}/sla/reports:
+    get:
+      description: Compliance, met and breached counts, and average and p90 business
+        minutes for first response and resolution, overall, by priority and by team,
+        for tickets created in [from, to). The window defaults to the last 30 days
+        and is at most 366 days.
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Start, RFC 3339 or YYYY-MM-DD
+        in: query
+        name: from
+        type: string
+      - description: End (exclusive), RFC 3339 or YYYY-MM-DD
+        in: query
+        name: to
+        type: string
+      - description: Team UUID
+        in: query
+        name: team_id
+        type: string
+      - description: Agent UUID
+        in: query
+        name: agent_id
+        type: string
+      - description: Priority
+        in: query
+        name: priority
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_modules_sla.Report'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: SLA report
+      tags:
+      - sla
   /{tenant}/teams:
     get:
       description: List support teams for the authenticated tenant
@@ -1395,55 +2102,66 @@ paths:
       summary: Create team
       tags:
       - identity
-  /{tenant}/tickets:
+  /{tenant}/ticketing/auth/me:
     get:
-      description: List support tickets for the authenticated tenant with optional
-        filters
+      description: The caller's ticketing role, permissions and agent profile in the
+        tenant
       parameters:
       - description: Tenant slug
         in: path
         name: tenant
+        required: true
         type: string
-      - description: Filter by status
-        in: query
-        name: status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_modules_rbac.Me'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Ticketing profile
+      tags:
+      - rbac
+  /{tenant}/tickets:
+    get:
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
         type: string
-      - description: Filter by priority
+      - description: next_cursor of the previous page
         in: query
-        name: priority
+        name: cursor
         type: string
-      - description: Filter by customer UUID
-        in: query
-        name: customerId
-        type: string
-      - description: Filter by assigned agent UUID
-        in: query
-        name: agentId
-        type: string
-      - description: Filter by assigned team UUID
-        in: query
-        name: teamId
-        type: string
-      - description: Filter by category UUID
-        in: query
-        name: categoryId
-        type: string
-      - description: Filter by order UUID
-        in: query
-        name: orderId
-        type: string
-      - description: Filter by channel
-        in: query
-        name: channel
-        type: string
-      - description: Page number
-        in: query
-        name: page
-        type: integer
-      - description: Results per page
+      - description: Page size (default 25, max 100)
         in: query
         name: limit
         type: integer
+      - description: Ticket number, subject, description or requester
+        in: query
+        name: search
+        type: string
+      - description: Comma-separated tags; a ticket must carry all
+        in: query
+        name: tags
+        type: string
+      - description: web, email, api, chat, whatsapp, phone or internal
+        in: query
+        name: channel
+        type: string
+      - description: created_desc (default) or created_asc
+        in: query
+        name: sort
+        type: string
       produces:
       - application/json
       responses:
@@ -1451,18 +2169,6 @@ paths:
           description: OK
           schema:
             additionalProperties: true
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
             type: object
       security:
       - BearerAuth: []
@@ -1472,7 +2178,6 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new support ticket for the authenticated tenant
       parameters:
       - description: Tenant slug
         in: path
@@ -1492,18 +2197,6 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/internal_modules_tickets.Ticket'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       security:
       - BearerAuth: []
       summary: Create ticket
@@ -1511,7 +2204,6 @@ paths:
       - tickets
   /{tenant}/tickets/{ticketId}:
     get:
-      description: Retrieve a support ticket by its UUID
       parameters:
       - description: Tenant slug
         in: path
@@ -1530,24 +2222,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/internal_modules_tickets.Ticket'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       security:
       - BearerAuth: []
       summary: Get ticket
@@ -1557,7 +2231,6 @@ paths:
     put:
       consumes:
       - application/json
-      description: Assign a support ticket to an agent or team
       parameters:
       - description: Tenant slug
         in: path
@@ -1584,32 +2257,13 @@ paths:
             additionalProperties:
               type: string
             type: object
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       security:
       - BearerAuth: []
       summary: Assign ticket
       tags:
       - tickets
-  /{tenant}/tickets/{ticketId}/comments:
+  /{tenant}/tickets/{ticketId}/attachments:
     get:
-      description: List all comments for a support ticket
       parameters:
       - description: Tenant slug
         in: path
@@ -1621,6 +2275,14 @@ paths:
         name: ticketId
         required: true
         type: string
+      - description: next_cursor of the previous page
+        in: query
+        name: cursor
+        type: string
+      - description: Page size (default 25, max 100)
+        in: query
+        name: limit
+        type: integer
       produces:
       - application/json
       responses:
@@ -1629,23 +2291,130 @@ paths:
           schema:
             additionalProperties: true
             type: object
-        "400":
-          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: List attachments
+      tags:
+      - tickets
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Ticket UUID
+        in: path
+        name: ticketId
+        required: true
+        type: string
+      - description: The file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_modules_tickets.TicketAttachment'
+      security:
+      - BearerAuth: []
+      summary: Upload attachment
+      tags:
+      - tickets
+  /{tenant}/tickets/{ticketId}/attachments/{attachmentId}:
+    delete:
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Ticket UUID
+        in: path
+        name: ticketId
+        required: true
+        type: string
+      - description: Attachment UUID
+        in: path
+        name: attachmentId
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
           schema:
             additionalProperties:
               type: string
             type: object
-        "401":
-          description: Unauthorized
+      security:
+      - BearerAuth: []
+      summary: Delete attachment
+      tags:
+      - tickets
+  /{tenant}/tickets/{ticketId}/attachments/{attachmentId}/download:
+    get:
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Ticket UUID
+        in: path
+        name: ticketId
+        required: true
+        type: string
+      - description: Attachment UUID
+        in: path
+        name: attachmentId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
+            $ref: '#/definitions/internal_modules_tickets.AttachmentLink'
+      security:
+      - BearerAuth: []
+      summary: Attachment download link
+      tags:
+      - tickets
+  /{tenant}/tickets/{ticketId}/comments:
+    get:
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Ticket UUID
+        in: path
+        name: ticketId
+        required: true
+        type: string
+      - description: next_cursor of the previous page
+        in: query
+        name: cursor
+        type: string
+      - description: Page size (default 25, max 100)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
           schema:
-            additionalProperties:
-              type: string
+            additionalProperties: true
             type: object
       security:
       - BearerAuth: []
@@ -1655,7 +2424,6 @@ paths:
     post:
       consumes:
       - application/json
-      description: Add a comment to a support ticket
       parameters:
       - description: Tenant slug
         in: path
@@ -1680,34 +2448,13 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/internal_modules_tickets.TicketComment'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       security:
       - BearerAuth: []
       summary: Add comment
       tags:
       - tickets
-  /{tenant}/tickets/{ticketId}/status:
-    put:
-      consumes:
-      - application/json
-      description: Update the status of a support ticket
+  /{tenant}/tickets/{ticketId}/links:
+    get:
       parameters:
       - description: Tenant slug
         in: path
@@ -1719,35 +2466,187 @@ paths:
         name: ticketId
         required: true
         type: string
-      - description: Status payload
-        in: body
-        name: body
-        required: true
-        schema:
-          type: object
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
+            additionalProperties: true
             type: object
-        "400":
-          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: List ticket links
+      tags:
+      - tickets
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Ticket UUID
+        in: path
+        name: ticketId
+        required: true
+        type: string
+      - description: Link
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_tickets.CreateLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
+            $ref: '#/definitions/internal_modules_tickets.TicketLink'
+      security:
+      - BearerAuth: []
+      summary: Link tickets
+      tags:
+      - tickets
+  /{tenant}/tickets/{ticketId}/macros/{macroId}/apply:
+    post:
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Ticket UUID
+        in: path
+        name: ticketId
+        required: true
+        type: string
+      - description: Macro UUID
+        in: path
+        name: macroId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
           schema:
-            additionalProperties:
-              type: string
+            $ref: '#/definitions/internal_modules_tickets.MacroApplied'
+      security:
+      - BearerAuth: []
+      summary: Apply macro
+      tags:
+      - macros
+  /{tenant}/tickets/{ticketId}/merge:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Ticket to merge (it closes)
+        in: path
+        name: ticketId
+        required: true
+        type: string
+      - description: Target ticket
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_tickets.MergeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_modules_tickets.Ticket'
+      security:
+      - BearerAuth: []
+      summary: Merge ticket
+      tags:
+      - tickets
+  /{tenant}/tickets/{ticketId}/presence:
+    get:
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Ticket UUID
+        in: path
+        name: ticketId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
             type: object
-        "404":
-          description: Not Found
+      security:
+      - BearerAuth: []
+      summary: Get presence
+      tags:
+      - tickets
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Ticket UUID
+        in: path
+        name: ticketId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Set presence
+      tags:
+      - tickets
+  /{tenant}/tickets/{ticketId}/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Ticket UUID
+        in: path
+        name: ticketId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
           schema:
             additionalProperties:
               type: string
@@ -1759,15 +2658,13 @@ paths:
       - tickets
   /{tenant}/tickets/analytics:
     get:
-      description: Returns ticket counts by status and priority, plus a creation/resolution
-        trend
       parameters:
       - description: Tenant slug
         in: path
         name: tenant
         required: true
         type: string
-      - description: Number of days to include in trend (default 30, max 365)
+      - description: Days in the trend (default 30, max 365)
         in: query
         name: days
         type: integer
@@ -1778,17 +2675,117 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/internal_modules_tickets.AnalyticsResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       security:
       - BearerAuth: []
       summary: Get analytics
       tags:
       - tickets
+  /{tenant}/tickets/bulk:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Tickets and changes
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_tickets.BulkUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Bulk update tickets
+      tags:
+      - tickets
+  /{tenant}/tickets/tags:
+    get:
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: Tag prefix
+        in: query
+        name: search
+        type: string
+      - description: At most this many tags (default 50, max 100)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List ticket tags
+      tags:
+      - tickets
+  /{tenant}/views:
+    get:
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List saved views
+      tags:
+      - views
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tenant slug
+        in: path
+        name: tenant
+        required: true
+        type: string
+      - description: View
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_tickets.ViewInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_modules_tickets.TicketView'
+      security:
+      - BearerAuth: []
+      summary: Create saved view
+      tags:
+      - views
 securityDefinitions:
   BearerAuth:
     in: header
