@@ -293,3 +293,15 @@ func TestWhatsAppOptInGating(t *testing.T) {
 		t.Fatal("an event without a tenant is invalid")
 	}
 }
+
+// A threaded email keeps the subject the customer wrote under, collapsed to one line; WhatsApp
+// has no subject.
+func TestCommentExtraKeepsTheEmailSubject(t *testing.T) {
+	got := commentExtra(map[string]any{}, Message{Channel: tickets.ChannelEmail, Subject: "  Re: [TKT-000007]\r\n  Refund  "})
+	if got[tickets.CommentMetaEmailSubject] != "Re: [TKT-000007] Refund" {
+		t.Fatalf("subject = %v", got)
+	}
+	if got := commentExtra(map[string]any{}, Message{Channel: tickets.ChannelWhatsApp, Subject: "x"}); len(got) != 0 {
+		t.Fatalf("whatsapp = %v", got)
+	}
+}

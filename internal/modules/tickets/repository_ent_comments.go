@@ -142,7 +142,7 @@ func entCommentToModel(c *ent.TicketComment) *TicketComment {
 	if c.AuthorID != nil {
 		authorID = *c.AuthorID
 	}
-	return &TicketComment{
+	return withChannelMessage(&TicketComment{
 		ID:          c.ID,
 		TenantID:    c.TenantID,
 		TicketID:    c.TicketID,
@@ -153,5 +153,5 @@ func entCommentToModel(c *ent.TicketComment) *TicketComment {
 		Mentions:    c.Mentions,
 		Metadata:    c.Metadata,
 		CreatedAt:   c.CreatedAt,
-	}
+	})
 }

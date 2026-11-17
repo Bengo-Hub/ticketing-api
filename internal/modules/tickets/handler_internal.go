@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	httpware "github.com/Bengo-Hub/httpware"
 	"github.com/go-chi/chi/v5"
@@ -63,6 +64,26 @@ type InternalCreateRequest struct {
 	// ContactHash is the caller's keyed hash of the contact it verified. The caller proves a later
 	// reader against it; ticketing never needs to read the contact itself.
 	ContactHash string `json:"contact_hash"`
+	// PhoneNumberID and ReceivedAt (RFC 3339) describe the WhatsApp message a ticket is converted
+	// from (source notifications.whatsapp, source_ref type wa_message): the tenant number it came
+	// in on and when. They open the 24-hour reply window the way the channel ingest does, and are
+	// ignored for any other source.
+	PhoneNumberID string `json:"phone_number_id"`
+	ReceivedAt    string `json:"received_at"`
+}
+
+// channelMessageKey is the channel message an internal create names, when its source and
+// source_ref are the key the channel ingest gives a ticket opened from that message. Only
+// WhatsApp has such a caller: the notifications inbox's Convert to ticket action.
+func channelMessageKey(source string, ref *SourceRef) (MessageKey, bool) {
+	if ref == nil {
+		return MessageKey{}, false
+	}
+	key := MessageKey{Channel: ChannelWhatsApp, ID: ref.ID}
+	if source != key.Source() || ref.Type != key.Ref().Type {
+		return MessageKey{}, false
+	}
+	return key, true
 }
 
 // internalCreator is the part of Service the internal routes need.
@@ -122,6 +143,18 @@ func (in *InternalCreateRequest) toCreateRequest(tenantID uuid.UUID) (*CreateTic
 	if in.ContactHash != "" {
 		// One contact's tickets group under one synthetic customer, as the public routes do by email.
 		req.CustomerID = uuid.NewSHA1(uuid.NameSpaceOID, []byte(in.ContactHash))
+	}
+	if key, ok := channelMessageKey(in.Source, in.SourceRef); ok {
+		// A converted channel message becomes the same ticket the ingest would have opened: the
+		// requester's customer id, the message as its origin and the WhatsApp reply window.
+		if in.ContactHash == "" && (strings.TrimSpace(in.RequesterEmail) != "" || strings.TrimSpace(in.RequesterPhone) != "") {
+			req.CustomerID = CustomerIDFor(RequesterContact{Email: in.RequesterEmail, Phone: in.RequesterPhone})
+		}
+		origin := &InboundOrigin{Key: key, PhoneNumberID: strings.TrimSpace(in.PhoneNumberID)}
+		if at, err := time.Parse(time.RFC3339, strings.TrimSpace(in.ReceivedAt)); err == nil {
+			origin.ReceivedAt = at
+		}
+		req.Inbound = origin
 	}
 	return req, nil
 }
@@ -212,7 +245,8 @@ func internalTicketView(t *Ticket, comments []*TicketComment) map[string]any {
 
 // CreateInternalTicket creates a ticket for an internal caller, once per (source,
 // source_ref.type, source_ref.id). created is false when the ticket already existed. Without a
-// source_ref every call creates a ticket.
+// source_ref every call creates a ticket. A WhatsApp message (notifications.whatsapp, wa_message)
+// that the channel ingest already added to a ticket as a comment answers with that ticket.
 func (s *Service) CreateInternalTicket(ctx context.Context, req *CreateTicketRequest, source string, ref *SourceRef) (*Ticket, bool, error) {
 	if req.Metadata == nil {
 		req.Metadata = map[string]any{}
@@ -229,6 +263,17 @@ func (s *Service) CreateInternalTicket(ctx context.Context, req *CreateTicketReq
 		return existing, false, nil
 	case !errors.Is(err, ErrTicketNotFound):
 		return nil, false, err
+	}
+	if key, ok := channelMessageKey(source, ref); ok {
+		// The ingest may already have threaded the message onto an open ticket as a comment;
+		// converting it then answers with that ticket instead of opening a second one.
+		threaded, err := s.TicketForMessage(ctx, req.TenantID, key)
+		if err != nil {
+			return nil, false, err
+		}
+		if threaded != nil {
+			return threaded, false, nil
+		}
 	}
 	t, err := s.CreateTicket(ctx, req)
 	if errors.Is(err, ErrDuplicateSourceRef) {

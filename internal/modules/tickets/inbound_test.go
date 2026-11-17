@@ -71,6 +71,9 @@ func TestAddInboundMessageThreadsAndReopens(t *testing.T) {
 	if c.AuthorType != AuthorCustomer || c.CommentType != CommentPublic || c.Metadata[CommentMetaExternalID] != "second@mail.example.com" {
 		t.Fatalf("comment = %+v", c)
 	}
+	if c.Channel != "email" || c.Sender == nil || c.Sender.Email != "amina@example.com" {
+		t.Fatalf("channel fields = %q %+v", c.Channel, c.Sender)
+	}
 	if got := threadIDs(repo.tickets[tk.ID].Metadata); len(got) != 2 || got[1] != "second@mail.example.com" {
 		t.Fatalf("thread ids = %v", got)
 	}
@@ -129,5 +132,33 @@ func TestInboundCreateAndThreadPayload(t *testing.T) {
 func TestReplySubject(t *testing.T) {
 	if got := ReplySubject("RE: re: Payout late [TKT-000042]", "TKT-000042"); got != "Re: Payout late [TKT-000042]" {
 		t.Fatalf("got %q", got)
+	}
+}
+
+// A channel message shows its channel, sender and (for email) subject from the comment
+// metadata; an agent reply or a web comment has none of them.
+func TestWithChannelMessage(t *testing.T) {
+	email := withChannelMessage(&TicketComment{Metadata: map[string]any{
+		CommentMetaChannel: "email", CommentMetaExternalID: "m-1@mail.example.com",
+		CommentMetaFromName: "Amina", CommentMetaFromEmail: "amina@example.com", CommentMetaEmailSubject: "Re: [TKT-000007] Refund",
+	}})
+	if email.Channel != "email" || email.ExternalID != "m-1@mail.example.com" || email.EmailSubject != "Re: [TKT-000007] Refund" ||
+		email.Sender == nil || email.Sender.Name != "Amina" || email.Sender.Email != "amina@example.com" {
+		t.Fatalf("email = %+v %+v", email, email.Sender)
+	}
+	wa := withChannelMessage(&TicketComment{Metadata: map[string]any{
+		CommentMetaChannel: "whatsapp", CommentMetaExternalID: "wamid.1", CommentMetaFromPhone: "+254712345678",
+		CommentMetaEmailSubject: "ignored",
+	}})
+	if wa.Channel != "whatsapp" || wa.EmailSubject != "" || wa.Sender == nil || wa.Sender.Phone != "+254712345678" {
+		t.Fatalf("whatsapp = %+v %+v", wa, wa.Sender)
+	}
+	old := withChannelMessage(&TicketComment{Metadata: map[string]any{CommentMetaChannel: "whatsapp", CommentMetaExternalID: "wamid.0"}})
+	if old.Sender != nil {
+		t.Fatalf("a message stored without a sender reports one: %+v", old.Sender)
+	}
+	agent := withChannelMessage(&TicketComment{AuthorType: AuthorAgent, Metadata: map[string]any{"macro_id": "x"}})
+	if agent.Channel != "" || agent.Sender != nil || agent.ExternalID != "" {
+		t.Fatalf("agent reply = %+v", agent)
 	}
 }

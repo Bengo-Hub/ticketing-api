@@ -135,7 +135,7 @@ func (s *Service) ticketForRef(ctx context.Context, tenantID uuid.UUID, ref stri
 func (s *Service) thread(ctx context.Context, m Message, key tickets.MessageKey, t *tickets.Ticket) (Result, error) {
 	_, err := s.tickets.AddInboundMessage(ctx, tickets.InboundMessage{
 		TenantID: m.TenantID, TicketID: t.ID, Key: key, From: m.Requester,
-		Content: messageBody(m, true), Metadata: s.extra(m), Files: m.Attachments,
+		Content: messageBody(m, true), Metadata: commentExtra(s.extra(m), m), Files: m.Attachments,
 		PhoneNumberID: m.PhoneNumberID, ReceivedAt: m.ReceivedAt,
 	})
 	if errors.Is(err, tickets.ErrDuplicateMessage) {
@@ -208,6 +208,25 @@ func splitName(name string) (first, last string) {
 		return "", ""
 	}
 	return parts[0], strings.Join(parts[1:], " ")
+}
+
+// maxCommentSubject bounds the email subject kept on a threaded comment.
+const maxCommentSubject = 300
+
+// commentExtra adds what the agent's thread shows of a message that continues a ticket: for
+// email, the subject the customer wrote under (the ticket keeps its own subject).
+func commentExtra(meta map[string]any, m Message) map[string]any {
+	if m.Channel != tickets.ChannelEmail {
+		return meta
+	}
+	subject := strings.Join(strings.Fields(m.Subject), " ")
+	if r := []rune(subject); len(r) > maxCommentSubject {
+		subject = string(r[:maxCommentSubject])
+	}
+	if subject != "" {
+		meta[tickets.CommentMetaEmailSubject] = subject
+	}
+	return meta
 }
 
 // extra copies the channel detail so the caller's map is never shared with a stored row.

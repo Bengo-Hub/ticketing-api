@@ -126,10 +126,25 @@ type TicketComment struct {
 	CommentType CommentType `json:"comment_type"`
 	Content     string      `json:"content"`
 	// Mentions are the agent ids the comment @mentions (staff comments only).
-	Mentions  []uuid.UUID    `json:"mentions,omitempty"`
-	Metadata  map[string]any `json:"metadata,omitempty"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
+	Mentions []uuid.UUID    `json:"mentions,omitempty"`
+	Metadata map[string]any `json:"metadata,omitempty"`
+	// Channel, ExternalID, Sender and EmailSubject describe a customer message that came in on a
+	// channel (email or WhatsApp). They are read from the comment metadata, never stored apart,
+	// and are empty on every other comment.
+	Channel      string         `json:"channel,omitempty"`
+	ExternalID   string         `json:"external_id,omitempty"`
+	Sender       *CommentSender `json:"sender,omitempty"`
+	EmailSubject string         `json:"email_subject,omitempty"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+}
+
+// CommentSender is who wrote a channel message: the requester, or a colleague of theirs on a
+// threaded email.
+type CommentSender struct {
+	Name  string `json:"name,omitempty"`
+	Email string `json:"email,omitempty"`
+	Phone string `json:"phone,omitempty"`
 }
 
 // TicketAttachment represents a file attachment on a ticket. The storage key never leaves the

@@ -227,3 +227,97 @@ func TestInternalTicketView(t *testing.T) {
 		t.Fatalf("view = %+v", out)
 	}
 }
+
+// waRepo adds the comment lookup the WhatsApp conversion reaches: externalID to the ticket the
+// channel ingest threaded that message onto.
+type waRepo struct {
+	*sourceRepo
+	threaded map[string]*Ticket
+}
+
+func (r *waRepo) FindCommentByExternalID(_ context.Context, _ uuid.UUID, channel, externalID string) (*TicketComment, error) {
+	if t, ok := r.threaded[channel+"|"+externalID]; ok {
+		return &TicketComment{ID: uuid.New(), TicketID: t.ID}, nil
+	}
+	return nil, ErrCommentNotFound
+}
+
+func (r *waRepo) GetTicket(_ context.Context, _ uuid.UUID, id uuid.UUID) (*Ticket, error) {
+	for _, t := range r.threaded {
+		if t.ID == id {
+			cp := *t
+			return &cp, nil
+		}
+	}
+	return nil, ErrTicketNotFound
+}
+
+// Convert to ticket from the notifications inbox uses the channel ingest's key: a repeat answers
+// with the same ticket, the ticket carries the WhatsApp origin and reply window, and a message the
+// ingest already threaded onto a ticket answers with that ticket.
+func TestInternalCreateConvertsAWhatsAppMessageOnce(t *testing.T) {
+	repo := &waRepo{sourceRepo: newSourceRepo(), threaded: map[string]*Ticket{}}
+	h := NewHandler(NewService(repo, zap.NewNop()), zap.NewNop(), WithServiceKey("k"))
+	tenant := uuid.New()
+	body := func(id string) string {
+		return `{"subject":"My order","description":"My order has not arrived","channel":"whatsapp",` +
+			`"source":"notifications.whatsapp","source_ref":{"type":"wa_message","id":"` + id + `"},` +
+			`"requester_name":"Amina","requester_phone":"+254712345678",` +
+			`"phone_number_id":"pn-1","received_at":"2025-01-06T08:00:00Z"}`
+	}
+	first := internalCreate(h, tenant, body("wamid.1"))
+	if first.Code != http.StatusCreated {
+		t.Fatalf("convert: %d %s", first.Code, first.Body)
+	}
+	again := internalCreate(h, tenant, body("wamid.1"))
+	if again.Code != http.StatusOK {
+		t.Fatalf("second convert: %d %s", again.Code, again.Body)
+	}
+	var a, b map[string]any
+	_ = json.Unmarshal(first.Body.Bytes(), &a)
+	_ = json.Unmarshal(again.Body.Bytes(), &b)
+	if a["id"] != b["id"] {
+		t.Fatalf("second convert opened another ticket: %v vs %v", a, b)
+	}
+	key := MessageKey{Channel: ChannelWhatsApp, ID: "wamid.1"}
+	stored := repo.bySrc[srcKey(tenant, map[string]any{"source": key.Source(),
+		"source_ref": map[string]any{"type": key.Ref().Type, "id": key.ID}})]
+	if stored == nil {
+		t.Fatal("ticket not stored under the ingest key")
+	}
+	if stored.Channel != ChannelWhatsApp || stored.Metadata[MetaWhatsAppLastMessageID] != "wamid.1" ||
+		stored.Metadata[MetaWhatsAppPhoneNumberID] != "pn-1" || stored.Metadata[MetaWhatsAppLastInboundAt] != "2025-01-06T08:00:00Z" {
+		t.Fatalf("whatsapp origin missing: %v", stored.Metadata)
+	}
+	if stored.CustomerID != CustomerIDFor(RequesterContact{Phone: "+254712345678"}) {
+		t.Fatalf("customer id differs from the ingest's: %s", stored.CustomerID)
+	}
+
+	open := &Ticket{ID: uuid.New(), TicketNumber: "TKT-000042", Status: StatusOpen}
+	repo.threaded["whatsapp|wamid.2"] = open
+	threaded := internalCreate(h, tenant, body("wamid.2"))
+	var c map[string]any
+	_ = json.Unmarshal(threaded.Body.Bytes(), &c)
+	if threaded.Code != http.StatusOK || c["id"] != open.ID.String() || c["ticket_number"] != "TKT-000042" {
+		t.Fatalf("threaded message: %d %v", threaded.Code, c)
+	}
+}
+
+// Only the ingest's own key is a channel message; another source or ref type is a plain create.
+func TestChannelMessageKey(t *testing.T) {
+	if _, ok := channelMessageKey("notifications.whatsapp", &SourceRef{Type: "wa_message", ID: "x"}); !ok {
+		t.Fatal("whatsapp key not recognised")
+	}
+	for _, c := range []struct {
+		source string
+		ref    *SourceRef
+	}{
+		{"notifications.whatsapp", nil},
+		{"notifications.whatsapp", &SourceRef{Type: "conversation", ID: "x"}},
+		{"projects.qa", &SourceRef{Type: "wa_message", ID: "x"}},
+	} {
+		if _, ok := channelMessageKey(c.source, c.ref); ok {
+			t.Errorf("%s %+v treated as a channel message", c.source, c.ref)
+		}
+	}
+}

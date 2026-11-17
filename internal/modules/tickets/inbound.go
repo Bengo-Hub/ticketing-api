@@ -45,7 +45,35 @@ const WhatsAppWindow = 24 * time.Hour
 const (
 	CommentMetaChannel    = "channel"
 	CommentMetaExternalID = "external_id"
+	// The sender of the message and, for email, its subject, shown in the agent's thread.
+	CommentMetaFromName     = "from_name"
+	CommentMetaFromEmail    = "from_email"
+	CommentMetaFromPhone    = "from_phone"
+	CommentMetaEmailSubject = "email_subject"
 )
+
+// withChannelMessage fills the comment's channel fields from its metadata. Comments that did
+// not come in on a channel are left as they are.
+func withChannelMessage(c *TicketComment) *TicketComment {
+	channel := metaText(c.Metadata, CommentMetaChannel)
+	if channel == "" {
+		return c
+	}
+	c.Channel = channel
+	c.ExternalID = metaText(c.Metadata, CommentMetaExternalID)
+	sender := CommentSender{
+		Name:  metaText(c.Metadata, CommentMetaFromName),
+		Email: metaText(c.Metadata, CommentMetaFromEmail),
+		Phone: metaText(c.Metadata, CommentMetaFromPhone),
+	}
+	if sender != (CommentSender{}) {
+		c.Sender = &sender
+	}
+	if channel == string(ChannelEmail) {
+		c.EmailSubject = metaText(c.Metadata, CommentMetaEmailSubject)
+	}
+	return c
+}
 
 // maxThreadIDs bounds the Message-IDs kept per ticket, and so the References header of a reply.
 const maxThreadIDs = 20
@@ -202,6 +230,15 @@ func (s *Service) AddInboundMessage(ctx context.Context, in InboundMessage) (*Ti
 		}
 		meta[CommentMetaChannel] = string(in.Key.Channel)
 		meta[CommentMetaExternalID] = in.Key.ID
+		for k, v := range map[string]string{
+			CommentMetaFromName:  strings.TrimSpace(in.From.Name),
+			CommentMetaFromEmail: normalizeEmail(in.From.Email),
+			CommentMetaFromPhone: normalizePhone(in.From.Phone),
+		} {
+			if _, set := meta[k]; !set && v != "" {
+				meta[k] = v
+			}
+		}
 		authorID := CustomerIDFor(in.From)
 		comment, err = s.commentTx(ctx, repo, out, &AddCommentRequest{
 			TenantID: in.TenantID, TicketID: in.TicketID, AuthorID: authorID,

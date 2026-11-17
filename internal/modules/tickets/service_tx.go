@@ -118,6 +118,7 @@ func (s *Service) commentTx(ctx context.Context, repo Repository, out *Outbox, r
 		Content:     req.Content,
 		Metadata:    req.Metadata,
 	}
+	withChannelMessage(comment)
 	// Only staff mention agents; a customer typing the token mentions nobody.
 	var mentionEmails map[uuid.UUID]string
 	if req.AuthorType == AuthorAgent {

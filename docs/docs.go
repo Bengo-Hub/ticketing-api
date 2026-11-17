@@ -3628,6 +3628,20 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_modules_tickets.CommentSender": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_modules_tickets.CommentType": {
             "type": "string",
             "enum": [
@@ -4073,6 +4087,10 @@ const docTemplate = `{
                 "author_type": {
                     "$ref": "#/definitions/internal_modules_tickets.AuthorType"
                 },
+                "channel": {
+                    "description": "Channel, ExternalID, Sender and EmailSubject describe a customer message that came in on a\nchannel (email or WhatsApp). They are read from the comment metadata, never stored apart,\nand are empty on every other comment.",
+                    "type": "string"
+                },
                 "comment_type": {
                     "$ref": "#/definitions/internal_modules_tickets.CommentType"
                 },
@@ -4080,6 +4098,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "created_at": {
+                    "type": "string"
+                },
+                "email_subject": {
+                    "type": "string"
+                },
+                "external_id": {
                     "type": "string"
                 },
                 "id": {
@@ -4095,6 +4119,9 @@ const docTemplate = `{
                 "metadata": {
                     "type": "object",
                     "additionalProperties": {}
+                },
+                "sender": {
+                    "$ref": "#/definitions/internal_modules_tickets.CommentSender"
                 },
                 "tenant_id": {
                     "type": "string"
