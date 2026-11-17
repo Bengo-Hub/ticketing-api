@@ -70,6 +70,42 @@ var (
 			},
 		},
 	}
+	// AuditLogsColumns holds the columns for the "audit_logs" table.
+	AuditLogsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "user_id", Type: field.TypeUUID},
+		{Name: "user_email", Type: field.TypeString, Nullable: true, Size: 255},
+		{Name: "action", Type: field.TypeString, Size: 50},
+		{Name: "resource_type", Type: field.TypeString, Size: 100},
+		{Name: "resource_id", Type: field.TypeString, Size: 255},
+		{Name: "changes", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "ip_address", Type: field.TypeString, Nullable: true, Size: 45},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// AuditLogsTable holds the schema information for the "audit_logs" table.
+	AuditLogsTable = &schema.Table{
+		Name:       "audit_logs",
+		Columns:    AuditLogsColumns,
+		PrimaryKey: []*schema.Column{AuditLogsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "auditlog_tenant_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{AuditLogsColumns[1], AuditLogsColumns[9]},
+			},
+			{
+				Name:    "auditlog_tenant_id_resource_type_resource_id",
+				Unique:  false,
+				Columns: []*schema.Column{AuditLogsColumns[1], AuditLogsColumns[5], AuditLogsColumns[6]},
+			},
+			{
+				Name:    "auditlog_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{AuditLogsColumns[2]},
+			},
+		},
+	}
 	// BusinessCalendarsColumns holds the columns for the "business_calendars" table.
 	BusinessCalendarsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -971,6 +1007,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AgentsTable,
+		AuditLogsTable,
 		BusinessCalendarsTable,
 		KBArticlesTable,
 		MacrosTable,
@@ -998,6 +1035,9 @@ func init() {
 	AgentsTable.ForeignKeys[0].RefTable = TeamsTable
 	AgentsTable.Annotation = &entsql.Annotation{
 		Table: "agents",
+	}
+	AuditLogsTable.Annotation = &entsql.Annotation{
+		Table: "audit_logs",
 	}
 	BusinessCalendarsTable.Annotation = &entsql.Annotation{
 		Table: "business_calendars",

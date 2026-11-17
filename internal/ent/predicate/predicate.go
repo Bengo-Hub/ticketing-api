@@ -9,6 +9,9 @@ import (
 // Agent is the predicate function for agent builders.
 type Agent func(*sql.Selector)
 
+// AuditLog is the predicate function for auditlog builders.
+type AuditLog func(*sql.Selector)
+
 // BusinessCalendar is the predicate function for businesscalendar builders.
 type BusinessCalendar func(*sql.Selector)
 

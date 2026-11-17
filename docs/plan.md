@@ -19,6 +19,8 @@ Commit 4f03d8e is live in production. The production migration recorded the base
 
 On 2026-11-17 Sprint 10 (2f0a568) is live, and so is the Sprint 11 ingest (a67e2e6). It has one ingest service for email and WhatsApp, two durable consumers, the per-tenant settings document with `channels.whatsapp.auto_ticket`, the threading fields on every ticket event and migration `20261117120000_sprint11.sql`. Its publishers are deployed too. email-provisioner 3da3d72 reads the support mailboxes and publishes `email.inbound.support`. notifications-api bec16df publishes `notifications.whatsapp.tenant_inbound` and threads ticket emails. Email intake starts once the Stalwart support domain, the ingest mailbox and its DNS records exist.
 
+On 2026-11-17 I also wrote sprint 14: treasury-api's user management and role administration, ported to ticketing. Roles can be created, customized, cloned, edited and deleted, people are added through auth-api's S2S member add, roles are granted with an optional end date and revoked without sign-in giving them back, and every change lands in the new `audit_logs` table. The old `PUT /ticketing/users/{userId}/roles` is gone. It is not deployed yet.
+
 The sprint list below gives the status of each sprint against the code.
 
 ## Find, Flip, Fix (read 2026-11-16)
@@ -93,6 +95,7 @@ The features the leaders share make up the baseline:
 | [11](sprints/sprint-11-channels.md) | Channels | Ingest, publishers and the settings page deployed; remainder in progress | The Stalwart support domain, ingest mailbox and DNS (need the owner to run the keyed calls), CRM contact link at ingest, WhatsApp agent replies and the 24-hour window, forwarding verify step, channel badge and filter, the web widget, and Convert to ticket in the notifications inbox |
 | [12](sprints/sprint-12-analytics-csat.md) | Analytics and CSAT | Pending | Rollups under `RunOnce`, `resolved_at` trends, CSAT, export through the reports module, 200k benchmark |
 | [13](sprints/sprint-13-ai-vera.md) | AI with Vera | Pending | Classify, summarize, suggested reply, KB suggestions, AI wallet credits, `IsGatingExempt` for codevertex only |
+| [14](sprints/sprint-14-user-management.md) | User management and role administration (treasury port) | Built, not deployed | Ent generation and the `audit_logs` migration, build and tests, the ticketing-ui pages |
 
 After sprint 13 comes the integration review and test pass: auth-api (including `auth.user.deleted`), notifications-api, marketflow, subscriptions-api, marketflow-ai, projects-api end to end, and the pos, ordering and treasury links shown on a ticket, with Testcontainers repository tests and Playwright e2e tests for the five Fix requirements.
 
@@ -105,7 +108,7 @@ After sprint 13 comes the integration review and test pass: auth-api (including 
 | The public support pages still use native form fields and a plain textarea | UI | UI sprint 8 |
 | `SLASidebar` and the policy form still use the removed `first_response_business_hours`, `resolution_business_hours` and `business_hours`; the API now takes `calendar_id` (null is 24x7) and `clear_calendar` | UI | UI sprint 9 |
 | Update requests cannot clear a field, because `UpdateTicketRequest` uses pointers with `omitempty` | API | Sprint 9 |
-| Fields the UI needs and the API lacks: stats `resolved_today` and `overdue`, previous-period figures, a tenant user directory for people not yet provisioned in ticketing (`GET /ticketing/users` lists only provisioned users), a KB category list, comment author names | API | Sprints 9 and 12 |
+| Fields the UI needs and the API lacks: stats `resolved_today` and `overdue`, previous-period figures, a KB category list, comment author names | API | Sprints 9 and 12 |
 | The OTP client is not on shared-service-client, because a retried call could replay a one-time code | API | Kept as is by design |
 | `internal/modules/tickets/handler.go` (469 lines) and `internal/modules/identity/handler.go` (465 lines) are over 400 lines | API | Sprint 9 |
 | `ListTickets` does not read the `search` parameter yet | API | Sprint 9 |

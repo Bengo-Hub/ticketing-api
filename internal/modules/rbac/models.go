@@ -30,12 +30,35 @@ type Permission struct {
 	Description string
 }
 
+// actionLabels and moduleLabels give each permission a readable name for the role editor.
+var actionLabels = map[string]string{
+	"add": "Add", "view": "View", "view_own": "View own", "change": "Change", "change_own": "Change own",
+	"delete": "Delete", "delete_own": "Delete own", "manage": "Manage", "manage_own": "Manage own",
+}
+
+var moduleLabels = map[string]string{
+	"sla": "SLA", "kb": "knowledge base", "rbac": "roles and users",
+}
+
+// PermissionName is the readable name of a module and action, such as "View own tickets".
+func PermissionName(module, action string) string {
+	a, ok := actionLabels[action]
+	if !ok {
+		a = action
+	}
+	m, ok := moduleLabels[module]
+	if !ok {
+		m = module
+	}
+	return a + " " + m
+}
+
 // Catalogue returns every ticketing permission: each module with each action.
 func Catalogue() []Permission {
 	out := make([]Permission, 0, len(Modules)*len(Actions))
 	for _, m := range Modules {
 		for _, a := range Actions {
-			out = append(out, Permission{Code: Code(m, a), Module: m, Action: a, Description: a + " " + m})
+			out = append(out, Permission{Code: Code(m, a), Module: m, Action: a, Description: PermissionName(m, a)})
 		}
 	}
 	return out
@@ -193,26 +216,94 @@ type Identity struct {
 	GlobalRoles []string
 }
 
-// User is a ticketing user row.
+// UserStatusActive is the status of every ticketing user: a row exists only for a member of the
+// tenant, and auth-api owns suspension and removal.
+const UserStatusActive = "active"
+
+// User is a ticketing user row, in treasury-api's user shape plus the display name.
 type User struct {
 	ID                uuid.UUID  `json:"id"`
 	TenantID          uuid.UUID  `json:"tenant_id"`
 	AuthServiceUserID uuid.UUID  `json:"auth_service_user_id"`
-	Email             string     `json:"email,omitempty"`
+	Email             string     `json:"email"`
 	Name              string     `json:"name,omitempty"`
+	Status            string     `json:"status"`
 	SyncStatus        string     `json:"sync_status"`
 	LastSyncAt        *time.Time `json:"last_sync_at,omitempty"`
-	Roles             []string   `json:"roles"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
 }
 
-// RoleView is a role as the admin screens show it.
-type RoleView struct {
-	ID          uuid.UUID `json:"id"`
-	Code        string    `json:"role_code"`
-	Name        string    `json:"name"`
-	Description string    `json:"description,omitempty"`
-	System      bool      `json:"is_system_role"`
-	Permissions []string  `json:"permissions"`
+// Role is a tenant's ticketing role. A system role is seeded and kept in step with SystemRoles;
+// customizing one turns is_system_role off so the seeder leaves the tenant's edits alone.
+type Role struct {
+	ID           uuid.UUID  `json:"id"`
+	TenantID     *uuid.UUID `json:"tenant_id"`
+	RoleCode     string     `json:"role_code"`
+	Name         string     `json:"name"`
+	Description  *string    `json:"description"`
+	IsSystemRole bool       `json:"is_system_role"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
+}
+
+// PermissionRecord is a catalogue row as the role editor lists it.
+type PermissionRecord struct {
+	ID             uuid.UUID `json:"id"`
+	PermissionCode string    `json:"permission_code"`
+	Name           string    `json:"name"`
+	Module         string    `json:"module"`
+	Action         string    `json:"action"`
+	Resource       *string   `json:"resource,omitempty"`
+	Description    *string   `json:"description,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+// Assignment is one role held, or once held, by a ticketing user.
+type Assignment struct {
+	ID         uuid.UUID
+	TenantID   uuid.UUID
+	UserID     uuid.UUID
+	RoleID     uuid.UUID
+	RoleCode   string
+	RoleName   string
+	AssignedBy uuid.UUID
+	AssignedAt time.Time
+	ExpiresAt  *time.Time
+}
+
+// AssignmentFilters narrows ListAssignments. ActiveOnly keeps assignments with no end date or one
+// still ahead.
+type AssignmentFilters struct {
+	UserID     *uuid.UUID
+	RoleID     *uuid.UUID
+	UserIDs    []uuid.UUID
+	ActiveOnly bool
+}
+
+// AuditEntry is one audit log row.
+type AuditEntry struct {
+	ID           uuid.UUID
+	TenantID     *uuid.UUID
+	UserID       uuid.UUID
+	UserEmail    string
+	Action       string
+	ResourceType string
+	ResourceID   string
+	Changes      *string
+	IPAddress    *string
+	CreatedAt    time.Time
+}
+
+// AuditFilters narrows the audit log list. ResourceTypes is forced by the caller; the others come
+// from the query string.
+type AuditFilters struct {
+	ResourceTypes []string
+	ResourceType  string
+	UserID        *uuid.UUID
+	Action        string
+	From          *time.Time
+	To            *time.Time
 }
 
 // AgentInput is the agent profile created for a staff user.

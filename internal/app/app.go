@@ -202,7 +202,9 @@ func New(ctx context.Context) (*App, error) {
 	if seedErr != nil {
 		return nil, fmt.Errorf("app: seed ticketing permissions: %w", seedErr)
 	}
-	rbacHandler := rbac.NewHandler(rbacService, log)
+	// Adding a user goes through auth-api's S2S member add; auth-api owns the account.
+	membersClient := clients.NewMembersClient(cfg.Auth.ServiceURL, cfg.Auth.InternalServiceKey, log)
+	rbacHandler := rbac.NewHandler(rbacService, membersClient, log)
 
 	// Notifications go out only through ticket events (ticketing.>, notifications-api's ticketing
 	// consumer); there is no direct notifications client.

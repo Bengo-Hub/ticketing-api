@@ -1,11 +1,14 @@
 package rbac
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"net"
 	"net/http"
-	"strconv"
+	"strings"
 
+	authclient "github.com/Bengo-Hub/shared-auth-client"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -13,25 +16,55 @@ import (
 	"github.com/bengobox/ticketing-service/internal/platform/access"
 )
 
-// Handler serves the caller's ticketing profile and role administration.
-type Handler struct {
-	svc *Service
-	log *zap.Logger
+// MemberDirectory adds a person to a tenant in auth-api (the S2S member add), which resolves or
+// creates the SSO account by email. auth-api owns identity; ticketing never creates accounts.
+type MemberDirectory interface {
+	AddMember(ctx context.Context, tenantID uuid.UUID, email string, roles []string) (uuid.UUID, error)
 }
 
-// NewHandler creates the RBAC handler.
-func NewHandler(svc *Service, log *zap.Logger) *Handler {
-	return &Handler{svc: svc, log: log.Named("rbac-handler")}
+// Handler serves the caller's ticketing profile, role administration and user administration.
+type Handler struct {
+	svc     *Service
+	members MemberDirectory
+	log     *zap.Logger
+}
+
+// NewHandler creates the RBAC handler. members may be nil, in which case adding a user fails.
+func NewHandler(svc *Service, members MemberDirectory, log *zap.Logger) *Handler {
+	return &Handler{svc: svc, members: members, log: log.Named("rbac-handler")}
 }
 
 // RegisterRoutes mounts the routes under the protected /{tenant} group. auth/me needs only a
-// signed-in caller in the tenant; role administration needs the rbac permissions.
+// signed-in caller in the tenant. Reads need ticketing.rbac.view and changes ticketing.rbac.manage;
+// on top of that, editing roles, removing a role and adding a user need an organisation admin
+// (admin tier), as in treasury-api.
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Route("/ticketing", func(t chi.Router) {
 		t.Get("/auth/me", h.Me)
-		t.With(access.RequirePermission(Code("rbac", "view"))).Get("/roles", h.ListRoles)
-		t.With(access.RequirePermission(Code("rbac", "view"))).Get("/users", h.ListUsers)
-		t.With(access.RequirePermission(Code("rbac", "manage"))).Put("/users/{userId}/roles", h.SetUserRoles)
+
+		t.Group(func(view chi.Router) {
+			view.Use(access.RequirePermission(Code("rbac", "view")))
+			view.Get("/roles", h.ListRoles)
+			view.Get("/roles/{id}/permissions", h.GetRolePermissions)
+			view.Get("/permissions", h.ListPermissions)
+			view.Get("/rbac/audit-logs", h.ListAuditLogs)
+			view.Get("/users", h.ListUsers)
+			view.Get("/users/{id}", h.GetUser)
+			view.Get("/users/{id}/roles", h.GetUserRoles)
+		})
+
+		t.Group(func(manage chi.Router) {
+			manage.Use(access.RequirePermission(ManagePermission))
+			manage.Post("/roles", h.CreateRole)
+			manage.Post("/roles/customize", h.CustomizeRole)
+			manage.Post("/roles/{id}/clone", h.CloneRole)
+			manage.Patch("/roles/{id}", h.UpdateRole)
+			manage.Delete("/roles/{id}", h.DeleteRole)
+			manage.Put("/roles/{id}/permissions", h.SetRolePermissions)
+			manage.Post("/users", h.CreateUser)
+			manage.Post("/users/{id}/roles", h.AssignUserRole)
+			manage.Delete("/users/{id}/roles/{role_id}", h.RevokeUserRole)
+		})
 	})
 }
 
@@ -99,62 +132,150 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	access.WriteJSON(w, http.StatusOK, BuildMe(a, name))
 }
 
-// ListRoles returns the tenant's roles with their permissions.
-func (h *Handler) ListRoles(w http.ResponseWriter, r *http.Request) {
-	a := access.From(r.Context())
-	roles, err := h.svc.ListRoles(r.Context(), a.TenantID)
-	if err != nil {
-		h.fail(w, err)
-		return
-	}
-	access.WriteJSON(w, http.StatusOK, map[string]any{"roles": roles})
+// rbacCaller is the tenant and person behind an administration request.
+type rbacCaller struct {
+	access *access.Access
+	tenant uuid.UUID
+	userID uuid.UUID
+	// guard is the caller's id for the self-lockout check; nil when they pass permission checks anyway.
+	guard *uuid.UUID
 }
 
-// ListUsers returns the tenant's ticketing users with their roles.
-func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
+// caller resolves the acting tenant (the token's, or ?tenantId= for a platform owner) and the
+// person. A service key has no person and is refused, as in treasury-api.
+func (h *Handler) caller(w http.ResponseWriter, r *http.Request) (rbacCaller, bool) {
 	a := access.From(r.Context())
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-	users, err := h.svc.ListUsers(r.Context(), a.TenantID, limit)
-	if err != nil {
-		h.fail(w, err)
-		return
+	if a == nil {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return rbacCaller{}, false
 	}
-	access.WriteJSON(w, http.StatusOK, map[string]any{"users": users})
+	if a.TenantID == uuid.Nil {
+		respondError(w, http.StatusBadRequest, "tenant context required")
+		return rbacCaller{}, false
+	}
+	if a.AuthUserID == uuid.Nil {
+		respondError(w, http.StatusUnauthorized, "invalid user ID")
+		return rbacCaller{}, false
+	}
+	c := rbacCaller{access: a, tenant: a.TenantID, userID: a.AuthUserID}
+	if !a.Bypass {
+		id := a.AuthUserID
+		c.guard = &id
+	}
+	return c, true
 }
 
-// SetUserRoles replaces a ticketing user's roles. Body: {"roles": ["agent"]}.
-func (h *Handler) SetUserRoles(w http.ResponseWriter, r *http.Request) {
-	a := access.From(r.Context())
-	userID, err := uuid.Parse(chi.URLParam(r, "userId"))
-	if err != nil {
-		access.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid user id"})
-		return
-	}
-	var body struct {
-		Roles []string `json:"roles"`
-	}
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&body); err != nil {
-		access.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
-		return
-	}
-	u, err := h.svc.SetUserRoles(r.Context(), a.TenantID, userID, a.AuthUserID, body.Roles)
-	if err != nil {
-		h.fail(w, err)
-		return
-	}
-	access.WriteJSON(w, http.StatusOK, u)
+func respondError(w http.ResponseWriter, status int, msg string) {
+	access.WriteJSON(w, status, map[string]string{"error": msg})
 }
 
-func (h *Handler) fail(w http.ResponseWriter, err error) {
+func decodeBody(w http.ResponseWriter, r *http.Request, into any) bool {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10)).Decode(into); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return false
+	}
+	return true
+}
+
+func pathUUID(w http.ResponseWriter, r *http.Request, param string) (uuid.UUID, bool) {
+	id, err := uuid.Parse(chi.URLParam(r, param))
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "invalid "+param)
+		return uuid.Nil, false
+	}
+	return id, true
+}
+
+// respondRBACError gives a refused action its own status and message; anything else is logged.
+func (h *Handler) respondRBACError(w http.ResponseWriter, action string, err error) {
 	switch {
-	case errors.Is(err, ErrUnknownRole):
-		access.WriteJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-	case errors.Is(err, ErrUserNotFound):
-		access.WriteJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
+	case errors.Is(err, ErrRoleNotFound), errors.Is(err, ErrUserNotFound), errors.Is(err, ErrAssignmentMissing):
+		respondError(w, http.StatusNotFound, err.Error())
+	case errors.Is(err, ErrRoleCodeTaken), errors.Is(err, ErrRoleInUse), errors.Is(err, ErrSystemRole), errors.Is(err, ErrSelfLockout):
+		respondError(w, http.StatusConflict, err.Error())
+	case errors.Is(err, ErrInvalidRole), errors.Is(err, ErrUnknownPermission), errors.Is(err, ErrInvalidExpiry):
+		respondError(w, http.StatusUnprocessableEntity, err.Error())
 	default:
-		h.log.Error("rbac request failed", zap.Error(err))
-		access.WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
+		h.log.Error("role management failed", zap.String("action", action), zap.Error(err))
+		respondError(w, http.StatusInternalServerError, "could not "+action)
 	}
+}
+
+// audit records a change. A failed write is logged and never undoes or blocks the change.
+func (h *Handler) audit(r *http.Request, c rbacCaller, action, resourceType, resourceID string, changes map[string]any) {
+	tenant := c.tenant
+	e := AuditEntry{
+		TenantID: &tenant, UserID: c.userID, UserEmail: c.access.Email,
+		Action: action, ResourceType: resourceType, ResourceID: resourceID,
+	}
+	if changes != nil {
+		if b, err := json.Marshal(changes); err == nil {
+			s := string(b)
+			e.Changes = &s
+		}
+	}
+	if ip := clientIP(r); ip != "" {
+		e.IPAddress = &ip
+	}
+	if err := h.svc.Audit(r.Context(), e); err != nil {
+		h.log.Warn("audit log write failed", zap.String("action", action), zap.String("resource_id", resourceID), zap.Error(err))
+	}
+}
+
+// clientIP is the address ratelimit.TrustedRealIP left on the request.
+func clientIP(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		host = r.RemoteAddr
+	}
+	if len(host) > 45 {
+		return ""
+	}
+	return host
+}
+
+// adminEquivalentRoles are the admin-tier role names with spaces, hyphens and underscores
+// removed, so super_admin, super-admin, super admin and SuperAdmin all match.
+var adminEquivalentRoles = map[string]struct{}{
+	"admin": {}, "administrator": {}, "superuser": {}, "superusers": {},
+	"superadmin": {}, "owner": {}, "tenantadmin": {}, "systemadmin": {},
+}
+
+func adminRoleKey(role string) string {
+	return strings.Map(func(r rune) rune {
+		switch r {
+		case ' ', '\t', '-', '_':
+			return -1
+		}
+		return r
+	}, strings.ToLower(strings.TrimSpace(role)))
+}
+
+// adminEquivalentRole reports a role that makes its holder an admin of the organisation. Only a
+// platform owner may give one through ticketing.
+func adminEquivalentRole(role string) bool {
+	_, ok := adminEquivalentRoles[adminRoleKey(role)]
+	return ok
+}
+
+const errAdminRoleRefused = "admin, owner and superuser roles can only be given by a platform owner"
+
+// isAdminTier reports a caller who is an admin of the organisation or a platform owner. Holding
+// ticketing.rbac.manage is not enough.
+func isAdminTier(claims *authclient.Claims) bool {
+	return claims != nil && (claims.IsPlatformOwner || claims.IsAdmin() || claims.IsSuperuser())
+}
+
+// requireAdminTier answers 403 unless the caller is admin tier or holds ticketing's own
+// ticketing_admin role, so a tenant can delegate ticketing administration without giving
+// tenant-wide admin (owner decision 2026-11-17). Role editing needs it on top of the rbac.manage
+// gate, so a supervisor cannot widen a role and then hand it out.
+func requireAdminTier(w http.ResponseWriter, c rbacCaller, msg string) bool {
+	if !isAdminTier(c.access.Claims) && !c.access.HasRole(RoleAdmin) {
+		respondError(w, http.StatusForbidden, msg)
+		return false
+	}
+	return true
 }
 
 func strongestRole(roles []string) string {

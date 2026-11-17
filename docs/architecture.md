@@ -113,15 +113,42 @@ A caller who holds only `tickets.view_own` sees and changes only tickets they ra
 
 ### Local RBAC tables
 
-`ticketing_permissions` holds the catalogue. `ticketing_roles` holds each tenant's roles, `role_permissions` links them, `ticketing_users` holds one row per auth user per tenant, and `user_role_assignments` gives users their roles. Column detail is in [erd.md](erd.md).
+`ticketing_permissions` holds the catalogue. `ticketing_roles` holds each tenant's roles, `role_permissions` links them, `ticketing_users` holds one row per auth user per tenant, `user_role_assignments` gives users their roles and `audit_logs` records every role and user change. Column detail is in [erd.md](erd.md).
 
-Role administration routes:
+### Role and user administration
 
-| Route | Permission |
-|---|---|
-| `GET /api/v1/{tenant}/ticketing/roles` | `ticketing.rbac.view` |
-| `GET /api/v1/{tenant}/ticketing/users` | `ticketing.rbac.view` |
-| `PUT /api/v1/{tenant}/ticketing/users/{userId}/roles` with `{"roles": ["agent"]}` | `ticketing.rbac.manage` |
+Ported from treasury-api in sprint 14, with treasury's paths, JSON field names and rules. Every route sits under `/api/v1/{tenant}/ticketing`. Reads need `ticketing.rbac.view` and changes need `ticketing.rbac.manage`; treasury does not split users from roles, so there is no `ticketing.users.*` module. On top of `rbac.manage`, creating, customizing, cloning, editing or deleting a role, changing its permissions, removing a role from someone and adding a user need an organisation admin (the token's `admin` or `superuser` role, or a platform owner), so a manager cannot widen a role and then hand it out. A platform owner acts in any tenant with `?tenantId=`. A service key has no person behind it and is refused.
+
+| Route | Gate | Body | Answer |
+|---|---|---|---|
+| `GET /roles` | view | | `{"roles": [RoleView]}` |
+| `POST /roles` | manage, admin | `{role_code?, name, description?, permission_codes?}` | 201 `Role` |
+| `POST /roles/customize` | manage, admin | `{role_code}` | 200 `Role` |
+| `POST /roles/{id}/clone` | manage, admin | `{role_code?, name, description?}` | 201 `Role` |
+| `PATCH /roles/{id}` | manage, admin | `{name?, description?}` | 200 `Role` |
+| `DELETE /roles/{id}` | manage, admin | | 204 |
+| `GET /roles/{id}/permissions` | view | | `{"permission_codes": [...]}` |
+| `PUT /roles/{id}/permissions` | manage, admin | `{permission_codes}` (required) | 200 `Role` |
+| `GET /permissions` | view | | `{"permissions": [Permission]}` |
+| `POST /users` | manage, admin | `{email, tenant_slug?, roles?}` | 201 `{user_id, email, tenant_id, created}` |
+| `GET /users` | view | `?search=&limit=&page=` | page of `UserView` |
+| `GET /users/{id}` | view | | `User` |
+| `GET /users/{id}/roles` | view | | `{"roles": [Role]}` |
+| `POST /users/{id}/roles` | manage | `{role_id, expires_at?}` | 201 `Role` |
+| `DELETE /users/{id}/roles/{role_id}` | manage, admin | | 204 |
+| `GET /rbac/audit-logs` | view | `?resource_type=&user_id=&action=&from=&to=&limit=&page=` | page of audit entries |
+
+Pages use `github.com/Bengo-Hub/pagination` (`{data, total, limit, page, hasMore}`). A user `{id}` may be the ticketing user id or the auth-api user id.
+
+Rules:
+
+- **System roles.** The four system roles are seeded per tenant and kept in step with their definitions. They are listed with `scope` `global`. A system role cannot be deleted (409). Editing one, through `PATCH`, `PUT /permissions` or `POST /roles/customize`, customizes it: the row keeps its id and code, `is_system_role` turns false, `scope` becomes `tenant`, `is_customized` is true, and the seeder leaves it alone from then on. Deleting a customized role (once nobody holds it) brings the default back at the next seed. A tenant role cannot take a system code.
+- **Grants.** `POST /users/{id}/roles` grants a role or renews it, with an optional end date in the future. A caller who is not an organisation admin may give only a role whose every permission they hold themselves. Nobody but a platform owner may give an admin-equivalent role (`admin`, `owner`, `superuser` and their spellings). A staff role gets the person an agent profile.
+- **Revokes.** Removing a role ends the assignment now and keeps the row, so sign-in never gives the role back.
+- **Self-lockout.** Nobody but a platform owner or superuser may remove their own last way to hold `ticketing.rbac.manage`, by revoke or by editing a role's permissions (409).
+- **Adding a user.** `POST /users` calls auth-api's S2S member add (`POST /api/v1/s2s/tenants/{tenant_id}/members` with the internal service key), which finds or creates the SSO account by email; ticketing then records the ticketing user. Ticketing stores no password. Roles in the body are tenant membership roles sent to auth-api (default `staff`); admin-equivalent ones are refused. The ticketing role comes from sign-in or an admin grant.
+- **Audit.** Every change writes an `audit_logs` row; a failed write is logged and never blocks the change. `GET /rbac/audit-logs` lists only resource types `role` and `user` of the acting tenant; `from` and `to` are East Africa Time days.
+- **Caches.** A change drops this pod's cached grants at once; other pods catch up within 60 seconds.
 
 ### GET /api/v1/{tenant}/ticketing/auth/me
 

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
+	"github.com/bengobox/ticketing-service/internal/ent/auditlog"
 	"github.com/bengobox/ticketing-service/internal/ent/businesscalendar"
 	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
 	"github.com/bengobox/ticketing-service/internal/ent/macro"
@@ -87,6 +88,78 @@ func init() {
 	agentDescID := agentFields[0].Descriptor()
 	// agent.DefaultID holds the default value on creation for the id field.
 	agent.DefaultID = agentDescID.Default.(func() uuid.UUID)
+	auditlogFields := schema.AuditLog{}.Fields()
+	_ = auditlogFields
+	// auditlogDescUserEmail is the schema descriptor for user_email field.
+	auditlogDescUserEmail := auditlogFields[3].Descriptor()
+	// auditlog.UserEmailValidator is a validator for the "user_email" field. It is called by the builders before save.
+	auditlog.UserEmailValidator = auditlogDescUserEmail.Validators[0].(func(string) error)
+	// auditlogDescAction is the schema descriptor for action field.
+	auditlogDescAction := auditlogFields[4].Descriptor()
+	// auditlog.ActionValidator is a validator for the "action" field. It is called by the builders before save.
+	auditlog.ActionValidator = func() func(string) error {
+		validators := auditlogDescAction.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(action string) error {
+			for _, fn := range fns {
+				if err := fn(action); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// auditlogDescResourceType is the schema descriptor for resource_type field.
+	auditlogDescResourceType := auditlogFields[5].Descriptor()
+	// auditlog.ResourceTypeValidator is a validator for the "resource_type" field. It is called by the builders before save.
+	auditlog.ResourceTypeValidator = func() func(string) error {
+		validators := auditlogDescResourceType.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(resource_type string) error {
+			for _, fn := range fns {
+				if err := fn(resource_type); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// auditlogDescResourceID is the schema descriptor for resource_id field.
+	auditlogDescResourceID := auditlogFields[6].Descriptor()
+	// auditlog.ResourceIDValidator is a validator for the "resource_id" field. It is called by the builders before save.
+	auditlog.ResourceIDValidator = func() func(string) error {
+		validators := auditlogDescResourceID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(resource_id string) error {
+			for _, fn := range fns {
+				if err := fn(resource_id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// auditlogDescIPAddress is the schema descriptor for ip_address field.
+	auditlogDescIPAddress := auditlogFields[8].Descriptor()
+	// auditlog.IPAddressValidator is a validator for the "ip_address" field. It is called by the builders before save.
+	auditlog.IPAddressValidator = auditlogDescIPAddress.Validators[0].(func(string) error)
+	// auditlogDescCreatedAt is the schema descriptor for created_at field.
+	auditlogDescCreatedAt := auditlogFields[9].Descriptor()
+	// auditlog.DefaultCreatedAt holds the default value on creation for the created_at field.
+	auditlog.DefaultCreatedAt = auditlogDescCreatedAt.Default.(func() time.Time)
+	// auditlogDescID is the schema descriptor for id field.
+	auditlogDescID := auditlogFields[0].Descriptor()
+	// auditlog.DefaultID holds the default value on creation for the id field.
+	auditlog.DefaultID = auditlogDescID.Default.(func() uuid.UUID)
 	businesscalendarFields := schema.BusinessCalendar{}.Fields()
 	_ = businesscalendarFields
 	// businesscalendarDescName is the schema descriptor for name field.

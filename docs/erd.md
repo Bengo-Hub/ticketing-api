@@ -190,7 +190,7 @@ The fixed catalogue, 108 codes, upserted on every API start.
 | `role_code` | varchar | Unique per tenant. System roles `ticketing_admin`, `supervisor`, `agent`, `customer` |
 | `name` | varchar | |
 | `description` | text | |
-| `is_system_role` | boolean | Default false |
+| `is_system_role` | boolean | Default false. True for a seeded role the seeder keeps in step; customizing it sets false and the seeder then leaves it alone |
 | `created_at`, `updated_at` | timestamptz | |
 
 ### role_permissions
@@ -228,7 +228,26 @@ One row per auth user per tenant, created just in time at sign-in or from `auth.
 | `assigned_at` | timestamptz | |
 | `expires_at` | timestamptz | |
 
-Unique `(tenant_id, user_id, role_id)`.
+Unique `(tenant_id, user_id, role_id)`. Revoking a role sets `expires_at` to now and keeps the row, so sign-in never gives the role back.
+
+### audit_logs
+
+Who changed which roles and people in a tenant (sprint 14). The shape follows treasury-api's `audit_logs`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | Nullable; null for a platform-level action |
+| `user_id` | uuid | auth-api user who acted |
+| `user_email` | varchar(255) | Nullable |
+| `action` | varchar(50) | `role.created`, `role.customized`, `role.cloned`, `role.updated`, `role.deleted`, `role.permissions_updated`, `role.assigned`, `role.revoked`, `create` |
+| `resource_type` | varchar(100) | `role` or `user` |
+| `resource_id` | varchar(255) | |
+| `changes` | text | Nullable JSON summary |
+| `ip_address` | varchar(45) | Nullable |
+| `created_at` | timestamptz | |
+
+Indexes `(tenant_id, created_at)`, `(tenant_id, resource_type, resource_id)` and `(user_id)`.
 
 ## SLA and routing
 

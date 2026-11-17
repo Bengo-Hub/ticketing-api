@@ -11,12 +11,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// ErrUnknownRole is returned when a role code does not exist in the tenant.
-var ErrUnknownRole = errors.New("unknown role")
-
-// ErrUserNotFound is returned when a ticketing user does not exist in the tenant.
-var ErrUserNotFound = errors.New("user not found")
-
 const (
 	// grantsTTL bounds how long another pod serves a changed role; this pod drops its copy at once.
 	grantsTTL = 60 * time.Second
@@ -26,7 +20,8 @@ const (
 	tenantRolesTTL = 30 * time.Minute
 )
 
-// Service seeds the catalogue, provisions users just in time and resolves their grants.
+// Service seeds the catalogue, provisions users just in time, resolves their grants and runs role
+// administration.
 type Service struct {
 	repo   Repository
 	log    *zap.Logger
@@ -69,9 +64,24 @@ func (s *Service) ensureTenantRoles(ctx context.Context, tenantID uuid.UUID) err
 	return nil
 }
 
-// EnsureUser creates or refreshes the tenant's ticketing user from the token. A user without any
-// role gets the role mapped from their global roles (MapGlobalRoles), and a staff role gets an
-// agent profile. It writes at most once per user per pod every syncTTL and returns the local id.
+// addDefaultRole assigns the sign-in default. A system role deleted on another pod since this pod
+// last seeded the tenant is seeded again and the grant retried once.
+func (s *Service) addDefaultRole(ctx context.Context, id Identity, local uuid.UUID, role string) error {
+	err := s.repo.AddRole(ctx, id.TenantID, local, id.AuthUserID, role)
+	if !errors.Is(err, ErrUnknownRole) {
+		return err
+	}
+	s.tenant.Delete(id.TenantID)
+	if err := s.ensureTenantRoles(ctx, id.TenantID); err != nil {
+		return err
+	}
+	return s.repo.AddRole(ctx, id.TenantID, local, id.AuthUserID, role)
+}
+
+// EnsureUser creates or refreshes the tenant's ticketing user from the token. A user who never
+// held a role gets the role mapped from their global roles (MapGlobalRoles), and a staff role gets
+// an agent profile. A user whose role an admin ended keeps the ended row, so sign-in never adds it
+// back. It writes at most once per user per pod every syncTTL and returns the local id.
 func (s *Service) EnsureUser(ctx context.Context, id Identity) (uuid.UUID, error) {
 	key := userKey(id.TenantID, id.AuthUserID)
 	if local, ok := s.synced.Get(key); ok {
@@ -90,7 +100,7 @@ func (s *Service) EnsureUser(ctx context.Context, id Identity) (uuid.UUID, error
 	}
 	if !has {
 		role := MapGlobalRoles(id.GlobalRoles)
-		if err := s.repo.AddRole(ctx, id.TenantID, local, id.AuthUserID, role); err != nil {
+		if err := s.addDefaultRole(ctx, id, local, role); err != nil {
 			return uuid.Nil, fmt.Errorf("assign default role %s: %w", role, err)
 		}
 		s.grants.Delete(key)
@@ -161,53 +171,11 @@ func (s *Service) HasPermission(ctx context.Context, tenantID, authUserID uuid.U
 	return false
 }
 
-// SetUserRoles replaces a user's roles. A staff role gets the user an agent profile.
-func (s *Service) SetUserRoles(ctx context.Context, tenantID, userID, actor uuid.UUID, roleCodes []string) (*User, error) {
-	if len(roleCodes) == 0 {
-		return nil, ErrUnknownRole
-	}
-	if err := s.ensureTenantRoles(ctx, tenantID); err != nil {
-		return nil, err
-	}
-	u, err := s.repo.GetUser(ctx, tenantID, userID)
-	if err != nil {
-		return nil, err
-	}
-	if u == nil {
-		return nil, ErrUserNotFound
-	}
-	if err := s.repo.SetRoles(ctx, tenantID, userID, actor, roleCodes); err != nil {
-		return nil, err
-	}
-	if role := AgentRole(roleCodes); role != "" {
-		if err := s.repo.EnsureAgent(ctx, AgentInput{
-			TenantID: tenantID, AuthUserID: u.AuthServiceUserID, Email: u.Email, Name: u.Name, Role: role,
-		}); err != nil {
-			return nil, fmt.Errorf("ensure agent profile: %w", err)
-		}
-	}
-	s.grants.Delete(userKey(tenantID, u.AuthServiceUserID))
-	u.Roles = roleCodes
-	return u, nil
-}
-
-// ListRoles returns the tenant's roles, seeding the system roles first.
-func (s *Service) ListRoles(ctx context.Context, tenantID uuid.UUID) ([]RoleView, error) {
-	if err := s.ensureTenantRoles(ctx, tenantID); err != nil {
-		return nil, err
-	}
-	return s.repo.ListRoles(ctx, tenantID)
-}
-
-// ListUsers returns the tenant's ticketing users.
-func (s *Service) ListUsers(ctx context.Context, tenantID uuid.UUID, limit int) ([]User, error) {
-	if limit <= 0 || limit > 500 {
-		limit = 200
-	}
-	return s.repo.ListUsers(ctx, tenantID, limit)
-}
-
 // FindUser returns the caller's ticketing user, or nil.
 func (s *Service) FindUser(ctx context.Context, tenantID, authUserID uuid.UUID) (*User, error) {
 	return s.repo.FindUser(ctx, tenantID, authUserID)
 }
+
+// forgetGrants drops this pod's cached grants after a role or assignment changed. Other pods
+// catch up within grantsTTL.
+func (s *Service) forgetGrants() { s.grants.Purge() }

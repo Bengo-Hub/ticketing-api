@@ -9,6 +9,7 @@ import (
 
 	"github.com/bengobox/ticketing-service/internal/ent"
 	entagent "github.com/bengobox/ticketing-service/internal/ent/agent"
+	"github.com/bengobox/ticketing-service/internal/ent/predicate"
 	"github.com/bengobox/ticketing-service/internal/ent/rolepermission"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketingpermission"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketingrole"
@@ -47,7 +48,26 @@ func (r *EntRepository) EnsureTenantRoles(ctx context.Context, tenantID uuid.UUI
 	for _, p := range perms {
 		permIDs[p.PermissionCode] = p.ID
 	}
+	codes := make([]string, len(roles))
+	for i, def := range roles {
+		codes[i] = def.Code
+	}
+	// A role the tenant customized is no longer a system role; the seeder must not reset it.
+	customized, err := r.client.TicketingRole.Query().
+		Where(ticketingrole.TenantID(tenantID), ticketingrole.RoleCodeIn(codes...), ticketingrole.IsSystemRole(false)).
+		Select(ticketingrole.FieldRoleCode).
+		Strings(ctx)
+	if err != nil {
+		return fmt.Errorf("read customized roles: %w", err)
+	}
+	skip := make(map[string]bool, len(customized))
+	for _, c := range customized {
+		skip[c] = true
+	}
 	for _, def := range roles {
+		if skip[def.Code] {
+			continue
+		}
 		roleID, err := r.client.TicketingRole.Create().
 			SetTenantID(tenantID).SetRoleCode(def.Code).SetName(def.Name).SetDescription(def.Description).
 			SetIsSystemRole(true).
@@ -121,11 +141,17 @@ func (r *EntRepository) FindUser(ctx context.Context, tenantID, authUserID uuid.
 	return toUser(u), nil
 }
 
-func (r *EntRepository) GetUser(ctx context.Context, tenantID, userID uuid.UUID) (*User, error) {
-	u, err := r.client.TicketingUser.Query().
-		Where(ticketinguser.TenantID(tenantID), ticketinguser.ID(userID)).
-		WithRoleAssignments(func(q *ent.UserRoleAssignmentQuery) { q.WithRole() }).
-		Only(ctx)
+// userMatches matches a tenant's user by local id or by auth-api user id, so a caller holding the
+// token subject and one holding the list's id both resolve the same row.
+func userMatches(tenantID, id uuid.UUID) predicate.TicketingUser {
+	return ticketinguser.And(
+		ticketinguser.TenantID(tenantID),
+		ticketinguser.Or(ticketinguser.ID(id), ticketinguser.AuthServiceUserID(id)),
+	)
+}
+
+func (r *EntRepository) GetUser(ctx context.Context, tenantID, id uuid.UUID) (*User, error) {
+	u, err := r.client.TicketingUser.Query().Where(userMatches(tenantID, id)).First(ctx)
 	if ent.IsNotFound(err) {
 		return nil, nil
 	}
@@ -135,21 +161,25 @@ func (r *EntRepository) GetUser(ctx context.Context, tenantID, userID uuid.UUID)
 	return toUser(u), nil
 }
 
-func (r *EntRepository) ListUsers(ctx context.Context, tenantID uuid.UUID, limit int) ([]User, error) {
-	rows, err := r.client.TicketingUser.Query().
-		Where(ticketinguser.TenantID(tenantID)).
-		WithRoleAssignments(func(q *ent.UserRoleAssignmentQuery) { q.WithRole() }).
-		Order(ent.Asc(ticketinguser.FieldEmail)).
-		Limit(limit).
-		All(ctx)
+func (r *EntRepository) ListUsers(ctx context.Context, tenantID uuid.UUID, search string, limit, offset int) ([]User, int, error) {
+	q := r.client.TicketingUser.Query().Where(ticketinguser.TenantID(tenantID))
+	if search != "" {
+		q = q.Where(ticketinguser.Or(ticketinguser.EmailContainsFold(search), ticketinguser.NameContainsFold(search)))
+	}
+	total, err := q.Clone().Count(ctx)
 	if err != nil {
-		return nil, err
+		return nil, 0, fmt.Errorf("count users: %w", err)
 	}
-	out := make([]User, 0, len(rows))
-	for _, u := range rows {
-		out = append(out, *toUser(u))
+	rows, err := q.Order(ent.Asc(ticketinguser.FieldEmail), ent.Asc(ticketinguser.FieldID)).
+		Limit(limit).Offset(offset).All(ctx)
+	if err != nil {
+		return nil, 0, fmt.Errorf("list users: %w", err)
 	}
-	return out, nil
+	out := make([]User, len(rows))
+	for i, u := range rows {
+		out[i] = *toUser(u)
+	}
+	return out, total, nil
 }
 
 func (r *EntRepository) HasAssignments(ctx context.Context, tenantID, userID uuid.UUID) (bool, error) {
@@ -158,63 +188,31 @@ func (r *EntRepository) HasAssignments(ctx context.Context, tenantID, userID uui
 		Exist(ctx)
 }
 
-// tenantRoleIDs returns the tenant's role ids for the given codes; unknown codes are an error.
-func tenantRoleIDs(ctx context.Context, c *ent.Client, tenantID uuid.UUID, codes []string) ([]uuid.UUID, error) {
-	rows, err := c.TicketingRole.Query().
-		Where(ticketingrole.TenantID(tenantID), ticketingrole.RoleCodeIn(codes...)).All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if len(rows) != len(uniqueStrings(codes)) {
-		return nil, ErrUnknownRole
-	}
-	ids := make([]uuid.UUID, len(rows))
-	for i, row := range rows {
-		ids[i] = row.ID
-	}
-	return ids, nil
-}
-
-func (r *EntRepository) SetRoles(ctx context.Context, tenantID, userID, assignedBy uuid.UUID, roleCodes []string) error {
-	ids, err := tenantRoleIDs(ctx, r.client, tenantID, roleCodes)
-	if err != nil {
-		return err
-	}
-	tx, err := r.client.Tx(ctx)
-	if err != nil {
-		return err
-	}
-	if _, err := tx.UserRoleAssignment.Delete().
-		Where(userroleassignment.TenantID(tenantID), userroleassignment.UserID(userID)).Exec(ctx); err != nil {
-		_ = tx.Rollback()
-		return err
-	}
-	for _, id := range ids {
-		if err := tx.UserRoleAssignment.Create().
-			SetTenantID(tenantID).SetUserID(userID).SetRoleID(id).SetAssignedBy(assignedBy).Exec(ctx); err != nil {
-			_ = tx.Rollback()
-			return err
-		}
-	}
-	return tx.Commit()
-}
-
 func (r *EntRepository) AddRole(ctx context.Context, tenantID, userID, assignedBy uuid.UUID, roleCode string) error {
-	ids, err := tenantRoleIDs(ctx, r.client, tenantID, []string{roleCode})
+	roleID, err := r.client.TicketingRole.Query().
+		Where(ticketingrole.TenantID(tenantID), ticketingrole.RoleCode(roleCode)).
+		OnlyID(ctx)
+	if ent.IsNotFound(err) {
+		return ErrUnknownRole
+	}
 	if err != nil {
 		return err
 	}
 	return r.client.UserRoleAssignment.Create().
-		SetTenantID(tenantID).SetUserID(userID).SetRoleID(ids[0]).SetAssignedBy(assignedBy).
+		SetTenantID(tenantID).SetUserID(userID).SetRoleID(roleID).SetAssignedBy(assignedBy).
 		OnConflictColumns(userroleassignment.FieldTenantID, userroleassignment.FieldUserID, userroleassignment.FieldRoleID).
 		DoNothing().
 		Exec(ctx)
 }
 
+// notExpired keeps assignments that still grant access: no end date, or one still ahead.
+func notExpired(now time.Time) predicate.UserRoleAssignment {
+	return userroleassignment.Or(userroleassignment.ExpiresAtIsNil(), userroleassignment.ExpiresAtGT(now))
+}
+
 func (r *EntRepository) Grants(ctx context.Context, tenantID, userID, authUserID uuid.UUID, now time.Time) (Grants, error) {
 	assignments, err := r.client.UserRoleAssignment.Query().
-		Where(userroleassignment.TenantID(tenantID), userroleassignment.UserID(userID),
-			userroleassignment.Or(userroleassignment.ExpiresAtIsNil(), userroleassignment.ExpiresAtGT(now))).
+		Where(userroleassignment.TenantID(tenantID), userroleassignment.UserID(userID), notExpired(now)).
 		WithRole(func(q *ent.TicketingRoleQuery) { q.WithPermissions() }).
 		All(ctx)
 	if err != nil {
@@ -241,27 +239,6 @@ func (r *EntRepository) Grants(ctx context.Context, tenantID, userID, authUserID
 		return Grants{}, err
 	}
 	return g, nil
-}
-
-func (r *EntRepository) ListRoles(ctx context.Context, tenantID uuid.UUID) ([]RoleView, error) {
-	rows, err := r.client.TicketingRole.Query().
-		Where(ticketingrole.TenantID(tenantID)).
-		WithPermissions().
-		Order(ent.Asc(ticketingrole.FieldRoleCode)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	out := make([]RoleView, 0, len(rows))
-	for _, row := range rows {
-		v := RoleView{ID: row.ID, Code: row.RoleCode, Name: row.Name, Description: row.Description,
-			System: row.IsSystemRole, Permissions: []string{}}
-		for _, p := range row.Edges.Permissions {
-			v.Permissions = append(v.Permissions, p.PermissionCode)
-		}
-		out = append(out, v)
-	}
-	return out, nil
 }
 
 func (r *EntRepository) EnsureAgent(ctx context.Context, in AgentInput) error {
@@ -295,6 +272,13 @@ func (r *EntRepository) EnsureAgent(ctx context.Context, in AgentInput) error {
 	return err
 }
 
+func (r *EntRepository) DeactivateAgent(ctx context.Context, tenantID, authUserID uuid.UUID) error {
+	_, err := r.client.Agent.Update().
+		Where(entagent.TenantID(tenantID), entagent.UserID(authUserID), entagent.IsActive(true)).
+		SetIsActive(false).Save(ctx)
+	return err
+}
+
 func (r *EntRepository) UpdateAgentContact(ctx context.Context, tenantID, authUserID uuid.UUID, email, name string) error {
 	u := r.client.Agent.Update().Where(entagent.TenantID(tenantID), entagent.UserID(authUserID))
 	if email != "" {
@@ -310,26 +294,9 @@ func (r *EntRepository) UpdateAgentContact(ctx context.Context, tenantID, authUs
 var agentRank = map[string]int{"agent": 1, "supervisor": 2, "admin": 3}
 
 func toUser(u *ent.TicketingUser) *User {
-	out := &User{
+	return &User{
 		ID: u.ID, TenantID: u.TenantID, AuthServiceUserID: u.AuthServiceUserID,
-		Email: u.Email, Name: u.Name, SyncStatus: u.SyncStatus, LastSyncAt: u.LastSyncAt, Roles: []string{},
+		Email: u.Email, Name: u.Name, Status: UserStatusActive, SyncStatus: u.SyncStatus,
+		LastSyncAt: u.LastSyncAt, CreatedAt: u.CreatedAt, UpdatedAt: u.UpdatedAt,
 	}
-	for _, a := range u.Edges.RoleAssignments {
-		if a.Edges.Role != nil {
-			out.Roles = append(out.Roles, a.Edges.Role.RoleCode)
-		}
-	}
-	return out
-}
-
-func uniqueStrings(in []string) []string {
-	seen := map[string]bool{}
-	out := make([]string, 0, len(in))
-	for _, s := range in {
-		if !seen[s] {
-			seen[s] = true
-			out = append(out, s)
-		}
-	}
-	return out
 }
