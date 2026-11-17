@@ -85,6 +85,10 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 		req.Channel = ChannelWeb
 	}
 	s.applyRouting(ctx, req)
+	meta := req.Metadata
+	if req.Inbound != nil {
+		meta = withInboundOrigin(withRequester(req.Metadata, RequesterContact{}), req.Inbound, s.now())
+	}
 
 	ticket := &Ticket{
 		ID:                uuid.New(),
@@ -104,7 +108,7 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 		CRMLeadID:         req.CRMLeadID,
 		Tags:              NormalizeTags(req.Tags),
 		// The requester's contact is stored the same way on every create path (requester_*).
-		Metadata: withRequester(req.Metadata, RequesterContact{
+		Metadata: withRequester(meta, RequesterContact{
 			Name: req.RequesterName, Email: req.RequesterEmail, Phone: req.RequesterPhone,
 		}),
 	}
@@ -128,6 +132,11 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 		ticket.TicketNumber = number
 		if err := repo.CreateTicket(ctx, req.TenantID, ticket); err != nil {
 			return err
+		}
+		if req.Inbound != nil {
+			if err := inboundFilesTx(ctx, repo, ticket, nil, ticket.CustomerID, req.Inbound.Files); err != nil {
+				return err
+			}
 		}
 		if ticket.CRMContactID != nil {
 			out.CRMActivity(crmActivity(ticket, "ticket_opened"))

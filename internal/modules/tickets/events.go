@@ -1,6 +1,7 @@
 package tickets
 
 import (
+	"maps"
 	"strings"
 	"time"
 
@@ -143,7 +144,61 @@ func ticketEventPayload(t *Ticket) map[string]any {
 	} else {
 		p["agent_id"] = ""
 	}
+	maps.Copy(p, emailThread(t))
 	return p
+}
+
+// emailThread is what an email about the ticket needs so the customer's reply comes back to the
+// same ticket:
+//   - email_message_token: the local part for this email's Message-ID (a ticket or comment id,
+//     set per event; empty when the email needs no fixed id);
+//   - email_thread_token: the ticket id, the token of the ticket.created email and so the root
+//     of the thread's References;
+//   - email_in_reply_to and email_references: the customer's last Message-ID and the thread's
+//     Message-IDs, oldest first, in angle brackets;
+//   - email_subject_tag and email_reply_subject: "[TKT-000042]" and "Re: <subject> [TKT-000042]".
+func emailThread(t *Ticket) map[string]any {
+	ids := threadIDs(t.Metadata)
+	refs := make([]string, 0, len(ids))
+	for _, id := range ids {
+		refs = append(refs, "<"+id+">")
+	}
+	inReplyTo := ""
+	if len(refs) > 0 {
+		inReplyTo = refs[len(refs)-1]
+	}
+	tag := ""
+	if t.TicketNumber != "" {
+		tag = "[" + t.TicketNumber + "]"
+	}
+	return map[string]any{
+		"email_message_token": "",
+		"email_thread_token":  t.ID.String(),
+		"email_in_reply_to":   inReplyTo,
+		"email_references":    refs,
+		"email_subject_tag":   tag,
+		"email_reply_subject": ReplySubject(t.Subject, t.TicketNumber),
+	}
+}
+
+// ReplySubject is "Re: <subject> [TKT-n]", with any "Re:" prefixes and an earlier tag removed so
+// the subject does not grow on every reply.
+func ReplySubject(subject, ticketNumber string) string {
+	s := strings.TrimSpace(subject)
+	for {
+		lower := strings.ToLower(s)
+		if strings.HasPrefix(lower, "re:") || strings.HasPrefix(lower, "aw:") {
+			s = strings.TrimSpace(s[3:])
+			continue
+		}
+		break
+	}
+	if ticketNumber != "" {
+		tag := "[" + ticketNumber + "]"
+		s = strings.TrimSpace(strings.ReplaceAll(s, tag, ""))
+		return strings.TrimSpace("Re: " + s + " " + tag)
+	}
+	return "Re: " + s
 }
 
 // excerpt shortens text for an event payload (a notification shows a preview, never the whole body)
@@ -160,6 +215,8 @@ func TicketCreatedPayload(t *Ticket) map[string]any {
 	p := ticketEventPayload(t)
 	p["description"] = excerpt(t.Description, eventExcerptLen)
 	p["created_at"] = t.CreatedAt.UTC().Format(time.RFC3339)
+	// The acknowledgement email's Message-ID is the ticket id, the root every reply references.
+	p["email_message_token"] = t.ID.String()
 	return p
 }
 
@@ -172,6 +229,8 @@ func TicketCommentAddedPayload(t *Ticket, c *TicketComment, agentEmail string) m
 	p["author_id"] = c.AuthorID.String()
 	p["author_type"] = string(c.AuthorType)
 	p["agent_email"] = agentEmail
+	// The reply email's Message-ID is the comment id, so an answer to it finds this ticket.
+	p["email_message_token"] = c.ID.String()
 	return p
 }
 

@@ -410,6 +410,19 @@ var (
 			},
 		},
 	}
+	// TenantSettingsColumns holds the columns for the "tenant_settings" table.
+	TenantSettingsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID, Unique: true},
+		{Name: "settings", Type: field.TypeJSON, Nullable: true},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// TenantSettingsTable holds the schema information for the "tenant_settings" table.
+	TenantSettingsTable = &schema.Table{
+		Name:       "tenant_settings",
+		Columns:    TenantSettingsColumns,
+		PrimaryKey: []*schema.Column{TenantSettingsColumns[0]},
+	}
 	// TicketsColumns holds the columns for the "tickets" table.
 	TicketsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -966,6 +979,7 @@ var (
 		RoutingRulesTable,
 		SLAPoliciesTable,
 		TeamsTable,
+		TenantSettingsTable,
 		TicketsTable,
 		TicketAttachmentsTable,
 		TicketCategoriesTable,
@@ -1007,6 +1021,9 @@ func init() {
 	}
 	TeamsTable.Annotation = &entsql.Annotation{
 		Table: "teams",
+	}
+	TenantSettingsTable.Annotation = &entsql.Annotation{
+		Table: "tenant_settings",
 	}
 	TicketsTable.ForeignKeys[0].RefTable = AgentsTable
 	TicketsTable.ForeignKeys[1].RefTable = TicketCategoriesTable

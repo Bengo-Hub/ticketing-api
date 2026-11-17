@@ -21,6 +21,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/modules/kb"
 	"github.com/bengobox/ticketing-service/internal/modules/rbac"
 	"github.com/bengobox/ticketing-service/internal/modules/routing"
+	"github.com/bengobox/ticketing-service/internal/modules/settings"
 	"github.com/bengobox/ticketing-service/internal/modules/sla"
 	"github.com/bengobox/ticketing-service/internal/modules/tickets"
 	"github.com/bengobox/ticketing-service/internal/platform/access"
@@ -41,6 +42,7 @@ type Config struct {
 	SLAHandler           *sla.Handler
 	KBHandler            *kb.Handler
 	RoutingHandler       *routing.Handler
+	SettingsHandler      *settings.Handler
 	RBACHandler          *rbac.Handler
 	AccessResolver       rbac.Resolver
 	SSEBroker            *sse.Broker
@@ -165,5 +167,8 @@ func mountProtected(p chi.Router, cfg Config) {
 	}
 	if cfg.RoutingHandler != nil {
 		cfg.RoutingHandler.RegisterRoutes(p)
+	}
+	if cfg.SettingsHandler != nil {
+		cfg.SettingsHandler.RegisterRoutes(p)
 	}
 }

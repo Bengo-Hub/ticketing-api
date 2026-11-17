@@ -25,9 +25,11 @@ import (
 	"github.com/bengobox/ticketing-service/internal/http/metrics"
 	httprouter "github.com/bengobox/ticketing-service/internal/http/router"
 	"github.com/bengobox/ticketing-service/internal/modules/identity"
+	"github.com/bengobox/ticketing-service/internal/modules/ingest"
 	"github.com/bengobox/ticketing-service/internal/modules/kb"
 	"github.com/bengobox/ticketing-service/internal/modules/rbac"
 	"github.com/bengobox/ticketing-service/internal/modules/routing"
+	"github.com/bengobox/ticketing-service/internal/modules/settings"
 	"github.com/bengobox/ticketing-service/internal/modules/sla"
 	"github.com/bengobox/ticketing-service/internal/modules/tickets"
 	"github.com/bengobox/ticketing-service/internal/platform/database"
@@ -278,6 +280,30 @@ func New(ctx context.Context) (*App, error) {
 		log.Warn("INTERNAL_SERVICE_KEY is empty: public ticket reads are disabled")
 	}
 
+	// Tenant settings (channels.whatsapp.auto_ticket) and the channel ingest: email from
+	// email-provisioner and WhatsApp from notifications-api become tickets through the tickets
+	// service, so numbering, routing, SLA and events apply as for any other ticket.
+	settingsService := settings.NewService(settings.NewStore(sqlDB))
+	supportAddresses := ingest.Addresses{
+		SupportDomain:   cfg.Channels.SupportDomain,
+		PlatformAddress: cfg.Channels.PlatformAddress,
+		PlatformSlug:    cfg.Channels.PlatformSlug,
+	}
+	settingsHandler := settings.NewHandler(settingsService, supportAddresses.ForwardingAddress, log)
+	if natsConn != nil && cfg.Channels.Enabled {
+		if js, jsErr := natsConn.JetStream(); jsErr != nil {
+			log.Warn("channel ingest not started", zap.Error(jsErr))
+		} else {
+			ingestService := ingest.NewService(ticketsService, log)
+			ingestService.SetThreadWindow(cfg.Channels.WhatsAppWindow)
+			ingest.NewConsumers(ingestService, ingest.NewTenantResolver(supportAddresses, tenantResolver), settingsService, supportAddresses,
+				ingest.ConsumerConfig{
+					EmailStream: cfg.Channels.EmailStream, EmailSubject: cfg.Channels.EmailSubject,
+					WhatsAppStream: cfg.Channels.WhatsAppStream, WhatsAppSubject: cfg.Channels.WhatsAppSubject,
+				}, log).Start(js)
+		}
+	}
+
 	// The shared-events background publisher relays outbox rows to JetStream.
 	var outboxPub *eventslib.Publisher
 	if natsConn != nil {
@@ -310,6 +336,7 @@ func New(ctx context.Context) (*App, error) {
 		SLAHandler:           slaHandler,
 		KBHandler:            kbHandler,
 		RoutingHandler:       routingHandler,
+		SettingsHandler:      settingsHandler,
 		SSEBroker:            sseBroker,
 		TenantResolver:       tenantResolver,
 		CRMLinks:             tickets.NewCRMLinksHandler(ormClient, tenantResolver, cfg.Auth.InternalServiceKey, log),

@@ -25,6 +25,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/routingrule"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
 	"github.com/bengobox/ticketing-service/internal/ent/team"
+	"github.com/bengobox/ticketing-service/internal/ent/tenantsetting"
 	"github.com/bengobox/ticketing-service/internal/ent/ticket"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketattachment"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketcategory"
@@ -61,6 +62,8 @@ type Client struct {
 	SLAPolicy *SLAPolicyClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
+	// TenantSetting is the client for interacting with the TenantSetting builders.
+	TenantSetting *TenantSettingClient
 	// Ticket is the client for interacting with the Ticket builders.
 	Ticket *TicketClient
 	// TicketAttachment is the client for interacting with the TicketAttachment builders.
@@ -103,6 +106,7 @@ func (c *Client) init() {
 	c.RoutingRule = NewRoutingRuleClient(c.config)
 	c.SLAPolicy = NewSLAPolicyClient(c.config)
 	c.Team = NewTeamClient(c.config)
+	c.TenantSetting = NewTenantSettingClient(c.config)
 	c.Ticket = NewTicketClient(c.config)
 	c.TicketAttachment = NewTicketAttachmentClient(c.config)
 	c.TicketCategory = NewTicketCategoryClient(c.config)
@@ -215,6 +219,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		RoutingRule:         NewRoutingRuleClient(cfg),
 		SLAPolicy:           NewSLAPolicyClient(cfg),
 		Team:                NewTeamClient(cfg),
+		TenantSetting:       NewTenantSettingClient(cfg),
 		Ticket:              NewTicketClient(cfg),
 		TicketAttachment:    NewTicketAttachmentClient(cfg),
 		TicketCategory:      NewTicketCategoryClient(cfg),
@@ -254,6 +259,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		RoutingRule:         NewRoutingRuleClient(cfg),
 		SLAPolicy:           NewSLAPolicyClient(cfg),
 		Team:                NewTeamClient(cfg),
+		TenantSetting:       NewTenantSettingClient(cfg),
 		Ticket:              NewTicketClient(cfg),
 		TicketAttachment:    NewTicketAttachmentClient(cfg),
 		TicketCategory:      NewTicketCategoryClient(cfg),
@@ -295,8 +301,8 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Agent, c.BusinessCalendar, c.KBArticle, c.Macro, c.OutboxEvent,
-		c.RolePermission, c.RoutingRule, c.SLAPolicy, c.Team, c.Ticket,
-		c.TicketAttachment, c.TicketCategory, c.TicketComment, c.TicketLink,
+		c.RolePermission, c.RoutingRule, c.SLAPolicy, c.Team, c.TenantSetting,
+		c.Ticket, c.TicketAttachment, c.TicketCategory, c.TicketComment, c.TicketLink,
 		c.TicketSequence, c.TicketView, c.TicketingPermission, c.TicketingRole,
 		c.TicketingUser, c.UserRoleAssignment,
 	} {
@@ -309,8 +315,8 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Agent, c.BusinessCalendar, c.KBArticle, c.Macro, c.OutboxEvent,
-		c.RolePermission, c.RoutingRule, c.SLAPolicy, c.Team, c.Ticket,
-		c.TicketAttachment, c.TicketCategory, c.TicketComment, c.TicketLink,
+		c.RolePermission, c.RoutingRule, c.SLAPolicy, c.Team, c.TenantSetting,
+		c.Ticket, c.TicketAttachment, c.TicketCategory, c.TicketComment, c.TicketLink,
 		c.TicketSequence, c.TicketView, c.TicketingPermission, c.TicketingRole,
 		c.TicketingUser, c.UserRoleAssignment,
 	} {
@@ -339,6 +345,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.SLAPolicy.mutate(ctx, m)
 	case *TeamMutation:
 		return c.Team.mutate(ctx, m)
+	case *TenantSettingMutation:
+		return c.TenantSetting.mutate(ctx, m)
 	case *TicketMutation:
 		return c.Ticket.mutate(ctx, m)
 	case *TicketAttachmentMutation:
@@ -1640,6 +1648,139 @@ func (c *TeamClient) mutate(ctx context.Context, m *TeamMutation) (Value, error)
 		return (&TeamDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Team mutation op: %q", m.Op())
+	}
+}
+
+// TenantSettingClient is a client for the TenantSetting schema.
+type TenantSettingClient struct {
+	config
+}
+
+// NewTenantSettingClient returns a client for the TenantSetting from the given config.
+func NewTenantSettingClient(c config) *TenantSettingClient {
+	return &TenantSettingClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `tenantsetting.Hooks(f(g(h())))`.
+func (c *TenantSettingClient) Use(hooks ...Hook) {
+	c.hooks.TenantSetting = append(c.hooks.TenantSetting, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `tenantsetting.Intercept(f(g(h())))`.
+func (c *TenantSettingClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TenantSetting = append(c.inters.TenantSetting, interceptors...)
+}
+
+// Create returns a builder for creating a TenantSetting entity.
+func (c *TenantSettingClient) Create() *TenantSettingCreate {
+	mutation := newTenantSettingMutation(c.config, OpCreate)
+	return &TenantSettingCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TenantSetting entities.
+func (c *TenantSettingClient) CreateBulk(builders ...*TenantSettingCreate) *TenantSettingCreateBulk {
+	return &TenantSettingCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TenantSettingClient) MapCreateBulk(slice any, setFunc func(*TenantSettingCreate, int)) *TenantSettingCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TenantSettingCreateBulk{err: fmt.Errorf("calling to TenantSettingClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TenantSettingCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TenantSettingCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TenantSetting.
+func (c *TenantSettingClient) Update() *TenantSettingUpdate {
+	mutation := newTenantSettingMutation(c.config, OpUpdate)
+	return &TenantSettingUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TenantSettingClient) UpdateOne(_m *TenantSetting) *TenantSettingUpdateOne {
+	mutation := newTenantSettingMutation(c.config, OpUpdateOne, withTenantSetting(_m))
+	return &TenantSettingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TenantSettingClient) UpdateOneID(id uuid.UUID) *TenantSettingUpdateOne {
+	mutation := newTenantSettingMutation(c.config, OpUpdateOne, withTenantSettingID(id))
+	return &TenantSettingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TenantSetting.
+func (c *TenantSettingClient) Delete() *TenantSettingDelete {
+	mutation := newTenantSettingMutation(c.config, OpDelete)
+	return &TenantSettingDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TenantSettingClient) DeleteOne(_m *TenantSetting) *TenantSettingDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TenantSettingClient) DeleteOneID(id uuid.UUID) *TenantSettingDeleteOne {
+	builder := c.Delete().Where(tenantsetting.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TenantSettingDeleteOne{builder}
+}
+
+// Query returns a query builder for TenantSetting.
+func (c *TenantSettingClient) Query() *TenantSettingQuery {
+	return &TenantSettingQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTenantSetting},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a TenantSetting entity by its id.
+func (c *TenantSettingClient) Get(ctx context.Context, id uuid.UUID) (*TenantSetting, error) {
+	return c.Query().Where(tenantsetting.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TenantSettingClient) GetX(ctx context.Context, id uuid.UUID) *TenantSetting {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *TenantSettingClient) Hooks() []Hook {
+	return c.hooks.TenantSetting
+}
+
+// Interceptors returns the client interceptors.
+func (c *TenantSettingClient) Interceptors() []Interceptor {
+	return c.inters.TenantSetting
+}
+
+func (c *TenantSettingClient) mutate(ctx context.Context, m *TenantSettingMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TenantSettingCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TenantSettingUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TenantSettingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TenantSettingDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TenantSetting mutation op: %q", m.Op())
 	}
 }
 
@@ -3382,14 +3523,16 @@ func (c *UserRoleAssignmentClient) mutate(ctx context.Context, m *UserRoleAssign
 type (
 	hooks struct {
 		Agent, BusinessCalendar, KBArticle, Macro, OutboxEvent, RolePermission,
-		RoutingRule, SLAPolicy, Team, Ticket, TicketAttachment, TicketCategory,
-		TicketComment, TicketLink, TicketSequence, TicketView, TicketingPermission,
-		TicketingRole, TicketingUser, UserRoleAssignment []ent.Hook
+		RoutingRule, SLAPolicy, Team, TenantSetting, Ticket, TicketAttachment,
+		TicketCategory, TicketComment, TicketLink, TicketSequence, TicketView,
+		TicketingPermission, TicketingRole, TicketingUser,
+		UserRoleAssignment []ent.Hook
 	}
 	inters struct {
 		Agent, BusinessCalendar, KBArticle, Macro, OutboxEvent, RolePermission,
-		RoutingRule, SLAPolicy, Team, Ticket, TicketAttachment, TicketCategory,
-		TicketComment, TicketLink, TicketSequence, TicketView, TicketingPermission,
-		TicketingRole, TicketingUser, UserRoleAssignment []ent.Interceptor
+		RoutingRule, SLAPolicy, Team, TenantSetting, Ticket, TicketAttachment,
+		TicketCategory, TicketComment, TicketLink, TicketSequence, TicketView,
+		TicketingPermission, TicketingRole, TicketingUser,
+		UserRoleAssignment []ent.Interceptor
 	}
 )

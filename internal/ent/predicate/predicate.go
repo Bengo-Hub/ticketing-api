@@ -33,6 +33,9 @@ type SLAPolicy func(*sql.Selector)
 // Team is the predicate function for team builders.
 type Team func(*sql.Selector)
 
+// TenantSetting is the predicate function for tenantsetting builders.
+type TenantSetting func(*sql.Selector)
+
 // Ticket is the predicate function for ticket builders.
 type Ticket func(*sql.Selector)
 

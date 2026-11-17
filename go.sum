@@ -6,8 +6,8 @@ github.com/Bengo-Hub/auth-client v0.20.0 h1:NgtZEK9KwGbVw1pEYz9PQtkHTXyVrONHr4Yd
 github.com/Bengo-Hub/auth-client v0.20.0/go.mod h1:i+YzG6wPeBk/KXh+FSOdA1GPEhbcNB7E4FD2LB+tlqk=
 github.com/Bengo-Hub/cache v0.5.10 h1:806r7ne78d8RnhExqd5XcYDTjKdoYG6acJ9HV5Fb/T0=
 github.com/Bengo-Hub/cache v0.5.10/go.mod h1:E84NxTCaQD5/Z+9aFlFrg02E+EQaAfYP4UmzxRHgp2A=
-github.com/Bengo-Hub/httpware v0.21.0 h1:4524wtjgCWDSoRs9rclGAYJ+VzgkTTfbdMrwQ9maBF4=
-github.com/Bengo-Hub/httpware v0.21.0/go.mod h1:DVl7z6zy4Zy0HZgDabwexmHrQSya1yFssci2Y40lYcI=
+github.com/Bengo-Hub/httpware v0.22.0 h1:O5LjMJHeGZeHFuWbQ/a/pTRz9Ltl7iaDiR7MUPNKr2o=
+github.com/Bengo-Hub/httpware v0.22.0/go.mod h1:DVl7z6zy4Zy0HZgDabwexmHrQSya1yFssci2Y40lYcI=
 github.com/Bengo-Hub/pagination v0.5.0 h1:SWNO+Yh7A+0xUmiStT4vj2cL7CbHxxbFNG8xED3G34Y=
 github.com/Bengo-Hub/pagination v0.5.0/go.mod h1:qXxXpX45Shf6qplVtxqEeOMeKiSr/W4nT4nMLQqF4/g=
 github.com/Bengo-Hub/shared-events v0.11.1 h1:Xiiw+lHJ4FukkPnZPn4D+jiP4Efc8t6L0DI0LNfjH4s=
@@ -168,6 +168,8 @@ github.com/nats-io/nkeys v0.4.16/go.mod h1:llLgWoI0o4z/Q57q2R1kHfmocyhGV6VG/U18G
 github.com/nats-io/nuid v1.0.1 h1:5iA8DT8V7q8WK2EScv2padNa/rTESc1KdnPw4TC2paw=
 github.com/nats-io/nuid v1.0.1/go.mod h1:19wcPz3Ph3q0Jbyiqsd0kePYG7A95tJPxeL+1OSON2c=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
+github.com/nyaruka/phonenumbers v1.8.1 h1:2K9YMQuv1dCGqjjzB1DwmdCe89khT4KPBQb2CxAMMlU=
+github.com/nyaruka/phonenumbers v1.8.1/go.mod h1:fsKPJ70O9JetEA4ggnJadYTFWwtGPvu/lETTXNXq6Cs=
 github.com/pelletier/go-toml/v2 v2.2.4 h1:mye9XuhQ6gvn5h28+VilKrrPoQVanw5PMw/TB0t5Ec4=
 github.com/pelletier/go-toml/v2 v2.2.4/go.mod h1:2gIqNv+qfxSVS7cM2xJQKtLSTLUE9V8t9Stt+h56mCY=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=

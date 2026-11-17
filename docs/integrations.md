@@ -13,8 +13,8 @@ This page lists every integration ticketing-api has in code today, the internal 
 | hadia-api | inbound | Internal create and internal read for its support form | Built |
 | marketflow-ai (Vera) | inbound | Internal create from the `create_ticket` tool | Built |
 | subscriptions-api, auth-api | inbound | `tenant.purge` | Built |
-| notifications-api inbound WhatsApp | inbound | `notifications.whatsapp.tenant_inbound` | Planned, sprint 11 |
-| Stalwart support mailboxes | inbound | JMAP | Planned, sprint 11 |
+| notifications-api inbound WhatsApp | inbound | `notifications.whatsapp.tenant_inbound`, durable `ticketing-whatsapp-ingest` | Consumer built (sprint 11); the publisher is a notifications-api change |
+| email-provisioner (Stalwart support mailboxes) | inbound | `email.inbound.support`, durable `ticketing-email-ingest` | Consumer built (sprint 11); the JMAP reader and publisher are an email-provisioner change |
 | object storage (R2) | outbound | httpware/objectstore | Planned, sprint 9 |
 | shared reports module | in process | Report export | Planned, sprint 12 |
 | marketflow-ai, subscriptions-api AI wallet | outbound | Classification, summaries, replies, credits | Planned, sprint 13 |
@@ -92,7 +92,17 @@ Events only. Ticketing makes no direct call to notifications-api. notifications-
 | `ticketing.ticket.resolved` | Requester |
 | `ticketing.sla.first_response_breached`, `ticketing.sla.resolution_breached` | Assigned agent, else the tenant's support contact |
 
-Payloads are in [architecture.md](architecture.md). Mail goes out under the tenant's name with the tenant's support email as Reply-To. Platform tickets on the codevertex tenant use support@codevertexafrica.com. SMS, WhatsApp, @mention alerts and CSAT surveys are not sent yet (sprints 9, 11 and 12).
+Payloads are in [architecture.md](architecture.md). Mail goes out under the tenant's name with the tenant's support email as Reply-To. Platform tickets on the codevertex tenant use support@codevertexafrica.com. SMS, WhatsApp and CSAT surveys are not sent yet (sprints 11 and 12).
+
+**Threaded replies (sprint 11).** Every ticket event carries `email_message_token`, `email_thread_token`, `email_in_reply_to`, `email_references`, `email_subject_tag` and `email_reply_subject`. For a reply to come back to its ticket, notifications-api's ticketing consumer and email worker need these changes, which are agreed with its owner first and not made from here:
+
+1. In `cmd/worker/ticketing_consumer.go`, when `email_message_token` is set, use it as `messaging.Message.RequestID` instead of a new UUID. The worker already turns the request id into the Message-ID local part (`email.WithMessageID`), and bounce matching keeps working because the token is still the request id.
+2. Carry `email_in_reply_to`, `email_references` and `email_thread_token` into `msg.Metadata` (for example under `email_thread`).
+3. In `cmd/worker/main.go`, read them into the context next to `WithMessageID` (a new `email.WithThreadHeaders`).
+4. In `internal/providers/email/smtp.go`, write `In-Reply-To: <email_in_reply_to>` and `References:` built as `<email_thread_token@sending domain>` followed by `email_references`, leaving the root out when it equals this message's own Message-ID (the receipt). In `brevo.go`, send the same two values in `payload.Headers`.
+5. Use `email_reply_subject` as the subject of requester mail on `ticket.comment_added`, and add `email_subject_tag` to the other requester subjects, so a reply keeps the `[TKT-n]` tag.
+
+Until then, a customer reply that quotes the subject tag still threads, and anything else opens a new ticket.
 
 ## marketflow CRM
 
@@ -105,22 +115,29 @@ The shared `TenantPurger` subscribes to `tenant.purge` on the `tenant` stream. a
 
 ## Email
 
-**Built: outbound only.** Ticketing publishes the ticket events above and notifications-api sends the email. Ticketing holds no SMTP, IMAP or POP3 credentials.
+**Outbound.** Ticketing publishes the ticket events above and notifications-api sends the email. Ticketing holds no SMTP, IMAP, POP3 or JMAP credentials.
 
-**Inbound email to ticket (owner decision 2026-11-16, built in [sprint 11](sprints/sprint-11-channels.md)).** It replaces the 12 November decision to stay outbound only.
+**Inbound (owner decision 2026-11-16, consumer built in [sprint 11](sprints/sprint-11-channels.md)).** email-provisioner is the only JMAP client and holds the Stalwart credentials. It reads `support@codevertexafrica.com` (the codevertex tenant) and the catch-all `support.codevertexafrica.com`, where each tenant auto-forwards its own support mailbox to `<slug>@support.codevertexafrica.com`, and publishes `email.inbound.support` once per message. ticketing-api consumes it on the durable `ticketing-email-ingest` (explicit ack, `MaxDeliver` 5). The stream is the config value `INGEST_EMAIL_STREAM`, default `email`, because email-provisioner's publisher is still being written; set it to the stream that publisher creates.
 
-- **Tenants.** Each tenant gets a forwarding address `<slug>@support.codevertexafrica.com` on our Stalwart server. The tenant sets an auto-forward from its own support mailbox, and I never store a tenant mailbox password. ticketing reads the catch-all support domain over JMAP, maps the local part to the tenant, opens a ticket or threads a reply (`In-Reply-To`, `References`, then a `[TKT-n]` subject tag) and dedupes on the Message-ID. The tenant's `support` address in auth-api metadata stays the Reply-To on outbound mail. A settings page shows the forwarding address with a verify step: a test email that must arrive.
-- **Platform tenant.** `support@codevertexafrica.com` is its own Stalwart mailbox and no longer an info@ alias. In sprint 11 ticketing reads it over JMAP for the codevertex tenant on the same path as tenant mail. info@ stays a human inbox.
-- **Ingest rules.** Mail from no-reply addresses, auto-replies (`Auto-Submitted`, `X-Autoreply`, bounce DSNs) and mail flagged by ClamAV never opens a ticket. Attachments go to object storage. Every requester resolves to a marketflow contact.
-- The JMAP client follows the pattern mail-service already uses with Stalwart.
+The event ticketing reads, bare or inside a shared-events envelope under `payload`:
 
-Until this ships, a customer replies through the public ticket page or opens a ticket through the public form, Vera or a service's internal create.
+| Field | Meaning |
+|---|---|
+| `message_id`, `in_reply_to`, `references[]` | Header values, with or without angle brackets |
+| `from_email`, `from_name`, `to[]`, `cc[]` | Sender and visible recipients |
+| `recipient` | The envelope recipient, which decides the tenant |
+| `subject`, `text`, `html` | Body parts; the text part is preferred, the HTML is sanitised through httpware/richtext |
+| `received_at` | RFC 3339 |
+| `attachments[]` | `{key, filename, content_type, size, scan_status}`; the key must be in the tenant's own prefix, `<service>/<tenant id or slug>/attachments/...` |
+| `auto_submitted`, `spam`, `virus`, `headers` | Optional loop and spam signals; `headers` holds other headers keyed in lower case (`x-autoreply`, `precedence`, `content-type`) |
 
-## WhatsApp (planned, sprint 11)
+Threading, dedupe and the ingest rules are in [architecture.md](architecture.md). The tenant's `support` address in auth-api metadata stays the Reply-To on outbound mail, so the customer's reply goes to the tenant's mailbox, is forwarded and comes back in.
 
-Messages to the platform WhatsApp number go out from notifications-api as `notifications.whatsapp.inbound` with no tenant, and only marketflow-api's WhatsApp assistant consumes them. Messages to a tenant's own number land in notifications-api's shared inbox and publish nothing another service can consume.
+## WhatsApp
 
-Sprint 11 adds `notifications.whatsapp.tenant_inbound` to notifications-api, carrying the tenant id, the WhatsApp message id, the sender, the contact name, the text or a media reference and the time received, published once per inbound message through its outbox. ticketing-api consumes it on a durable queue and threads it onto the requester's latest open WhatsApp ticket or opens a new one, dedupes on the WhatsApp message id and never opens a ticket from a STOP reply. Auto-ticketing is the tenant setting `channels.whatsapp.auto_ticket`, off by default. The notifications inbox also gets a Convert to ticket action that calls the internal create with `source: "notifications.whatsapp"`. Agent replies on a WhatsApp ticket go out through the notifications send path inside the 24-hour window, or as a template outside it.
+Messages to the platform WhatsApp number go out from notifications-api as `notifications.whatsapp.inbound` with no tenant, and only marketflow-api's WhatsApp assistant consumes them. Messages to a tenant's own number land in notifications-api's shared inbox.
+
+notifications-api is to publish `notifications.whatsapp.tenant_inbound` on its `notifications` stream once per inbound tenant message, through its outbox, never for a STOP reply: `{tenant_id, phone_number_id, wa_message_id, from, type, text, contact_name, received_at, reply_id}`. ticketing-api consumes it on the durable `ticketing-whatsapp-ingest`, gated by the tenant setting `channels.whatsapp.auto_ticket` (off by default, `GET` and `PUT /{tenant}/settings/channels`, `ticketing.settings.manage`). With it on, a message continues the sender's latest open WhatsApp ticket from the last 7 days or opens one; with it off, a message only continues such a ticket. Dedupe is on the WhatsApp message id. A ticket opened here has source `notifications.whatsapp` and source_ref `{type: "wa_message", id: <wa_message_id>}`, so the inbox's Convert to ticket action should call the internal create with the same source and ref and the two paths never open two tickets for one message. Agent replies on a WhatsApp ticket going out through the notifications send path are still to build.
 
 ## Order, invoice and project links
 

@@ -10,6 +10,9 @@ var (
 	ErrInvalidTransition   = errors.New("tickets: invalid status transition")
 	// ErrDuplicateSourceRef means another create for the same internal source record won the race.
 	ErrDuplicateSourceRef = errors.New("tickets: a ticket already exists for this source record")
+	// ErrDuplicateMessage means a channel message (an email or WhatsApp message) is already a
+	// comment; a redelivered message lands here.
+	ErrDuplicateMessage = errors.New("tickets: this channel message is already on a ticket")
 
 	// Comment errors
 	ErrCommentNotFound = errors.New("tickets: comment not found")

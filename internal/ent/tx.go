@@ -30,6 +30,8 @@ type Tx struct {
 	SLAPolicy *SLAPolicyClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
+	// TenantSetting is the client for interacting with the TenantSetting builders.
+	TenantSetting *TenantSettingClient
 	// Ticket is the client for interacting with the Ticket builders.
 	Ticket *TicketClient
 	// TicketAttachment is the client for interacting with the TicketAttachment builders.
@@ -192,6 +194,7 @@ func (tx *Tx) init() {
 	tx.RoutingRule = NewRoutingRuleClient(tx.config)
 	tx.SLAPolicy = NewSLAPolicyClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
+	tx.TenantSetting = NewTenantSettingClient(tx.config)
 	tx.Ticket = NewTicketClient(tx.config)
 	tx.TicketAttachment = NewTicketAttachmentClient(tx.config)
 	tx.TicketCategory = NewTicketCategoryClient(tx.config)

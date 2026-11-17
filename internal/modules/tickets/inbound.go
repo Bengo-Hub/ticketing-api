@@ -1,0 +1,283 @@
+package tickets
+
+import (
+	"context"
+	"errors"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+)
+
+// Channel messages (Sprint 11). Every inbound email or WhatsApp message is either the message a
+// ticket was opened from or a customer comment on one. Both carry the message's key, so a
+// redelivered message is found and never stored twice:
+//   - a ticket keeps it as metadata source and source_ref, under the ticket_tenant_source_ref
+//     unique index the internal create already uses;
+//   - a comment keeps it as metadata channel and external_id, under the unique expression index
+//     ticketcomment_tenant_channel_external_id (migration 20261117120000_sprint11.sql).
+
+// Ticket metadata keys the channel ingest writes.
+const (
+	// MetaEmailMessageIDs holds the Message-IDs of the customer's emails on the ticket, oldest
+	// first, without angle brackets, at most maxThreadIDs. Outgoing mail answers the last one.
+	MetaEmailMessageIDs = "email_message_ids"
+	// MetaLastInboundAt is when the customer last wrote on any channel.
+	MetaLastInboundAt = "last_inbound_at"
+	// MetaFollowUpOf is the ticket number a new ticket follows up (a reply to a closed ticket).
+	MetaFollowUpOf = "follow_up_of"
+)
+
+// Comment metadata keys of a channel message.
+const (
+	CommentMetaChannel    = "channel"
+	CommentMetaExternalID = "external_id"
+)
+
+// maxThreadIDs bounds the Message-IDs kept per ticket, and so the References header of a reply.
+const maxThreadIDs = 20
+
+// MessageKey identifies one inbound message on one channel: the email Message-ID (without angle
+// brackets) or the WhatsApp message id.
+type MessageKey struct {
+	Channel TicketChannel
+	ID      string
+}
+
+// Source is the ticket metadata source of a ticket opened from a message on this channel.
+// WhatsApp uses the notifications inbox's own source, so a message auto-ticketed here and the
+// same message converted by an agent in the inbox dedupe against each other.
+func (k MessageKey) Source() string {
+	if k.Channel == ChannelWhatsApp {
+		return "notifications.whatsapp"
+	}
+	return string(k.Channel) + ".inbound"
+}
+
+// Ref is the source_ref of a ticket opened from the message.
+func (k MessageKey) Ref() SourceRef {
+	if k.Channel == ChannelWhatsApp {
+		return SourceRef{Type: "wa_message", ID: k.ID}
+	}
+	return SourceRef{Type: string(k.Channel) + "_message", ID: k.ID}
+}
+
+// InboundFile is an attachment the sending service already stored in the private bucket; only
+// its key is recorded here.
+type InboundFile struct {
+	Key         string
+	Filename    string
+	ContentType string
+	Size        int64
+	ScanStatus  string
+}
+
+// InboundOrigin is set on a CreateTicketRequest by the channel ingest: the message the ticket is
+// opened from and the files that came with it.
+type InboundOrigin struct {
+	Key   MessageKey
+	Files []InboundFile
+}
+
+// InboundMessage is a customer's channel message added to an existing ticket.
+type InboundMessage struct {
+	TenantID uuid.UUID
+	TicketID uuid.UUID
+	Key      MessageKey
+	// From is who wrote: the requester, or a colleague of theirs on a threaded email.
+	From     RequesterContact
+	Content  string
+	Metadata map[string]any
+	Files    []InboundFile
+}
+
+// CustomerIDFor is the customer id of a requester known only by email or phone, the same id the
+// public form derives from an email.
+func CustomerIDFor(c RequesterContact) uuid.UUID {
+	if e := normalizeEmail(c.Email); e != "" {
+		return emailToUUID(e)
+	}
+	return emailToUUID(normalizePhone(c.Phone))
+}
+
+// MessageIngested reports whether the message already opened a ticket or is already a comment.
+func (s *Service) MessageIngested(ctx context.Context, tenantID uuid.UUID, key MessageKey) (bool, error) {
+	t, err := s.TicketForMessage(ctx, tenantID, key)
+	return t != nil, err
+}
+
+// TicketForMessage returns the ticket a message opened or was added to, or nil when it is new.
+func (s *Service) TicketForMessage(ctx context.Context, tenantID uuid.UUID, key MessageKey) (*Ticket, error) {
+	t, err := s.repo.FindTicketBySourceRef(ctx, tenantID, key.Source(), key.Ref())
+	if err == nil || !errors.Is(err, ErrTicketNotFound) {
+		return t, err
+	}
+	c, err := s.repo.FindCommentByExternalID(ctx, tenantID, string(key.Channel), key.ID)
+	if errors.Is(err, ErrCommentNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return s.liveTicket(ctx, tenantID, c.TicketID)
+}
+
+// TicketForOwnID returns the ticket an id from one of our own emails names: the ticket id (the
+// token of the ticket.created email) or a comment id (the token of an agent reply). It is nil
+// when the id is neither in this tenant.
+func (s *Service) TicketForOwnID(ctx context.Context, tenantID, id uuid.UUID) (*Ticket, error) {
+	t, err := s.liveTicket(ctx, tenantID, id)
+	if t != nil || err != nil {
+		return t, err
+	}
+	c, err := s.repo.GetComment(ctx, tenantID, id)
+	if errors.Is(err, ErrCommentNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return s.liveTicket(ctx, tenantID, c.TicketID)
+}
+
+// LatestChannelTicket returns the requester's most recently active ticket on the channel that
+// is not closed or cancelled and saw activity since the given time, or nil.
+func (s *Service) LatestChannelTicket(ctx context.Context, tenantID uuid.UUID, channel TicketChannel, phone string, since time.Time) (*Ticket, error) {
+	if phone = normalizePhone(phone); phone == "" {
+		return nil, nil
+	}
+	t, err := s.repo.LatestOpenTicketByPhone(ctx, tenantID, channel, phone, since)
+	if errors.Is(err, ErrTicketNotFound) {
+		return nil, nil
+	}
+	return t, err
+}
+
+func (s *Service) liveTicket(ctx context.Context, tenantID, id uuid.UUID) (*Ticket, error) {
+	t, err := s.repo.GetTicket(ctx, tenantID, id)
+	if errors.Is(err, ErrTicketNotFound) {
+		return nil, nil
+	}
+	return t, err
+}
+
+// AddInboundMessage adds a customer's channel message to a ticket in one transaction: the
+// public customer comment (refused with ErrDuplicateMessage when the message is already one),
+// its files, the thread ids in the ticket metadata, and the reopen of a ticket that was waiting
+// on the customer or resolved.
+func (s *Service) AddInboundMessage(ctx context.Context, in InboundMessage) (*TicketComment, error) {
+	var (
+		comment  *TicketComment
+		reopened bool
+	)
+	err := s.repo.InTx(ctx, in.TenantID, func(repo Repository, out *Outbox) error {
+		t, err := repo.GetTicket(ctx, in.TenantID, in.TicketID)
+		if err != nil {
+			return err
+		}
+		meta := make(map[string]any, len(in.Metadata)+2)
+		for k, v := range in.Metadata {
+			meta[k] = v
+		}
+		meta[CommentMetaChannel] = string(in.Key.Channel)
+		meta[CommentMetaExternalID] = in.Key.ID
+		authorID := CustomerIDFor(in.From)
+		comment, err = s.commentTx(ctx, repo, out, &AddCommentRequest{
+			TenantID: in.TenantID, TicketID: in.TicketID, AuthorID: authorID,
+			AuthorType: AuthorCustomer, CommentType: CommentPublic, Content: in.Content, Metadata: meta,
+		})
+		if err != nil {
+			return err
+		}
+		if err := inboundFilesTx(ctx, repo, t, &comment.ID, authorID, in.Files); err != nil {
+			return err
+		}
+		patch := map[string]any{MetaLastInboundAt: s.now().UTC().Format(time.RFC3339)}
+		if in.Key.Channel == ChannelEmail {
+			patch[MetaEmailMessageIDs] = appendThreadID(t.Metadata, in.Key.ID)
+		}
+		if err := repo.MergeTicketMetadata(ctx, in.TenantID, in.TicketID, patch); err != nil {
+			return err
+		}
+		if t.Status == StatusPendingCustomer || t.Status == StatusResolved {
+			if _, err := s.statusTx(ctx, repo, out, in.TenantID, in.TicketID, StatusOpen); err != nil {
+				return err
+			}
+			reopened = true
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	s.broadcast(in.TenantID, "comment.created", map[string]any{"ticket_id": in.TicketID, "comment_id": comment.ID})
+	if reopened {
+		s.broadcast(in.TenantID, "ticket.updated", map[string]any{"ticket_id": in.TicketID, "status": string(StatusOpen)})
+	}
+	return comment, nil
+}
+
+// withInboundOrigin stores the message key on a new ticket's metadata (and the email
+// Message-ID as the thread's first id).
+func withInboundOrigin(meta map[string]any, o *InboundOrigin, now time.Time) map[string]any {
+	ref := o.Key.Ref()
+	meta["source"] = o.Key.Source()
+	meta["source_ref"] = ref.metadata()
+	meta[MetaLastInboundAt] = now.UTC().Format(time.RFC3339)
+	if o.Key.Channel == ChannelEmail {
+		meta[MetaEmailMessageIDs] = []string{o.Key.ID}
+	}
+	return meta
+}
+
+// inboundFilesTx records files the sending service already stored; they are customer files, so
+// never internal.
+func inboundFilesTx(ctx context.Context, repo Repository, t *Ticket, commentID *uuid.UUID, uploader uuid.UUID, files []InboundFile) error {
+	for _, f := range files {
+		scan := f.ScanStatus
+		if scan == "" {
+			scan = "unknown"
+		}
+		a := &TicketAttachment{
+			ID: uuid.New(), TenantID: t.TenantID, TicketID: t.ID, CommentID: commentID,
+			Filename: cleanFilename(f.Filename, ""), ContentType: f.ContentType, Size: f.Size,
+			StoragePath: f.Key, UploadedByID: uploader,
+			Metadata: map[string]any{metaAttachmentInternal: false, metaScanStatus: scan, "source": string(t.Channel) + ".inbound"},
+		}
+		if err := repo.CreateAttachment(ctx, t.TenantID, a); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// threadIDs reads the Message-IDs kept on a ticket (a JSON array of strings).
+func threadIDs(meta map[string]any) []string {
+	var out []string
+	switch v := meta[MetaEmailMessageIDs].(type) {
+	case []string:
+		out = append(out, v...)
+	case []any:
+		for _, x := range v {
+			if s, ok := x.(string); ok && strings.TrimSpace(s) != "" {
+				out = append(out, strings.TrimSpace(s))
+			}
+		}
+	}
+	return out
+}
+
+// appendThreadID adds a Message-ID to the ticket's thread, keeping the newest maxThreadIDs.
+func appendThreadID(meta map[string]any, id string) []string {
+	ids := threadIDs(meta)
+	for _, existing := range ids {
+		if existing == id {
+			return ids
+		}
+	}
+	ids = append(ids, id)
+	if len(ids) > maxThreadIDs {
+		ids = ids[len(ids)-maxThreadIDs:]
+	}
+	return ids
+}

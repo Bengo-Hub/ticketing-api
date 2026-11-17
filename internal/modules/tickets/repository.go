@@ -22,6 +22,11 @@ type Repository interface {
 	// FindTicketBySourceRef returns the ticket an internal caller created for (source,
 	// source_ref.type, source_ref.id), or ErrTicketNotFound.
 	FindTicketBySourceRef(ctx context.Context, tenantID uuid.UUID, source string, ref SourceRef) (*Ticket, error)
+	// LatestOpenTicketByPhone returns the requester's most recently updated ticket on the channel
+	// that is not closed or cancelled and was updated at or after since, or ErrTicketNotFound.
+	LatestOpenTicketByPhone(ctx context.Context, tenantID uuid.UUID, channel TicketChannel, phone string, since time.Time) (*Ticket, error)
+	// MergeTicketMetadata merges patch into the ticket's metadata at its top level in one statement.
+	MergeTicketMetadata(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, patch map[string]any) error
 	// ListTickets returns up to filter.Page.Limit+1 tickets after the cursor, so the caller learns
 	// whether another page exists.
 	ListTickets(ctx context.Context, tenantID uuid.UUID, filter TicketFilter) ([]*Ticket, error)
@@ -41,6 +46,9 @@ type Repository interface {
 	// Comment operations
 	CreateComment(ctx context.Context, tenantID uuid.UUID, comment *TicketComment) error
 	GetComment(ctx context.Context, tenantID uuid.UUID, commentID uuid.UUID) (*TicketComment, error)
+	// FindCommentByExternalID returns the comment a channel message became, deleted or not, or
+	// ErrCommentNotFound.
+	FindCommentByExternalID(ctx context.Context, tenantID uuid.UUID, channel, externalID string) (*TicketComment, error)
 	// ListComments returns up to q.Page.Limit+1 comments after the cursor, oldest first.
 	ListComments(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, q CommentQuery) ([]*TicketComment, error)
 	UpdateComment(ctx context.Context, tenantID uuid.UUID, commentID uuid.UUID, content string) error

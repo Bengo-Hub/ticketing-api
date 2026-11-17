@@ -14,6 +14,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/schema"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
 	"github.com/bengobox/ticketing-service/internal/ent/team"
+	"github.com/bengobox/ticketing-service/internal/ent/tenantsetting"
 	"github.com/bengobox/ticketing-service/internal/ent/ticket"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketattachment"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketcategory"
@@ -396,6 +397,18 @@ func init() {
 	teamDescID := teamFields[0].Descriptor()
 	// team.DefaultID holds the default value on creation for the id field.
 	team.DefaultID = teamDescID.Default.(func() uuid.UUID)
+	tenantsettingFields := schema.TenantSetting{}.Fields()
+	_ = tenantsettingFields
+	// tenantsettingDescUpdatedAt is the schema descriptor for updated_at field.
+	tenantsettingDescUpdatedAt := tenantsettingFields[3].Descriptor()
+	// tenantsetting.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	tenantsetting.DefaultUpdatedAt = tenantsettingDescUpdatedAt.Default.(func() time.Time)
+	// tenantsetting.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	tenantsetting.UpdateDefaultUpdatedAt = tenantsettingDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// tenantsettingDescID is the schema descriptor for id field.
+	tenantsettingDescID := tenantsettingFields[0].Descriptor()
+	// tenantsetting.DefaultID holds the default value on creation for the id field.
+	tenantsetting.DefaultID = tenantsettingDescID.Default.(func() uuid.UUID)
 	ticketFields := schema.Ticket{}.Fields()
 	_ = ticketFields
 	// ticketDescTicketNumber is the schema descriptor for ticket_number field.

@@ -17,6 +17,21 @@ type Config struct {
 	Events   EventsConfig
 	Auth     AuthConfig
 	Tenant   TenantConfig
+	Channels ChannelsConfig
+}
+
+// ChannelsConfig holds the inbound channel consumers. email-provisioner publishes
+// email.inbound.support onto the "subscription" stream, which already owns email.>.
+type ChannelsConfig struct {
+	Enabled         bool          `envconfig:"INGEST_ENABLED" default:"true"`
+	EmailStream     string        `envconfig:"INGEST_EMAIL_STREAM" default:"subscription"`
+	EmailSubject    string        `envconfig:"INGEST_EMAIL_SUBJECT" default:"email.inbound.support"`
+	SupportDomain   string        `envconfig:"INGEST_SUPPORT_DOMAIN" default:"support.codevertexafrica.com"`
+	PlatformAddress string        `envconfig:"INGEST_PLATFORM_ADDRESS" default:"support@codevertexafrica.com"`
+	PlatformSlug    string        `envconfig:"INGEST_PLATFORM_SLUG" default:"codevertex"`
+	WhatsAppStream  string        `envconfig:"INGEST_WHATSAPP_STREAM" default:"notifications"`
+	WhatsAppSubject string        `envconfig:"INGEST_WHATSAPP_SUBJECT" default:"notifications.whatsapp.tenant_inbound"`
+	WhatsAppWindow  time.Duration `envconfig:"INGEST_WHATSAPP_THREAD_WINDOW" default:"168h"`
 }
 
 // AppConfig holds application-level configuration.

@@ -21,6 +21,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/routingrule"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
 	"github.com/bengobox/ticketing-service/internal/ent/team"
+	"github.com/bengobox/ticketing-service/internal/ent/tenantsetting"
 	"github.com/bengobox/ticketing-service/internal/ent/ticket"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketattachment"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketcategory"
@@ -101,6 +102,7 @@ func checkColumn(t, c string) error {
 			routingrule.Table:         routingrule.ValidColumn,
 			slapolicy.Table:           slapolicy.ValidColumn,
 			team.Table:                team.ValidColumn,
+			tenantsetting.Table:       tenantsetting.ValidColumn,
 			ticket.Table:              ticket.ValidColumn,
 			ticketattachment.Table:    ticketattachment.ValidColumn,
 			ticketcategory.Table:      ticketcategory.ValidColumn,

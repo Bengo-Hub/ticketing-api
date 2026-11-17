@@ -91,6 +91,9 @@ func (TicketComment) Annotations() []schema.Annotation {
 
 // Indexes of the TicketComment.
 func (TicketComment) Indexes() []ent.Index {
+	// The channel message dedupe key ticketcomment_tenant_channel_external_id (tenant_id, metadata
+	// channel, metadata external_id), unique where external_id is set, is an expression index ent
+	// cannot declare; it lives in 20261117120000_sprint11.sql.
 	return []ent.Index{
 		index.Fields("tenant_id", "ticket_id"),
 		index.Fields("ticket_id", "created_at"),

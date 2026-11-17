@@ -176,6 +176,9 @@ type CreateTicketRequest struct {
 	RequesterName  string `json:"requester_name,omitempty"`
 	RequesterEmail string `json:"requester_email,omitempty"`
 	RequesterPhone string `json:"requester_phone,omitempty"`
+	// Inbound is set only by the channel ingest: the email or WhatsApp message the ticket opens
+	// from (its dedupe key) and the files already stored for it. Never read from a body.
+	Inbound *InboundOrigin `json:"-"`
 }
 
 // UpdateTicketRequest represents a request to update a ticket.

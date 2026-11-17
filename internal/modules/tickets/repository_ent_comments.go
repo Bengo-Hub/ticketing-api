@@ -34,6 +34,9 @@ func (r *EntRepository) CreateComment(ctx context.Context, tenantID uuid.UUID, c
 	}
 	created, err := create.Save(ctx)
 	if err != nil {
+		if isDuplicateMessage(err) {
+			return ErrDuplicateMessage
+		}
 		return err
 	}
 	c.ID = created.ID

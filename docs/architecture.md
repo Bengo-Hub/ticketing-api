@@ -46,9 +46,11 @@ internal/
     router/   chi router and the auth chain
   modules/
     identity/ teams, agents, auth.user.* consumer
+    ingest/   channel ingest: email and WhatsApp consumers, tenant from recipient, threading, dedupe
     kb/       knowledge base articles
     rbac/     permission catalogue, roles, ticketing users, auth/me
     routing/  routing rules
+    settings/ per-tenant settings document (tenant_settings), GET and PUT /settings/channels
     sla/      SLA policies, business calendars, deadline calculation, the SLA report
       clock/  business-time arithmetic, Kenyan holidays, policy settings (no internal imports)
     tickets/  tickets, comments, attachments, categories, public and internal routes, SSE, outbox
@@ -202,6 +204,8 @@ Ticket changes and their events commit in one transaction: the repository writes
 | `auth.user.created`, `auth.user.updated` | auth-api | ticketing-api, queue subscription, provisions or refreshes the ticketing user and agent |
 | `tenant.purge` (stream `tenant`) | auth-api (deleted or declined tenant), subscriptions-api (confirmed dormant account) | ticketing-api, the shared `TenantPurger` deletes every row held for the tenant |
 | `apikey.changed` (auth broadcast) | auth-api | ticketing-api, drops the key from the validator cache |
+| `email.inbound.support` (stream `INGEST_EMAIL_STREAM`, default `email`) | email-provisioner, once per message read from the support mailboxes | ticketing-api, durable and deliver group `ticketing-email-ingest` |
+| `notifications.whatsapp.tenant_inbound` (stream `notifications`) | notifications-api, once per message to a tenant's own number | ticketing-api, durable and deliver group `ticketing-whatsapp-ingest` |
 
 Payloads are built in `internal/modules/tickets/events.go` and covered by `events_test.go`. Every ticket event carries `ticket_id`, `ticket_number`, `subject`, `status`, `priority`, `channel`, `source`, `agent_id`, `requester_name`, `requester_email` and `requester_phone`, each key always present and empty when unknown. On top of that:
 
@@ -212,6 +216,16 @@ Payloads are built in `internal/modules/tickets/events.go` and covered by `event
 | `ticket.comment_added` | `comment_id`, `comment` (first 500 characters), `author_id`, `author_type`, `agent_email` |
 | `ticket.status_changed` | `old_status`, `new_status` |
 | `ticket.resolved` | `old_status`, `new_status` (`resolved`), `resolved_at` |
+
+Every ticket event also carries what an email about the ticket needs to thread, so the customer's reply comes back to the same ticket:
+
+| Key | Value |
+|---|---|
+| `email_message_token` | The local part notifications-api should give this email's Message-ID: the ticket id on `ticket.created`, the comment id on `ticket.comment_added`, empty on other events |
+| `email_thread_token` | The ticket id, the token of the receipt email and so the root of the References chain |
+| `email_in_reply_to` | The customer's last Message-ID on the ticket in angle brackets, or empty |
+| `email_references` | The customer's Message-IDs on the ticket, oldest first, in angle brackets (at most 20) |
+| `email_subject_tag`, `email_reply_subject` | `[TKT-000042]` and `Re: <subject> [TKT-000042]` |
 
 SLA events and `ticket.escalated` carry `ticket_id`, `ticket_number`, `subject`, `priority`, `status`, `agent_id` and `team_id`, and never the requester's contact. On top of that:
 
@@ -227,14 +241,18 @@ notifications-api emails the requester from the contact on the event: the receip
 
 ## Inbound email and WhatsApp
 
-Not built yet. A message to a support address or a WhatsApp number does not open a ticket today. Tickets are opened by the signed-in route, the public form and the internal route.
+Built in [sprint 11](sprints/sprint-11-channels.md) on the ticketing side. Every channel goes through one service, `internal/modules/ingest`, which runs in the API pods because it opens tickets through the same `CreateTicket` as every other path: numbering, routing, SLA deadlines, the outbox events and the live SSE update all apply.
 
-The design is set (owner decision, 2026-11-16) and is built in [sprint 11](sprints/sprint-11-channels.md):
-
-- **Tenant email.** Each tenant gets a forwarding address `<slug>@support.codevertexafrica.com` on our Stalwart mail server. The tenant sets an auto-forward from its own support mailbox, so ticketing never stores a tenant mailbox password. ticketing reads the catch-all support domain over JMAP, maps the local part to the tenant, opens a ticket or threads a reply (`In-Reply-To`, `References`, then a `[TKT-n]` subject tag) and dedupes on the Message-ID. The tenant's `support` address stays the Reply-To on outbound mail.
-- **Platform email.** `support@codevertexafrica.com` is already its own Stalwart mailbox, no longer an info@ alias. Sprint 11 reads it over JMAP for the codevertex tenant on the same path. info@ stays a human inbox.
-- **WhatsApp.** notifications-api publishes a new `notifications.whatsapp.tenant_inbound` event for messages to a tenant's own number. ticketing consumes it on a durable queue, threads it onto the requester's open WhatsApp ticket or opens one, dedupes on the WhatsApp message id and ignores STOP replies. Auto-ticketing is a tenant opt-in, off by default, and the notifications inbox gains a Convert to ticket action.
-- **Ingest rules.** No-reply senders, auto-replies (`Auto-Submitted`, `X-Autoreply`, bounce DSNs) and mail flagged by ClamAV never open a ticket. Every requester resolves to a marketflow contact.
+- **Mail ownership.** email-provisioner is the platform's only JMAP client and holds the Stalwart credentials; ticketing has none. It reads `support@codevertexafrica.com` and the `support.codevertexafrica.com` catch-all, stores attachments in the private bucket through httpware/objectstore and publishes `email.inbound.support` once per message.
+- **Tenant from the recipient.** The envelope recipient (then To and Cc) decides the tenant. `support@codevertexafrica.com` is the codevertex tenant; `<slug>@support.codevertexafrica.com` (a `+tag` is ignored) is the tenant with that slug, looked up through the tenant cache. Mail to any other address, or to a slug auth-api does not know, is acknowledged and logged, never retried. An auth-api outage is retried.
+- **Threading, email.** In order: a Message-ID in `In-Reply-To` or `References` that ticketing sent (its local part is a ticket or comment id, from `email_message_token`) or received (a customer email already on a ticket); then a `[TKT-n]` subject tag, only when the sender is that ticket's requester, because a tag can be guessed; else a new ticket.
+- **Threading, WhatsApp.** The sender's most recently active WhatsApp ticket that is not closed or cancelled and saw activity in the last 7 days (`INGEST_WHATSAPP_THREAD_WINDOW`). The phone is normalised to E.164 through httpware/contact.
+- **Open or continue.** A message that continues a ticket becomes a public customer comment, in one transaction with its attachments, the Message-ID added to the ticket's thread (`email_message_ids` in metadata) and, for a ticket waiting on the customer or resolved, the reopen. A reply to a closed or cancelled ticket opens a follow-up ticket with `follow_up_of` in its metadata.
+- **Dedupe.** A ticket opened from a message carries it as `source` and `source_ref` (`email.inbound` with type `email_message`, or `notifications.whatsapp` with type `wa_message`, the source the inbox's Convert to ticket also uses), under the existing unique index `ticket_tenant_source_ref`. A comment carries `channel` and `external_id` in metadata under the unique index `ticketcomment_tenant_channel_external_id`. A redelivered message is found before anything is written, and a race between replicas loses on the unique index.
+- **Ingest rules.** Nothing is opened or continued from our own addresses, no-reply and daemon senders, `Auto-Submitted` other than `no`, `X-Autoreply`, bulk or list `Precedence`, delivery status reports, auto-reply subjects (out of office, automatic reply, undeliverable), mail flagged as spam or carrying a virus, or a WhatsApp STOP reply. Attachments are recorded only when their key is in the tenant's own `attachments` prefix and not reported infected.
+- **WhatsApp opt-in.** `channels.whatsapp.auto_ticket` in the tenant settings, off by default. Off, a message still continues an open WhatsApp ticket (for example one an agent made with Convert to ticket) but never opens one.
+- **Data ownership.** The requester is a marketflow contact. A ticket keeps only `requester_name`, `requester_email` and `requester_phone` in metadata, as every create path does.
+- **Acknowledgement.** Both consumers use explicit acks and `MaxDeliver` 5. A permanent failure is acknowledged and logged; a transient one is retried with a growing delay.
 
 ## Migrations
 
@@ -246,6 +264,7 @@ Schema changes are versioned Atlas migrations in `internal/ent/migrate/migration
 - **Baseline rule.** `20261116090000_baseline.sql` is the schema that Ent auto-migrate built up to commit c0d863b. A database that has the `tickets` table but no revision history records the baseline as applied without running it, and only later files run. Any other database without history is new and runs every file.
 - `20261116090100_phase0.sql` adds per-tenant ticket numbers, the internal-create idempotency index, `tenant_id` on comments and attachments, agents unique per tenant and the RBAC tables.
 - `20261117090000_sprint10.sql` adds `business_calendars`, replaces the policy business-hours flags and map with `calendar_id`, adds `sla_policy_id`, `sla_paused_at`, `sla_paused_minutes`, `sla_first_response_minutes` and `sla_resolution_minutes` to tickets, and gives open tickets with deadlines the policy that set them.
+- `20261117120000_sprint11.sql` adds `tenant_settings` (one settings document per tenant), the unique expression index `ticketcomment_tenant_channel_external_id` that stores each channel message once, and the expression index `ticket_tenant_requester_phone` behind the WhatsApp threading lookup.
 - `RESET_DB=true` drops and recreates the public schema before migrating. It exists for local development only.
 
 The API never auto-migrates. In production (commit 4f03d8e, deployed 2026-11-16) the baseline was recorded as applied, `20261116090100_phase0.sql` ran, and the API seeded the 108 permission codes on start.
@@ -344,6 +363,12 @@ CI (`.github/workflows/deploy.yml`) runs `go vet ./...` and `go test -timeout 30
 | `METRICS_PORT` | `9090` | Metrics port |
 | `HTTP_ALLOWED_ORIGINS` | fleet UI origins | CORS allow list |
 | `RESET_DB` | unset | Migrate only: drop the public schema first (local use) |
+| `INGEST_ENABLED` | `true` | Run the email and WhatsApp ingest consumers |
+| `INGEST_EMAIL_STREAM`, `INGEST_EMAIL_SUBJECT` | `email`, `email.inbound.support` | Stream and subject of the inbound email event; the stream name follows email-provisioner's publisher |
+| `INGEST_SUPPORT_DOMAIN` | `support.codevertexafrica.com` | Catch-all forwarding domain, `<slug>@` this domain |
+| `INGEST_PLATFORM_ADDRESS`, `INGEST_PLATFORM_SLUG` | `support@codevertexafrica.com`, `codevertex` | The platform tenant's support mailbox and slug |
+| `INGEST_WHATSAPP_STREAM`, `INGEST_WHATSAPP_SUBJECT` | `notifications`, `notifications.whatsapp.tenant_inbound` | Stream and subject of the tenant inbound WhatsApp event |
+| `INGEST_WHATSAPP_THREAD_WINDOW` | `168h` | How long a WhatsApp conversation stays on one ticket |
 
 ## Seed
 
