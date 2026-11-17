@@ -136,6 +136,34 @@ var (
 			},
 		},
 	}
+	// CsatResponsesColumns holds the columns for the "csat_responses" table.
+	CsatResponsesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "ticket_id", Type: field.TypeUUID},
+		{Name: "score", Type: field.TypeInt},
+		{Name: "comment", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "token_hash", Type: field.TypeString, Unique: true, Size: 64},
+		{Name: "submitted_at", Type: field.TypeTime},
+	}
+	// CsatResponsesTable holds the schema information for the "csat_responses" table.
+	CsatResponsesTable = &schema.Table{
+		Name:       "csat_responses",
+		Columns:    CsatResponsesColumns,
+		PrimaryKey: []*schema.Column{CsatResponsesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "csatresponse_tenant_id_submitted_at",
+				Unique:  false,
+				Columns: []*schema.Column{CsatResponsesColumns[1], CsatResponsesColumns[6]},
+			},
+			{
+				Name:    "csatresponse_ticket_id_submitted_at",
+				Unique:  false,
+				Columns: []*schema.Column{CsatResponsesColumns[2], CsatResponsesColumns[6]},
+			},
+		},
+	}
 	// KBArticlesColumns holds the columns for the "kb_articles" table.
 	KBArticlesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -329,6 +357,21 @@ var (
 				Columns: []*schema.Column{RolePermissionsColumns[2]},
 			},
 		},
+	}
+	// RollupWatermarksColumns holds the columns for the "rollup_watermarks" table.
+	RollupWatermarksColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString, Unique: true, Size: 100},
+		{Name: "watermark_at", Type: field.TypeTime},
+		{Name: "watermark_id", Type: field.TypeUUID},
+		{Name: "caught_up_at", Type: field.TypeTime, Nullable: true},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// RollupWatermarksTable holds the schema information for the "rollup_watermarks" table.
+	RollupWatermarksTable = &schema.Table{
+		Name:       "rollup_watermarks",
+		Columns:    RollupWatermarksColumns,
+		PrimaryKey: []*schema.Column{RollupWatermarksColumns[0]},
 	}
 	// RoutingRulesColumns holds the columns for the "routing_rules" table.
 	RoutingRulesColumns = []*schema.Column{
@@ -542,6 +585,34 @@ var (
 				Name:    "ticket_tenant_id_resolved_at",
 				Unique:  false,
 				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[24]},
+			},
+			{
+				Name:    "ticket_tenant_id_first_response_at",
+				Unique:  false,
+				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[23]},
+			},
+			{
+				Name:    "ticket_tenant_id_sla_response_due_at",
+				Unique:  false,
+				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[14]},
+			},
+			{
+				Name:    "ticket_tenant_id_sla_resolution_due_at",
+				Unique:  false,
+				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[15]},
+			},
+			{
+				Name:    "ticket_updated_at_id",
+				Unique:  false,
+				Columns: []*schema.Column{TicketsColumns[32], TicketsColumns[0]},
+			},
+			{
+				Name:    "ticket_open_backlog",
+				Unique:  false,
+				Columns: []*schema.Column{TicketsColumns[1], TicketsColumns[7], TicketsColumns[4], TicketsColumns[34], TicketsColumns[35], TicketsColumns[9], TicketsColumns[8], TicketsColumns[15], TicketsColumns[19]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "((deleted_at IS NULL) AND ((status)::text = ANY ('{new,open,in_progress,pending_customer,pending_internal}'::text[])))",
+				},
 			},
 			{
 				Name:    "ticket_subject_trgm",
@@ -842,6 +913,152 @@ var (
 			},
 		},
 	}
+	// TicketRollupsColumns holds the columns for the "ticket_rollups" table.
+	TicketRollupsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "granularity", Type: field.TypeEnum, Enums: []string{"hour", "day"}},
+		{Name: "bucket_start", Type: field.TypeTime},
+		{Name: "team_id", Type: field.TypeUUID},
+		{Name: "agent_id", Type: field.TypeUUID},
+		{Name: "category_id", Type: field.TypeUUID},
+		{Name: "channel", Type: field.TypeString, Size: 20},
+		{Name: "priority", Type: field.TypeString, Size: 20},
+		{Name: "created_count", Type: field.TypeInt, Default: 0},
+		{Name: "resolved_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_response_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_response_minutes", Type: field.TypeInt64, Default: 0},
+		{Name: "resolution_minutes", Type: field.TypeInt64, Default: 0},
+		{Name: "fr_met", Type: field.TypeInt, Default: 0},
+		{Name: "fr_breached", Type: field.TypeInt, Default: 0},
+		{Name: "res_met", Type: field.TypeInt, Default: 0},
+		{Name: "res_breached", Type: field.TypeInt, Default: 0},
+		{Name: "csat_1", Type: field.TypeInt, Default: 0},
+		{Name: "csat_2", Type: field.TypeInt, Default: 0},
+		{Name: "csat_3", Type: field.TypeInt, Default: 0},
+		{Name: "csat_4", Type: field.TypeInt, Default: 0},
+		{Name: "csat_5", Type: field.TypeInt, Default: 0},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// TicketRollupsTable holds the schema information for the "ticket_rollups" table.
+	TicketRollupsTable = &schema.Table{
+		Name:       "ticket_rollups",
+		Columns:    TicketRollupsColumns,
+		PrimaryKey: []*schema.Column{TicketRollupsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ticketrollup_cell",
+				Unique:  true,
+				Columns: []*schema.Column{TicketRollupsColumns[1], TicketRollupsColumns[2], TicketRollupsColumns[3], TicketRollupsColumns[4], TicketRollupsColumns[5], TicketRollupsColumns[6], TicketRollupsColumns[7], TicketRollupsColumns[8]},
+			},
+			{
+				Name:    "ticketrollup_team",
+				Unique:  false,
+				Columns: []*schema.Column{TicketRollupsColumns[1], TicketRollupsColumns[2], TicketRollupsColumns[4], TicketRollupsColumns[3]},
+			},
+			{
+				Name:    "ticketrollup_agent",
+				Unique:  false,
+				Columns: []*schema.Column{TicketRollupsColumns[1], TicketRollupsColumns[2], TicketRollupsColumns[5], TicketRollupsColumns[3]},
+			},
+			{
+				Name:    "ticketrollup_category",
+				Unique:  false,
+				Columns: []*schema.Column{TicketRollupsColumns[1], TicketRollupsColumns[2], TicketRollupsColumns[6], TicketRollupsColumns[3]},
+			},
+			{
+				Name:    "ticketrollup_channel",
+				Unique:  false,
+				Columns: []*schema.Column{TicketRollupsColumns[1], TicketRollupsColumns[2], TicketRollupsColumns[7], TicketRollupsColumns[3]},
+			},
+			{
+				Name:    "ticketrollup_priority",
+				Unique:  false,
+				Columns: []*schema.Column{TicketRollupsColumns[1], TicketRollupsColumns[2], TicketRollupsColumns[8], TicketRollupsColumns[3]},
+			},
+			{
+				Name:    "ticketrollup_team_category",
+				Unique:  false,
+				Columns: []*schema.Column{TicketRollupsColumns[1], TicketRollupsColumns[2], TicketRollupsColumns[4], TicketRollupsColumns[6], TicketRollupsColumns[3]},
+			},
+			{
+				Name:    "ticketrollup_team_channel",
+				Unique:  false,
+				Columns: []*schema.Column{TicketRollupsColumns[1], TicketRollupsColumns[2], TicketRollupsColumns[4], TicketRollupsColumns[7], TicketRollupsColumns[3]},
+			},
+			{
+				Name:    "ticketrollup_team_priority",
+				Unique:  false,
+				Columns: []*schema.Column{TicketRollupsColumns[1], TicketRollupsColumns[2], TicketRollupsColumns[4], TicketRollupsColumns[8], TicketRollupsColumns[3]},
+			},
+		},
+	}
+	// TicketRollupDimsColumns holds the columns for the "ticket_rollup_dims" table.
+	TicketRollupDimsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "granularity", Type: field.TypeEnum, Enums: []string{"hour", "day"}},
+		{Name: "bucket_start", Type: field.TypeTime},
+		{Name: "dim_kind", Type: field.TypeEnum, Enums: []string{"all", "team", "agent", "category", "channel", "priority", "team_agent", "team_category", "team_channel", "team_priority"}},
+		{Name: "team_id", Type: field.TypeUUID},
+		{Name: "dim_value", Type: field.TypeString, Size: 64, Default: ""},
+		{Name: "created_count", Type: field.TypeInt, Default: 0},
+		{Name: "resolved_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_response_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_response_minutes", Type: field.TypeInt64, Default: 0},
+		{Name: "resolution_minutes", Type: field.TypeInt64, Default: 0},
+		{Name: "fr_met", Type: field.TypeInt, Default: 0},
+		{Name: "fr_breached", Type: field.TypeInt, Default: 0},
+		{Name: "res_met", Type: field.TypeInt, Default: 0},
+		{Name: "res_breached", Type: field.TypeInt, Default: 0},
+		{Name: "csat_1", Type: field.TypeInt, Default: 0},
+		{Name: "csat_2", Type: field.TypeInt, Default: 0},
+		{Name: "csat_3", Type: field.TypeInt, Default: 0},
+		{Name: "csat_4", Type: field.TypeInt, Default: 0},
+		{Name: "csat_5", Type: field.TypeInt, Default: 0},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// TicketRollupDimsTable holds the schema information for the "ticket_rollup_dims" table.
+	TicketRollupDimsTable = &schema.Table{
+		Name:       "ticket_rollup_dims",
+		Columns:    TicketRollupDimsColumns,
+		PrimaryKey: []*schema.Column{TicketRollupDimsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ticketrollupdim_key",
+				Unique:  true,
+				Columns: []*schema.Column{TicketRollupDimsColumns[1], TicketRollupDimsColumns[2], TicketRollupDimsColumns[4], TicketRollupDimsColumns[5], TicketRollupDimsColumns[6], TicketRollupDimsColumns[3]},
+			},
+			{
+				Name:    "ticketrollupdim_kind",
+				Unique:  false,
+				Columns: []*schema.Column{TicketRollupDimsColumns[1], TicketRollupDimsColumns[2], TicketRollupDimsColumns[4], TicketRollupDimsColumns[3]},
+			},
+			{
+				Name:    "ticketrollupdim_pair",
+				Unique:  false,
+				Columns: []*schema.Column{TicketRollupDimsColumns[1], TicketRollupDimsColumns[2], TicketRollupDimsColumns[4], TicketRollupDimsColumns[5], TicketRollupDimsColumns[3]},
+			},
+			{
+				Name:    "ticketrollupdim_bucket",
+				Unique:  false,
+				Columns: []*schema.Column{TicketRollupDimsColumns[1], TicketRollupDimsColumns[2], TicketRollupDimsColumns[3]},
+			},
+		},
+	}
+	// TicketRollupMarksColumns holds the columns for the "ticket_rollup_marks" table.
+	TicketRollupMarksColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "hours", Type: field.TypeJSON},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// TicketRollupMarksTable holds the schema information for the "ticket_rollup_marks" table.
+	TicketRollupMarksTable = &schema.Table{
+		Name:       "ticket_rollup_marks",
+		Columns:    TicketRollupMarksColumns,
+		PrimaryKey: []*schema.Column{TicketRollupMarksColumns[0]},
+	}
 	// TicketSequencesColumns holds the columns for the "ticket_sequences" table.
 	TicketSequencesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -1009,10 +1226,12 @@ var (
 		AgentsTable,
 		AuditLogsTable,
 		BusinessCalendarsTable,
+		CsatResponsesTable,
 		KBArticlesTable,
 		MacrosTable,
 		OutboxEventsTable,
 		RolePermissionsTable,
+		RollupWatermarksTable,
 		RoutingRulesTable,
 		SLAPoliciesTable,
 		TeamsTable,
@@ -1022,6 +1241,9 @@ var (
 		TicketCategoriesTable,
 		TicketCommentsTable,
 		TicketLinksTable,
+		TicketRollupsTable,
+		TicketRollupDimsTable,
+		TicketRollupMarksTable,
 		TicketSequencesTable,
 		TicketViewsTable,
 		TicketingPermissionsTable,
@@ -1042,6 +1264,9 @@ func init() {
 	BusinessCalendarsTable.Annotation = &entsql.Annotation{
 		Table: "business_calendars",
 	}
+	CsatResponsesTable.Annotation = &entsql.Annotation{
+		Table: "csat_responses",
+	}
 	KBArticlesTable.Annotation = &entsql.Annotation{
 		Table: "kb_articles",
 	}
@@ -1052,6 +1277,9 @@ func init() {
 	RolePermissionsTable.ForeignKeys[1].RefTable = TicketingPermissionsTable
 	RolePermissionsTable.Annotation = &entsql.Annotation{
 		Table: "role_permissions",
+	}
+	RollupWatermarksTable.Annotation = &entsql.Annotation{
+		Table: "rollup_watermarks",
 	}
 	RoutingRulesTable.Annotation = &entsql.Annotation{
 		Table: "routing_rules",
@@ -1084,6 +1312,15 @@ func init() {
 	}
 	TicketLinksTable.Annotation = &entsql.Annotation{
 		Table: "ticket_links",
+	}
+	TicketRollupsTable.Annotation = &entsql.Annotation{
+		Table: "ticket_rollups",
+	}
+	TicketRollupDimsTable.Annotation = &entsql.Annotation{
+		Table: "ticket_rollup_dims",
+	}
+	TicketRollupMarksTable.Annotation = &entsql.Annotation{
+		Table: "ticket_rollup_marks",
 	}
 	TicketSequencesTable.Annotation = &entsql.Annotation{
 		Table: "ticket_sequences",

@@ -24,7 +24,7 @@ The image holds four binaries, built by the `Dockerfile`.
 |---|---|
 | `ticketing-api` | HTTP API on `HTTP_PORT` (default 4009) and Prometheus metrics on `METRICS_PORT` (default 9090). It also drains the outbox to JetStream. |
 | `ticketing-migrate` | Applies the versioned migrations. `scripts/entrypoint.sh` runs it before the API starts. |
-| `ticketing-worker` | The SLA scans: breaches, pre-breach warnings and escalations. It runs as its own Deployment and is the only process that runs them. |
+| `ticketing-worker` | The SLA scans (breaches, pre-breach warnings and escalations) and the analytics rollup. It runs as its own Deployment and is the only process that runs them. |
 | `ticketing-seed` | Per-tenant seed of categories, SLA policies, the default business calendar and knowledge base sets. It is a manual step. |
 
 ## Module layout
@@ -33,7 +33,7 @@ The image holds four binaries, built by the `Dockerfile`.
 cmd/
   api/        HTTP server
   migrate/    versioned migrations under the advisory lock
-  worker/     SLA breach, warning and escalation scans
+  worker/     SLA breach, warning and escalation scans, the analytics rollup
   seed/       per-tenant seed and knowledge base sets (kb/<set>/*.json)
 internal/
   app/        wiring of every dependency
@@ -45,6 +45,7 @@ internal/
     metrics/  Prometheus collectors and middleware
     router/   chi router and the auth chain
   modules/
+    analytics/ rollup job, /analytics views, export through the shared reports module
     identity/ teams, agents, auth.user.* consumer
     ingest/   channel ingest: email and WhatsApp consumers, tenant from recipient, threading, dedupe
     kb/       knowledge base articles
@@ -53,7 +54,7 @@ internal/
     settings/ per-tenant settings document (tenant_settings), GET and PUT /settings/channels
     sla/      SLA policies, business calendars, deadline calculation, the SLA report
       clock/  business-time arithmetic, Kenyan holidays, policy settings (no internal imports)
-    tickets/  tickets, comments, attachments, categories, public and internal routes, SSE, outbox
+    tickets/  tickets, comments, attachments, categories, public and internal routes, CSAT surveys, SSE, outbox
   platform/
     access/   resolved caller, tenant guard, RequirePermission
     database/ pgx pool
@@ -192,7 +193,7 @@ The requester's contact sits in ticket metadata as `requester_name`, `requester_
 
 ### Public support pages
 
-`/api/v1/{tenant}/public/tickets` takes a create with an `X-OTP-Token` from auth-api's public email code, rate limited to 5 creates an hour per IP and 10 a day per verified email. Reading a ticket and replying need either an OTP token for the requester's email or a ticket access token (`POST .../public/tickets/{ticketNumber}/access`). Access tokens are signed with a key derived from `INTERNAL_SERVICE_KEY`, so without that key every public read is refused.
+`/api/v1/{tenant}/public/tickets` takes a create with an `X-OTP-Token` from auth-api's public email code, rate limited to 5 creates an hour per IP and 10 a day per verified email. Reading a ticket and replying need either an OTP token for the requester's email or a ticket access token (`POST .../public/tickets/{ticketNumber}/access`). Access tokens are signed with a key derived from `INTERNAL_SERVICE_KEY`, so without that key every public read is refused. The CSAT survey routes `POST /api/v1/{tenant}/public/csat/check` and `POST /api/v1/{tenant}/public/csat` take only the survey token and are limited to 20 calls an hour per IP.
 
 ### Live updates
 
@@ -224,6 +225,7 @@ Ticket changes and their events commit in one transaction: the repository writes
 | `ticketing.ticket.comment_added` | outbox, public agent replies only | notifications-api, to the requester |
 | `ticketing.ticket.status_changed` | outbox, every change except to resolved | notifications-api, to the requester |
 | `ticketing.ticket.resolved` | outbox | notifications-api, to the requester |
+| `ticketing.ticket.csat_requested` | outbox, on resolve when the requester has an email | notifications-api, the survey email to the requester (consumer not built yet) |
 | `ticketing.sla.first_response_breached`, `ticketing.sla.resolution_breached` | outbox, from the worker | notifications-api, to the agent |
 | `ticketing.sla.breach_warning` | outbox, from the worker, once per ticket and target | notifications-api, to the agent (consumer not built yet) |
 | `ticketing.ticket.escalated` | outbox, from the worker, once per escalation level | notifications-api, to the agent or team (consumer not built yet) |
@@ -243,6 +245,7 @@ Payloads are built in `internal/modules/tickets/events.go` and covered by `event
 | `ticket.comment_added` | `comment_id`, `comment` (first 500 characters), `author_id`, `author_type`, `agent_email` |
 | `ticket.status_changed` | `old_status`, `new_status` |
 | `ticket.resolved` | `old_status`, `new_status` (`resolved`), `resolved_at` |
+| `ticket.csat_requested` | `resolved_at`, `survey_channel` (`email`), `csat_url`, `csat_token`, `csat_expires_at` |
 
 Every ticket event also carries what an email about the ticket needs to thread, so the customer's reply comes back to the same ticket:
 
@@ -298,7 +301,7 @@ The API never auto-migrates. In production (commit 4f03d8e, deployed 2026-11-16)
 
 ## SLA worker
 
-`ticketing-worker` runs three scans every minute. Each scan of each tick is claimed fleet-wide through the shared cache `RunOnce` under its own period key (`ticketing:sla-breach-scan`, `ticketing:sla-warning-scan`, `ticketing:sla-escalation-scan`), so a second replica or a restart inside the period never repeats one. Without Redis (local development) a single worker runs every tick. The API pods never run a scan. Every scan skips deleted tickets, closed statuses and tickets whose clock is paused, and records each change with its event in one transaction per ticket.
+`ticketing-worker` runs three SLA scans every minute, then the analytics rollup (see Analytics rollups). Each scan of each tick is claimed fleet-wide through the shared cache `RunOnce` under its own period key (`ticketing:sla-breach-scan`, `ticketing:sla-warning-scan`, `ticketing:sla-escalation-scan`), so a second replica or a restart inside the period never repeats one. Without Redis (local development) a single worker runs every tick. The API pods never run a scan. Every scan skips deleted tickets, closed statuses and tickets whose clock is paused, and records each change with its event in one transaction per ticket.
 
 - **Breaches**, 200 per tick: tickets past a response or resolution deadline. Each breach is recorded once.
 - **Warnings**, 200 per tick: targets due within the policy's `notify_before_breach_min`. The lead is wall-clock minutes before the deadline. The ticket's `metadata.sla_warnings.<target>` records the warning, and the update only matches an unwarned target, so each target is warned once.
@@ -346,6 +349,42 @@ An escalation raises the priority one level (up to critical), assigns the rule's
 
 `compliance_pct`, `avg_minutes` and `p90_minutes` are null when nothing was measured. The minutes are business minutes in each ticket's policy clock, net of pauses.
 
+## Analytics rollups
+
+The `/analytics` routes read period figures only from two rollup tables; the contract is in [analytics.md](analytics.md). Each figure is dated by its own moment: created by `created_at`, resolved by `resolved_at`, first responses by `first_response_at`, a breach by its deadline and CSAT by `submitted_at`.
+
+- **`ticket_rollups`, the fine cells.** One tenant's figures for one hour or one UTC day and one combination of team, agent, category, channel and priority, with a missing team, agent or category stored as the zero UUID so the cell key has no nulls. At 200k tickets a year this is about 830k rows, roughly one per moment a ticket counts at, so a query that sums them without a narrow filter is slow.
+- **`ticket_rollup_dims`, the compact series.** Per tenant and bucket, one total row (`dim_kind` `all`) and one row per value of each single dimension, the `GROUPING SETS ((), (team_id), (agent_id), (category_id), (channel), (priority))` of the fine cells. Day rows also hold the team pairs, `(team_id, agent_id)`, `(team_id, category_id)`, `(team_id, channel)` and `(team_id, priority)`, with the team in `team_id` (`dim_kind` `team_agent` and so on), so a long window with a team filter reads its breakdowns from them. Hour rows have no pairs: short windows read few fine cells. A year of totals is 365 day rows; a year of one team's priority breakdown is about 365 rows per priority.
+
+**Which table each query reads.** The repository picks the cheapest from the filters:
+
+| Query | No filter | One filter | Team and one other filter | Any other two or more filters |
+|---|---|---|---|---|
+| Totals (current and previous period), trend | series `all`, `ticketrollupdim_key` | series of that filter's value, `ticketrollupdim_key` | windows over 31 days: the team pair series, `ticketrollupdim_key`; shorter: fine cells, the team pair index (`ticketrollup_team_<dim>`; the agent index for team and agent) | fine cells, the narrowest filter index |
+| Breakdown by D | series of kind D, `ticketrollupdim_pair` | D filtered: its series, `ticketrollupdim_key`. Team filter over 31 days: the team pair series of kind `team_D`, `ticketrollupdim_pair`. Otherwise fine cells, the filter's index | D is the team or the other filtered dimension: the pair row, `ticketrollupdim_key`. A third D: fine cells, the team pair index | fine cells, one `GROUPING SETS` pass |
+
+Windows up to 31 days read hour rows and longer ones day rows, so a series read is at most about 744 hour rows or 367 day rows per value. The fine-cell paths only run under a filter, and a team with a second filter has its own composite index, so they read only the cells of both values. The routes read each table once per figure: the current and previous totals are two series reads of a few hundred rows, and all the fine-cell breakdowns of a request share one `GROUPING SETS` pass.
+
+`ticketing-worker` fills both every minute under `RunOnce` (`ticketing:analytics-rollup`), after the SLA scans. One step, in one transaction:
+
+1. Locks the `ticket_rollups` row of `rollup_watermarks` (`FOR UPDATE`), so two runs never interleave.
+2. Reads the next 2000 tickets with `(updated_at, id)` past the watermark and `updated_at` more than two minutes old, across tenants, through the tickets `(updated_at, id)` index. Deleted tickets are read too.
+3. Works out each ticket's hours now (creation, resolution, first response, both deadlines, its CSAT responses; none for a deleted ticket) and adds the hours it counted in at the last step, from `ticket_rollup_marks`. A deadline that moved or a second resolution therefore leaves no ticket behind in an old cell.
+4. Per tenant, deletes those hour cells and rebuilds them from `tickets` and `csat_responses` with one `INSERT ... SELECT ... GROUP BY ... ON CONFLICT DO UPDATE`. Each moment is a range scan of its own `(tenant_id, moment)` index per hour.
+5. Deletes and rebuilds the same hours' series rows from the fine cells just written, in one `GROUPING SETS` pass.
+6. Rebuilds the UTC-day fine cells of those hours from their hour cells, then the day series rows, team pairs included, from those day cells in one `GROUPING SETS` pass.
+7. Stores the new marks and moves the watermark to the last ticket read; a step that read less than a full batch sets `caught_up_at`.
+
+A run steps until it reaches the two-minute horizon or has spent 40 seconds, so the first run after deploy (the backfill, from the epoch) spreads over as many ticks as it needs. A failed step rolls back whole and the next tick repeats it. Rebuilding a bucket replaces it, so a repeated step gives the same rows, and the series always agree with the fine cells because they are derived from them in the same transaction. Ticket writes all move `updated_at`, including a CSAT submit, which is how a new response reaches its hour.
+
+The routes add live figures counted on `tickets`. The open backlog by status, with overdue and unassigned, and the open count per agent are an index-only scan of the partial index `ticket_open_backlog` (`(tenant_id, status, assigned_team_id, assigned_agent_id, category_id, channel, priority, sla_resolution_due_at, sla_paused_at)` over undeleted tickets in an open status), which holds every filter column, so a filtered backlog never visits the heap either. Today's created and resolved use the `(tenant_id, created_at, id)` and `(tenant_id, resolved_at)` indexes. The old `GET /tickets/stats` and `GET /tickets/analytics` are removed; their figures are in `GET /analytics/tickets`.
+
+`internal/modules/analytics/benchmark_test.go` (build tag `benchmark`) proves Fix 5: 200k seeded tickets, every route under 300 ms p95 for the default window, a year, and filtered windows of both lengths.
+
+## CSAT surveys
+
+Resolving a ticket whose requester has an email issues a survey in the resolve transaction (`csatTx`, called from `statusTx`, so single changes, bulk updates and macros all issue it): a 54-character token whose SHA-256 goes into ticket metadata `csat` with `issued_at` and `expires_at`, and the `ticketing.ticket.csat_requested` event carrying the link. The public routes `POST /{tenant}/public/csat/check` and `POST /{tenant}/public/csat` find the ticket from the id inside the token and compare hashes. The submit marks the token used with a conditional update (hash matches, not used, not expired) and inserts the `csat_responses` row in the same transaction, and `csat_responses.token_hash` is unique, so a token gives one response even under a race. Resolving again issues a new token that replaces the old one.
+
 ## Health and metrics
 
 | Endpoint | Behaviour |
@@ -366,6 +405,7 @@ CI (`.github/workflows/deploy.yml`) runs `go vet ./...` and `go test -timeout 30
 | `github.com/Bengo-Hub/shared-events` | v0.11.1 | Outbox publisher, queue subscriptions, broadcaster, `TenantPurger` |
 | `github.com/Bengo-Hub/cache` | v0.5.10 | Redis client, tenant cache, `RunOnce`, local caches |
 | `github.com/Bengo-Hub/pagination` | v0.5.0 | `Parse` and `NewResponse` on every list (offset paging today, keyset in sprint 9) |
+| `github.com/Bengo-Hub/reports` | v0.2.0 | PDF, CSV and Excel export of the analytics views |
 | `github.com/Bengo-Hub/shared-ratelimit` | v0.3.1 | Global and public limits, `TrustedRealIP` |
 | `entgo.io/ent` | v0.14.5 | Schema and queries |
 | `ariga.io/atlas` | v0.32.1 pre-release | Migration executor |
@@ -396,6 +436,8 @@ CI (`.github/workflows/deploy.yml`) runs `go vet ./...` and `go test -timeout 30
 | `INGEST_PLATFORM_ADDRESS`, `INGEST_PLATFORM_SLUG` | `support@codevertexafrica.com`, `codevertex` | The platform tenant's support mailbox and slug |
 | `INGEST_WHATSAPP_STREAM`, `INGEST_WHATSAPP_SUBJECT` | `notifications`, `notifications.whatsapp.tenant_inbound` | Stream and subject of the tenant inbound WhatsApp event |
 | `INGEST_WHATSAPP_THREAD_WINDOW` | `168h` | How long a WhatsApp conversation stays on one ticket |
+| `CSAT_SURVEY_URL` | `https://ticketing.codevertexafrica.com/support/csat` | Public survey page; the link adds `?tenant=<tenant id>&token=<token>`. Empty sends no surveys |
+| `CSAT_TOKEN_TTL` | `168h` | How long a survey link works |
 
 ## Seed
 

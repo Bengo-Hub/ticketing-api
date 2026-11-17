@@ -16,7 +16,7 @@ This page lists every integration ticketing-api has in code today, the internal 
 | notifications-api inbound WhatsApp | inbound | `notifications.whatsapp.tenant_inbound`, durable `ticketing-whatsapp-ingest` | Consumer built (sprint 11); the publisher is a notifications-api change |
 | email-provisioner (Stalwart support mailboxes) | inbound | `email.inbound.support`, durable `ticketing-email-ingest` | Consumer built (sprint 11); the JMAP reader and publisher are an email-provisioner change |
 | object storage (R2) | outbound | httpware/objectstore | Planned, sprint 9 |
-| shared reports module | in process | Report export | Planned, sprint 12 |
+| shared reports module (`github.com/Bengo-Hub/reports` v0.2.0) | in process | PDF, CSV and Excel export of the analytics views ([analytics.md](analytics.md)) | Built (sprint 12) |
 | marketflow-ai, subscriptions-api AI wallet | outbound | Classification, summaries, replies, credits | Planned, sprint 13 |
 
 ## Internal create: POST /api/v1/internal/tickets
@@ -93,9 +93,38 @@ Events only. Ticketing makes no direct call to notifications-api. notifications-
 | `ticketing.ticket.comment_added` (public agent replies only) | Requester |
 | `ticketing.ticket.status_changed` (every change except to resolved) | Requester, for the statuses that need them |
 | `ticketing.ticket.resolved` | Requester |
+| `ticketing.ticket.csat_requested` | Requester, the CSAT survey email `ticketing/ticket_csat_survey` (notifications-api `cmd/worker/ticketing_csat.go`): five score links (`csat_url` plus `&score=1..5`), threaded on the ticket's email thread, never WhatsApp; essential, so on by default and a tenant can turn it off. See below |
 | `ticketing.sla.first_response_breached`, `ticketing.sla.resolution_breached` | Assigned agent, else the tenant's support contact |
 
-Payloads are in [architecture.md](architecture.md). Mail goes out under the tenant's name with the tenant's support email as Reply-To. Platform tickets on the codevertex tenant use support@codevertexafrica.com. SMS and CSAT surveys are not sent yet (sprint 12).
+Payloads are in [architecture.md](architecture.md). Mail goes out under the tenant's name with the tenant's support email as Reply-To. Platform tickets on the codevertex tenant use support@codevertexafrica.com. SMS is not sent yet.
+
+**CSAT survey (sprint 12).** Resolving a ticket whose requester has an email records `ticketing.ticket.csat_requested` in the same transaction as the resolve, right after `ticketing.ticket.resolved`, through the outbox like every ticket event. It carries every common ticket key (including the email threading keys) plus:
+
+| Field | Meaning |
+|---|---|
+| `status` | `resolved` |
+| `resolved_at` | When the ticket was resolved, RFC 3339 |
+| `survey_channel` | `email`. WhatsApp surveys are off by owner decision, so a ticket without a requester email gets no event |
+| `csat_url` | The survey link to put in the email: `CSAT_SURVEY_URL?tenant=<tenant id>&token=<token>` |
+| `csat_token` | The single-use token inside the link, in case the template builds its own link |
+| `csat_expires_at` | When the link stops working, RFC 3339 (`CSAT_TOKEN_TTL` after the resolve, default 7 days) |
+
+Example:
+
+```json
+{
+  "ticket_id": "6f0c...", "ticket_number": "TKT-000042", "subject": "Printer jam",
+  "status": "resolved", "priority": "normal", "channel": "email", "source": "",
+  "agent_id": "", "requester_name": "Jane", "requester_email": "jane@example.com", "requester_phone": "",
+  "resolved_at": "2026-11-17T09:00:00Z", "survey_channel": "email",
+  "csat_url": "https://ticketing.codevertexafrica.com/support/csat?tenant=<tenant id>&token=<token>",
+  "csat_token": "<54 characters>", "csat_expires_at": "2026-11-24T09:00:00Z",
+  "email_message_token": "", "email_thread_token": "6f0c...", "email_in_reply_to": "", "email_references": [],
+  "email_subject_tag": "[TKT-000042]", "email_reply_subject": "Re: Printer jam [TKT-000042]"
+}
+```
+
+notifications-api's ticketing consumer needs a case for `ticket.csat_requested` that emails `requester_email` under the tenant's name with a "How did we do?" message, the ticket number and subject, and one button to `csat_url` (or five score links to `csat_url&score=<n>`, which the survey page reads to preselect a score). It goes in the ticket's email thread with `email_reply_subject` and the thread headers above. The token is a credential for one rating only: the email must not log it, and the event is the only place it exists in clear. The rating comes back through the public routes in [analytics.md](analytics.md), not through notifications-api.
 
 **WhatsApp replies (sprint 11).** `ticketing.ticket.comment_added` carries these fields on every event. They hold values only on a WhatsApp ticket with a requester phone and a recorded inbound message; otherwise they are false or empty.
 
@@ -168,7 +197,7 @@ Tickets carry `order_id`, `external_reference`, `crm_contact_id` and `crm_lead_i
 
 - Internal routes check `X-API-Key` with `httpware.ValidServiceKey` and require `X-Tenant-ID`.
 - Protected routes run the full auth chain, including the tenant guard that refuses a URL tenant other than the token's.
-- Public routes need an OTP token or a ticket access token, and public creates are rate limited per IP and per verified email.
+- Public routes need an OTP token or a ticket access token, and public creates are rate limited per IP and per verified email. The CSAT survey routes take only their single-use survey token, stored as a SHA-256 hash, and are rate limited per IP.
 - Secrets come from Kubernetes secrets as environment variables. Nothing in this repository holds a real key.
 
 ## References

@@ -18,6 +18,8 @@ type Tx struct {
 	AuditLog *AuditLogClient
 	// BusinessCalendar is the client for interacting with the BusinessCalendar builders.
 	BusinessCalendar *BusinessCalendarClient
+	// CSATResponse is the client for interacting with the CSATResponse builders.
+	CSATResponse *CSATResponseClient
 	// KBArticle is the client for interacting with the KBArticle builders.
 	KBArticle *KBArticleClient
 	// Macro is the client for interacting with the Macro builders.
@@ -26,6 +28,8 @@ type Tx struct {
 	OutboxEvent *OutboxEventClient
 	// RolePermission is the client for interacting with the RolePermission builders.
 	RolePermission *RolePermissionClient
+	// RollupWatermark is the client for interacting with the RollupWatermark builders.
+	RollupWatermark *RollupWatermarkClient
 	// RoutingRule is the client for interacting with the RoutingRule builders.
 	RoutingRule *RoutingRuleClient
 	// SLAPolicy is the client for interacting with the SLAPolicy builders.
@@ -44,6 +48,12 @@ type Tx struct {
 	TicketComment *TicketCommentClient
 	// TicketLink is the client for interacting with the TicketLink builders.
 	TicketLink *TicketLinkClient
+	// TicketRollup is the client for interacting with the TicketRollup builders.
+	TicketRollup *TicketRollupClient
+	// TicketRollupDim is the client for interacting with the TicketRollupDim builders.
+	TicketRollupDim *TicketRollupDimClient
+	// TicketRollupMark is the client for interacting with the TicketRollupMark builders.
+	TicketRollupMark *TicketRollupMarkClient
 	// TicketSequence is the client for interacting with the TicketSequence builders.
 	TicketSequence *TicketSequenceClient
 	// TicketView is the client for interacting with the TicketView builders.
@@ -190,10 +200,12 @@ func (tx *Tx) init() {
 	tx.Agent = NewAgentClient(tx.config)
 	tx.AuditLog = NewAuditLogClient(tx.config)
 	tx.BusinessCalendar = NewBusinessCalendarClient(tx.config)
+	tx.CSATResponse = NewCSATResponseClient(tx.config)
 	tx.KBArticle = NewKBArticleClient(tx.config)
 	tx.Macro = NewMacroClient(tx.config)
 	tx.OutboxEvent = NewOutboxEventClient(tx.config)
 	tx.RolePermission = NewRolePermissionClient(tx.config)
+	tx.RollupWatermark = NewRollupWatermarkClient(tx.config)
 	tx.RoutingRule = NewRoutingRuleClient(tx.config)
 	tx.SLAPolicy = NewSLAPolicyClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
@@ -203,6 +215,9 @@ func (tx *Tx) init() {
 	tx.TicketCategory = NewTicketCategoryClient(tx.config)
 	tx.TicketComment = NewTicketCommentClient(tx.config)
 	tx.TicketLink = NewTicketLinkClient(tx.config)
+	tx.TicketRollup = NewTicketRollupClient(tx.config)
+	tx.TicketRollupDim = NewTicketRollupDimClient(tx.config)
+	tx.TicketRollupMark = NewTicketRollupMarkClient(tx.config)
 	tx.TicketSequence = NewTicketSequenceClient(tx.config)
 	tx.TicketView = NewTicketViewClient(tx.config)
 	tx.TicketingPermission = NewTicketingPermissionClient(tx.config)

@@ -3,7 +3,6 @@ package tickets
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"strings"
 
 	pagination "github.com/Bengo-Hub/pagination"
@@ -326,44 +325,4 @@ func (h *Handler) DeleteTicket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
-}
-
-// GetTicketStats returns ticket counts by status.
-func (h *Handler) GetTicketStats(w http.ResponseWriter, r *http.Request) {
-	a, ok := caller(w, r)
-	if !ok {
-		return
-	}
-	stats, err := h.service.GetTicketStats(r.Context(), a.TenantID)
-	if err != nil {
-		h.handleError(w, err)
-		return
-	}
-	respondJSON(w, http.StatusOK, map[string]any{"stats": stats})
-}
-
-// GetAnalytics returns ticket counts by status and priority plus the creation and resolution trend.
-// @Summary      Get analytics
-// @Tags         tickets
-// @Produce      json
-// @Param        tenant path  string true "Tenant slug"
-// @Param        days   query int    false "Days in the trend (default 30, max 365)"
-// @Success      200 {object} tickets.AnalyticsResponse
-// @Security     BearerAuth
-// @Router       /{tenant}/tickets/analytics [get]
-func (h *Handler) GetAnalytics(w http.ResponseWriter, r *http.Request) {
-	a, ok := caller(w, r)
-	if !ok {
-		return
-	}
-	days := 30
-	if n, err := strconv.Atoi(r.URL.Query().Get("days")); err == nil && n > 0 {
-		days = n
-	}
-	analytics, err := h.service.GetAnalytics(r.Context(), a.TenantID, days)
-	if err != nil {
-		h.handleError(w, err)
-		return
-	}
-	respondJSON(w, http.StatusOK, analytics)
 }

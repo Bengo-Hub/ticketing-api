@@ -15,6 +15,9 @@ type AuditLog func(*sql.Selector)
 // BusinessCalendar is the predicate function for businesscalendar builders.
 type BusinessCalendar func(*sql.Selector)
 
+// CSATResponse is the predicate function for csatresponse builders.
+type CSATResponse func(*sql.Selector)
+
 // KBArticle is the predicate function for kbarticle builders.
 type KBArticle func(*sql.Selector)
 
@@ -26,6 +29,9 @@ type OutboxEvent func(*sql.Selector)
 
 // RolePermission is the predicate function for rolepermission builders.
 type RolePermission func(*sql.Selector)
+
+// RollupWatermark is the predicate function for rollupwatermark builders.
+type RollupWatermark func(*sql.Selector)
 
 // RoutingRule is the predicate function for routingrule builders.
 type RoutingRule func(*sql.Selector)
@@ -53,6 +59,15 @@ type TicketComment func(*sql.Selector)
 
 // TicketLink is the predicate function for ticketlink builders.
 type TicketLink func(*sql.Selector)
+
+// TicketRollup is the predicate function for ticketrollup builders.
+type TicketRollup func(*sql.Selector)
+
+// TicketRollupDim is the predicate function for ticketrollupdim builders.
+type TicketRollupDim func(*sql.Selector)
+
+// TicketRollupMark is the predicate function for ticketrollupmark builders.
+type TicketRollupMark func(*sql.Selector)
 
 // TicketSequence is the predicate function for ticketsequence builders.
 type TicketSequence func(*sql.Selector)

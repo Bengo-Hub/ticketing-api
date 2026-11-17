@@ -45,6 +45,18 @@ func (f BusinessCalendarFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.V
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BusinessCalendarMutation", m)
 }
 
+// The CSATResponseFunc type is an adapter to allow the use of ordinary
+// function as CSATResponse mutator.
+type CSATResponseFunc func(context.Context, *ent.CSATResponseMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CSATResponseFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CSATResponseMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CSATResponseMutation", m)
+}
+
 // The KBArticleFunc type is an adapter to allow the use of ordinary
 // function as KBArticle mutator.
 type KBArticleFunc func(context.Context, *ent.KBArticleMutation) (ent.Value, error)
@@ -91,6 +103,18 @@ func (f RolePermissionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Val
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RolePermissionMutation", m)
+}
+
+// The RollupWatermarkFunc type is an adapter to allow the use of ordinary
+// function as RollupWatermark mutator.
+type RollupWatermarkFunc func(context.Context, *ent.RollupWatermarkMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RollupWatermarkFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.RollupWatermarkMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RollupWatermarkMutation", m)
 }
 
 // The RoutingRuleFunc type is an adapter to allow the use of ordinary
@@ -199,6 +223,42 @@ func (f TicketLinkFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketLinkMutation", m)
+}
+
+// The TicketRollupFunc type is an adapter to allow the use of ordinary
+// function as TicketRollup mutator.
+type TicketRollupFunc func(context.Context, *ent.TicketRollupMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TicketRollupFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TicketRollupMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketRollupMutation", m)
+}
+
+// The TicketRollupDimFunc type is an adapter to allow the use of ordinary
+// function as TicketRollupDim mutator.
+type TicketRollupDimFunc func(context.Context, *ent.TicketRollupDimMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TicketRollupDimFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TicketRollupDimMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketRollupDimMutation", m)
+}
+
+// The TicketRollupMarkFunc type is an adapter to allow the use of ordinary
+// function as TicketRollupMark mutator.
+type TicketRollupMarkFunc func(context.Context, *ent.TicketRollupMarkMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TicketRollupMarkFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TicketRollupMarkMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketRollupMarkMutation", m)
 }
 
 // The TicketSequenceFunc type is an adapter to allow the use of ordinary

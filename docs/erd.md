@@ -24,7 +24,7 @@ erDiagram
     ticketing_users ||--o{ user_role_assignments : "user_id"
 ```
 
-`ticket_sequences`, `sla_policies`, `business_calendars`, `routing_rules`, `kb_articles` and `outbox_events` stand alone and relate by `tenant_id` only. `tickets.assigned_team_id` and `ticket_attachments.comment_id` are plain columns with no foreign key.
+`ticket_sequences`, `sla_policies`, `business_calendars`, `routing_rules`, `kb_articles`, `outbox_events`, `ticket_rollups`, `ticket_rollup_dims`, `ticket_rollup_marks`, `csat_responses` and `rollup_watermarks` stand alone and relate by `tenant_id` only; `csat_responses.ticket_id` and `ticket_rollup_marks.id` hold a ticket id with no foreign key. `tickets.assigned_team_id` and `ticket_attachments.comment_id` are plain columns with no foreign key.
 
 ## Tickets
 
@@ -57,7 +57,7 @@ erDiagram
 | `escalation_level` | bigint | Default 0. Raised by the worker's escalation rules |
 | `escalated_at` | timestamptz | Last escalation |
 | `tags` | jsonb | String list |
-| `metadata` | jsonb | Requester contact (`requester_name`, `requester_email`, `requester_phone`), `source`, `source_ref`, `category`, `contact_hash`, `sla_warnings` (target to warning time) |
+| `metadata` | jsonb | Requester contact (`requester_name`, `requester_email`, `requester_phone`), `source`, `source_ref`, `category`, `contact_hash`, `sla_warnings` (target to warning time), `csat` (survey state: `token_hash`, `issued_at`, `expires_at`, `used_at`; the token itself is never stored) |
 | `created_at`, `updated_at`, `deleted_at` | timestamptz | |
 
 Indexes:
@@ -70,6 +70,9 @@ Indexes:
 | `ticket_category_id`, `ticket_order_id`, `ticket_crm_contact_id`, `ticket_crm_lead_id`, `ticket_external_reference` | Lookups |
 | `ticket_sla_response_due_at`, `ticket_sla_resolution_due_at` | Breach scan |
 | `ticket_created_at`, `ticket_deleted_at` | |
+| `ticket_tenant_id_resolved_at`, `ticket_tenant_id_first_response_at`, `ticket_tenant_id_sla_response_due_at`, `ticket_tenant_id_sla_resolution_due_at` | The analytics rollup rebuilds an hour from each moment; resolved_at also serves the live resolved today figure (sprint 12) |
+| `ticket_updated_at_id` | `(updated_at, id)`, the rollup's cross-tenant read of changed tickets from its watermark (sprint 12) |
+| `ticket_open_backlog` | Partial `(tenant_id, status, assigned_team_id, assigned_agent_id, category_id, channel, priority, sla_resolution_due_at, sla_paused_at)` where `deleted_at IS NULL AND status IN ('new', 'open', 'in_progress', 'pending_customer', 'pending_internal')`, written in Postgres' normalised form. The live backlog, overdue, unassigned and open per agent as index-only scans (sprint 12) |
 
 ### ticket_sequences
 
@@ -316,6 +319,101 @@ Indexes: unique `(tenant_id, name)`, `(tenant_id, is_default)`.
 | `metadata` | jsonb | |
 | `published_at`, `created_at`, `updated_at`, `deleted_at` | timestamptz | |
 
+## Analytics and CSAT
+
+Added in sprint 12. The design is in [architecture.md](architecture.md) under Analytics rollups and CSAT surveys, the route contract in [analytics.md](analytics.md).
+
+### ticket_rollups
+
+One cell of the analytics cube: a tenant's figures for one hour or one UTC day and one combination of team, agent, category, channel and priority. `ticketing-worker` writes it. The `/analytics` routes read it only for two or more filters, or a breakdown by one dimension under a filter on another; every other path reads `ticket_rollup_dims`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | |
+| `granularity` | varchar | `hour` or `day` |
+| `bucket_start` | timestamptz | Start of the hour or UTC day |
+| `team_id`, `agent_id`, `category_id` | uuid | The ticket's current values; the zero UUID when none |
+| `channel`, `priority` | varchar(20) | |
+| `created_count`, `resolved_count`, `first_response_count` | bigint | Default 0. Tickets created, resolved and first answered in the bucket |
+| `first_response_minutes`, `resolution_minutes` | bigint | Default 0. Sums of wall-clock minutes from creation, for the averages |
+| `fr_met`, `res_met` | bigint | Default 0. Targets met in the bucket (deadline set, no breach) |
+| `fr_breached`, `res_breached` | bigint | Default 0. Breached deadlines that fell in the bucket |
+| `csat_1` to `csat_5` | bigint | Default 0. CSAT responses by score submitted in the bucket |
+| `updated_at` | timestamptz | |
+
+Indexes:
+
+| Index | Columns |
+|---|---|
+| `ticketrollup_cell` | Unique `(tenant_id, granularity, bucket_start, team_id, agent_id, category_id, channel, priority)`. The worker's upsert key and every unfiltered window |
+| `ticketrollup_team`, `ticketrollup_agent`, `ticketrollup_category`, `ticketrollup_channel`, `ticketrollup_priority` | `(tenant_id, granularity, <dimension>, bucket_start)`, one per filter |
+| `ticketrollup_team_category`, `ticketrollup_team_channel`, `ticketrollup_team_priority` | `(tenant_id, granularity, team_id, <dimension>, bucket_start)`. A team with a second filter reads only the cells of both values |
+
+### ticket_rollup_dims
+
+The compact series the common analytics paths read: per tenant and bucket, one total row and one row per value of each single dimension, and on day rows one row per team and value of each other dimension (the team pairs). The worker derives them from the fine cells of the same bucket with `GROUPING SETS`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | |
+| `granularity` | varchar | `hour` or `day` |
+| `bucket_start` | timestamptz | Start of the hour or UTC day |
+| `dim_kind` | varchar | `all`, `team`, `agent`, `category`, `channel`, `priority`, or on day rows the pairs `team_agent`, `team_category`, `team_channel`, `team_priority` |
+| `team_id` | uuid | The team of a pair row; the zero UUID on every other row |
+| `dim_value` | varchar(64) | Default empty. The UUID as text (the zero UUID for none), the channel or priority, or empty for `all`; on a pair row, the value beside the team |
+| `created_count` to `csat_5` | bigint | The same counters as `ticket_rollups`, default 0 |
+| `updated_at` | timestamptz | |
+
+Indexes:
+
+| Index | Columns |
+|---|---|
+| `ticketrollupdim_key` | Unique `(tenant_id, granularity, dim_kind, team_id, dim_value, bucket_start)`. One series over a window (the total, one filter value, or a team pair); the worker's upsert key |
+| `ticketrollupdim_kind` | `(tenant_id, granularity, dim_kind, bucket_start)`. A breakdown: every value of a kind over a window |
+| `ticketrollupdim_pair` | `(tenant_id, granularity, dim_kind, team_id, bucket_start)`. A breakdown: every value of a kind (for a pair kind, of one team) over a window |
+| `ticketrollupdim_bucket` | `(tenant_id, granularity, bucket_start)`. The worker's delete |
+
+### ticket_rollup_marks
+
+The hours a ticket counted in at the last rollup, so a moved deadline or a second resolution recomputes the old hour too.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key, the ticket id |
+| `tenant_id` | uuid | |
+| `hours` | jsonb | UTC hour starts; empty for a deleted ticket |
+| `updated_at` | timestamptz | |
+
+### rollup_watermarks
+
+How far a rollup job has read. Global, one row per job (`ticket_rollups`), so it has no `tenant_id`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `name` | varchar(100) | Unique |
+| `watermark_at`, `watermark_id` | timestamptz, uuid | `(updated_at, id)` of the last ticket read; the epoch and the zero UUID before the backfill |
+| `caught_up_at` | timestamptz | Nullable. When a run last reached its settle horizon; null while the first backfill runs |
+| `updated_at` | timestamptz | |
+
+### csat_responses
+
+One rating per survey token.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | |
+| `ticket_id` | uuid | The rated ticket, no foreign key |
+| `score` | bigint | 1 to 5 |
+| `comment` | text | Nullable, at most 2000 characters |
+| `token_hash` | varchar(64) | Unique. SHA-256 of the token used, so one token gives one response |
+| `submitted_at` | timestamptz | |
+
+Indexes `(tenant_id, submitted_at)` for the rollup and the latest comments, and `(ticket_id, submitted_at)` for the rollup's per-ticket read.
+
 ## Events
 
 ### outbox_events
@@ -343,8 +441,6 @@ Indexes: unique `(tenant_id, name)`, `(tenant_id, is_default)`.
 | `macros` | Canned replies that set fields | 9 |
 | A `related` link between tickets | Merge and parent-child | 9 |
 | Business-hours calendars and holidays | SLA clocks | 10 |
-| Ticket rollup tables (hourly and daily) | Analytics | 12 |
-| `csat_responses` | CSAT scores | 12 |
 
 ## Maintenance
 

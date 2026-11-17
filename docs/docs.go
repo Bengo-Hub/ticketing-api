@@ -1787,45 +1787,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/{tenant}/tickets/analytics": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "tickets"
-                ],
-                "summary": "Get analytics",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Tenant slug",
-                        "name": "tenant",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Days in the trend (default 30, max 365)",
-                        "name": "days",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/internal_modules_tickets.AnalyticsResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/{tenant}/tickets/bulk": {
             "put": {
                 "security": [
@@ -3538,29 +3499,6 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_modules_tickets.AnalyticsResponse": {
-            "type": "object",
-            "properties": {
-                "by_priority": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "integer"
-                    }
-                },
-                "by_status": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "integer"
-                    }
-                },
-                "trend": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/internal_modules_tickets.TrendPoint"
-                    }
-                }
-            }
-        },
         "internal_modules_tickets.AssignTicketRequest": {
             "type": "object",
             "properties": {
@@ -4224,20 +4162,6 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
-                }
-            }
-        },
-        "internal_modules_tickets.TrendPoint": {
-            "type": "object",
-            "properties": {
-                "created": {
-                    "type": "integer"
-                },
-                "date": {
-                    "type": "string"
-                },
-                "resolved": {
-                    "type": "integer"
                 }
             }
         },

@@ -19,6 +19,14 @@ type Config struct {
 	Tenant     TenantConfig
 	Channels   ChannelsConfig
 	Marketflow MarketflowConfig
+	CSAT       CSATConfig
+}
+
+// CSATConfig is the satisfaction survey sent on resolve. The link is SurveyURL with
+// ?tenant=<tenant id>&token=<token>; an empty SurveyURL sends no surveys.
+type CSATConfig struct {
+	SurveyURL string        `envconfig:"CSAT_SURVEY_URL" default:"https://ticketing.codevertexafrica.com/support/csat"`
+	TokenTTL  time.Duration `envconfig:"CSAT_TOKEN_TTL" default:"168h"`
 }
 
 // MarketflowConfig is marketflow-api, the CRM that owns customer identity. The channel ingest links

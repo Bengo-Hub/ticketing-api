@@ -19,10 +19,12 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
 	"github.com/bengobox/ticketing-service/internal/ent/auditlog"
 	"github.com/bengobox/ticketing-service/internal/ent/businesscalendar"
+	"github.com/bengobox/ticketing-service/internal/ent/csatresponse"
 	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
 	"github.com/bengobox/ticketing-service/internal/ent/macro"
 	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
 	"github.com/bengobox/ticketing-service/internal/ent/rolepermission"
+	"github.com/bengobox/ticketing-service/internal/ent/rollupwatermark"
 	"github.com/bengobox/ticketing-service/internal/ent/routingrule"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
 	"github.com/bengobox/ticketing-service/internal/ent/team"
@@ -35,6 +37,9 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/ticketingrole"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketinguser"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketlink"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketrollup"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketrollupdim"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketrollupmark"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketsequence"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketview"
 	"github.com/bengobox/ticketing-service/internal/ent/userroleassignment"
@@ -51,6 +56,8 @@ type Client struct {
 	AuditLog *AuditLogClient
 	// BusinessCalendar is the client for interacting with the BusinessCalendar builders.
 	BusinessCalendar *BusinessCalendarClient
+	// CSATResponse is the client for interacting with the CSATResponse builders.
+	CSATResponse *CSATResponseClient
 	// KBArticle is the client for interacting with the KBArticle builders.
 	KBArticle *KBArticleClient
 	// Macro is the client for interacting with the Macro builders.
@@ -59,6 +66,8 @@ type Client struct {
 	OutboxEvent *OutboxEventClient
 	// RolePermission is the client for interacting with the RolePermission builders.
 	RolePermission *RolePermissionClient
+	// RollupWatermark is the client for interacting with the RollupWatermark builders.
+	RollupWatermark *RollupWatermarkClient
 	// RoutingRule is the client for interacting with the RoutingRule builders.
 	RoutingRule *RoutingRuleClient
 	// SLAPolicy is the client for interacting with the SLAPolicy builders.
@@ -77,6 +86,12 @@ type Client struct {
 	TicketComment *TicketCommentClient
 	// TicketLink is the client for interacting with the TicketLink builders.
 	TicketLink *TicketLinkClient
+	// TicketRollup is the client for interacting with the TicketRollup builders.
+	TicketRollup *TicketRollupClient
+	// TicketRollupDim is the client for interacting with the TicketRollupDim builders.
+	TicketRollupDim *TicketRollupDimClient
+	// TicketRollupMark is the client for interacting with the TicketRollupMark builders.
+	TicketRollupMark *TicketRollupMarkClient
 	// TicketSequence is the client for interacting with the TicketSequence builders.
 	TicketSequence *TicketSequenceClient
 	// TicketView is the client for interacting with the TicketView builders.
@@ -103,10 +118,12 @@ func (c *Client) init() {
 	c.Agent = NewAgentClient(c.config)
 	c.AuditLog = NewAuditLogClient(c.config)
 	c.BusinessCalendar = NewBusinessCalendarClient(c.config)
+	c.CSATResponse = NewCSATResponseClient(c.config)
 	c.KBArticle = NewKBArticleClient(c.config)
 	c.Macro = NewMacroClient(c.config)
 	c.OutboxEvent = NewOutboxEventClient(c.config)
 	c.RolePermission = NewRolePermissionClient(c.config)
+	c.RollupWatermark = NewRollupWatermarkClient(c.config)
 	c.RoutingRule = NewRoutingRuleClient(c.config)
 	c.SLAPolicy = NewSLAPolicyClient(c.config)
 	c.Team = NewTeamClient(c.config)
@@ -116,6 +133,9 @@ func (c *Client) init() {
 	c.TicketCategory = NewTicketCategoryClient(c.config)
 	c.TicketComment = NewTicketCommentClient(c.config)
 	c.TicketLink = NewTicketLinkClient(c.config)
+	c.TicketRollup = NewTicketRollupClient(c.config)
+	c.TicketRollupDim = NewTicketRollupDimClient(c.config)
+	c.TicketRollupMark = NewTicketRollupMarkClient(c.config)
 	c.TicketSequence = NewTicketSequenceClient(c.config)
 	c.TicketView = NewTicketViewClient(c.config)
 	c.TicketingPermission = NewTicketingPermissionClient(c.config)
@@ -217,10 +237,12 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Agent:               NewAgentClient(cfg),
 		AuditLog:            NewAuditLogClient(cfg),
 		BusinessCalendar:    NewBusinessCalendarClient(cfg),
+		CSATResponse:        NewCSATResponseClient(cfg),
 		KBArticle:           NewKBArticleClient(cfg),
 		Macro:               NewMacroClient(cfg),
 		OutboxEvent:         NewOutboxEventClient(cfg),
 		RolePermission:      NewRolePermissionClient(cfg),
+		RollupWatermark:     NewRollupWatermarkClient(cfg),
 		RoutingRule:         NewRoutingRuleClient(cfg),
 		SLAPolicy:           NewSLAPolicyClient(cfg),
 		Team:                NewTeamClient(cfg),
@@ -230,6 +252,9 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		TicketCategory:      NewTicketCategoryClient(cfg),
 		TicketComment:       NewTicketCommentClient(cfg),
 		TicketLink:          NewTicketLinkClient(cfg),
+		TicketRollup:        NewTicketRollupClient(cfg),
+		TicketRollupDim:     NewTicketRollupDimClient(cfg),
+		TicketRollupMark:    NewTicketRollupMarkClient(cfg),
 		TicketSequence:      NewTicketSequenceClient(cfg),
 		TicketView:          NewTicketViewClient(cfg),
 		TicketingPermission: NewTicketingPermissionClient(cfg),
@@ -258,10 +283,12 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Agent:               NewAgentClient(cfg),
 		AuditLog:            NewAuditLogClient(cfg),
 		BusinessCalendar:    NewBusinessCalendarClient(cfg),
+		CSATResponse:        NewCSATResponseClient(cfg),
 		KBArticle:           NewKBArticleClient(cfg),
 		Macro:               NewMacroClient(cfg),
 		OutboxEvent:         NewOutboxEventClient(cfg),
 		RolePermission:      NewRolePermissionClient(cfg),
+		RollupWatermark:     NewRollupWatermarkClient(cfg),
 		RoutingRule:         NewRoutingRuleClient(cfg),
 		SLAPolicy:           NewSLAPolicyClient(cfg),
 		Team:                NewTeamClient(cfg),
@@ -271,6 +298,9 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		TicketCategory:      NewTicketCategoryClient(cfg),
 		TicketComment:       NewTicketCommentClient(cfg),
 		TicketLink:          NewTicketLinkClient(cfg),
+		TicketRollup:        NewTicketRollupClient(cfg),
+		TicketRollupDim:     NewTicketRollupDimClient(cfg),
+		TicketRollupMark:    NewTicketRollupMarkClient(cfg),
 		TicketSequence:      NewTicketSequenceClient(cfg),
 		TicketView:          NewTicketViewClient(cfg),
 		TicketingPermission: NewTicketingPermissionClient(cfg),
@@ -306,11 +336,12 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Agent, c.AuditLog, c.BusinessCalendar, c.KBArticle, c.Macro, c.OutboxEvent,
-		c.RolePermission, c.RoutingRule, c.SLAPolicy, c.Team, c.TenantSetting,
-		c.Ticket, c.TicketAttachment, c.TicketCategory, c.TicketComment, c.TicketLink,
-		c.TicketSequence, c.TicketView, c.TicketingPermission, c.TicketingRole,
-		c.TicketingUser, c.UserRoleAssignment,
+		c.Agent, c.AuditLog, c.BusinessCalendar, c.CSATResponse, c.KBArticle, c.Macro,
+		c.OutboxEvent, c.RolePermission, c.RollupWatermark, c.RoutingRule, c.SLAPolicy,
+		c.Team, c.TenantSetting, c.Ticket, c.TicketAttachment, c.TicketCategory,
+		c.TicketComment, c.TicketLink, c.TicketRollup, c.TicketRollupDim,
+		c.TicketRollupMark, c.TicketSequence, c.TicketView, c.TicketingPermission,
+		c.TicketingRole, c.TicketingUser, c.UserRoleAssignment,
 	} {
 		n.Use(hooks...)
 	}
@@ -320,11 +351,12 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Agent, c.AuditLog, c.BusinessCalendar, c.KBArticle, c.Macro, c.OutboxEvent,
-		c.RolePermission, c.RoutingRule, c.SLAPolicy, c.Team, c.TenantSetting,
-		c.Ticket, c.TicketAttachment, c.TicketCategory, c.TicketComment, c.TicketLink,
-		c.TicketSequence, c.TicketView, c.TicketingPermission, c.TicketingRole,
-		c.TicketingUser, c.UserRoleAssignment,
+		c.Agent, c.AuditLog, c.BusinessCalendar, c.CSATResponse, c.KBArticle, c.Macro,
+		c.OutboxEvent, c.RolePermission, c.RollupWatermark, c.RoutingRule, c.SLAPolicy,
+		c.Team, c.TenantSetting, c.Ticket, c.TicketAttachment, c.TicketCategory,
+		c.TicketComment, c.TicketLink, c.TicketRollup, c.TicketRollupDim,
+		c.TicketRollupMark, c.TicketSequence, c.TicketView, c.TicketingPermission,
+		c.TicketingRole, c.TicketingUser, c.UserRoleAssignment,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -339,6 +371,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.AuditLog.mutate(ctx, m)
 	case *BusinessCalendarMutation:
 		return c.BusinessCalendar.mutate(ctx, m)
+	case *CSATResponseMutation:
+		return c.CSATResponse.mutate(ctx, m)
 	case *KBArticleMutation:
 		return c.KBArticle.mutate(ctx, m)
 	case *MacroMutation:
@@ -347,6 +381,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.OutboxEvent.mutate(ctx, m)
 	case *RolePermissionMutation:
 		return c.RolePermission.mutate(ctx, m)
+	case *RollupWatermarkMutation:
+		return c.RollupWatermark.mutate(ctx, m)
 	case *RoutingRuleMutation:
 		return c.RoutingRule.mutate(ctx, m)
 	case *SLAPolicyMutation:
@@ -365,6 +401,12 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.TicketComment.mutate(ctx, m)
 	case *TicketLinkMutation:
 		return c.TicketLink.mutate(ctx, m)
+	case *TicketRollupMutation:
+		return c.TicketRollup.mutate(ctx, m)
+	case *TicketRollupDimMutation:
+		return c.TicketRollupDim.mutate(ctx, m)
+	case *TicketRollupMarkMutation:
+		return c.TicketRollupMark.mutate(ctx, m)
 	case *TicketSequenceMutation:
 		return c.TicketSequence.mutate(ctx, m)
 	case *TicketViewMutation:
@@ -810,6 +852,139 @@ func (c *BusinessCalendarClient) mutate(ctx context.Context, m *BusinessCalendar
 		return (&BusinessCalendarDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown BusinessCalendar mutation op: %q", m.Op())
+	}
+}
+
+// CSATResponseClient is a client for the CSATResponse schema.
+type CSATResponseClient struct {
+	config
+}
+
+// NewCSATResponseClient returns a client for the CSATResponse from the given config.
+func NewCSATResponseClient(c config) *CSATResponseClient {
+	return &CSATResponseClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `csatresponse.Hooks(f(g(h())))`.
+func (c *CSATResponseClient) Use(hooks ...Hook) {
+	c.hooks.CSATResponse = append(c.hooks.CSATResponse, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `csatresponse.Intercept(f(g(h())))`.
+func (c *CSATResponseClient) Intercept(interceptors ...Interceptor) {
+	c.inters.CSATResponse = append(c.inters.CSATResponse, interceptors...)
+}
+
+// Create returns a builder for creating a CSATResponse entity.
+func (c *CSATResponseClient) Create() *CSATResponseCreate {
+	mutation := newCSATResponseMutation(c.config, OpCreate)
+	return &CSATResponseCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of CSATResponse entities.
+func (c *CSATResponseClient) CreateBulk(builders ...*CSATResponseCreate) *CSATResponseCreateBulk {
+	return &CSATResponseCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CSATResponseClient) MapCreateBulk(slice any, setFunc func(*CSATResponseCreate, int)) *CSATResponseCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CSATResponseCreateBulk{err: fmt.Errorf("calling to CSATResponseClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CSATResponseCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CSATResponseCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for CSATResponse.
+func (c *CSATResponseClient) Update() *CSATResponseUpdate {
+	mutation := newCSATResponseMutation(c.config, OpUpdate)
+	return &CSATResponseUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CSATResponseClient) UpdateOne(_m *CSATResponse) *CSATResponseUpdateOne {
+	mutation := newCSATResponseMutation(c.config, OpUpdateOne, withCSATResponse(_m))
+	return &CSATResponseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CSATResponseClient) UpdateOneID(id uuid.UUID) *CSATResponseUpdateOne {
+	mutation := newCSATResponseMutation(c.config, OpUpdateOne, withCSATResponseID(id))
+	return &CSATResponseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for CSATResponse.
+func (c *CSATResponseClient) Delete() *CSATResponseDelete {
+	mutation := newCSATResponseMutation(c.config, OpDelete)
+	return &CSATResponseDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CSATResponseClient) DeleteOne(_m *CSATResponse) *CSATResponseDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CSATResponseClient) DeleteOneID(id uuid.UUID) *CSATResponseDeleteOne {
+	builder := c.Delete().Where(csatresponse.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CSATResponseDeleteOne{builder}
+}
+
+// Query returns a query builder for CSATResponse.
+func (c *CSATResponseClient) Query() *CSATResponseQuery {
+	return &CSATResponseQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCSATResponse},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a CSATResponse entity by its id.
+func (c *CSATResponseClient) Get(ctx context.Context, id uuid.UUID) (*CSATResponse, error) {
+	return c.Query().Where(csatresponse.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CSATResponseClient) GetX(ctx context.Context, id uuid.UUID) *CSATResponse {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CSATResponseClient) Hooks() []Hook {
+	return c.hooks.CSATResponse
+}
+
+// Interceptors returns the client interceptors.
+func (c *CSATResponseClient) Interceptors() []Interceptor {
+	return c.inters.CSATResponse
+}
+
+func (c *CSATResponseClient) mutate(ctx context.Context, m *CSATResponseMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CSATResponseCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CSATResponseUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CSATResponseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CSATResponseDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown CSATResponse mutation op: %q", m.Op())
 	}
 }
 
@@ -1374,6 +1549,139 @@ func (c *RolePermissionClient) mutate(ctx context.Context, m *RolePermissionMuta
 		return (&RolePermissionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown RolePermission mutation op: %q", m.Op())
+	}
+}
+
+// RollupWatermarkClient is a client for the RollupWatermark schema.
+type RollupWatermarkClient struct {
+	config
+}
+
+// NewRollupWatermarkClient returns a client for the RollupWatermark from the given config.
+func NewRollupWatermarkClient(c config) *RollupWatermarkClient {
+	return &RollupWatermarkClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `rollupwatermark.Hooks(f(g(h())))`.
+func (c *RollupWatermarkClient) Use(hooks ...Hook) {
+	c.hooks.RollupWatermark = append(c.hooks.RollupWatermark, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `rollupwatermark.Intercept(f(g(h())))`.
+func (c *RollupWatermarkClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RollupWatermark = append(c.inters.RollupWatermark, interceptors...)
+}
+
+// Create returns a builder for creating a RollupWatermark entity.
+func (c *RollupWatermarkClient) Create() *RollupWatermarkCreate {
+	mutation := newRollupWatermarkMutation(c.config, OpCreate)
+	return &RollupWatermarkCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RollupWatermark entities.
+func (c *RollupWatermarkClient) CreateBulk(builders ...*RollupWatermarkCreate) *RollupWatermarkCreateBulk {
+	return &RollupWatermarkCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RollupWatermarkClient) MapCreateBulk(slice any, setFunc func(*RollupWatermarkCreate, int)) *RollupWatermarkCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RollupWatermarkCreateBulk{err: fmt.Errorf("calling to RollupWatermarkClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RollupWatermarkCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RollupWatermarkCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RollupWatermark.
+func (c *RollupWatermarkClient) Update() *RollupWatermarkUpdate {
+	mutation := newRollupWatermarkMutation(c.config, OpUpdate)
+	return &RollupWatermarkUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RollupWatermarkClient) UpdateOne(_m *RollupWatermark) *RollupWatermarkUpdateOne {
+	mutation := newRollupWatermarkMutation(c.config, OpUpdateOne, withRollupWatermark(_m))
+	return &RollupWatermarkUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RollupWatermarkClient) UpdateOneID(id uuid.UUID) *RollupWatermarkUpdateOne {
+	mutation := newRollupWatermarkMutation(c.config, OpUpdateOne, withRollupWatermarkID(id))
+	return &RollupWatermarkUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RollupWatermark.
+func (c *RollupWatermarkClient) Delete() *RollupWatermarkDelete {
+	mutation := newRollupWatermarkMutation(c.config, OpDelete)
+	return &RollupWatermarkDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RollupWatermarkClient) DeleteOne(_m *RollupWatermark) *RollupWatermarkDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RollupWatermarkClient) DeleteOneID(id uuid.UUID) *RollupWatermarkDeleteOne {
+	builder := c.Delete().Where(rollupwatermark.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RollupWatermarkDeleteOne{builder}
+}
+
+// Query returns a query builder for RollupWatermark.
+func (c *RollupWatermarkClient) Query() *RollupWatermarkQuery {
+	return &RollupWatermarkQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRollupWatermark},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RollupWatermark entity by its id.
+func (c *RollupWatermarkClient) Get(ctx context.Context, id uuid.UUID) (*RollupWatermark, error) {
+	return c.Query().Where(rollupwatermark.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RollupWatermarkClient) GetX(ctx context.Context, id uuid.UUID) *RollupWatermark {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *RollupWatermarkClient) Hooks() []Hook {
+	return c.hooks.RollupWatermark
+}
+
+// Interceptors returns the client interceptors.
+func (c *RollupWatermarkClient) Interceptors() []Interceptor {
+	return c.inters.RollupWatermark
+}
+
+func (c *RollupWatermarkClient) mutate(ctx context.Context, m *RollupWatermarkMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RollupWatermarkCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RollupWatermarkUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RollupWatermarkUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RollupWatermarkDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RollupWatermark mutation op: %q", m.Op())
 	}
 }
 
@@ -2734,6 +3042,405 @@ func (c *TicketLinkClient) mutate(ctx context.Context, m *TicketLinkMutation) (V
 	}
 }
 
+// TicketRollupClient is a client for the TicketRollup schema.
+type TicketRollupClient struct {
+	config
+}
+
+// NewTicketRollupClient returns a client for the TicketRollup from the given config.
+func NewTicketRollupClient(c config) *TicketRollupClient {
+	return &TicketRollupClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `ticketrollup.Hooks(f(g(h())))`.
+func (c *TicketRollupClient) Use(hooks ...Hook) {
+	c.hooks.TicketRollup = append(c.hooks.TicketRollup, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `ticketrollup.Intercept(f(g(h())))`.
+func (c *TicketRollupClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TicketRollup = append(c.inters.TicketRollup, interceptors...)
+}
+
+// Create returns a builder for creating a TicketRollup entity.
+func (c *TicketRollupClient) Create() *TicketRollupCreate {
+	mutation := newTicketRollupMutation(c.config, OpCreate)
+	return &TicketRollupCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TicketRollup entities.
+func (c *TicketRollupClient) CreateBulk(builders ...*TicketRollupCreate) *TicketRollupCreateBulk {
+	return &TicketRollupCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TicketRollupClient) MapCreateBulk(slice any, setFunc func(*TicketRollupCreate, int)) *TicketRollupCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TicketRollupCreateBulk{err: fmt.Errorf("calling to TicketRollupClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TicketRollupCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TicketRollupCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TicketRollup.
+func (c *TicketRollupClient) Update() *TicketRollupUpdate {
+	mutation := newTicketRollupMutation(c.config, OpUpdate)
+	return &TicketRollupUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TicketRollupClient) UpdateOne(_m *TicketRollup) *TicketRollupUpdateOne {
+	mutation := newTicketRollupMutation(c.config, OpUpdateOne, withTicketRollup(_m))
+	return &TicketRollupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TicketRollupClient) UpdateOneID(id uuid.UUID) *TicketRollupUpdateOne {
+	mutation := newTicketRollupMutation(c.config, OpUpdateOne, withTicketRollupID(id))
+	return &TicketRollupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TicketRollup.
+func (c *TicketRollupClient) Delete() *TicketRollupDelete {
+	mutation := newTicketRollupMutation(c.config, OpDelete)
+	return &TicketRollupDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TicketRollupClient) DeleteOne(_m *TicketRollup) *TicketRollupDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TicketRollupClient) DeleteOneID(id uuid.UUID) *TicketRollupDeleteOne {
+	builder := c.Delete().Where(ticketrollup.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TicketRollupDeleteOne{builder}
+}
+
+// Query returns a query builder for TicketRollup.
+func (c *TicketRollupClient) Query() *TicketRollupQuery {
+	return &TicketRollupQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTicketRollup},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a TicketRollup entity by its id.
+func (c *TicketRollupClient) Get(ctx context.Context, id uuid.UUID) (*TicketRollup, error) {
+	return c.Query().Where(ticketrollup.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TicketRollupClient) GetX(ctx context.Context, id uuid.UUID) *TicketRollup {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *TicketRollupClient) Hooks() []Hook {
+	return c.hooks.TicketRollup
+}
+
+// Interceptors returns the client interceptors.
+func (c *TicketRollupClient) Interceptors() []Interceptor {
+	return c.inters.TicketRollup
+}
+
+func (c *TicketRollupClient) mutate(ctx context.Context, m *TicketRollupMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TicketRollupCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TicketRollupUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TicketRollupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TicketRollupDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TicketRollup mutation op: %q", m.Op())
+	}
+}
+
+// TicketRollupDimClient is a client for the TicketRollupDim schema.
+type TicketRollupDimClient struct {
+	config
+}
+
+// NewTicketRollupDimClient returns a client for the TicketRollupDim from the given config.
+func NewTicketRollupDimClient(c config) *TicketRollupDimClient {
+	return &TicketRollupDimClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `ticketrollupdim.Hooks(f(g(h())))`.
+func (c *TicketRollupDimClient) Use(hooks ...Hook) {
+	c.hooks.TicketRollupDim = append(c.hooks.TicketRollupDim, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `ticketrollupdim.Intercept(f(g(h())))`.
+func (c *TicketRollupDimClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TicketRollupDim = append(c.inters.TicketRollupDim, interceptors...)
+}
+
+// Create returns a builder for creating a TicketRollupDim entity.
+func (c *TicketRollupDimClient) Create() *TicketRollupDimCreate {
+	mutation := newTicketRollupDimMutation(c.config, OpCreate)
+	return &TicketRollupDimCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TicketRollupDim entities.
+func (c *TicketRollupDimClient) CreateBulk(builders ...*TicketRollupDimCreate) *TicketRollupDimCreateBulk {
+	return &TicketRollupDimCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TicketRollupDimClient) MapCreateBulk(slice any, setFunc func(*TicketRollupDimCreate, int)) *TicketRollupDimCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TicketRollupDimCreateBulk{err: fmt.Errorf("calling to TicketRollupDimClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TicketRollupDimCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TicketRollupDimCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TicketRollupDim.
+func (c *TicketRollupDimClient) Update() *TicketRollupDimUpdate {
+	mutation := newTicketRollupDimMutation(c.config, OpUpdate)
+	return &TicketRollupDimUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TicketRollupDimClient) UpdateOne(_m *TicketRollupDim) *TicketRollupDimUpdateOne {
+	mutation := newTicketRollupDimMutation(c.config, OpUpdateOne, withTicketRollupDim(_m))
+	return &TicketRollupDimUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TicketRollupDimClient) UpdateOneID(id uuid.UUID) *TicketRollupDimUpdateOne {
+	mutation := newTicketRollupDimMutation(c.config, OpUpdateOne, withTicketRollupDimID(id))
+	return &TicketRollupDimUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TicketRollupDim.
+func (c *TicketRollupDimClient) Delete() *TicketRollupDimDelete {
+	mutation := newTicketRollupDimMutation(c.config, OpDelete)
+	return &TicketRollupDimDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TicketRollupDimClient) DeleteOne(_m *TicketRollupDim) *TicketRollupDimDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TicketRollupDimClient) DeleteOneID(id uuid.UUID) *TicketRollupDimDeleteOne {
+	builder := c.Delete().Where(ticketrollupdim.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TicketRollupDimDeleteOne{builder}
+}
+
+// Query returns a query builder for TicketRollupDim.
+func (c *TicketRollupDimClient) Query() *TicketRollupDimQuery {
+	return &TicketRollupDimQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTicketRollupDim},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a TicketRollupDim entity by its id.
+func (c *TicketRollupDimClient) Get(ctx context.Context, id uuid.UUID) (*TicketRollupDim, error) {
+	return c.Query().Where(ticketrollupdim.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TicketRollupDimClient) GetX(ctx context.Context, id uuid.UUID) *TicketRollupDim {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *TicketRollupDimClient) Hooks() []Hook {
+	return c.hooks.TicketRollupDim
+}
+
+// Interceptors returns the client interceptors.
+func (c *TicketRollupDimClient) Interceptors() []Interceptor {
+	return c.inters.TicketRollupDim
+}
+
+func (c *TicketRollupDimClient) mutate(ctx context.Context, m *TicketRollupDimMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TicketRollupDimCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TicketRollupDimUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TicketRollupDimUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TicketRollupDimDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TicketRollupDim mutation op: %q", m.Op())
+	}
+}
+
+// TicketRollupMarkClient is a client for the TicketRollupMark schema.
+type TicketRollupMarkClient struct {
+	config
+}
+
+// NewTicketRollupMarkClient returns a client for the TicketRollupMark from the given config.
+func NewTicketRollupMarkClient(c config) *TicketRollupMarkClient {
+	return &TicketRollupMarkClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `ticketrollupmark.Hooks(f(g(h())))`.
+func (c *TicketRollupMarkClient) Use(hooks ...Hook) {
+	c.hooks.TicketRollupMark = append(c.hooks.TicketRollupMark, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `ticketrollupmark.Intercept(f(g(h())))`.
+func (c *TicketRollupMarkClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TicketRollupMark = append(c.inters.TicketRollupMark, interceptors...)
+}
+
+// Create returns a builder for creating a TicketRollupMark entity.
+func (c *TicketRollupMarkClient) Create() *TicketRollupMarkCreate {
+	mutation := newTicketRollupMarkMutation(c.config, OpCreate)
+	return &TicketRollupMarkCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TicketRollupMark entities.
+func (c *TicketRollupMarkClient) CreateBulk(builders ...*TicketRollupMarkCreate) *TicketRollupMarkCreateBulk {
+	return &TicketRollupMarkCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TicketRollupMarkClient) MapCreateBulk(slice any, setFunc func(*TicketRollupMarkCreate, int)) *TicketRollupMarkCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TicketRollupMarkCreateBulk{err: fmt.Errorf("calling to TicketRollupMarkClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TicketRollupMarkCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TicketRollupMarkCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TicketRollupMark.
+func (c *TicketRollupMarkClient) Update() *TicketRollupMarkUpdate {
+	mutation := newTicketRollupMarkMutation(c.config, OpUpdate)
+	return &TicketRollupMarkUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TicketRollupMarkClient) UpdateOne(_m *TicketRollupMark) *TicketRollupMarkUpdateOne {
+	mutation := newTicketRollupMarkMutation(c.config, OpUpdateOne, withTicketRollupMark(_m))
+	return &TicketRollupMarkUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TicketRollupMarkClient) UpdateOneID(id uuid.UUID) *TicketRollupMarkUpdateOne {
+	mutation := newTicketRollupMarkMutation(c.config, OpUpdateOne, withTicketRollupMarkID(id))
+	return &TicketRollupMarkUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TicketRollupMark.
+func (c *TicketRollupMarkClient) Delete() *TicketRollupMarkDelete {
+	mutation := newTicketRollupMarkMutation(c.config, OpDelete)
+	return &TicketRollupMarkDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TicketRollupMarkClient) DeleteOne(_m *TicketRollupMark) *TicketRollupMarkDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TicketRollupMarkClient) DeleteOneID(id uuid.UUID) *TicketRollupMarkDeleteOne {
+	builder := c.Delete().Where(ticketrollupmark.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TicketRollupMarkDeleteOne{builder}
+}
+
+// Query returns a query builder for TicketRollupMark.
+func (c *TicketRollupMarkClient) Query() *TicketRollupMarkQuery {
+	return &TicketRollupMarkQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTicketRollupMark},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a TicketRollupMark entity by its id.
+func (c *TicketRollupMarkClient) Get(ctx context.Context, id uuid.UUID) (*TicketRollupMark, error) {
+	return c.Query().Where(ticketrollupmark.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TicketRollupMarkClient) GetX(ctx context.Context, id uuid.UUID) *TicketRollupMark {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *TicketRollupMarkClient) Hooks() []Hook {
+	return c.hooks.TicketRollupMark
+}
+
+// Interceptors returns the client interceptors.
+func (c *TicketRollupMarkClient) Interceptors() []Interceptor {
+	return c.inters.TicketRollupMark
+}
+
+func (c *TicketRollupMarkClient) mutate(ctx context.Context, m *TicketRollupMarkMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TicketRollupMarkCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TicketRollupMarkUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TicketRollupMarkUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TicketRollupMarkDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TicketRollupMark mutation op: %q", m.Op())
+	}
+}
+
 // TicketSequenceClient is a client for the TicketSequence schema.
 type TicketSequenceClient struct {
 	config
@@ -3663,17 +4370,19 @@ func (c *UserRoleAssignmentClient) mutate(ctx context.Context, m *UserRoleAssign
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Agent, AuditLog, BusinessCalendar, KBArticle, Macro, OutboxEvent,
-		RolePermission, RoutingRule, SLAPolicy, Team, TenantSetting, Ticket,
-		TicketAttachment, TicketCategory, TicketComment, TicketLink, TicketSequence,
-		TicketView, TicketingPermission, TicketingRole, TicketingUser,
+		Agent, AuditLog, BusinessCalendar, CSATResponse, KBArticle, Macro, OutboxEvent,
+		RolePermission, RollupWatermark, RoutingRule, SLAPolicy, Team, TenantSetting,
+		Ticket, TicketAttachment, TicketCategory, TicketComment, TicketLink,
+		TicketRollup, TicketRollupDim, TicketRollupMark, TicketSequence, TicketView,
+		TicketingPermission, TicketingRole, TicketingUser,
 		UserRoleAssignment []ent.Hook
 	}
 	inters struct {
-		Agent, AuditLog, BusinessCalendar, KBArticle, Macro, OutboxEvent,
-		RolePermission, RoutingRule, SLAPolicy, Team, TenantSetting, Ticket,
-		TicketAttachment, TicketCategory, TicketComment, TicketLink, TicketSequence,
-		TicketView, TicketingPermission, TicketingRole, TicketingUser,
+		Agent, AuditLog, BusinessCalendar, CSATResponse, KBArticle, Macro, OutboxEvent,
+		RolePermission, RollupWatermark, RoutingRule, SLAPolicy, Team, TenantSetting,
+		Ticket, TicketAttachment, TicketCategory, TicketComment, TicketLink,
+		TicketRollup, TicketRollupDim, TicketRollupMark, TicketSequence, TicketView,
+		TicketingPermission, TicketingRole, TicketingUser,
 		UserRoleAssignment []ent.Interceptor
 	}
 )

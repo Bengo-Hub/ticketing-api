@@ -8,9 +8,11 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
 	"github.com/bengobox/ticketing-service/internal/ent/auditlog"
 	"github.com/bengobox/ticketing-service/internal/ent/businesscalendar"
+	"github.com/bengobox/ticketing-service/internal/ent/csatresponse"
 	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
 	"github.com/bengobox/ticketing-service/internal/ent/macro"
 	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
+	"github.com/bengobox/ticketing-service/internal/ent/rollupwatermark"
 	"github.com/bengobox/ticketing-service/internal/ent/routingrule"
 	"github.com/bengobox/ticketing-service/internal/ent/schema"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
@@ -24,6 +26,9 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/ticketingrole"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketinguser"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketlink"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketrollup"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketrollupdim"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketrollupmark"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketsequence"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketview"
 	"github.com/bengobox/ticketing-service/internal/ent/userroleassignment"
@@ -204,6 +209,24 @@ func init() {
 	businesscalendarDescID := businesscalendarFields[0].Descriptor()
 	// businesscalendar.DefaultID holds the default value on creation for the id field.
 	businesscalendar.DefaultID = businesscalendarDescID.Default.(func() uuid.UUID)
+	csatresponseFields := schema.CSATResponse{}.Fields()
+	_ = csatresponseFields
+	// csatresponseDescScore is the schema descriptor for score field.
+	csatresponseDescScore := csatresponseFields[3].Descriptor()
+	// csatresponse.ScoreValidator is a validator for the "score" field. It is called by the builders before save.
+	csatresponse.ScoreValidator = csatresponseDescScore.Validators[0].(func(int) error)
+	// csatresponseDescTokenHash is the schema descriptor for token_hash field.
+	csatresponseDescTokenHash := csatresponseFields[5].Descriptor()
+	// csatresponse.TokenHashValidator is a validator for the "token_hash" field. It is called by the builders before save.
+	csatresponse.TokenHashValidator = csatresponseDescTokenHash.Validators[0].(func(string) error)
+	// csatresponseDescSubmittedAt is the schema descriptor for submitted_at field.
+	csatresponseDescSubmittedAt := csatresponseFields[6].Descriptor()
+	// csatresponse.DefaultSubmittedAt holds the default value on creation for the submitted_at field.
+	csatresponse.DefaultSubmittedAt = csatresponseDescSubmittedAt.Default.(func() time.Time)
+	// csatresponseDescID is the schema descriptor for id field.
+	csatresponseDescID := csatresponseFields[0].Descriptor()
+	// csatresponse.DefaultID holds the default value on creation for the id field.
+	csatresponse.DefaultID = csatresponseDescID.Default.(func() uuid.UUID)
 	kbarticleFields := schema.KBArticle{}.Fields()
 	_ = kbarticleFields
 	// kbarticleDescTitle is the schema descriptor for title field.
@@ -348,6 +371,22 @@ func init() {
 	outboxeventDescID := outboxeventFields[0].Descriptor()
 	// outboxevent.DefaultID holds the default value on creation for the id field.
 	outboxevent.DefaultID = outboxeventDescID.Default.(func() uuid.UUID)
+	rollupwatermarkFields := schema.RollupWatermark{}.Fields()
+	_ = rollupwatermarkFields
+	// rollupwatermarkDescName is the schema descriptor for name field.
+	rollupwatermarkDescName := rollupwatermarkFields[1].Descriptor()
+	// rollupwatermark.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	rollupwatermark.NameValidator = rollupwatermarkDescName.Validators[0].(func(string) error)
+	// rollupwatermarkDescUpdatedAt is the schema descriptor for updated_at field.
+	rollupwatermarkDescUpdatedAt := rollupwatermarkFields[5].Descriptor()
+	// rollupwatermark.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	rollupwatermark.DefaultUpdatedAt = rollupwatermarkDescUpdatedAt.Default.(func() time.Time)
+	// rollupwatermark.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	rollupwatermark.UpdateDefaultUpdatedAt = rollupwatermarkDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// rollupwatermarkDescID is the schema descriptor for id field.
+	rollupwatermarkDescID := rollupwatermarkFields[0].Descriptor()
+	// rollupwatermark.DefaultID holds the default value on creation for the id field.
+	rollupwatermark.DefaultID = rollupwatermarkDescID.Default.(func() uuid.UUID)
 	routingruleFields := schema.RoutingRule{}.Fields()
 	_ = routingruleFields
 	// routingruleDescName is the schema descriptor for name field.
@@ -690,6 +729,164 @@ func init() {
 	ticketlinkDescID := ticketlinkFields[0].Descriptor()
 	// ticketlink.DefaultID holds the default value on creation for the id field.
 	ticketlink.DefaultID = ticketlinkDescID.Default.(func() uuid.UUID)
+	ticketrollupFields := schema.TicketRollup{}.Fields()
+	_ = ticketrollupFields
+	// ticketrollupDescChannel is the schema descriptor for channel field.
+	ticketrollupDescChannel := ticketrollupFields[7].Descriptor()
+	// ticketrollup.ChannelValidator is a validator for the "channel" field. It is called by the builders before save.
+	ticketrollup.ChannelValidator = ticketrollupDescChannel.Validators[0].(func(string) error)
+	// ticketrollupDescPriority is the schema descriptor for priority field.
+	ticketrollupDescPriority := ticketrollupFields[8].Descriptor()
+	// ticketrollup.PriorityValidator is a validator for the "priority" field. It is called by the builders before save.
+	ticketrollup.PriorityValidator = ticketrollupDescPriority.Validators[0].(func(string) error)
+	// ticketrollupDescCreatedCount is the schema descriptor for created_count field.
+	ticketrollupDescCreatedCount := ticketrollupFields[9].Descriptor()
+	// ticketrollup.DefaultCreatedCount holds the default value on creation for the created_count field.
+	ticketrollup.DefaultCreatedCount = ticketrollupDescCreatedCount.Default.(int)
+	// ticketrollupDescResolvedCount is the schema descriptor for resolved_count field.
+	ticketrollupDescResolvedCount := ticketrollupFields[10].Descriptor()
+	// ticketrollup.DefaultResolvedCount holds the default value on creation for the resolved_count field.
+	ticketrollup.DefaultResolvedCount = ticketrollupDescResolvedCount.Default.(int)
+	// ticketrollupDescFirstResponseCount is the schema descriptor for first_response_count field.
+	ticketrollupDescFirstResponseCount := ticketrollupFields[11].Descriptor()
+	// ticketrollup.DefaultFirstResponseCount holds the default value on creation for the first_response_count field.
+	ticketrollup.DefaultFirstResponseCount = ticketrollupDescFirstResponseCount.Default.(int)
+	// ticketrollupDescFirstResponseMinutes is the schema descriptor for first_response_minutes field.
+	ticketrollupDescFirstResponseMinutes := ticketrollupFields[12].Descriptor()
+	// ticketrollup.DefaultFirstResponseMinutes holds the default value on creation for the first_response_minutes field.
+	ticketrollup.DefaultFirstResponseMinutes = ticketrollupDescFirstResponseMinutes.Default.(int64)
+	// ticketrollupDescResolutionMinutes is the schema descriptor for resolution_minutes field.
+	ticketrollupDescResolutionMinutes := ticketrollupFields[13].Descriptor()
+	// ticketrollup.DefaultResolutionMinutes holds the default value on creation for the resolution_minutes field.
+	ticketrollup.DefaultResolutionMinutes = ticketrollupDescResolutionMinutes.Default.(int64)
+	// ticketrollupDescFrMet is the schema descriptor for fr_met field.
+	ticketrollupDescFrMet := ticketrollupFields[14].Descriptor()
+	// ticketrollup.DefaultFrMet holds the default value on creation for the fr_met field.
+	ticketrollup.DefaultFrMet = ticketrollupDescFrMet.Default.(int)
+	// ticketrollupDescFrBreached is the schema descriptor for fr_breached field.
+	ticketrollupDescFrBreached := ticketrollupFields[15].Descriptor()
+	// ticketrollup.DefaultFrBreached holds the default value on creation for the fr_breached field.
+	ticketrollup.DefaultFrBreached = ticketrollupDescFrBreached.Default.(int)
+	// ticketrollupDescResMet is the schema descriptor for res_met field.
+	ticketrollupDescResMet := ticketrollupFields[16].Descriptor()
+	// ticketrollup.DefaultResMet holds the default value on creation for the res_met field.
+	ticketrollup.DefaultResMet = ticketrollupDescResMet.Default.(int)
+	// ticketrollupDescResBreached is the schema descriptor for res_breached field.
+	ticketrollupDescResBreached := ticketrollupFields[17].Descriptor()
+	// ticketrollup.DefaultResBreached holds the default value on creation for the res_breached field.
+	ticketrollup.DefaultResBreached = ticketrollupDescResBreached.Default.(int)
+	// ticketrollupDescCsat1 is the schema descriptor for csat_1 field.
+	ticketrollupDescCsat1 := ticketrollupFields[18].Descriptor()
+	// ticketrollup.DefaultCsat1 holds the default value on creation for the csat_1 field.
+	ticketrollup.DefaultCsat1 = ticketrollupDescCsat1.Default.(int)
+	// ticketrollupDescCsat2 is the schema descriptor for csat_2 field.
+	ticketrollupDescCsat2 := ticketrollupFields[19].Descriptor()
+	// ticketrollup.DefaultCsat2 holds the default value on creation for the csat_2 field.
+	ticketrollup.DefaultCsat2 = ticketrollupDescCsat2.Default.(int)
+	// ticketrollupDescCsat3 is the schema descriptor for csat_3 field.
+	ticketrollupDescCsat3 := ticketrollupFields[20].Descriptor()
+	// ticketrollup.DefaultCsat3 holds the default value on creation for the csat_3 field.
+	ticketrollup.DefaultCsat3 = ticketrollupDescCsat3.Default.(int)
+	// ticketrollupDescCsat4 is the schema descriptor for csat_4 field.
+	ticketrollupDescCsat4 := ticketrollupFields[21].Descriptor()
+	// ticketrollup.DefaultCsat4 holds the default value on creation for the csat_4 field.
+	ticketrollup.DefaultCsat4 = ticketrollupDescCsat4.Default.(int)
+	// ticketrollupDescCsat5 is the schema descriptor for csat_5 field.
+	ticketrollupDescCsat5 := ticketrollupFields[22].Descriptor()
+	// ticketrollup.DefaultCsat5 holds the default value on creation for the csat_5 field.
+	ticketrollup.DefaultCsat5 = ticketrollupDescCsat5.Default.(int)
+	// ticketrollupDescUpdatedAt is the schema descriptor for updated_at field.
+	ticketrollupDescUpdatedAt := ticketrollupFields[23].Descriptor()
+	// ticketrollup.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	ticketrollup.DefaultUpdatedAt = ticketrollupDescUpdatedAt.Default.(func() time.Time)
+	// ticketrollup.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	ticketrollup.UpdateDefaultUpdatedAt = ticketrollupDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// ticketrollupDescID is the schema descriptor for id field.
+	ticketrollupDescID := ticketrollupFields[0].Descriptor()
+	// ticketrollup.DefaultID holds the default value on creation for the id field.
+	ticketrollup.DefaultID = ticketrollupDescID.Default.(func() uuid.UUID)
+	ticketrollupdimFields := schema.TicketRollupDim{}.Fields()
+	_ = ticketrollupdimFields
+	// ticketrollupdimDescDimValue is the schema descriptor for dim_value field.
+	ticketrollupdimDescDimValue := ticketrollupdimFields[6].Descriptor()
+	// ticketrollupdim.DefaultDimValue holds the default value on creation for the dim_value field.
+	ticketrollupdim.DefaultDimValue = ticketrollupdimDescDimValue.Default.(string)
+	// ticketrollupdim.DimValueValidator is a validator for the "dim_value" field. It is called by the builders before save.
+	ticketrollupdim.DimValueValidator = ticketrollupdimDescDimValue.Validators[0].(func(string) error)
+	// ticketrollupdimDescCreatedCount is the schema descriptor for created_count field.
+	ticketrollupdimDescCreatedCount := ticketrollupdimFields[7].Descriptor()
+	// ticketrollupdim.DefaultCreatedCount holds the default value on creation for the created_count field.
+	ticketrollupdim.DefaultCreatedCount = ticketrollupdimDescCreatedCount.Default.(int)
+	// ticketrollupdimDescResolvedCount is the schema descriptor for resolved_count field.
+	ticketrollupdimDescResolvedCount := ticketrollupdimFields[8].Descriptor()
+	// ticketrollupdim.DefaultResolvedCount holds the default value on creation for the resolved_count field.
+	ticketrollupdim.DefaultResolvedCount = ticketrollupdimDescResolvedCount.Default.(int)
+	// ticketrollupdimDescFirstResponseCount is the schema descriptor for first_response_count field.
+	ticketrollupdimDescFirstResponseCount := ticketrollupdimFields[9].Descriptor()
+	// ticketrollupdim.DefaultFirstResponseCount holds the default value on creation for the first_response_count field.
+	ticketrollupdim.DefaultFirstResponseCount = ticketrollupdimDescFirstResponseCount.Default.(int)
+	// ticketrollupdimDescFirstResponseMinutes is the schema descriptor for first_response_minutes field.
+	ticketrollupdimDescFirstResponseMinutes := ticketrollupdimFields[10].Descriptor()
+	// ticketrollupdim.DefaultFirstResponseMinutes holds the default value on creation for the first_response_minutes field.
+	ticketrollupdim.DefaultFirstResponseMinutes = ticketrollupdimDescFirstResponseMinutes.Default.(int64)
+	// ticketrollupdimDescResolutionMinutes is the schema descriptor for resolution_minutes field.
+	ticketrollupdimDescResolutionMinutes := ticketrollupdimFields[11].Descriptor()
+	// ticketrollupdim.DefaultResolutionMinutes holds the default value on creation for the resolution_minutes field.
+	ticketrollupdim.DefaultResolutionMinutes = ticketrollupdimDescResolutionMinutes.Default.(int64)
+	// ticketrollupdimDescFrMet is the schema descriptor for fr_met field.
+	ticketrollupdimDescFrMet := ticketrollupdimFields[12].Descriptor()
+	// ticketrollupdim.DefaultFrMet holds the default value on creation for the fr_met field.
+	ticketrollupdim.DefaultFrMet = ticketrollupdimDescFrMet.Default.(int)
+	// ticketrollupdimDescFrBreached is the schema descriptor for fr_breached field.
+	ticketrollupdimDescFrBreached := ticketrollupdimFields[13].Descriptor()
+	// ticketrollupdim.DefaultFrBreached holds the default value on creation for the fr_breached field.
+	ticketrollupdim.DefaultFrBreached = ticketrollupdimDescFrBreached.Default.(int)
+	// ticketrollupdimDescResMet is the schema descriptor for res_met field.
+	ticketrollupdimDescResMet := ticketrollupdimFields[14].Descriptor()
+	// ticketrollupdim.DefaultResMet holds the default value on creation for the res_met field.
+	ticketrollupdim.DefaultResMet = ticketrollupdimDescResMet.Default.(int)
+	// ticketrollupdimDescResBreached is the schema descriptor for res_breached field.
+	ticketrollupdimDescResBreached := ticketrollupdimFields[15].Descriptor()
+	// ticketrollupdim.DefaultResBreached holds the default value on creation for the res_breached field.
+	ticketrollupdim.DefaultResBreached = ticketrollupdimDescResBreached.Default.(int)
+	// ticketrollupdimDescCsat1 is the schema descriptor for csat_1 field.
+	ticketrollupdimDescCsat1 := ticketrollupdimFields[16].Descriptor()
+	// ticketrollupdim.DefaultCsat1 holds the default value on creation for the csat_1 field.
+	ticketrollupdim.DefaultCsat1 = ticketrollupdimDescCsat1.Default.(int)
+	// ticketrollupdimDescCsat2 is the schema descriptor for csat_2 field.
+	ticketrollupdimDescCsat2 := ticketrollupdimFields[17].Descriptor()
+	// ticketrollupdim.DefaultCsat2 holds the default value on creation for the csat_2 field.
+	ticketrollupdim.DefaultCsat2 = ticketrollupdimDescCsat2.Default.(int)
+	// ticketrollupdimDescCsat3 is the schema descriptor for csat_3 field.
+	ticketrollupdimDescCsat3 := ticketrollupdimFields[18].Descriptor()
+	// ticketrollupdim.DefaultCsat3 holds the default value on creation for the csat_3 field.
+	ticketrollupdim.DefaultCsat3 = ticketrollupdimDescCsat3.Default.(int)
+	// ticketrollupdimDescCsat4 is the schema descriptor for csat_4 field.
+	ticketrollupdimDescCsat4 := ticketrollupdimFields[19].Descriptor()
+	// ticketrollupdim.DefaultCsat4 holds the default value on creation for the csat_4 field.
+	ticketrollupdim.DefaultCsat4 = ticketrollupdimDescCsat4.Default.(int)
+	// ticketrollupdimDescCsat5 is the schema descriptor for csat_5 field.
+	ticketrollupdimDescCsat5 := ticketrollupdimFields[20].Descriptor()
+	// ticketrollupdim.DefaultCsat5 holds the default value on creation for the csat_5 field.
+	ticketrollupdim.DefaultCsat5 = ticketrollupdimDescCsat5.Default.(int)
+	// ticketrollupdimDescUpdatedAt is the schema descriptor for updated_at field.
+	ticketrollupdimDescUpdatedAt := ticketrollupdimFields[21].Descriptor()
+	// ticketrollupdim.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	ticketrollupdim.DefaultUpdatedAt = ticketrollupdimDescUpdatedAt.Default.(func() time.Time)
+	// ticketrollupdim.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	ticketrollupdim.UpdateDefaultUpdatedAt = ticketrollupdimDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// ticketrollupdimDescID is the schema descriptor for id field.
+	ticketrollupdimDescID := ticketrollupdimFields[0].Descriptor()
+	// ticketrollupdim.DefaultID holds the default value on creation for the id field.
+	ticketrollupdim.DefaultID = ticketrollupdimDescID.Default.(func() uuid.UUID)
+	ticketrollupmarkFields := schema.TicketRollupMark{}.Fields()
+	_ = ticketrollupmarkFields
+	// ticketrollupmarkDescUpdatedAt is the schema descriptor for updated_at field.
+	ticketrollupmarkDescUpdatedAt := ticketrollupmarkFields[3].Descriptor()
+	// ticketrollupmark.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	ticketrollupmark.DefaultUpdatedAt = ticketrollupmarkDescUpdatedAt.Default.(func() time.Time)
+	// ticketrollupmark.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	ticketrollupmark.UpdateDefaultUpdatedAt = ticketrollupmarkDescUpdatedAt.UpdateDefault.(func() time.Time)
 	ticketsequenceFields := schema.TicketSequence{}.Fields()
 	_ = ticketsequenceFields
 	// ticketsequenceDescNextValue is the schema descriptor for next_value field.

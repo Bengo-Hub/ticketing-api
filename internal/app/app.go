@@ -25,6 +25,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/http/handlers"
 	"github.com/bengobox/ticketing-service/internal/http/metrics"
 	httprouter "github.com/bengobox/ticketing-service/internal/http/router"
+	"github.com/bengobox/ticketing-service/internal/modules/analytics"
 	"github.com/bengobox/ticketing-service/internal/modules/identity"
 	"github.com/bengobox/ticketing-service/internal/modules/ingest"
 	"github.com/bengobox/ticketing-service/internal/modules/kb"
@@ -259,6 +260,8 @@ func New(ctx context.Context) (*App, error) {
 	ticketsService.SetSLAService(&slaAdapter{svc: slaService})
 	ticketsService.SetRoutingService(&routingAdapter{svc: routingService})
 	ticketsService.SetSSEBroker(sseBroker)
+	// A resolved ticket gets a single-use CSAT survey link (ticketing.ticket.csat_requested).
+	ticketsService.SetCSAT(tickets.CSATConfig{SurveyURL: cfg.CSAT.SurveyURL, TTL: cfg.CSAT.TokenTTL})
 	// Attachments live in the private R2 bucket (OBJECT_STORAGE_*), or under MEDIA_ROOT locally.
 	if fileStore, storeErr := objectstore.New("ticketing", objectstore.FromEnv()); storeErr != nil {
 		log.Warn("app: object storage not configured, attachment uploads are disabled", zap.Error(storeErr))
@@ -345,7 +348,9 @@ func New(ctx context.Context) (*App, error) {
 		SettingsHandler:      settingsHandler,
 		SSEBroker:            sseBroker,
 		TenantResolver:       tenantResolver,
-		CRMLinks:             tickets.NewCRMLinksHandler(ormClient, tenantResolver, cfg.Auth.InternalServiceKey, log),
+		// Analytics read only the rollups ticketing-worker fills, plus indexed live counts.
+		AnalyticsHandler: analytics.NewHandler(analytics.NewService(analytics.NewRepository(sqlDB)), tenantResolver, log),
+		CRMLinks:         tickets.NewCRMLinksHandler(ormClient, tenantResolver, cfg.Auth.InternalServiceKey, log),
 	})
 
 	httpServer := &http.Server{

@@ -50,6 +50,7 @@ type Service struct {
 	sse     SSEPublisher
 	routing RulesEvaluator
 	files   FileStore
+	csat    CSATConfig
 	now     func() time.Time
 }
 

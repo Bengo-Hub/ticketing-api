@@ -15,10 +15,12 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
 	"github.com/bengobox/ticketing-service/internal/ent/auditlog"
 	"github.com/bengobox/ticketing-service/internal/ent/businesscalendar"
+	"github.com/bengobox/ticketing-service/internal/ent/csatresponse"
 	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
 	"github.com/bengobox/ticketing-service/internal/ent/macro"
 	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
 	"github.com/bengobox/ticketing-service/internal/ent/rolepermission"
+	"github.com/bengobox/ticketing-service/internal/ent/rollupwatermark"
 	"github.com/bengobox/ticketing-service/internal/ent/routingrule"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
 	"github.com/bengobox/ticketing-service/internal/ent/team"
@@ -31,6 +33,9 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/ticketingrole"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketinguser"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketlink"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketrollup"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketrollupdim"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketrollupmark"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketsequence"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketview"
 	"github.com/bengobox/ticketing-service/internal/ent/userroleassignment"
@@ -97,10 +102,12 @@ func checkColumn(t, c string) error {
 			agent.Table:               agent.ValidColumn,
 			auditlog.Table:            auditlog.ValidColumn,
 			businesscalendar.Table:    businesscalendar.ValidColumn,
+			csatresponse.Table:        csatresponse.ValidColumn,
 			kbarticle.Table:           kbarticle.ValidColumn,
 			macro.Table:               macro.ValidColumn,
 			outboxevent.Table:         outboxevent.ValidColumn,
 			rolepermission.Table:      rolepermission.ValidColumn,
+			rollupwatermark.Table:     rollupwatermark.ValidColumn,
 			routingrule.Table:         routingrule.ValidColumn,
 			slapolicy.Table:           slapolicy.ValidColumn,
 			team.Table:                team.ValidColumn,
@@ -110,6 +117,9 @@ func checkColumn(t, c string) error {
 			ticketcategory.Table:      ticketcategory.ValidColumn,
 			ticketcomment.Table:       ticketcomment.ValidColumn,
 			ticketlink.Table:          ticketlink.ValidColumn,
+			ticketrollup.Table:        ticketrollup.ValidColumn,
+			ticketrollupdim.Table:     ticketrollupdim.ValidColumn,
+			ticketrollupmark.Table:    ticketrollupmark.ValidColumn,
 			ticketsequence.Table:      ticketsequence.ValidColumn,
 			ticketview.Table:          ticketview.ValidColumn,
 			ticketingpermission.Table: ticketingpermission.ValidColumn,

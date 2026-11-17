@@ -104,10 +104,12 @@ type Repository interface {
 	GetCategoryTicketCount(ctx context.Context, tenantID uuid.UUID, categoryID uuid.UUID) (int, error)
 	GetCategoryChildCount(ctx context.Context, tenantID uuid.UUID, categoryID uuid.UUID) (int, error)
 
-	// Stats
-	GetTicketCountsByStatus(ctx context.Context, tenantID uuid.UUID) (map[TicketStatus]int, error)
-	GetTicketCountsByPriority(ctx context.Context, tenantID uuid.UUID) (map[TicketPriority]int, error)
-	GetTicketTrend(ctx context.Context, tenantID uuid.UUID, from, to time.Time, bucketDays int) ([]TrendPoint, error)
+	// CSAT. ConsumeCSATToken marks the ticket's survey token used when its hash matches, it is
+	// unused and not expired at now; consumed is false when another submit got there first.
+	ConsumeCSATToken(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, tokenHash string, now time.Time) (consumed bool, err error)
+	CreateCSATResponse(ctx context.Context, resp *CSATResponse) error
+
+	// Agents. Period figures (analytics) live in the analytics module and read only rollups.
 	GetAgentTicketCount(ctx context.Context, tenantID uuid.UUID, agentID uuid.UUID) (int, error)
 	GetAgentEmail(ctx context.Context, tenantID uuid.UUID, agentID uuid.UUID) (string, error)
 	// GetAgentEmailByUser returns the email of the tenant's agent profile for an auth-api user.

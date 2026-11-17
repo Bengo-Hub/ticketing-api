@@ -36,7 +36,6 @@ const (
 	permCategoriesView   = "ticketing.categories.view"
 	permCategoriesChange = "ticketing.categories.change"
 	permCategoriesDelete = "ticketing.categories.delete"
-	permAnalyticsView    = "ticketing.analytics.view"
 	// Canned replies are curated content, managed by whoever curates the knowledge base.
 	permKBManage = "ticketing.kb.manage"
 )
@@ -87,8 +86,6 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		t.With(viewAny).Get("/", h.ListTickets)
 		t.With(staff).Get("/tags", h.ListTags)
 		t.With(change).Put("/bulk", h.BulkUpdate)
-		t.With(access.RequirePermission(permAnalyticsView)).Get("/stats", h.GetTicketStats)
-		t.With(access.RequirePermission(permAnalyticsView)).Get("/analytics", h.GetAnalytics)
 		t.With(access.RequirePermission(permTicketsAdd)).Post("/classify", h.ClassifyTicket)
 		t.With(viewAny).Get("/number/{ticketNumber}", h.GetTicketByNumber)
 		t.With(viewAny).Get("/{ticketId}", h.GetTicket)

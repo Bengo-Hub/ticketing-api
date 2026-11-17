@@ -67,37 +67,6 @@ func (s *Service) DeleteCategory(ctx context.Context, tenantID uuid.UUID, catego
 	return s.repo.DeleteCategory(ctx, tenantID, categoryID)
 }
 
-// GetTicketStats returns ticket counts by status.
-func (s *Service) GetTicketStats(ctx context.Context, tenantID uuid.UUID) (map[TicketStatus]int, error) {
-	return s.repo.GetTicketCountsByStatus(ctx, tenantID)
-}
-
-// GetAnalytics returns combined ticket analytics: by status, by priority and the trend.
-func (s *Service) GetAnalytics(ctx context.Context, tenantID uuid.UUID, days int) (*AnalyticsResponse, error) {
-	if days <= 0 || days > 365 {
-		days = 30
-	}
-	to := s.now().UTC()
-	from := to.AddDate(0, 0, -days)
-	bucketDays := 1
-	if days > 90 {
-		bucketDays = 7
-	}
-	byStatus, err := s.repo.GetTicketCountsByStatus(ctx, tenantID)
-	if err != nil {
-		return nil, err
-	}
-	byPriority, err := s.repo.GetTicketCountsByPriority(ctx, tenantID)
-	if err != nil {
-		return nil, err
-	}
-	trend, err := s.repo.GetTicketTrend(ctx, tenantID, from, to, bucketDays)
-	if err != nil {
-		return nil, err
-	}
-	return &AnalyticsResponse{ByStatus: byStatus, ByPriority: byPriority, Trend: trend}, nil
-}
-
 // validTransitions lists the statuses each status may move to.
 var validTransitions = map[TicketStatus][]TicketStatus{
 	StatusNew:             {StatusOpen, StatusInProgress, StatusCancelled},

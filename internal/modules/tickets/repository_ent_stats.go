@@ -12,46 +12,6 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/ticket"
 )
 
-func (r *EntRepository) GetTicketCountsByStatus(ctx context.Context, tenantID uuid.UUID) (map[TicketStatus]int, error) {
-	var rows []struct {
-		Status string `json:"status"`
-		Count  int    `json:"count"`
-	}
-	err := r.client.Ticket.Query().
-		Where(ticket.TenantID(tenantID), ticket.DeletedAtIsNil()).
-		GroupBy(ticket.FieldStatus).
-		Aggregate(ent.Count()).
-		Scan(ctx, &rows)
-	if err != nil {
-		return nil, err
-	}
-	counts := make(map[TicketStatus]int, len(rows))
-	for _, row := range rows {
-		counts[TicketStatus(row.Status)] = row.Count
-	}
-	return counts, nil
-}
-
-func (r *EntRepository) GetTicketCountsByPriority(ctx context.Context, tenantID uuid.UUID) (map[TicketPriority]int, error) {
-	var rows []struct {
-		Priority string `json:"priority"`
-		Count    int    `json:"count"`
-	}
-	err := r.client.Ticket.Query().
-		Where(ticket.TenantID(tenantID), ticket.DeletedAtIsNil()).
-		GroupBy(ticket.FieldPriority).
-		Aggregate(ent.Count()).
-		Scan(ctx, &rows)
-	if err != nil {
-		return nil, err
-	}
-	counts := make(map[TicketPriority]int, len(rows))
-	for _, row := range rows {
-		counts[TicketPriority(row.Priority)] = row.Count
-	}
-	return counts, nil
-}
-
 func (r *EntRepository) GetAgentTicketCount(ctx context.Context, tenantID uuid.UUID, agentID uuid.UUID) (int, error) {
 	return r.client.Ticket.Query().
 		Where(

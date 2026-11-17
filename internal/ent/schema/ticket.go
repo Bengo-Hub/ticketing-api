@@ -198,8 +198,26 @@ func (Ticket) Indexes() []ent.Index {
 		index.Fields("tenant_id", "created_at", "id"),
 		index.Fields("tenant_id", "channel"),
 		index.Fields("tenant_id", "category_id"),
-		// The analytics trend counts resolutions by resolved_at.
+		// The analytics rollup recomputes an hour from each moment a ticket can count at: created_at
+		// (above), resolved_at, first_response_at and the two SLA deadlines. resolved_at also
+		// serves the live resolved_today figure.
 		index.Fields("tenant_id", "resolved_at"),
+		index.Fields("tenant_id", "first_response_at"),
+		index.Fields("tenant_id", "sla_response_due_at"),
+		index.Fields("tenant_id", "sla_resolution_due_at"),
+		// The rollup reads changed tickets across tenants in (updated_at, id) order from its watermark.
+		index.Fields("updated_at", "id"),
+		// The live backlog (open by status, overdue, unassigned, open per agent) is an index-only
+		// scan of the open tickets: every column those counts read, the five dimension filters
+		// included, is in the index, and the predicate matches the queries' WHERE
+		// (analytics.openStatuses). A team or any other filter therefore never visits the heap.
+		index.Fields("tenant_id", "status", "assigned_team_id", "assigned_agent_id", "category_id", "channel", "priority",
+			"sla_resolution_due_at", "sla_paused_at").
+			StorageKey("ticket_open_backlog").
+			// Written in Postgres' own normalised form so Atlas sees no drift on replay (the IN form
+			// is rewritten differently by each pass). The planner still matches the queries'
+			// "status IN (...)" against it: verified as an index-only scan on 2026-11-17.
+			Annotations(entsql.IndexWhere("((deleted_at IS NULL) AND ((status)::text = ANY ('{new,open,in_progress,pending_customer,pending_internal}'::text[])))")),
 		trgmIndex("subject", "ticket_subject_trgm"),
 		trgmIndex("description", "ticket_description_trgm"),
 		ginIndex("tags", "ticket_tags_gin"),

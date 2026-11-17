@@ -42,6 +42,10 @@ func (s *Service) statusTx(ctx context.Context, repo Repository, out *Outbox, te
 		}
 	}
 	out.Ticket(EventTicketResolved, TicketResolvedPayload(ticket, from, now))
+	// CSAT survey (Sprint 12): a single-use token in the same transaction as the resolve.
+	if err := s.csatTx(ctx, repo, out, ticket, now); err != nil {
+		return from, err
+	}
 	if ticket.CRMContactID != nil {
 		out.CRMActivity(crmActivity(ticket, "ticket_resolved"))
 	}

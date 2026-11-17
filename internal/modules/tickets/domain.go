@@ -344,17 +344,3 @@ type CategoryFilter struct {
 	Offset   int
 	Limit    int
 }
-
-// TrendPoint represents ticket counts for a single time bucket.
-type TrendPoint struct {
-	Date     string `json:"date"`
-	Created  int    `json:"created"`
-	Resolved int    `json:"resolved"`
-}
-
-// AnalyticsResponse is the response for the analytics endpoint.
-type AnalyticsResponse struct {
-	ByStatus   map[TicketStatus]int   `json:"by_status"`
-	ByPriority map[TicketPriority]int `json:"by_priority"`
-	Trend      []TrendPoint           `json:"trend"`
-}

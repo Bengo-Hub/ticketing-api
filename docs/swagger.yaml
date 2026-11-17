@@ -565,21 +565,6 @@ definitions:
       content:
         type: string
     type: object
-  internal_modules_tickets.AnalyticsResponse:
-    properties:
-      by_priority:
-        additionalProperties:
-          type: integer
-        type: object
-      by_status:
-        additionalProperties:
-          type: integer
-        type: object
-      trend:
-        items:
-          $ref: '#/definitions/internal_modules_tickets.TrendPoint'
-        type: array
-    type: object
   internal_modules_tickets.AssignTicketRequest:
     properties:
       agent_id:
@@ -1048,15 +1033,6 @@ definitions:
         type: string
       updated_at:
         type: string
-    type: object
-  internal_modules_tickets.TrendPoint:
-    properties:
-      created:
-        type: integer
-      date:
-        type: string
-      resolved:
-        type: integer
     type: object
   internal_modules_tickets.ViewInput:
     properties:
@@ -2675,30 +2651,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Update ticket status
-      tags:
-      - tickets
-  /{tenant}/tickets/analytics:
-    get:
-      parameters:
-      - description: Tenant slug
-        in: path
-        name: tenant
-        required: true
-        type: string
-      - description: Days in the trend (default 30, max 365)
-        in: query
-        name: days
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/internal_modules_tickets.AnalyticsResponse'
-      security:
-      - BearerAuth: []
-      summary: Get analytics
       tags:
       - tickets
   /{tenant}/tickets/bulk:

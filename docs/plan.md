@@ -21,6 +21,8 @@ On 2026-11-17 Sprint 10 (2f0a568) is live, and so is the Sprint 11 ingest (a67e2
 
 On 2026-11-17 I also wrote sprint 14: treasury-api's user management and role administration, ported to ticketing. Roles can be created, customized, cloned, edited and deleted, people are added through auth-api's S2S member add, roles are granted with an optional end date and revoked without sign-in giving them back, and every change lands in the new `audit_logs` table. The old `PUT /ticketing/users/{userId}/roles` is gone. It is not deployed yet.
 
+On 2026-11-17 I also built sprint 12: hourly and daily rollups filled by the worker, the `/analytics/tickets`, `/analytics/agents`, `/analytics/sla` and `/analytics/csat` routes read only from them, export through the shared reports module, and CSAT surveys sent on resolve with a single-use link. The route contract is [analytics.md](analytics.md). It is not deployed yet.
+
 The sprint list below gives the status of each sprint against the code.
 
 ## Find, Flip, Fix (read 2026-11-16)
@@ -60,7 +62,7 @@ The features the leaders share make up the baseline:
 2. **Low learning curve.** Seeded defaults (categories, SLA policy, macros, a business-hours calendar with Kenyan public holidays) give a new tenant a working desk with zero configuration. An e2e test runs a fresh tenant from first ticket to resolution without opening the admin pages. Proved in sprint 10.
 3. **No missed duplicate replies.** Collision detection covers viewing and typing. An e2e test with two agents on one ticket shows the second agent the warning within 2 seconds. Proved in sprint 9.
 4. **Predictable cost.** AI calls debit the AI credit wallet and refuse cleanly at zero balance. A unit test with a zero-balance tenant hides the AI suggestion and still saves the ticket. Proved in sprint 13.
-5. **Reports stay fast as data grows.** Analytics come from rollup tables and indexed `GROUP BY`, never row loads. A benchmark with 200k tickets keeps `/analytics/*` under 300 ms p95 locally. Proved in sprint 12.
+5. **Reports stay fast as data grows.** Analytics come from rollup tables and indexed `GROUP BY`, never row loads. A benchmark with 200k tickets keeps `/analytics/*` under 300 ms p95 locally. Proved in sprint 12 by `internal/modules/analytics/benchmark_test.go`; the first recorded run is pending.
 
 ### Sources (read 2026-11-16)
 
@@ -87,13 +89,13 @@ The features the leaders share make up the baseline:
 | [3](sprints/sprint-3-sla.md) | SLA management | Done | Finished by sprint 10 |
 | [4](sprints/sprint-4-public-api.md) | Public API and email codes | Done | |
 | [5](sprints/sprint-5-knowledge-base.md) | Knowledge base | Partial | Full-text search, category list, suggestions |
-| [6](sprints/sprint-6-analytics.md) | Analytics | Partial | Agent, SLA and CSAT reports, export, rollups, `resolved_at` trend |
+| [6](sprints/sprint-6-analytics.md) | Analytics | Done | Finished by sprint 12 |
 | [7](sprints/sprint-7-notifications.md) | Notifications | Partial | Preferences, @mentions, SMS and WhatsApp |
 | [8](sprints/sprint-8-routing.md) | Routing and classification | Partial | Least-loaded fallback, ticket counts, escalation, AI classification |
 | [9](sprints/sprint-9-agent-productivity.md) | Agent productivity | Pending | Keyset paging, full-text search, views, tags, macros, merge, parent-child, bulk, collision presence, @mentions, attachments on R2 |
 | [10](sprints/sprint-10-sla-leaders.md) | SLA that matches the leaders | Built, not deployed | Testcontainers tests for the scans and the report; the notifications-api consumer for warnings and escalations |
 | [11](sprints/sprint-11-channels.md) | Channels | Ingest, publishers and the settings page deployed; remainder in progress | The Stalwart support domain, ingest mailbox and DNS (need the owner to run the keyed calls), CRM contact link at ingest, WhatsApp agent replies and the 24-hour window, forwarding verify step, channel badge and filter, the web widget, and Convert to ticket in the notifications inbox |
-| [12](sprints/sprint-12-analytics-csat.md) | Analytics and CSAT | Pending | Rollups under `RunOnce`, `resolved_at` trends, CSAT, export through the reports module, 200k benchmark |
+| [12](sprints/sprint-12-analytics-csat.md) | Analytics and CSAT | Built, not deployed | The migration for the compact series and the backlog index, a passing 200k benchmark run, the notifications-api survey email |
 | [13](sprints/sprint-13-ai-vera.md) | AI with Vera | Pending | Classify, summarize, suggested reply, KB suggestions, AI wallet credits, `IsGatingExempt` for codevertex only |
 | [14](sprints/sprint-14-user-management.md) | User management and role administration (treasury port) | Built, not deployed | Ent generation and the `audit_logs` migration, build and tests, the ticketing-ui pages |
 
@@ -108,24 +110,24 @@ After sprint 13 comes the integration review and test pass: auth-api (including 
 | The public support pages still use native form fields and a plain textarea | UI | UI sprint 8 |
 | `SLASidebar` and the policy form still use the removed `first_response_business_hours`, `resolution_business_hours` and `business_hours`; the API now takes `calendar_id` (null is 24x7) and `clear_calendar` | UI | UI sprint 9 |
 | Update requests cannot clear a field, because `UpdateTicketRequest` uses pointers with `omitempty` | API | Sprint 9 |
-| Fields the UI needs and the API lacks: stats `resolved_today` and `overdue`, previous-period figures, a KB category list, comment author names | API | Sprints 9 and 12 |
+| Fields the UI needs and the API lacks: a KB category list, comment author names (`resolved_today`, `overdue` and previous-period figures are in `/analytics/tickets` since sprint 12) | API | Sprint 9 |
 | The OTP client is not on shared-service-client, because a retried call could replay a one-time code | API | Kept as is by design |
 | `internal/modules/tickets/handler.go` (469 lines) and `internal/modules/identity/handler.go` (465 lines) are over 400 lines | API | Sprint 9 |
 | `ListTickets` does not read the `search` parameter yet | API | Sprint 9 |
 | Turbopack on Windows refuses the shared-ui-lib `@source` path through the pnpm junction, so local verification uses `next build --webpack` while CI builds with Turbopack on Linux | UI | Open |
-| The analytics trend loads rows and counts resolved by current status | API | Sprint 12 |
 | `IncrementAgentTicketCount`, `DecrementAgentTicketCount` and `GetLeastLoadedAgent` exist and the ticket flow does not call them | API | Sprint 8 follow-up |
 
 ## Runtime
 
 - API on `HTTP_PORT`, default 4009. Metrics on `METRICS_PORT`, default 9090.
 - Public host `ticketingapi.codevertexafrica.com`.
-- Migrations run from `scripts/entrypoint.sh` at every pod start. The SLA scans (breaches, warnings, escalations) run only in the `ticketing-worker` Deployment, every minute.
+- Migrations run from `scripts/entrypoint.sh` at every pod start. The SLA scans (breaches, warnings, escalations) and the analytics rollup run only in the `ticketing-worker` Deployment, every minute.
 
 ## References
 
 - [Architecture](architecture.md)
 - [ERD](erd.md)
 - [Integrations](integrations.md)
+- [Analytics and CSAT](analytics.md)
 - [Superset design](superset-integration.md)
 - [ticketing-ui plan](../../ticketing-ui/docs/plan.md)

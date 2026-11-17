@@ -14,11 +14,13 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/agent"
 	"github.com/bengobox/ticketing-service/internal/ent/auditlog"
 	"github.com/bengobox/ticketing-service/internal/ent/businesscalendar"
+	"github.com/bengobox/ticketing-service/internal/ent/csatresponse"
 	"github.com/bengobox/ticketing-service/internal/ent/kbarticle"
 	"github.com/bengobox/ticketing-service/internal/ent/macro"
 	"github.com/bengobox/ticketing-service/internal/ent/outboxevent"
 	"github.com/bengobox/ticketing-service/internal/ent/predicate"
 	"github.com/bengobox/ticketing-service/internal/ent/rolepermission"
+	"github.com/bengobox/ticketing-service/internal/ent/rollupwatermark"
 	"github.com/bengobox/ticketing-service/internal/ent/routingrule"
 	"github.com/bengobox/ticketing-service/internal/ent/slapolicy"
 	"github.com/bengobox/ticketing-service/internal/ent/team"
@@ -31,6 +33,9 @@ import (
 	"github.com/bengobox/ticketing-service/internal/ent/ticketingrole"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketinguser"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketlink"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketrollup"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketrollupdim"
+	"github.com/bengobox/ticketing-service/internal/ent/ticketrollupmark"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketsequence"
 	"github.com/bengobox/ticketing-service/internal/ent/ticketview"
 	"github.com/bengobox/ticketing-service/internal/ent/userroleassignment"
@@ -50,10 +55,12 @@ const (
 	TypeAgent               = "Agent"
 	TypeAuditLog            = "AuditLog"
 	TypeBusinessCalendar    = "BusinessCalendar"
+	TypeCSATResponse        = "CSATResponse"
 	TypeKBArticle           = "KBArticle"
 	TypeMacro               = "Macro"
 	TypeOutboxEvent         = "OutboxEvent"
 	TypeRolePermission      = "RolePermission"
+	TypeRollupWatermark     = "RollupWatermark"
 	TypeRoutingRule         = "RoutingRule"
 	TypeSLAPolicy           = "SLAPolicy"
 	TypeTeam                = "Team"
@@ -63,6 +70,9 @@ const (
 	TypeTicketCategory      = "TicketCategory"
 	TypeTicketComment       = "TicketComment"
 	TypeTicketLink          = "TicketLink"
+	TypeTicketRollup        = "TicketRollup"
+	TypeTicketRollupDim     = "TicketRollupDim"
+	TypeTicketRollupMark    = "TicketRollupMark"
 	TypeTicketSequence      = "TicketSequence"
 	TypeTicketView          = "TicketView"
 	TypeTicketingPermission = "TicketingPermission"
@@ -3126,6 +3136,666 @@ func (m *BusinessCalendarMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *BusinessCalendarMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown BusinessCalendar edge %s", name)
+}
+
+// CSATResponseMutation represents an operation that mutates the CSATResponse nodes in the graph.
+type CSATResponseMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *uuid.UUID
+	tenant_id     *uuid.UUID
+	ticket_id     *uuid.UUID
+	score         *int
+	addscore      *int
+	comment       *string
+	token_hash    *string
+	submitted_at  *time.Time
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*CSATResponse, error)
+	predicates    []predicate.CSATResponse
+}
+
+var _ ent.Mutation = (*CSATResponseMutation)(nil)
+
+// csatresponseOption allows management of the mutation configuration using functional options.
+type csatresponseOption func(*CSATResponseMutation)
+
+// newCSATResponseMutation creates new mutation for the CSATResponse entity.
+func newCSATResponseMutation(c config, op Op, opts ...csatresponseOption) *CSATResponseMutation {
+	m := &CSATResponseMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCSATResponse,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCSATResponseID sets the ID field of the mutation.
+func withCSATResponseID(id uuid.UUID) csatresponseOption {
+	return func(m *CSATResponseMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *CSATResponse
+		)
+		m.oldValue = func(ctx context.Context) (*CSATResponse, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().CSATResponse.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCSATResponse sets the old CSATResponse of the mutation.
+func withCSATResponse(node *CSATResponse) csatresponseOption {
+	return func(m *CSATResponseMutation) {
+		m.oldValue = func(context.Context) (*CSATResponse, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CSATResponseMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CSATResponseMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of CSATResponse entities.
+func (m *CSATResponseMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CSATResponseMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CSATResponseMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().CSATResponse.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (m *CSATResponseMutation) SetTenantID(u uuid.UUID) {
+	m.tenant_id = &u
+}
+
+// TenantID returns the value of the "tenant_id" field in the mutation.
+func (m *CSATResponseMutation) TenantID() (r uuid.UUID, exists bool) {
+	v := m.tenant_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTenantID returns the old "tenant_id" field's value of the CSATResponse entity.
+// If the CSATResponse object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CSATResponseMutation) OldTenantID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTenantID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTenantID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTenantID: %w", err)
+	}
+	return oldValue.TenantID, nil
+}
+
+// ResetTenantID resets all changes to the "tenant_id" field.
+func (m *CSATResponseMutation) ResetTenantID() {
+	m.tenant_id = nil
+}
+
+// SetTicketID sets the "ticket_id" field.
+func (m *CSATResponseMutation) SetTicketID(u uuid.UUID) {
+	m.ticket_id = &u
+}
+
+// TicketID returns the value of the "ticket_id" field in the mutation.
+func (m *CSATResponseMutation) TicketID() (r uuid.UUID, exists bool) {
+	v := m.ticket_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTicketID returns the old "ticket_id" field's value of the CSATResponse entity.
+// If the CSATResponse object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CSATResponseMutation) OldTicketID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTicketID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTicketID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTicketID: %w", err)
+	}
+	return oldValue.TicketID, nil
+}
+
+// ResetTicketID resets all changes to the "ticket_id" field.
+func (m *CSATResponseMutation) ResetTicketID() {
+	m.ticket_id = nil
+}
+
+// SetScore sets the "score" field.
+func (m *CSATResponseMutation) SetScore(i int) {
+	m.score = &i
+	m.addscore = nil
+}
+
+// Score returns the value of the "score" field in the mutation.
+func (m *CSATResponseMutation) Score() (r int, exists bool) {
+	v := m.score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldScore returns the old "score" field's value of the CSATResponse entity.
+// If the CSATResponse object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CSATResponseMutation) OldScore(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldScore is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldScore requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldScore: %w", err)
+	}
+	return oldValue.Score, nil
+}
+
+// AddScore adds i to the "score" field.
+func (m *CSATResponseMutation) AddScore(i int) {
+	if m.addscore != nil {
+		*m.addscore += i
+	} else {
+		m.addscore = &i
+	}
+}
+
+// AddedScore returns the value that was added to the "score" field in this mutation.
+func (m *CSATResponseMutation) AddedScore() (r int, exists bool) {
+	v := m.addscore
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetScore resets all changes to the "score" field.
+func (m *CSATResponseMutation) ResetScore() {
+	m.score = nil
+	m.addscore = nil
+}
+
+// SetComment sets the "comment" field.
+func (m *CSATResponseMutation) SetComment(s string) {
+	m.comment = &s
+}
+
+// Comment returns the value of the "comment" field in the mutation.
+func (m *CSATResponseMutation) Comment() (r string, exists bool) {
+	v := m.comment
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldComment returns the old "comment" field's value of the CSATResponse entity.
+// If the CSATResponse object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CSATResponseMutation) OldComment(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldComment is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldComment requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldComment: %w", err)
+	}
+	return oldValue.Comment, nil
+}
+
+// ClearComment clears the value of the "comment" field.
+func (m *CSATResponseMutation) ClearComment() {
+	m.comment = nil
+	m.clearedFields[csatresponse.FieldComment] = struct{}{}
+}
+
+// CommentCleared returns if the "comment" field was cleared in this mutation.
+func (m *CSATResponseMutation) CommentCleared() bool {
+	_, ok := m.clearedFields[csatresponse.FieldComment]
+	return ok
+}
+
+// ResetComment resets all changes to the "comment" field.
+func (m *CSATResponseMutation) ResetComment() {
+	m.comment = nil
+	delete(m.clearedFields, csatresponse.FieldComment)
+}
+
+// SetTokenHash sets the "token_hash" field.
+func (m *CSATResponseMutation) SetTokenHash(s string) {
+	m.token_hash = &s
+}
+
+// TokenHash returns the value of the "token_hash" field in the mutation.
+func (m *CSATResponseMutation) TokenHash() (r string, exists bool) {
+	v := m.token_hash
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTokenHash returns the old "token_hash" field's value of the CSATResponse entity.
+// If the CSATResponse object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CSATResponseMutation) OldTokenHash(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTokenHash is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTokenHash requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTokenHash: %w", err)
+	}
+	return oldValue.TokenHash, nil
+}
+
+// ResetTokenHash resets all changes to the "token_hash" field.
+func (m *CSATResponseMutation) ResetTokenHash() {
+	m.token_hash = nil
+}
+
+// SetSubmittedAt sets the "submitted_at" field.
+func (m *CSATResponseMutation) SetSubmittedAt(t time.Time) {
+	m.submitted_at = &t
+}
+
+// SubmittedAt returns the value of the "submitted_at" field in the mutation.
+func (m *CSATResponseMutation) SubmittedAt() (r time.Time, exists bool) {
+	v := m.submitted_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSubmittedAt returns the old "submitted_at" field's value of the CSATResponse entity.
+// If the CSATResponse object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CSATResponseMutation) OldSubmittedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSubmittedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSubmittedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSubmittedAt: %w", err)
+	}
+	return oldValue.SubmittedAt, nil
+}
+
+// ResetSubmittedAt resets all changes to the "submitted_at" field.
+func (m *CSATResponseMutation) ResetSubmittedAt() {
+	m.submitted_at = nil
+}
+
+// Where appends a list predicates to the CSATResponseMutation builder.
+func (m *CSATResponseMutation) Where(ps ...predicate.CSATResponse) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CSATResponseMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CSATResponseMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.CSATResponse, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CSATResponseMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CSATResponseMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (CSATResponse).
+func (m *CSATResponseMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CSATResponseMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.tenant_id != nil {
+		fields = append(fields, csatresponse.FieldTenantID)
+	}
+	if m.ticket_id != nil {
+		fields = append(fields, csatresponse.FieldTicketID)
+	}
+	if m.score != nil {
+		fields = append(fields, csatresponse.FieldScore)
+	}
+	if m.comment != nil {
+		fields = append(fields, csatresponse.FieldComment)
+	}
+	if m.token_hash != nil {
+		fields = append(fields, csatresponse.FieldTokenHash)
+	}
+	if m.submitted_at != nil {
+		fields = append(fields, csatresponse.FieldSubmittedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CSATResponseMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case csatresponse.FieldTenantID:
+		return m.TenantID()
+	case csatresponse.FieldTicketID:
+		return m.TicketID()
+	case csatresponse.FieldScore:
+		return m.Score()
+	case csatresponse.FieldComment:
+		return m.Comment()
+	case csatresponse.FieldTokenHash:
+		return m.TokenHash()
+	case csatresponse.FieldSubmittedAt:
+		return m.SubmittedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CSATResponseMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case csatresponse.FieldTenantID:
+		return m.OldTenantID(ctx)
+	case csatresponse.FieldTicketID:
+		return m.OldTicketID(ctx)
+	case csatresponse.FieldScore:
+		return m.OldScore(ctx)
+	case csatresponse.FieldComment:
+		return m.OldComment(ctx)
+	case csatresponse.FieldTokenHash:
+		return m.OldTokenHash(ctx)
+	case csatresponse.FieldSubmittedAt:
+		return m.OldSubmittedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown CSATResponse field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CSATResponseMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case csatresponse.FieldTenantID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTenantID(v)
+		return nil
+	case csatresponse.FieldTicketID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTicketID(v)
+		return nil
+	case csatresponse.FieldScore:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetScore(v)
+		return nil
+	case csatresponse.FieldComment:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetComment(v)
+		return nil
+	case csatresponse.FieldTokenHash:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTokenHash(v)
+		return nil
+	case csatresponse.FieldSubmittedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSubmittedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown CSATResponse field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CSATResponseMutation) AddedFields() []string {
+	var fields []string
+	if m.addscore != nil {
+		fields = append(fields, csatresponse.FieldScore)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CSATResponseMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case csatresponse.FieldScore:
+		return m.AddedScore()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CSATResponseMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case csatresponse.FieldScore:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddScore(v)
+		return nil
+	}
+	return fmt.Errorf("unknown CSATResponse numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CSATResponseMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(csatresponse.FieldComment) {
+		fields = append(fields, csatresponse.FieldComment)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CSATResponseMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CSATResponseMutation) ClearField(name string) error {
+	switch name {
+	case csatresponse.FieldComment:
+		m.ClearComment()
+		return nil
+	}
+	return fmt.Errorf("unknown CSATResponse nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CSATResponseMutation) ResetField(name string) error {
+	switch name {
+	case csatresponse.FieldTenantID:
+		m.ResetTenantID()
+		return nil
+	case csatresponse.FieldTicketID:
+		m.ResetTicketID()
+		return nil
+	case csatresponse.FieldScore:
+		m.ResetScore()
+		return nil
+	case csatresponse.FieldComment:
+		m.ResetComment()
+		return nil
+	case csatresponse.FieldTokenHash:
+		m.ResetTokenHash()
+		return nil
+	case csatresponse.FieldSubmittedAt:
+		m.ResetSubmittedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown CSATResponse field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CSATResponseMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CSATResponseMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CSATResponseMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CSATResponseMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CSATResponseMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CSATResponseMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CSATResponseMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown CSATResponse unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CSATResponseMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown CSATResponse edge %s", name)
 }
 
 // KBArticleMutation represents an operation that mutates the KBArticle nodes in the graph.
@@ -6811,6 +7481,576 @@ func (m *RolePermissionMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown RolePermission edge %s", name)
+}
+
+// RollupWatermarkMutation represents an operation that mutates the RollupWatermark nodes in the graph.
+type RollupWatermarkMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *uuid.UUID
+	name          *string
+	watermark_at  *time.Time
+	watermark_id  *uuid.UUID
+	caught_up_at  *time.Time
+	updated_at    *time.Time
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*RollupWatermark, error)
+	predicates    []predicate.RollupWatermark
+}
+
+var _ ent.Mutation = (*RollupWatermarkMutation)(nil)
+
+// rollupwatermarkOption allows management of the mutation configuration using functional options.
+type rollupwatermarkOption func(*RollupWatermarkMutation)
+
+// newRollupWatermarkMutation creates new mutation for the RollupWatermark entity.
+func newRollupWatermarkMutation(c config, op Op, opts ...rollupwatermarkOption) *RollupWatermarkMutation {
+	m := &RollupWatermarkMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeRollupWatermark,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withRollupWatermarkID sets the ID field of the mutation.
+func withRollupWatermarkID(id uuid.UUID) rollupwatermarkOption {
+	return func(m *RollupWatermarkMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *RollupWatermark
+		)
+		m.oldValue = func(ctx context.Context) (*RollupWatermark, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().RollupWatermark.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withRollupWatermark sets the old RollupWatermark of the mutation.
+func withRollupWatermark(node *RollupWatermark) rollupwatermarkOption {
+	return func(m *RollupWatermarkMutation) {
+		m.oldValue = func(context.Context) (*RollupWatermark, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m RollupWatermarkMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m RollupWatermarkMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of RollupWatermark entities.
+func (m *RollupWatermarkMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *RollupWatermarkMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *RollupWatermarkMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().RollupWatermark.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *RollupWatermarkMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *RollupWatermarkMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the RollupWatermark entity.
+// If the RollupWatermark object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RollupWatermarkMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *RollupWatermarkMutation) ResetName() {
+	m.name = nil
+}
+
+// SetWatermarkAt sets the "watermark_at" field.
+func (m *RollupWatermarkMutation) SetWatermarkAt(t time.Time) {
+	m.watermark_at = &t
+}
+
+// WatermarkAt returns the value of the "watermark_at" field in the mutation.
+func (m *RollupWatermarkMutation) WatermarkAt() (r time.Time, exists bool) {
+	v := m.watermark_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWatermarkAt returns the old "watermark_at" field's value of the RollupWatermark entity.
+// If the RollupWatermark object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RollupWatermarkMutation) OldWatermarkAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWatermarkAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWatermarkAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWatermarkAt: %w", err)
+	}
+	return oldValue.WatermarkAt, nil
+}
+
+// ResetWatermarkAt resets all changes to the "watermark_at" field.
+func (m *RollupWatermarkMutation) ResetWatermarkAt() {
+	m.watermark_at = nil
+}
+
+// SetWatermarkID sets the "watermark_id" field.
+func (m *RollupWatermarkMutation) SetWatermarkID(u uuid.UUID) {
+	m.watermark_id = &u
+}
+
+// WatermarkID returns the value of the "watermark_id" field in the mutation.
+func (m *RollupWatermarkMutation) WatermarkID() (r uuid.UUID, exists bool) {
+	v := m.watermark_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWatermarkID returns the old "watermark_id" field's value of the RollupWatermark entity.
+// If the RollupWatermark object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RollupWatermarkMutation) OldWatermarkID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWatermarkID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWatermarkID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWatermarkID: %w", err)
+	}
+	return oldValue.WatermarkID, nil
+}
+
+// ResetWatermarkID resets all changes to the "watermark_id" field.
+func (m *RollupWatermarkMutation) ResetWatermarkID() {
+	m.watermark_id = nil
+}
+
+// SetCaughtUpAt sets the "caught_up_at" field.
+func (m *RollupWatermarkMutation) SetCaughtUpAt(t time.Time) {
+	m.caught_up_at = &t
+}
+
+// CaughtUpAt returns the value of the "caught_up_at" field in the mutation.
+func (m *RollupWatermarkMutation) CaughtUpAt() (r time.Time, exists bool) {
+	v := m.caught_up_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCaughtUpAt returns the old "caught_up_at" field's value of the RollupWatermark entity.
+// If the RollupWatermark object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RollupWatermarkMutation) OldCaughtUpAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCaughtUpAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCaughtUpAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCaughtUpAt: %w", err)
+	}
+	return oldValue.CaughtUpAt, nil
+}
+
+// ClearCaughtUpAt clears the value of the "caught_up_at" field.
+func (m *RollupWatermarkMutation) ClearCaughtUpAt() {
+	m.caught_up_at = nil
+	m.clearedFields[rollupwatermark.FieldCaughtUpAt] = struct{}{}
+}
+
+// CaughtUpAtCleared returns if the "caught_up_at" field was cleared in this mutation.
+func (m *RollupWatermarkMutation) CaughtUpAtCleared() bool {
+	_, ok := m.clearedFields[rollupwatermark.FieldCaughtUpAt]
+	return ok
+}
+
+// ResetCaughtUpAt resets all changes to the "caught_up_at" field.
+func (m *RollupWatermarkMutation) ResetCaughtUpAt() {
+	m.caught_up_at = nil
+	delete(m.clearedFields, rollupwatermark.FieldCaughtUpAt)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *RollupWatermarkMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *RollupWatermarkMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the RollupWatermark entity.
+// If the RollupWatermark object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RollupWatermarkMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *RollupWatermarkMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// Where appends a list predicates to the RollupWatermarkMutation builder.
+func (m *RollupWatermarkMutation) Where(ps ...predicate.RollupWatermark) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the RollupWatermarkMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *RollupWatermarkMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.RollupWatermark, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *RollupWatermarkMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *RollupWatermarkMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (RollupWatermark).
+func (m *RollupWatermarkMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *RollupWatermarkMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.name != nil {
+		fields = append(fields, rollupwatermark.FieldName)
+	}
+	if m.watermark_at != nil {
+		fields = append(fields, rollupwatermark.FieldWatermarkAt)
+	}
+	if m.watermark_id != nil {
+		fields = append(fields, rollupwatermark.FieldWatermarkID)
+	}
+	if m.caught_up_at != nil {
+		fields = append(fields, rollupwatermark.FieldCaughtUpAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, rollupwatermark.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *RollupWatermarkMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case rollupwatermark.FieldName:
+		return m.Name()
+	case rollupwatermark.FieldWatermarkAt:
+		return m.WatermarkAt()
+	case rollupwatermark.FieldWatermarkID:
+		return m.WatermarkID()
+	case rollupwatermark.FieldCaughtUpAt:
+		return m.CaughtUpAt()
+	case rollupwatermark.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *RollupWatermarkMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case rollupwatermark.FieldName:
+		return m.OldName(ctx)
+	case rollupwatermark.FieldWatermarkAt:
+		return m.OldWatermarkAt(ctx)
+	case rollupwatermark.FieldWatermarkID:
+		return m.OldWatermarkID(ctx)
+	case rollupwatermark.FieldCaughtUpAt:
+		return m.OldCaughtUpAt(ctx)
+	case rollupwatermark.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown RollupWatermark field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RollupWatermarkMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case rollupwatermark.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case rollupwatermark.FieldWatermarkAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWatermarkAt(v)
+		return nil
+	case rollupwatermark.FieldWatermarkID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWatermarkID(v)
+		return nil
+	case rollupwatermark.FieldCaughtUpAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCaughtUpAt(v)
+		return nil
+	case rollupwatermark.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown RollupWatermark field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *RollupWatermarkMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *RollupWatermarkMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RollupWatermarkMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown RollupWatermark numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *RollupWatermarkMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(rollupwatermark.FieldCaughtUpAt) {
+		fields = append(fields, rollupwatermark.FieldCaughtUpAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *RollupWatermarkMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *RollupWatermarkMutation) ClearField(name string) error {
+	switch name {
+	case rollupwatermark.FieldCaughtUpAt:
+		m.ClearCaughtUpAt()
+		return nil
+	}
+	return fmt.Errorf("unknown RollupWatermark nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *RollupWatermarkMutation) ResetField(name string) error {
+	switch name {
+	case rollupwatermark.FieldName:
+		m.ResetName()
+		return nil
+	case rollupwatermark.FieldWatermarkAt:
+		m.ResetWatermarkAt()
+		return nil
+	case rollupwatermark.FieldWatermarkID:
+		m.ResetWatermarkID()
+		return nil
+	case rollupwatermark.FieldCaughtUpAt:
+		m.ResetCaughtUpAt()
+		return nil
+	case rollupwatermark.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown RollupWatermark field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *RollupWatermarkMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *RollupWatermarkMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *RollupWatermarkMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *RollupWatermarkMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *RollupWatermarkMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *RollupWatermarkMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *RollupWatermarkMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown RollupWatermark unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *RollupWatermarkMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown RollupWatermark edge %s", name)
 }
 
 // RoutingRuleMutation represents an operation that mutates the RoutingRule nodes in the graph.
@@ -17274,6 +18514,4324 @@ func (m *TicketLinkMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *TicketLinkMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown TicketLink edge %s", name)
+}
+
+// TicketRollupMutation represents an operation that mutates the TicketRollup nodes in the graph.
+type TicketRollupMutation struct {
+	config
+	op                        Op
+	typ                       string
+	id                        *uuid.UUID
+	tenant_id                 *uuid.UUID
+	granularity               *ticketrollup.Granularity
+	bucket_start              *time.Time
+	team_id                   *uuid.UUID
+	agent_id                  *uuid.UUID
+	category_id               *uuid.UUID
+	channel                   *string
+	priority                  *string
+	created_count             *int
+	addcreated_count          *int
+	resolved_count            *int
+	addresolved_count         *int
+	first_response_count      *int
+	addfirst_response_count   *int
+	first_response_minutes    *int64
+	addfirst_response_minutes *int64
+	resolution_minutes        *int64
+	addresolution_minutes     *int64
+	fr_met                    *int
+	addfr_met                 *int
+	fr_breached               *int
+	addfr_breached            *int
+	res_met                   *int
+	addres_met                *int
+	res_breached              *int
+	addres_breached           *int
+	csat_1                    *int
+	addcsat_1                 *int
+	csat_2                    *int
+	addcsat_2                 *int
+	csat_3                    *int
+	addcsat_3                 *int
+	csat_4                    *int
+	addcsat_4                 *int
+	csat_5                    *int
+	addcsat_5                 *int
+	updated_at                *time.Time
+	clearedFields             map[string]struct{}
+	done                      bool
+	oldValue                  func(context.Context) (*TicketRollup, error)
+	predicates                []predicate.TicketRollup
+}
+
+var _ ent.Mutation = (*TicketRollupMutation)(nil)
+
+// ticketrollupOption allows management of the mutation configuration using functional options.
+type ticketrollupOption func(*TicketRollupMutation)
+
+// newTicketRollupMutation creates new mutation for the TicketRollup entity.
+func newTicketRollupMutation(c config, op Op, opts ...ticketrollupOption) *TicketRollupMutation {
+	m := &TicketRollupMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTicketRollup,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTicketRollupID sets the ID field of the mutation.
+func withTicketRollupID(id uuid.UUID) ticketrollupOption {
+	return func(m *TicketRollupMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *TicketRollup
+		)
+		m.oldValue = func(ctx context.Context) (*TicketRollup, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().TicketRollup.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTicketRollup sets the old TicketRollup of the mutation.
+func withTicketRollup(node *TicketRollup) ticketrollupOption {
+	return func(m *TicketRollupMutation) {
+		m.oldValue = func(context.Context) (*TicketRollup, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TicketRollupMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TicketRollupMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of TicketRollup entities.
+func (m *TicketRollupMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TicketRollupMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *TicketRollupMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().TicketRollup.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (m *TicketRollupMutation) SetTenantID(u uuid.UUID) {
+	m.tenant_id = &u
+}
+
+// TenantID returns the value of the "tenant_id" field in the mutation.
+func (m *TicketRollupMutation) TenantID() (r uuid.UUID, exists bool) {
+	v := m.tenant_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTenantID returns the old "tenant_id" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldTenantID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTenantID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTenantID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTenantID: %w", err)
+	}
+	return oldValue.TenantID, nil
+}
+
+// ResetTenantID resets all changes to the "tenant_id" field.
+func (m *TicketRollupMutation) ResetTenantID() {
+	m.tenant_id = nil
+}
+
+// SetGranularity sets the "granularity" field.
+func (m *TicketRollupMutation) SetGranularity(t ticketrollup.Granularity) {
+	m.granularity = &t
+}
+
+// Granularity returns the value of the "granularity" field in the mutation.
+func (m *TicketRollupMutation) Granularity() (r ticketrollup.Granularity, exists bool) {
+	v := m.granularity
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGranularity returns the old "granularity" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldGranularity(ctx context.Context) (v ticketrollup.Granularity, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGranularity is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGranularity requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGranularity: %w", err)
+	}
+	return oldValue.Granularity, nil
+}
+
+// ResetGranularity resets all changes to the "granularity" field.
+func (m *TicketRollupMutation) ResetGranularity() {
+	m.granularity = nil
+}
+
+// SetBucketStart sets the "bucket_start" field.
+func (m *TicketRollupMutation) SetBucketStart(t time.Time) {
+	m.bucket_start = &t
+}
+
+// BucketStart returns the value of the "bucket_start" field in the mutation.
+func (m *TicketRollupMutation) BucketStart() (r time.Time, exists bool) {
+	v := m.bucket_start
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBucketStart returns the old "bucket_start" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldBucketStart(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBucketStart is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBucketStart requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBucketStart: %w", err)
+	}
+	return oldValue.BucketStart, nil
+}
+
+// ResetBucketStart resets all changes to the "bucket_start" field.
+func (m *TicketRollupMutation) ResetBucketStart() {
+	m.bucket_start = nil
+}
+
+// SetTeamID sets the "team_id" field.
+func (m *TicketRollupMutation) SetTeamID(u uuid.UUID) {
+	m.team_id = &u
+}
+
+// TeamID returns the value of the "team_id" field in the mutation.
+func (m *TicketRollupMutation) TeamID() (r uuid.UUID, exists bool) {
+	v := m.team_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTeamID returns the old "team_id" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldTeamID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTeamID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTeamID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTeamID: %w", err)
+	}
+	return oldValue.TeamID, nil
+}
+
+// ResetTeamID resets all changes to the "team_id" field.
+func (m *TicketRollupMutation) ResetTeamID() {
+	m.team_id = nil
+}
+
+// SetAgentID sets the "agent_id" field.
+func (m *TicketRollupMutation) SetAgentID(u uuid.UUID) {
+	m.agent_id = &u
+}
+
+// AgentID returns the value of the "agent_id" field in the mutation.
+func (m *TicketRollupMutation) AgentID() (r uuid.UUID, exists bool) {
+	v := m.agent_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAgentID returns the old "agent_id" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldAgentID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAgentID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAgentID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAgentID: %w", err)
+	}
+	return oldValue.AgentID, nil
+}
+
+// ResetAgentID resets all changes to the "agent_id" field.
+func (m *TicketRollupMutation) ResetAgentID() {
+	m.agent_id = nil
+}
+
+// SetCategoryID sets the "category_id" field.
+func (m *TicketRollupMutation) SetCategoryID(u uuid.UUID) {
+	m.category_id = &u
+}
+
+// CategoryID returns the value of the "category_id" field in the mutation.
+func (m *TicketRollupMutation) CategoryID() (r uuid.UUID, exists bool) {
+	v := m.category_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCategoryID returns the old "category_id" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldCategoryID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCategoryID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCategoryID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCategoryID: %w", err)
+	}
+	return oldValue.CategoryID, nil
+}
+
+// ResetCategoryID resets all changes to the "category_id" field.
+func (m *TicketRollupMutation) ResetCategoryID() {
+	m.category_id = nil
+}
+
+// SetChannel sets the "channel" field.
+func (m *TicketRollupMutation) SetChannel(s string) {
+	m.channel = &s
+}
+
+// Channel returns the value of the "channel" field in the mutation.
+func (m *TicketRollupMutation) Channel() (r string, exists bool) {
+	v := m.channel
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldChannel returns the old "channel" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldChannel(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldChannel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldChannel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldChannel: %w", err)
+	}
+	return oldValue.Channel, nil
+}
+
+// ResetChannel resets all changes to the "channel" field.
+func (m *TicketRollupMutation) ResetChannel() {
+	m.channel = nil
+}
+
+// SetPriority sets the "priority" field.
+func (m *TicketRollupMutation) SetPriority(s string) {
+	m.priority = &s
+}
+
+// Priority returns the value of the "priority" field in the mutation.
+func (m *TicketRollupMutation) Priority() (r string, exists bool) {
+	v := m.priority
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPriority returns the old "priority" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldPriority(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPriority is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPriority requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPriority: %w", err)
+	}
+	return oldValue.Priority, nil
+}
+
+// ResetPriority resets all changes to the "priority" field.
+func (m *TicketRollupMutation) ResetPriority() {
+	m.priority = nil
+}
+
+// SetCreatedCount sets the "created_count" field.
+func (m *TicketRollupMutation) SetCreatedCount(i int) {
+	m.created_count = &i
+	m.addcreated_count = nil
+}
+
+// CreatedCount returns the value of the "created_count" field in the mutation.
+func (m *TicketRollupMutation) CreatedCount() (r int, exists bool) {
+	v := m.created_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedCount returns the old "created_count" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldCreatedCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedCount: %w", err)
+	}
+	return oldValue.CreatedCount, nil
+}
+
+// AddCreatedCount adds i to the "created_count" field.
+func (m *TicketRollupMutation) AddCreatedCount(i int) {
+	if m.addcreated_count != nil {
+		*m.addcreated_count += i
+	} else {
+		m.addcreated_count = &i
+	}
+}
+
+// AddedCreatedCount returns the value that was added to the "created_count" field in this mutation.
+func (m *TicketRollupMutation) AddedCreatedCount() (r int, exists bool) {
+	v := m.addcreated_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCreatedCount resets all changes to the "created_count" field.
+func (m *TicketRollupMutation) ResetCreatedCount() {
+	m.created_count = nil
+	m.addcreated_count = nil
+}
+
+// SetResolvedCount sets the "resolved_count" field.
+func (m *TicketRollupMutation) SetResolvedCount(i int) {
+	m.resolved_count = &i
+	m.addresolved_count = nil
+}
+
+// ResolvedCount returns the value of the "resolved_count" field in the mutation.
+func (m *TicketRollupMutation) ResolvedCount() (r int, exists bool) {
+	v := m.resolved_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResolvedCount returns the old "resolved_count" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldResolvedCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResolvedCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResolvedCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResolvedCount: %w", err)
+	}
+	return oldValue.ResolvedCount, nil
+}
+
+// AddResolvedCount adds i to the "resolved_count" field.
+func (m *TicketRollupMutation) AddResolvedCount(i int) {
+	if m.addresolved_count != nil {
+		*m.addresolved_count += i
+	} else {
+		m.addresolved_count = &i
+	}
+}
+
+// AddedResolvedCount returns the value that was added to the "resolved_count" field in this mutation.
+func (m *TicketRollupMutation) AddedResolvedCount() (r int, exists bool) {
+	v := m.addresolved_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetResolvedCount resets all changes to the "resolved_count" field.
+func (m *TicketRollupMutation) ResetResolvedCount() {
+	m.resolved_count = nil
+	m.addresolved_count = nil
+}
+
+// SetFirstResponseCount sets the "first_response_count" field.
+func (m *TicketRollupMutation) SetFirstResponseCount(i int) {
+	m.first_response_count = &i
+	m.addfirst_response_count = nil
+}
+
+// FirstResponseCount returns the value of the "first_response_count" field in the mutation.
+func (m *TicketRollupMutation) FirstResponseCount() (r int, exists bool) {
+	v := m.first_response_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFirstResponseCount returns the old "first_response_count" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldFirstResponseCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFirstResponseCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFirstResponseCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFirstResponseCount: %w", err)
+	}
+	return oldValue.FirstResponseCount, nil
+}
+
+// AddFirstResponseCount adds i to the "first_response_count" field.
+func (m *TicketRollupMutation) AddFirstResponseCount(i int) {
+	if m.addfirst_response_count != nil {
+		*m.addfirst_response_count += i
+	} else {
+		m.addfirst_response_count = &i
+	}
+}
+
+// AddedFirstResponseCount returns the value that was added to the "first_response_count" field in this mutation.
+func (m *TicketRollupMutation) AddedFirstResponseCount() (r int, exists bool) {
+	v := m.addfirst_response_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFirstResponseCount resets all changes to the "first_response_count" field.
+func (m *TicketRollupMutation) ResetFirstResponseCount() {
+	m.first_response_count = nil
+	m.addfirst_response_count = nil
+}
+
+// SetFirstResponseMinutes sets the "first_response_minutes" field.
+func (m *TicketRollupMutation) SetFirstResponseMinutes(i int64) {
+	m.first_response_minutes = &i
+	m.addfirst_response_minutes = nil
+}
+
+// FirstResponseMinutes returns the value of the "first_response_minutes" field in the mutation.
+func (m *TicketRollupMutation) FirstResponseMinutes() (r int64, exists bool) {
+	v := m.first_response_minutes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFirstResponseMinutes returns the old "first_response_minutes" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldFirstResponseMinutes(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFirstResponseMinutes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFirstResponseMinutes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFirstResponseMinutes: %w", err)
+	}
+	return oldValue.FirstResponseMinutes, nil
+}
+
+// AddFirstResponseMinutes adds i to the "first_response_minutes" field.
+func (m *TicketRollupMutation) AddFirstResponseMinutes(i int64) {
+	if m.addfirst_response_minutes != nil {
+		*m.addfirst_response_minutes += i
+	} else {
+		m.addfirst_response_minutes = &i
+	}
+}
+
+// AddedFirstResponseMinutes returns the value that was added to the "first_response_minutes" field in this mutation.
+func (m *TicketRollupMutation) AddedFirstResponseMinutes() (r int64, exists bool) {
+	v := m.addfirst_response_minutes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFirstResponseMinutes resets all changes to the "first_response_minutes" field.
+func (m *TicketRollupMutation) ResetFirstResponseMinutes() {
+	m.first_response_minutes = nil
+	m.addfirst_response_minutes = nil
+}
+
+// SetResolutionMinutes sets the "resolution_minutes" field.
+func (m *TicketRollupMutation) SetResolutionMinutes(i int64) {
+	m.resolution_minutes = &i
+	m.addresolution_minutes = nil
+}
+
+// ResolutionMinutes returns the value of the "resolution_minutes" field in the mutation.
+func (m *TicketRollupMutation) ResolutionMinutes() (r int64, exists bool) {
+	v := m.resolution_minutes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResolutionMinutes returns the old "resolution_minutes" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldResolutionMinutes(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResolutionMinutes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResolutionMinutes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResolutionMinutes: %w", err)
+	}
+	return oldValue.ResolutionMinutes, nil
+}
+
+// AddResolutionMinutes adds i to the "resolution_minutes" field.
+func (m *TicketRollupMutation) AddResolutionMinutes(i int64) {
+	if m.addresolution_minutes != nil {
+		*m.addresolution_minutes += i
+	} else {
+		m.addresolution_minutes = &i
+	}
+}
+
+// AddedResolutionMinutes returns the value that was added to the "resolution_minutes" field in this mutation.
+func (m *TicketRollupMutation) AddedResolutionMinutes() (r int64, exists bool) {
+	v := m.addresolution_minutes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetResolutionMinutes resets all changes to the "resolution_minutes" field.
+func (m *TicketRollupMutation) ResetResolutionMinutes() {
+	m.resolution_minutes = nil
+	m.addresolution_minutes = nil
+}
+
+// SetFrMet sets the "fr_met" field.
+func (m *TicketRollupMutation) SetFrMet(i int) {
+	m.fr_met = &i
+	m.addfr_met = nil
+}
+
+// FrMet returns the value of the "fr_met" field in the mutation.
+func (m *TicketRollupMutation) FrMet() (r int, exists bool) {
+	v := m.fr_met
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFrMet returns the old "fr_met" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldFrMet(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFrMet is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFrMet requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFrMet: %w", err)
+	}
+	return oldValue.FrMet, nil
+}
+
+// AddFrMet adds i to the "fr_met" field.
+func (m *TicketRollupMutation) AddFrMet(i int) {
+	if m.addfr_met != nil {
+		*m.addfr_met += i
+	} else {
+		m.addfr_met = &i
+	}
+}
+
+// AddedFrMet returns the value that was added to the "fr_met" field in this mutation.
+func (m *TicketRollupMutation) AddedFrMet() (r int, exists bool) {
+	v := m.addfr_met
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFrMet resets all changes to the "fr_met" field.
+func (m *TicketRollupMutation) ResetFrMet() {
+	m.fr_met = nil
+	m.addfr_met = nil
+}
+
+// SetFrBreached sets the "fr_breached" field.
+func (m *TicketRollupMutation) SetFrBreached(i int) {
+	m.fr_breached = &i
+	m.addfr_breached = nil
+}
+
+// FrBreached returns the value of the "fr_breached" field in the mutation.
+func (m *TicketRollupMutation) FrBreached() (r int, exists bool) {
+	v := m.fr_breached
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFrBreached returns the old "fr_breached" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldFrBreached(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFrBreached is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFrBreached requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFrBreached: %w", err)
+	}
+	return oldValue.FrBreached, nil
+}
+
+// AddFrBreached adds i to the "fr_breached" field.
+func (m *TicketRollupMutation) AddFrBreached(i int) {
+	if m.addfr_breached != nil {
+		*m.addfr_breached += i
+	} else {
+		m.addfr_breached = &i
+	}
+}
+
+// AddedFrBreached returns the value that was added to the "fr_breached" field in this mutation.
+func (m *TicketRollupMutation) AddedFrBreached() (r int, exists bool) {
+	v := m.addfr_breached
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFrBreached resets all changes to the "fr_breached" field.
+func (m *TicketRollupMutation) ResetFrBreached() {
+	m.fr_breached = nil
+	m.addfr_breached = nil
+}
+
+// SetResMet sets the "res_met" field.
+func (m *TicketRollupMutation) SetResMet(i int) {
+	m.res_met = &i
+	m.addres_met = nil
+}
+
+// ResMet returns the value of the "res_met" field in the mutation.
+func (m *TicketRollupMutation) ResMet() (r int, exists bool) {
+	v := m.res_met
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResMet returns the old "res_met" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldResMet(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResMet is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResMet requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResMet: %w", err)
+	}
+	return oldValue.ResMet, nil
+}
+
+// AddResMet adds i to the "res_met" field.
+func (m *TicketRollupMutation) AddResMet(i int) {
+	if m.addres_met != nil {
+		*m.addres_met += i
+	} else {
+		m.addres_met = &i
+	}
+}
+
+// AddedResMet returns the value that was added to the "res_met" field in this mutation.
+func (m *TicketRollupMutation) AddedResMet() (r int, exists bool) {
+	v := m.addres_met
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetResMet resets all changes to the "res_met" field.
+func (m *TicketRollupMutation) ResetResMet() {
+	m.res_met = nil
+	m.addres_met = nil
+}
+
+// SetResBreached sets the "res_breached" field.
+func (m *TicketRollupMutation) SetResBreached(i int) {
+	m.res_breached = &i
+	m.addres_breached = nil
+}
+
+// ResBreached returns the value of the "res_breached" field in the mutation.
+func (m *TicketRollupMutation) ResBreached() (r int, exists bool) {
+	v := m.res_breached
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResBreached returns the old "res_breached" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldResBreached(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResBreached is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResBreached requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResBreached: %w", err)
+	}
+	return oldValue.ResBreached, nil
+}
+
+// AddResBreached adds i to the "res_breached" field.
+func (m *TicketRollupMutation) AddResBreached(i int) {
+	if m.addres_breached != nil {
+		*m.addres_breached += i
+	} else {
+		m.addres_breached = &i
+	}
+}
+
+// AddedResBreached returns the value that was added to the "res_breached" field in this mutation.
+func (m *TicketRollupMutation) AddedResBreached() (r int, exists bool) {
+	v := m.addres_breached
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetResBreached resets all changes to the "res_breached" field.
+func (m *TicketRollupMutation) ResetResBreached() {
+	m.res_breached = nil
+	m.addres_breached = nil
+}
+
+// SetCsat1 sets the "csat_1" field.
+func (m *TicketRollupMutation) SetCsat1(i int) {
+	m.csat_1 = &i
+	m.addcsat_1 = nil
+}
+
+// Csat1 returns the value of the "csat_1" field in the mutation.
+func (m *TicketRollupMutation) Csat1() (r int, exists bool) {
+	v := m.csat_1
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCsat1 returns the old "csat_1" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldCsat1(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCsat1 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCsat1 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCsat1: %w", err)
+	}
+	return oldValue.Csat1, nil
+}
+
+// AddCsat1 adds i to the "csat_1" field.
+func (m *TicketRollupMutation) AddCsat1(i int) {
+	if m.addcsat_1 != nil {
+		*m.addcsat_1 += i
+	} else {
+		m.addcsat_1 = &i
+	}
+}
+
+// AddedCsat1 returns the value that was added to the "csat_1" field in this mutation.
+func (m *TicketRollupMutation) AddedCsat1() (r int, exists bool) {
+	v := m.addcsat_1
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCsat1 resets all changes to the "csat_1" field.
+func (m *TicketRollupMutation) ResetCsat1() {
+	m.csat_1 = nil
+	m.addcsat_1 = nil
+}
+
+// SetCsat2 sets the "csat_2" field.
+func (m *TicketRollupMutation) SetCsat2(i int) {
+	m.csat_2 = &i
+	m.addcsat_2 = nil
+}
+
+// Csat2 returns the value of the "csat_2" field in the mutation.
+func (m *TicketRollupMutation) Csat2() (r int, exists bool) {
+	v := m.csat_2
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCsat2 returns the old "csat_2" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldCsat2(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCsat2 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCsat2 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCsat2: %w", err)
+	}
+	return oldValue.Csat2, nil
+}
+
+// AddCsat2 adds i to the "csat_2" field.
+func (m *TicketRollupMutation) AddCsat2(i int) {
+	if m.addcsat_2 != nil {
+		*m.addcsat_2 += i
+	} else {
+		m.addcsat_2 = &i
+	}
+}
+
+// AddedCsat2 returns the value that was added to the "csat_2" field in this mutation.
+func (m *TicketRollupMutation) AddedCsat2() (r int, exists bool) {
+	v := m.addcsat_2
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCsat2 resets all changes to the "csat_2" field.
+func (m *TicketRollupMutation) ResetCsat2() {
+	m.csat_2 = nil
+	m.addcsat_2 = nil
+}
+
+// SetCsat3 sets the "csat_3" field.
+func (m *TicketRollupMutation) SetCsat3(i int) {
+	m.csat_3 = &i
+	m.addcsat_3 = nil
+}
+
+// Csat3 returns the value of the "csat_3" field in the mutation.
+func (m *TicketRollupMutation) Csat3() (r int, exists bool) {
+	v := m.csat_3
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCsat3 returns the old "csat_3" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldCsat3(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCsat3 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCsat3 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCsat3: %w", err)
+	}
+	return oldValue.Csat3, nil
+}
+
+// AddCsat3 adds i to the "csat_3" field.
+func (m *TicketRollupMutation) AddCsat3(i int) {
+	if m.addcsat_3 != nil {
+		*m.addcsat_3 += i
+	} else {
+		m.addcsat_3 = &i
+	}
+}
+
+// AddedCsat3 returns the value that was added to the "csat_3" field in this mutation.
+func (m *TicketRollupMutation) AddedCsat3() (r int, exists bool) {
+	v := m.addcsat_3
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCsat3 resets all changes to the "csat_3" field.
+func (m *TicketRollupMutation) ResetCsat3() {
+	m.csat_3 = nil
+	m.addcsat_3 = nil
+}
+
+// SetCsat4 sets the "csat_4" field.
+func (m *TicketRollupMutation) SetCsat4(i int) {
+	m.csat_4 = &i
+	m.addcsat_4 = nil
+}
+
+// Csat4 returns the value of the "csat_4" field in the mutation.
+func (m *TicketRollupMutation) Csat4() (r int, exists bool) {
+	v := m.csat_4
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCsat4 returns the old "csat_4" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldCsat4(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCsat4 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCsat4 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCsat4: %w", err)
+	}
+	return oldValue.Csat4, nil
+}
+
+// AddCsat4 adds i to the "csat_4" field.
+func (m *TicketRollupMutation) AddCsat4(i int) {
+	if m.addcsat_4 != nil {
+		*m.addcsat_4 += i
+	} else {
+		m.addcsat_4 = &i
+	}
+}
+
+// AddedCsat4 returns the value that was added to the "csat_4" field in this mutation.
+func (m *TicketRollupMutation) AddedCsat4() (r int, exists bool) {
+	v := m.addcsat_4
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCsat4 resets all changes to the "csat_4" field.
+func (m *TicketRollupMutation) ResetCsat4() {
+	m.csat_4 = nil
+	m.addcsat_4 = nil
+}
+
+// SetCsat5 sets the "csat_5" field.
+func (m *TicketRollupMutation) SetCsat5(i int) {
+	m.csat_5 = &i
+	m.addcsat_5 = nil
+}
+
+// Csat5 returns the value of the "csat_5" field in the mutation.
+func (m *TicketRollupMutation) Csat5() (r int, exists bool) {
+	v := m.csat_5
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCsat5 returns the old "csat_5" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldCsat5(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCsat5 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCsat5 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCsat5: %w", err)
+	}
+	return oldValue.Csat5, nil
+}
+
+// AddCsat5 adds i to the "csat_5" field.
+func (m *TicketRollupMutation) AddCsat5(i int) {
+	if m.addcsat_5 != nil {
+		*m.addcsat_5 += i
+	} else {
+		m.addcsat_5 = &i
+	}
+}
+
+// AddedCsat5 returns the value that was added to the "csat_5" field in this mutation.
+func (m *TicketRollupMutation) AddedCsat5() (r int, exists bool) {
+	v := m.addcsat_5
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCsat5 resets all changes to the "csat_5" field.
+func (m *TicketRollupMutation) ResetCsat5() {
+	m.csat_5 = nil
+	m.addcsat_5 = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *TicketRollupMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *TicketRollupMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the TicketRollup entity.
+// If the TicketRollup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *TicketRollupMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// Where appends a list predicates to the TicketRollupMutation builder.
+func (m *TicketRollupMutation) Where(ps ...predicate.TicketRollup) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the TicketRollupMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *TicketRollupMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.TicketRollup, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *TicketRollupMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *TicketRollupMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (TicketRollup).
+func (m *TicketRollupMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TicketRollupMutation) Fields() []string {
+	fields := make([]string, 0, 23)
+	if m.tenant_id != nil {
+		fields = append(fields, ticketrollup.FieldTenantID)
+	}
+	if m.granularity != nil {
+		fields = append(fields, ticketrollup.FieldGranularity)
+	}
+	if m.bucket_start != nil {
+		fields = append(fields, ticketrollup.FieldBucketStart)
+	}
+	if m.team_id != nil {
+		fields = append(fields, ticketrollup.FieldTeamID)
+	}
+	if m.agent_id != nil {
+		fields = append(fields, ticketrollup.FieldAgentID)
+	}
+	if m.category_id != nil {
+		fields = append(fields, ticketrollup.FieldCategoryID)
+	}
+	if m.channel != nil {
+		fields = append(fields, ticketrollup.FieldChannel)
+	}
+	if m.priority != nil {
+		fields = append(fields, ticketrollup.FieldPriority)
+	}
+	if m.created_count != nil {
+		fields = append(fields, ticketrollup.FieldCreatedCount)
+	}
+	if m.resolved_count != nil {
+		fields = append(fields, ticketrollup.FieldResolvedCount)
+	}
+	if m.first_response_count != nil {
+		fields = append(fields, ticketrollup.FieldFirstResponseCount)
+	}
+	if m.first_response_minutes != nil {
+		fields = append(fields, ticketrollup.FieldFirstResponseMinutes)
+	}
+	if m.resolution_minutes != nil {
+		fields = append(fields, ticketrollup.FieldResolutionMinutes)
+	}
+	if m.fr_met != nil {
+		fields = append(fields, ticketrollup.FieldFrMet)
+	}
+	if m.fr_breached != nil {
+		fields = append(fields, ticketrollup.FieldFrBreached)
+	}
+	if m.res_met != nil {
+		fields = append(fields, ticketrollup.FieldResMet)
+	}
+	if m.res_breached != nil {
+		fields = append(fields, ticketrollup.FieldResBreached)
+	}
+	if m.csat_1 != nil {
+		fields = append(fields, ticketrollup.FieldCsat1)
+	}
+	if m.csat_2 != nil {
+		fields = append(fields, ticketrollup.FieldCsat2)
+	}
+	if m.csat_3 != nil {
+		fields = append(fields, ticketrollup.FieldCsat3)
+	}
+	if m.csat_4 != nil {
+		fields = append(fields, ticketrollup.FieldCsat4)
+	}
+	if m.csat_5 != nil {
+		fields = append(fields, ticketrollup.FieldCsat5)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, ticketrollup.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TicketRollupMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case ticketrollup.FieldTenantID:
+		return m.TenantID()
+	case ticketrollup.FieldGranularity:
+		return m.Granularity()
+	case ticketrollup.FieldBucketStart:
+		return m.BucketStart()
+	case ticketrollup.FieldTeamID:
+		return m.TeamID()
+	case ticketrollup.FieldAgentID:
+		return m.AgentID()
+	case ticketrollup.FieldCategoryID:
+		return m.CategoryID()
+	case ticketrollup.FieldChannel:
+		return m.Channel()
+	case ticketrollup.FieldPriority:
+		return m.Priority()
+	case ticketrollup.FieldCreatedCount:
+		return m.CreatedCount()
+	case ticketrollup.FieldResolvedCount:
+		return m.ResolvedCount()
+	case ticketrollup.FieldFirstResponseCount:
+		return m.FirstResponseCount()
+	case ticketrollup.FieldFirstResponseMinutes:
+		return m.FirstResponseMinutes()
+	case ticketrollup.FieldResolutionMinutes:
+		return m.ResolutionMinutes()
+	case ticketrollup.FieldFrMet:
+		return m.FrMet()
+	case ticketrollup.FieldFrBreached:
+		return m.FrBreached()
+	case ticketrollup.FieldResMet:
+		return m.ResMet()
+	case ticketrollup.FieldResBreached:
+		return m.ResBreached()
+	case ticketrollup.FieldCsat1:
+		return m.Csat1()
+	case ticketrollup.FieldCsat2:
+		return m.Csat2()
+	case ticketrollup.FieldCsat3:
+		return m.Csat3()
+	case ticketrollup.FieldCsat4:
+		return m.Csat4()
+	case ticketrollup.FieldCsat5:
+		return m.Csat5()
+	case ticketrollup.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TicketRollupMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case ticketrollup.FieldTenantID:
+		return m.OldTenantID(ctx)
+	case ticketrollup.FieldGranularity:
+		return m.OldGranularity(ctx)
+	case ticketrollup.FieldBucketStart:
+		return m.OldBucketStart(ctx)
+	case ticketrollup.FieldTeamID:
+		return m.OldTeamID(ctx)
+	case ticketrollup.FieldAgentID:
+		return m.OldAgentID(ctx)
+	case ticketrollup.FieldCategoryID:
+		return m.OldCategoryID(ctx)
+	case ticketrollup.FieldChannel:
+		return m.OldChannel(ctx)
+	case ticketrollup.FieldPriority:
+		return m.OldPriority(ctx)
+	case ticketrollup.FieldCreatedCount:
+		return m.OldCreatedCount(ctx)
+	case ticketrollup.FieldResolvedCount:
+		return m.OldResolvedCount(ctx)
+	case ticketrollup.FieldFirstResponseCount:
+		return m.OldFirstResponseCount(ctx)
+	case ticketrollup.FieldFirstResponseMinutes:
+		return m.OldFirstResponseMinutes(ctx)
+	case ticketrollup.FieldResolutionMinutes:
+		return m.OldResolutionMinutes(ctx)
+	case ticketrollup.FieldFrMet:
+		return m.OldFrMet(ctx)
+	case ticketrollup.FieldFrBreached:
+		return m.OldFrBreached(ctx)
+	case ticketrollup.FieldResMet:
+		return m.OldResMet(ctx)
+	case ticketrollup.FieldResBreached:
+		return m.OldResBreached(ctx)
+	case ticketrollup.FieldCsat1:
+		return m.OldCsat1(ctx)
+	case ticketrollup.FieldCsat2:
+		return m.OldCsat2(ctx)
+	case ticketrollup.FieldCsat3:
+		return m.OldCsat3(ctx)
+	case ticketrollup.FieldCsat4:
+		return m.OldCsat4(ctx)
+	case ticketrollup.FieldCsat5:
+		return m.OldCsat5(ctx)
+	case ticketrollup.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown TicketRollup field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TicketRollupMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case ticketrollup.FieldTenantID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTenantID(v)
+		return nil
+	case ticketrollup.FieldGranularity:
+		v, ok := value.(ticketrollup.Granularity)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGranularity(v)
+		return nil
+	case ticketrollup.FieldBucketStart:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBucketStart(v)
+		return nil
+	case ticketrollup.FieldTeamID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTeamID(v)
+		return nil
+	case ticketrollup.FieldAgentID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAgentID(v)
+		return nil
+	case ticketrollup.FieldCategoryID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCategoryID(v)
+		return nil
+	case ticketrollup.FieldChannel:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetChannel(v)
+		return nil
+	case ticketrollup.FieldPriority:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPriority(v)
+		return nil
+	case ticketrollup.FieldCreatedCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedCount(v)
+		return nil
+	case ticketrollup.FieldResolvedCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResolvedCount(v)
+		return nil
+	case ticketrollup.FieldFirstResponseCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFirstResponseCount(v)
+		return nil
+	case ticketrollup.FieldFirstResponseMinutes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFirstResponseMinutes(v)
+		return nil
+	case ticketrollup.FieldResolutionMinutes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResolutionMinutes(v)
+		return nil
+	case ticketrollup.FieldFrMet:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFrMet(v)
+		return nil
+	case ticketrollup.FieldFrBreached:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFrBreached(v)
+		return nil
+	case ticketrollup.FieldResMet:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResMet(v)
+		return nil
+	case ticketrollup.FieldResBreached:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResBreached(v)
+		return nil
+	case ticketrollup.FieldCsat1:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCsat1(v)
+		return nil
+	case ticketrollup.FieldCsat2:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCsat2(v)
+		return nil
+	case ticketrollup.FieldCsat3:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCsat3(v)
+		return nil
+	case ticketrollup.FieldCsat4:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCsat4(v)
+		return nil
+	case ticketrollup.FieldCsat5:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCsat5(v)
+		return nil
+	case ticketrollup.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TicketRollup field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TicketRollupMutation) AddedFields() []string {
+	var fields []string
+	if m.addcreated_count != nil {
+		fields = append(fields, ticketrollup.FieldCreatedCount)
+	}
+	if m.addresolved_count != nil {
+		fields = append(fields, ticketrollup.FieldResolvedCount)
+	}
+	if m.addfirst_response_count != nil {
+		fields = append(fields, ticketrollup.FieldFirstResponseCount)
+	}
+	if m.addfirst_response_minutes != nil {
+		fields = append(fields, ticketrollup.FieldFirstResponseMinutes)
+	}
+	if m.addresolution_minutes != nil {
+		fields = append(fields, ticketrollup.FieldResolutionMinutes)
+	}
+	if m.addfr_met != nil {
+		fields = append(fields, ticketrollup.FieldFrMet)
+	}
+	if m.addfr_breached != nil {
+		fields = append(fields, ticketrollup.FieldFrBreached)
+	}
+	if m.addres_met != nil {
+		fields = append(fields, ticketrollup.FieldResMet)
+	}
+	if m.addres_breached != nil {
+		fields = append(fields, ticketrollup.FieldResBreached)
+	}
+	if m.addcsat_1 != nil {
+		fields = append(fields, ticketrollup.FieldCsat1)
+	}
+	if m.addcsat_2 != nil {
+		fields = append(fields, ticketrollup.FieldCsat2)
+	}
+	if m.addcsat_3 != nil {
+		fields = append(fields, ticketrollup.FieldCsat3)
+	}
+	if m.addcsat_4 != nil {
+		fields = append(fields, ticketrollup.FieldCsat4)
+	}
+	if m.addcsat_5 != nil {
+		fields = append(fields, ticketrollup.FieldCsat5)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TicketRollupMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case ticketrollup.FieldCreatedCount:
+		return m.AddedCreatedCount()
+	case ticketrollup.FieldResolvedCount:
+		return m.AddedResolvedCount()
+	case ticketrollup.FieldFirstResponseCount:
+		return m.AddedFirstResponseCount()
+	case ticketrollup.FieldFirstResponseMinutes:
+		return m.AddedFirstResponseMinutes()
+	case ticketrollup.FieldResolutionMinutes:
+		return m.AddedResolutionMinutes()
+	case ticketrollup.FieldFrMet:
+		return m.AddedFrMet()
+	case ticketrollup.FieldFrBreached:
+		return m.AddedFrBreached()
+	case ticketrollup.FieldResMet:
+		return m.AddedResMet()
+	case ticketrollup.FieldResBreached:
+		return m.AddedResBreached()
+	case ticketrollup.FieldCsat1:
+		return m.AddedCsat1()
+	case ticketrollup.FieldCsat2:
+		return m.AddedCsat2()
+	case ticketrollup.FieldCsat3:
+		return m.AddedCsat3()
+	case ticketrollup.FieldCsat4:
+		return m.AddedCsat4()
+	case ticketrollup.FieldCsat5:
+		return m.AddedCsat5()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TicketRollupMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case ticketrollup.FieldCreatedCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCreatedCount(v)
+		return nil
+	case ticketrollup.FieldResolvedCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddResolvedCount(v)
+		return nil
+	case ticketrollup.FieldFirstResponseCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFirstResponseCount(v)
+		return nil
+	case ticketrollup.FieldFirstResponseMinutes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFirstResponseMinutes(v)
+		return nil
+	case ticketrollup.FieldResolutionMinutes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddResolutionMinutes(v)
+		return nil
+	case ticketrollup.FieldFrMet:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFrMet(v)
+		return nil
+	case ticketrollup.FieldFrBreached:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFrBreached(v)
+		return nil
+	case ticketrollup.FieldResMet:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddResMet(v)
+		return nil
+	case ticketrollup.FieldResBreached:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddResBreached(v)
+		return nil
+	case ticketrollup.FieldCsat1:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCsat1(v)
+		return nil
+	case ticketrollup.FieldCsat2:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCsat2(v)
+		return nil
+	case ticketrollup.FieldCsat3:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCsat3(v)
+		return nil
+	case ticketrollup.FieldCsat4:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCsat4(v)
+		return nil
+	case ticketrollup.FieldCsat5:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCsat5(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TicketRollup numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TicketRollupMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TicketRollupMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TicketRollupMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown TicketRollup nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TicketRollupMutation) ResetField(name string) error {
+	switch name {
+	case ticketrollup.FieldTenantID:
+		m.ResetTenantID()
+		return nil
+	case ticketrollup.FieldGranularity:
+		m.ResetGranularity()
+		return nil
+	case ticketrollup.FieldBucketStart:
+		m.ResetBucketStart()
+		return nil
+	case ticketrollup.FieldTeamID:
+		m.ResetTeamID()
+		return nil
+	case ticketrollup.FieldAgentID:
+		m.ResetAgentID()
+		return nil
+	case ticketrollup.FieldCategoryID:
+		m.ResetCategoryID()
+		return nil
+	case ticketrollup.FieldChannel:
+		m.ResetChannel()
+		return nil
+	case ticketrollup.FieldPriority:
+		m.ResetPriority()
+		return nil
+	case ticketrollup.FieldCreatedCount:
+		m.ResetCreatedCount()
+		return nil
+	case ticketrollup.FieldResolvedCount:
+		m.ResetResolvedCount()
+		return nil
+	case ticketrollup.FieldFirstResponseCount:
+		m.ResetFirstResponseCount()
+		return nil
+	case ticketrollup.FieldFirstResponseMinutes:
+		m.ResetFirstResponseMinutes()
+		return nil
+	case ticketrollup.FieldResolutionMinutes:
+		m.ResetResolutionMinutes()
+		return nil
+	case ticketrollup.FieldFrMet:
+		m.ResetFrMet()
+		return nil
+	case ticketrollup.FieldFrBreached:
+		m.ResetFrBreached()
+		return nil
+	case ticketrollup.FieldResMet:
+		m.ResetResMet()
+		return nil
+	case ticketrollup.FieldResBreached:
+		m.ResetResBreached()
+		return nil
+	case ticketrollup.FieldCsat1:
+		m.ResetCsat1()
+		return nil
+	case ticketrollup.FieldCsat2:
+		m.ResetCsat2()
+		return nil
+	case ticketrollup.FieldCsat3:
+		m.ResetCsat3()
+		return nil
+	case ticketrollup.FieldCsat4:
+		m.ResetCsat4()
+		return nil
+	case ticketrollup.FieldCsat5:
+		m.ResetCsat5()
+		return nil
+	case ticketrollup.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown TicketRollup field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TicketRollupMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TicketRollupMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TicketRollupMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TicketRollupMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TicketRollupMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TicketRollupMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TicketRollupMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown TicketRollup unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TicketRollupMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown TicketRollup edge %s", name)
+}
+
+// TicketRollupDimMutation represents an operation that mutates the TicketRollupDim nodes in the graph.
+type TicketRollupDimMutation struct {
+	config
+	op                        Op
+	typ                       string
+	id                        *uuid.UUID
+	tenant_id                 *uuid.UUID
+	granularity               *ticketrollupdim.Granularity
+	bucket_start              *time.Time
+	dim_kind                  *ticketrollupdim.DimKind
+	team_id                   *uuid.UUID
+	dim_value                 *string
+	created_count             *int
+	addcreated_count          *int
+	resolved_count            *int
+	addresolved_count         *int
+	first_response_count      *int
+	addfirst_response_count   *int
+	first_response_minutes    *int64
+	addfirst_response_minutes *int64
+	resolution_minutes        *int64
+	addresolution_minutes     *int64
+	fr_met                    *int
+	addfr_met                 *int
+	fr_breached               *int
+	addfr_breached            *int
+	res_met                   *int
+	addres_met                *int
+	res_breached              *int
+	addres_breached           *int
+	csat_1                    *int
+	addcsat_1                 *int
+	csat_2                    *int
+	addcsat_2                 *int
+	csat_3                    *int
+	addcsat_3                 *int
+	csat_4                    *int
+	addcsat_4                 *int
+	csat_5                    *int
+	addcsat_5                 *int
+	updated_at                *time.Time
+	clearedFields             map[string]struct{}
+	done                      bool
+	oldValue                  func(context.Context) (*TicketRollupDim, error)
+	predicates                []predicate.TicketRollupDim
+}
+
+var _ ent.Mutation = (*TicketRollupDimMutation)(nil)
+
+// ticketrollupdimOption allows management of the mutation configuration using functional options.
+type ticketrollupdimOption func(*TicketRollupDimMutation)
+
+// newTicketRollupDimMutation creates new mutation for the TicketRollupDim entity.
+func newTicketRollupDimMutation(c config, op Op, opts ...ticketrollupdimOption) *TicketRollupDimMutation {
+	m := &TicketRollupDimMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTicketRollupDim,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTicketRollupDimID sets the ID field of the mutation.
+func withTicketRollupDimID(id uuid.UUID) ticketrollupdimOption {
+	return func(m *TicketRollupDimMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *TicketRollupDim
+		)
+		m.oldValue = func(ctx context.Context) (*TicketRollupDim, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().TicketRollupDim.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTicketRollupDim sets the old TicketRollupDim of the mutation.
+func withTicketRollupDim(node *TicketRollupDim) ticketrollupdimOption {
+	return func(m *TicketRollupDimMutation) {
+		m.oldValue = func(context.Context) (*TicketRollupDim, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TicketRollupDimMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TicketRollupDimMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of TicketRollupDim entities.
+func (m *TicketRollupDimMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TicketRollupDimMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *TicketRollupDimMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().TicketRollupDim.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (m *TicketRollupDimMutation) SetTenantID(u uuid.UUID) {
+	m.tenant_id = &u
+}
+
+// TenantID returns the value of the "tenant_id" field in the mutation.
+func (m *TicketRollupDimMutation) TenantID() (r uuid.UUID, exists bool) {
+	v := m.tenant_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTenantID returns the old "tenant_id" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldTenantID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTenantID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTenantID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTenantID: %w", err)
+	}
+	return oldValue.TenantID, nil
+}
+
+// ResetTenantID resets all changes to the "tenant_id" field.
+func (m *TicketRollupDimMutation) ResetTenantID() {
+	m.tenant_id = nil
+}
+
+// SetGranularity sets the "granularity" field.
+func (m *TicketRollupDimMutation) SetGranularity(t ticketrollupdim.Granularity) {
+	m.granularity = &t
+}
+
+// Granularity returns the value of the "granularity" field in the mutation.
+func (m *TicketRollupDimMutation) Granularity() (r ticketrollupdim.Granularity, exists bool) {
+	v := m.granularity
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGranularity returns the old "granularity" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldGranularity(ctx context.Context) (v ticketrollupdim.Granularity, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGranularity is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGranularity requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGranularity: %w", err)
+	}
+	return oldValue.Granularity, nil
+}
+
+// ResetGranularity resets all changes to the "granularity" field.
+func (m *TicketRollupDimMutation) ResetGranularity() {
+	m.granularity = nil
+}
+
+// SetBucketStart sets the "bucket_start" field.
+func (m *TicketRollupDimMutation) SetBucketStart(t time.Time) {
+	m.bucket_start = &t
+}
+
+// BucketStart returns the value of the "bucket_start" field in the mutation.
+func (m *TicketRollupDimMutation) BucketStart() (r time.Time, exists bool) {
+	v := m.bucket_start
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBucketStart returns the old "bucket_start" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldBucketStart(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBucketStart is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBucketStart requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBucketStart: %w", err)
+	}
+	return oldValue.BucketStart, nil
+}
+
+// ResetBucketStart resets all changes to the "bucket_start" field.
+func (m *TicketRollupDimMutation) ResetBucketStart() {
+	m.bucket_start = nil
+}
+
+// SetDimKind sets the "dim_kind" field.
+func (m *TicketRollupDimMutation) SetDimKind(tk ticketrollupdim.DimKind) {
+	m.dim_kind = &tk
+}
+
+// DimKind returns the value of the "dim_kind" field in the mutation.
+func (m *TicketRollupDimMutation) DimKind() (r ticketrollupdim.DimKind, exists bool) {
+	v := m.dim_kind
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDimKind returns the old "dim_kind" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldDimKind(ctx context.Context) (v ticketrollupdim.DimKind, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDimKind is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDimKind requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDimKind: %w", err)
+	}
+	return oldValue.DimKind, nil
+}
+
+// ResetDimKind resets all changes to the "dim_kind" field.
+func (m *TicketRollupDimMutation) ResetDimKind() {
+	m.dim_kind = nil
+}
+
+// SetTeamID sets the "team_id" field.
+func (m *TicketRollupDimMutation) SetTeamID(u uuid.UUID) {
+	m.team_id = &u
+}
+
+// TeamID returns the value of the "team_id" field in the mutation.
+func (m *TicketRollupDimMutation) TeamID() (r uuid.UUID, exists bool) {
+	v := m.team_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTeamID returns the old "team_id" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldTeamID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTeamID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTeamID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTeamID: %w", err)
+	}
+	return oldValue.TeamID, nil
+}
+
+// ResetTeamID resets all changes to the "team_id" field.
+func (m *TicketRollupDimMutation) ResetTeamID() {
+	m.team_id = nil
+}
+
+// SetDimValue sets the "dim_value" field.
+func (m *TicketRollupDimMutation) SetDimValue(s string) {
+	m.dim_value = &s
+}
+
+// DimValue returns the value of the "dim_value" field in the mutation.
+func (m *TicketRollupDimMutation) DimValue() (r string, exists bool) {
+	v := m.dim_value
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDimValue returns the old "dim_value" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldDimValue(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDimValue is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDimValue requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDimValue: %w", err)
+	}
+	return oldValue.DimValue, nil
+}
+
+// ResetDimValue resets all changes to the "dim_value" field.
+func (m *TicketRollupDimMutation) ResetDimValue() {
+	m.dim_value = nil
+}
+
+// SetCreatedCount sets the "created_count" field.
+func (m *TicketRollupDimMutation) SetCreatedCount(i int) {
+	m.created_count = &i
+	m.addcreated_count = nil
+}
+
+// CreatedCount returns the value of the "created_count" field in the mutation.
+func (m *TicketRollupDimMutation) CreatedCount() (r int, exists bool) {
+	v := m.created_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedCount returns the old "created_count" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldCreatedCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedCount: %w", err)
+	}
+	return oldValue.CreatedCount, nil
+}
+
+// AddCreatedCount adds i to the "created_count" field.
+func (m *TicketRollupDimMutation) AddCreatedCount(i int) {
+	if m.addcreated_count != nil {
+		*m.addcreated_count += i
+	} else {
+		m.addcreated_count = &i
+	}
+}
+
+// AddedCreatedCount returns the value that was added to the "created_count" field in this mutation.
+func (m *TicketRollupDimMutation) AddedCreatedCount() (r int, exists bool) {
+	v := m.addcreated_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCreatedCount resets all changes to the "created_count" field.
+func (m *TicketRollupDimMutation) ResetCreatedCount() {
+	m.created_count = nil
+	m.addcreated_count = nil
+}
+
+// SetResolvedCount sets the "resolved_count" field.
+func (m *TicketRollupDimMutation) SetResolvedCount(i int) {
+	m.resolved_count = &i
+	m.addresolved_count = nil
+}
+
+// ResolvedCount returns the value of the "resolved_count" field in the mutation.
+func (m *TicketRollupDimMutation) ResolvedCount() (r int, exists bool) {
+	v := m.resolved_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResolvedCount returns the old "resolved_count" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldResolvedCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResolvedCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResolvedCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResolvedCount: %w", err)
+	}
+	return oldValue.ResolvedCount, nil
+}
+
+// AddResolvedCount adds i to the "resolved_count" field.
+func (m *TicketRollupDimMutation) AddResolvedCount(i int) {
+	if m.addresolved_count != nil {
+		*m.addresolved_count += i
+	} else {
+		m.addresolved_count = &i
+	}
+}
+
+// AddedResolvedCount returns the value that was added to the "resolved_count" field in this mutation.
+func (m *TicketRollupDimMutation) AddedResolvedCount() (r int, exists bool) {
+	v := m.addresolved_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetResolvedCount resets all changes to the "resolved_count" field.
+func (m *TicketRollupDimMutation) ResetResolvedCount() {
+	m.resolved_count = nil
+	m.addresolved_count = nil
+}
+
+// SetFirstResponseCount sets the "first_response_count" field.
+func (m *TicketRollupDimMutation) SetFirstResponseCount(i int) {
+	m.first_response_count = &i
+	m.addfirst_response_count = nil
+}
+
+// FirstResponseCount returns the value of the "first_response_count" field in the mutation.
+func (m *TicketRollupDimMutation) FirstResponseCount() (r int, exists bool) {
+	v := m.first_response_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFirstResponseCount returns the old "first_response_count" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldFirstResponseCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFirstResponseCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFirstResponseCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFirstResponseCount: %w", err)
+	}
+	return oldValue.FirstResponseCount, nil
+}
+
+// AddFirstResponseCount adds i to the "first_response_count" field.
+func (m *TicketRollupDimMutation) AddFirstResponseCount(i int) {
+	if m.addfirst_response_count != nil {
+		*m.addfirst_response_count += i
+	} else {
+		m.addfirst_response_count = &i
+	}
+}
+
+// AddedFirstResponseCount returns the value that was added to the "first_response_count" field in this mutation.
+func (m *TicketRollupDimMutation) AddedFirstResponseCount() (r int, exists bool) {
+	v := m.addfirst_response_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFirstResponseCount resets all changes to the "first_response_count" field.
+func (m *TicketRollupDimMutation) ResetFirstResponseCount() {
+	m.first_response_count = nil
+	m.addfirst_response_count = nil
+}
+
+// SetFirstResponseMinutes sets the "first_response_minutes" field.
+func (m *TicketRollupDimMutation) SetFirstResponseMinutes(i int64) {
+	m.first_response_minutes = &i
+	m.addfirst_response_minutes = nil
+}
+
+// FirstResponseMinutes returns the value of the "first_response_minutes" field in the mutation.
+func (m *TicketRollupDimMutation) FirstResponseMinutes() (r int64, exists bool) {
+	v := m.first_response_minutes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFirstResponseMinutes returns the old "first_response_minutes" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldFirstResponseMinutes(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFirstResponseMinutes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFirstResponseMinutes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFirstResponseMinutes: %w", err)
+	}
+	return oldValue.FirstResponseMinutes, nil
+}
+
+// AddFirstResponseMinutes adds i to the "first_response_minutes" field.
+func (m *TicketRollupDimMutation) AddFirstResponseMinutes(i int64) {
+	if m.addfirst_response_minutes != nil {
+		*m.addfirst_response_minutes += i
+	} else {
+		m.addfirst_response_minutes = &i
+	}
+}
+
+// AddedFirstResponseMinutes returns the value that was added to the "first_response_minutes" field in this mutation.
+func (m *TicketRollupDimMutation) AddedFirstResponseMinutes() (r int64, exists bool) {
+	v := m.addfirst_response_minutes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFirstResponseMinutes resets all changes to the "first_response_minutes" field.
+func (m *TicketRollupDimMutation) ResetFirstResponseMinutes() {
+	m.first_response_minutes = nil
+	m.addfirst_response_minutes = nil
+}
+
+// SetResolutionMinutes sets the "resolution_minutes" field.
+func (m *TicketRollupDimMutation) SetResolutionMinutes(i int64) {
+	m.resolution_minutes = &i
+	m.addresolution_minutes = nil
+}
+
+// ResolutionMinutes returns the value of the "resolution_minutes" field in the mutation.
+func (m *TicketRollupDimMutation) ResolutionMinutes() (r int64, exists bool) {
+	v := m.resolution_minutes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResolutionMinutes returns the old "resolution_minutes" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldResolutionMinutes(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResolutionMinutes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResolutionMinutes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResolutionMinutes: %w", err)
+	}
+	return oldValue.ResolutionMinutes, nil
+}
+
+// AddResolutionMinutes adds i to the "resolution_minutes" field.
+func (m *TicketRollupDimMutation) AddResolutionMinutes(i int64) {
+	if m.addresolution_minutes != nil {
+		*m.addresolution_minutes += i
+	} else {
+		m.addresolution_minutes = &i
+	}
+}
+
+// AddedResolutionMinutes returns the value that was added to the "resolution_minutes" field in this mutation.
+func (m *TicketRollupDimMutation) AddedResolutionMinutes() (r int64, exists bool) {
+	v := m.addresolution_minutes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetResolutionMinutes resets all changes to the "resolution_minutes" field.
+func (m *TicketRollupDimMutation) ResetResolutionMinutes() {
+	m.resolution_minutes = nil
+	m.addresolution_minutes = nil
+}
+
+// SetFrMet sets the "fr_met" field.
+func (m *TicketRollupDimMutation) SetFrMet(i int) {
+	m.fr_met = &i
+	m.addfr_met = nil
+}
+
+// FrMet returns the value of the "fr_met" field in the mutation.
+func (m *TicketRollupDimMutation) FrMet() (r int, exists bool) {
+	v := m.fr_met
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFrMet returns the old "fr_met" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldFrMet(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFrMet is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFrMet requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFrMet: %w", err)
+	}
+	return oldValue.FrMet, nil
+}
+
+// AddFrMet adds i to the "fr_met" field.
+func (m *TicketRollupDimMutation) AddFrMet(i int) {
+	if m.addfr_met != nil {
+		*m.addfr_met += i
+	} else {
+		m.addfr_met = &i
+	}
+}
+
+// AddedFrMet returns the value that was added to the "fr_met" field in this mutation.
+func (m *TicketRollupDimMutation) AddedFrMet() (r int, exists bool) {
+	v := m.addfr_met
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFrMet resets all changes to the "fr_met" field.
+func (m *TicketRollupDimMutation) ResetFrMet() {
+	m.fr_met = nil
+	m.addfr_met = nil
+}
+
+// SetFrBreached sets the "fr_breached" field.
+func (m *TicketRollupDimMutation) SetFrBreached(i int) {
+	m.fr_breached = &i
+	m.addfr_breached = nil
+}
+
+// FrBreached returns the value of the "fr_breached" field in the mutation.
+func (m *TicketRollupDimMutation) FrBreached() (r int, exists bool) {
+	v := m.fr_breached
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFrBreached returns the old "fr_breached" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldFrBreached(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFrBreached is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFrBreached requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFrBreached: %w", err)
+	}
+	return oldValue.FrBreached, nil
+}
+
+// AddFrBreached adds i to the "fr_breached" field.
+func (m *TicketRollupDimMutation) AddFrBreached(i int) {
+	if m.addfr_breached != nil {
+		*m.addfr_breached += i
+	} else {
+		m.addfr_breached = &i
+	}
+}
+
+// AddedFrBreached returns the value that was added to the "fr_breached" field in this mutation.
+func (m *TicketRollupDimMutation) AddedFrBreached() (r int, exists bool) {
+	v := m.addfr_breached
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFrBreached resets all changes to the "fr_breached" field.
+func (m *TicketRollupDimMutation) ResetFrBreached() {
+	m.fr_breached = nil
+	m.addfr_breached = nil
+}
+
+// SetResMet sets the "res_met" field.
+func (m *TicketRollupDimMutation) SetResMet(i int) {
+	m.res_met = &i
+	m.addres_met = nil
+}
+
+// ResMet returns the value of the "res_met" field in the mutation.
+func (m *TicketRollupDimMutation) ResMet() (r int, exists bool) {
+	v := m.res_met
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResMet returns the old "res_met" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldResMet(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResMet is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResMet requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResMet: %w", err)
+	}
+	return oldValue.ResMet, nil
+}
+
+// AddResMet adds i to the "res_met" field.
+func (m *TicketRollupDimMutation) AddResMet(i int) {
+	if m.addres_met != nil {
+		*m.addres_met += i
+	} else {
+		m.addres_met = &i
+	}
+}
+
+// AddedResMet returns the value that was added to the "res_met" field in this mutation.
+func (m *TicketRollupDimMutation) AddedResMet() (r int, exists bool) {
+	v := m.addres_met
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetResMet resets all changes to the "res_met" field.
+func (m *TicketRollupDimMutation) ResetResMet() {
+	m.res_met = nil
+	m.addres_met = nil
+}
+
+// SetResBreached sets the "res_breached" field.
+func (m *TicketRollupDimMutation) SetResBreached(i int) {
+	m.res_breached = &i
+	m.addres_breached = nil
+}
+
+// ResBreached returns the value of the "res_breached" field in the mutation.
+func (m *TicketRollupDimMutation) ResBreached() (r int, exists bool) {
+	v := m.res_breached
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResBreached returns the old "res_breached" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldResBreached(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResBreached is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResBreached requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResBreached: %w", err)
+	}
+	return oldValue.ResBreached, nil
+}
+
+// AddResBreached adds i to the "res_breached" field.
+func (m *TicketRollupDimMutation) AddResBreached(i int) {
+	if m.addres_breached != nil {
+		*m.addres_breached += i
+	} else {
+		m.addres_breached = &i
+	}
+}
+
+// AddedResBreached returns the value that was added to the "res_breached" field in this mutation.
+func (m *TicketRollupDimMutation) AddedResBreached() (r int, exists bool) {
+	v := m.addres_breached
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetResBreached resets all changes to the "res_breached" field.
+func (m *TicketRollupDimMutation) ResetResBreached() {
+	m.res_breached = nil
+	m.addres_breached = nil
+}
+
+// SetCsat1 sets the "csat_1" field.
+func (m *TicketRollupDimMutation) SetCsat1(i int) {
+	m.csat_1 = &i
+	m.addcsat_1 = nil
+}
+
+// Csat1 returns the value of the "csat_1" field in the mutation.
+func (m *TicketRollupDimMutation) Csat1() (r int, exists bool) {
+	v := m.csat_1
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCsat1 returns the old "csat_1" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldCsat1(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCsat1 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCsat1 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCsat1: %w", err)
+	}
+	return oldValue.Csat1, nil
+}
+
+// AddCsat1 adds i to the "csat_1" field.
+func (m *TicketRollupDimMutation) AddCsat1(i int) {
+	if m.addcsat_1 != nil {
+		*m.addcsat_1 += i
+	} else {
+		m.addcsat_1 = &i
+	}
+}
+
+// AddedCsat1 returns the value that was added to the "csat_1" field in this mutation.
+func (m *TicketRollupDimMutation) AddedCsat1() (r int, exists bool) {
+	v := m.addcsat_1
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCsat1 resets all changes to the "csat_1" field.
+func (m *TicketRollupDimMutation) ResetCsat1() {
+	m.csat_1 = nil
+	m.addcsat_1 = nil
+}
+
+// SetCsat2 sets the "csat_2" field.
+func (m *TicketRollupDimMutation) SetCsat2(i int) {
+	m.csat_2 = &i
+	m.addcsat_2 = nil
+}
+
+// Csat2 returns the value of the "csat_2" field in the mutation.
+func (m *TicketRollupDimMutation) Csat2() (r int, exists bool) {
+	v := m.csat_2
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCsat2 returns the old "csat_2" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldCsat2(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCsat2 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCsat2 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCsat2: %w", err)
+	}
+	return oldValue.Csat2, nil
+}
+
+// AddCsat2 adds i to the "csat_2" field.
+func (m *TicketRollupDimMutation) AddCsat2(i int) {
+	if m.addcsat_2 != nil {
+		*m.addcsat_2 += i
+	} else {
+		m.addcsat_2 = &i
+	}
+}
+
+// AddedCsat2 returns the value that was added to the "csat_2" field in this mutation.
+func (m *TicketRollupDimMutation) AddedCsat2() (r int, exists bool) {
+	v := m.addcsat_2
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCsat2 resets all changes to the "csat_2" field.
+func (m *TicketRollupDimMutation) ResetCsat2() {
+	m.csat_2 = nil
+	m.addcsat_2 = nil
+}
+
+// SetCsat3 sets the "csat_3" field.
+func (m *TicketRollupDimMutation) SetCsat3(i int) {
+	m.csat_3 = &i
+	m.addcsat_3 = nil
+}
+
+// Csat3 returns the value of the "csat_3" field in the mutation.
+func (m *TicketRollupDimMutation) Csat3() (r int, exists bool) {
+	v := m.csat_3
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCsat3 returns the old "csat_3" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldCsat3(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCsat3 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCsat3 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCsat3: %w", err)
+	}
+	return oldValue.Csat3, nil
+}
+
+// AddCsat3 adds i to the "csat_3" field.
+func (m *TicketRollupDimMutation) AddCsat3(i int) {
+	if m.addcsat_3 != nil {
+		*m.addcsat_3 += i
+	} else {
+		m.addcsat_3 = &i
+	}
+}
+
+// AddedCsat3 returns the value that was added to the "csat_3" field in this mutation.
+func (m *TicketRollupDimMutation) AddedCsat3() (r int, exists bool) {
+	v := m.addcsat_3
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCsat3 resets all changes to the "csat_3" field.
+func (m *TicketRollupDimMutation) ResetCsat3() {
+	m.csat_3 = nil
+	m.addcsat_3 = nil
+}
+
+// SetCsat4 sets the "csat_4" field.
+func (m *TicketRollupDimMutation) SetCsat4(i int) {
+	m.csat_4 = &i
+	m.addcsat_4 = nil
+}
+
+// Csat4 returns the value of the "csat_4" field in the mutation.
+func (m *TicketRollupDimMutation) Csat4() (r int, exists bool) {
+	v := m.csat_4
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCsat4 returns the old "csat_4" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldCsat4(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCsat4 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCsat4 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCsat4: %w", err)
+	}
+	return oldValue.Csat4, nil
+}
+
+// AddCsat4 adds i to the "csat_4" field.
+func (m *TicketRollupDimMutation) AddCsat4(i int) {
+	if m.addcsat_4 != nil {
+		*m.addcsat_4 += i
+	} else {
+		m.addcsat_4 = &i
+	}
+}
+
+// AddedCsat4 returns the value that was added to the "csat_4" field in this mutation.
+func (m *TicketRollupDimMutation) AddedCsat4() (r int, exists bool) {
+	v := m.addcsat_4
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCsat4 resets all changes to the "csat_4" field.
+func (m *TicketRollupDimMutation) ResetCsat4() {
+	m.csat_4 = nil
+	m.addcsat_4 = nil
+}
+
+// SetCsat5 sets the "csat_5" field.
+func (m *TicketRollupDimMutation) SetCsat5(i int) {
+	m.csat_5 = &i
+	m.addcsat_5 = nil
+}
+
+// Csat5 returns the value of the "csat_5" field in the mutation.
+func (m *TicketRollupDimMutation) Csat5() (r int, exists bool) {
+	v := m.csat_5
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCsat5 returns the old "csat_5" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldCsat5(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCsat5 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCsat5 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCsat5: %w", err)
+	}
+	return oldValue.Csat5, nil
+}
+
+// AddCsat5 adds i to the "csat_5" field.
+func (m *TicketRollupDimMutation) AddCsat5(i int) {
+	if m.addcsat_5 != nil {
+		*m.addcsat_5 += i
+	} else {
+		m.addcsat_5 = &i
+	}
+}
+
+// AddedCsat5 returns the value that was added to the "csat_5" field in this mutation.
+func (m *TicketRollupDimMutation) AddedCsat5() (r int, exists bool) {
+	v := m.addcsat_5
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCsat5 resets all changes to the "csat_5" field.
+func (m *TicketRollupDimMutation) ResetCsat5() {
+	m.csat_5 = nil
+	m.addcsat_5 = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *TicketRollupDimMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *TicketRollupDimMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the TicketRollupDim entity.
+// If the TicketRollupDim object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupDimMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *TicketRollupDimMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// Where appends a list predicates to the TicketRollupDimMutation builder.
+func (m *TicketRollupDimMutation) Where(ps ...predicate.TicketRollupDim) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the TicketRollupDimMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *TicketRollupDimMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.TicketRollupDim, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *TicketRollupDimMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *TicketRollupDimMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (TicketRollupDim).
+func (m *TicketRollupDimMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TicketRollupDimMutation) Fields() []string {
+	fields := make([]string, 0, 21)
+	if m.tenant_id != nil {
+		fields = append(fields, ticketrollupdim.FieldTenantID)
+	}
+	if m.granularity != nil {
+		fields = append(fields, ticketrollupdim.FieldGranularity)
+	}
+	if m.bucket_start != nil {
+		fields = append(fields, ticketrollupdim.FieldBucketStart)
+	}
+	if m.dim_kind != nil {
+		fields = append(fields, ticketrollupdim.FieldDimKind)
+	}
+	if m.team_id != nil {
+		fields = append(fields, ticketrollupdim.FieldTeamID)
+	}
+	if m.dim_value != nil {
+		fields = append(fields, ticketrollupdim.FieldDimValue)
+	}
+	if m.created_count != nil {
+		fields = append(fields, ticketrollupdim.FieldCreatedCount)
+	}
+	if m.resolved_count != nil {
+		fields = append(fields, ticketrollupdim.FieldResolvedCount)
+	}
+	if m.first_response_count != nil {
+		fields = append(fields, ticketrollupdim.FieldFirstResponseCount)
+	}
+	if m.first_response_minutes != nil {
+		fields = append(fields, ticketrollupdim.FieldFirstResponseMinutes)
+	}
+	if m.resolution_minutes != nil {
+		fields = append(fields, ticketrollupdim.FieldResolutionMinutes)
+	}
+	if m.fr_met != nil {
+		fields = append(fields, ticketrollupdim.FieldFrMet)
+	}
+	if m.fr_breached != nil {
+		fields = append(fields, ticketrollupdim.FieldFrBreached)
+	}
+	if m.res_met != nil {
+		fields = append(fields, ticketrollupdim.FieldResMet)
+	}
+	if m.res_breached != nil {
+		fields = append(fields, ticketrollupdim.FieldResBreached)
+	}
+	if m.csat_1 != nil {
+		fields = append(fields, ticketrollupdim.FieldCsat1)
+	}
+	if m.csat_2 != nil {
+		fields = append(fields, ticketrollupdim.FieldCsat2)
+	}
+	if m.csat_3 != nil {
+		fields = append(fields, ticketrollupdim.FieldCsat3)
+	}
+	if m.csat_4 != nil {
+		fields = append(fields, ticketrollupdim.FieldCsat4)
+	}
+	if m.csat_5 != nil {
+		fields = append(fields, ticketrollupdim.FieldCsat5)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, ticketrollupdim.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TicketRollupDimMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case ticketrollupdim.FieldTenantID:
+		return m.TenantID()
+	case ticketrollupdim.FieldGranularity:
+		return m.Granularity()
+	case ticketrollupdim.FieldBucketStart:
+		return m.BucketStart()
+	case ticketrollupdim.FieldDimKind:
+		return m.DimKind()
+	case ticketrollupdim.FieldTeamID:
+		return m.TeamID()
+	case ticketrollupdim.FieldDimValue:
+		return m.DimValue()
+	case ticketrollupdim.FieldCreatedCount:
+		return m.CreatedCount()
+	case ticketrollupdim.FieldResolvedCount:
+		return m.ResolvedCount()
+	case ticketrollupdim.FieldFirstResponseCount:
+		return m.FirstResponseCount()
+	case ticketrollupdim.FieldFirstResponseMinutes:
+		return m.FirstResponseMinutes()
+	case ticketrollupdim.FieldResolutionMinutes:
+		return m.ResolutionMinutes()
+	case ticketrollupdim.FieldFrMet:
+		return m.FrMet()
+	case ticketrollupdim.FieldFrBreached:
+		return m.FrBreached()
+	case ticketrollupdim.FieldResMet:
+		return m.ResMet()
+	case ticketrollupdim.FieldResBreached:
+		return m.ResBreached()
+	case ticketrollupdim.FieldCsat1:
+		return m.Csat1()
+	case ticketrollupdim.FieldCsat2:
+		return m.Csat2()
+	case ticketrollupdim.FieldCsat3:
+		return m.Csat3()
+	case ticketrollupdim.FieldCsat4:
+		return m.Csat4()
+	case ticketrollupdim.FieldCsat5:
+		return m.Csat5()
+	case ticketrollupdim.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TicketRollupDimMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case ticketrollupdim.FieldTenantID:
+		return m.OldTenantID(ctx)
+	case ticketrollupdim.FieldGranularity:
+		return m.OldGranularity(ctx)
+	case ticketrollupdim.FieldBucketStart:
+		return m.OldBucketStart(ctx)
+	case ticketrollupdim.FieldDimKind:
+		return m.OldDimKind(ctx)
+	case ticketrollupdim.FieldTeamID:
+		return m.OldTeamID(ctx)
+	case ticketrollupdim.FieldDimValue:
+		return m.OldDimValue(ctx)
+	case ticketrollupdim.FieldCreatedCount:
+		return m.OldCreatedCount(ctx)
+	case ticketrollupdim.FieldResolvedCount:
+		return m.OldResolvedCount(ctx)
+	case ticketrollupdim.FieldFirstResponseCount:
+		return m.OldFirstResponseCount(ctx)
+	case ticketrollupdim.FieldFirstResponseMinutes:
+		return m.OldFirstResponseMinutes(ctx)
+	case ticketrollupdim.FieldResolutionMinutes:
+		return m.OldResolutionMinutes(ctx)
+	case ticketrollupdim.FieldFrMet:
+		return m.OldFrMet(ctx)
+	case ticketrollupdim.FieldFrBreached:
+		return m.OldFrBreached(ctx)
+	case ticketrollupdim.FieldResMet:
+		return m.OldResMet(ctx)
+	case ticketrollupdim.FieldResBreached:
+		return m.OldResBreached(ctx)
+	case ticketrollupdim.FieldCsat1:
+		return m.OldCsat1(ctx)
+	case ticketrollupdim.FieldCsat2:
+		return m.OldCsat2(ctx)
+	case ticketrollupdim.FieldCsat3:
+		return m.OldCsat3(ctx)
+	case ticketrollupdim.FieldCsat4:
+		return m.OldCsat4(ctx)
+	case ticketrollupdim.FieldCsat5:
+		return m.OldCsat5(ctx)
+	case ticketrollupdim.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown TicketRollupDim field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TicketRollupDimMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case ticketrollupdim.FieldTenantID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTenantID(v)
+		return nil
+	case ticketrollupdim.FieldGranularity:
+		v, ok := value.(ticketrollupdim.Granularity)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGranularity(v)
+		return nil
+	case ticketrollupdim.FieldBucketStart:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBucketStart(v)
+		return nil
+	case ticketrollupdim.FieldDimKind:
+		v, ok := value.(ticketrollupdim.DimKind)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDimKind(v)
+		return nil
+	case ticketrollupdim.FieldTeamID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTeamID(v)
+		return nil
+	case ticketrollupdim.FieldDimValue:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDimValue(v)
+		return nil
+	case ticketrollupdim.FieldCreatedCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedCount(v)
+		return nil
+	case ticketrollupdim.FieldResolvedCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResolvedCount(v)
+		return nil
+	case ticketrollupdim.FieldFirstResponseCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFirstResponseCount(v)
+		return nil
+	case ticketrollupdim.FieldFirstResponseMinutes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFirstResponseMinutes(v)
+		return nil
+	case ticketrollupdim.FieldResolutionMinutes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResolutionMinutes(v)
+		return nil
+	case ticketrollupdim.FieldFrMet:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFrMet(v)
+		return nil
+	case ticketrollupdim.FieldFrBreached:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFrBreached(v)
+		return nil
+	case ticketrollupdim.FieldResMet:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResMet(v)
+		return nil
+	case ticketrollupdim.FieldResBreached:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResBreached(v)
+		return nil
+	case ticketrollupdim.FieldCsat1:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCsat1(v)
+		return nil
+	case ticketrollupdim.FieldCsat2:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCsat2(v)
+		return nil
+	case ticketrollupdim.FieldCsat3:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCsat3(v)
+		return nil
+	case ticketrollupdim.FieldCsat4:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCsat4(v)
+		return nil
+	case ticketrollupdim.FieldCsat5:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCsat5(v)
+		return nil
+	case ticketrollupdim.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TicketRollupDim field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TicketRollupDimMutation) AddedFields() []string {
+	var fields []string
+	if m.addcreated_count != nil {
+		fields = append(fields, ticketrollupdim.FieldCreatedCount)
+	}
+	if m.addresolved_count != nil {
+		fields = append(fields, ticketrollupdim.FieldResolvedCount)
+	}
+	if m.addfirst_response_count != nil {
+		fields = append(fields, ticketrollupdim.FieldFirstResponseCount)
+	}
+	if m.addfirst_response_minutes != nil {
+		fields = append(fields, ticketrollupdim.FieldFirstResponseMinutes)
+	}
+	if m.addresolution_minutes != nil {
+		fields = append(fields, ticketrollupdim.FieldResolutionMinutes)
+	}
+	if m.addfr_met != nil {
+		fields = append(fields, ticketrollupdim.FieldFrMet)
+	}
+	if m.addfr_breached != nil {
+		fields = append(fields, ticketrollupdim.FieldFrBreached)
+	}
+	if m.addres_met != nil {
+		fields = append(fields, ticketrollupdim.FieldResMet)
+	}
+	if m.addres_breached != nil {
+		fields = append(fields, ticketrollupdim.FieldResBreached)
+	}
+	if m.addcsat_1 != nil {
+		fields = append(fields, ticketrollupdim.FieldCsat1)
+	}
+	if m.addcsat_2 != nil {
+		fields = append(fields, ticketrollupdim.FieldCsat2)
+	}
+	if m.addcsat_3 != nil {
+		fields = append(fields, ticketrollupdim.FieldCsat3)
+	}
+	if m.addcsat_4 != nil {
+		fields = append(fields, ticketrollupdim.FieldCsat4)
+	}
+	if m.addcsat_5 != nil {
+		fields = append(fields, ticketrollupdim.FieldCsat5)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TicketRollupDimMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case ticketrollupdim.FieldCreatedCount:
+		return m.AddedCreatedCount()
+	case ticketrollupdim.FieldResolvedCount:
+		return m.AddedResolvedCount()
+	case ticketrollupdim.FieldFirstResponseCount:
+		return m.AddedFirstResponseCount()
+	case ticketrollupdim.FieldFirstResponseMinutes:
+		return m.AddedFirstResponseMinutes()
+	case ticketrollupdim.FieldResolutionMinutes:
+		return m.AddedResolutionMinutes()
+	case ticketrollupdim.FieldFrMet:
+		return m.AddedFrMet()
+	case ticketrollupdim.FieldFrBreached:
+		return m.AddedFrBreached()
+	case ticketrollupdim.FieldResMet:
+		return m.AddedResMet()
+	case ticketrollupdim.FieldResBreached:
+		return m.AddedResBreached()
+	case ticketrollupdim.FieldCsat1:
+		return m.AddedCsat1()
+	case ticketrollupdim.FieldCsat2:
+		return m.AddedCsat2()
+	case ticketrollupdim.FieldCsat3:
+		return m.AddedCsat3()
+	case ticketrollupdim.FieldCsat4:
+		return m.AddedCsat4()
+	case ticketrollupdim.FieldCsat5:
+		return m.AddedCsat5()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TicketRollupDimMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case ticketrollupdim.FieldCreatedCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCreatedCount(v)
+		return nil
+	case ticketrollupdim.FieldResolvedCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddResolvedCount(v)
+		return nil
+	case ticketrollupdim.FieldFirstResponseCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFirstResponseCount(v)
+		return nil
+	case ticketrollupdim.FieldFirstResponseMinutes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFirstResponseMinutes(v)
+		return nil
+	case ticketrollupdim.FieldResolutionMinutes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddResolutionMinutes(v)
+		return nil
+	case ticketrollupdim.FieldFrMet:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFrMet(v)
+		return nil
+	case ticketrollupdim.FieldFrBreached:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFrBreached(v)
+		return nil
+	case ticketrollupdim.FieldResMet:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddResMet(v)
+		return nil
+	case ticketrollupdim.FieldResBreached:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddResBreached(v)
+		return nil
+	case ticketrollupdim.FieldCsat1:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCsat1(v)
+		return nil
+	case ticketrollupdim.FieldCsat2:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCsat2(v)
+		return nil
+	case ticketrollupdim.FieldCsat3:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCsat3(v)
+		return nil
+	case ticketrollupdim.FieldCsat4:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCsat4(v)
+		return nil
+	case ticketrollupdim.FieldCsat5:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCsat5(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TicketRollupDim numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TicketRollupDimMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TicketRollupDimMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TicketRollupDimMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown TicketRollupDim nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TicketRollupDimMutation) ResetField(name string) error {
+	switch name {
+	case ticketrollupdim.FieldTenantID:
+		m.ResetTenantID()
+		return nil
+	case ticketrollupdim.FieldGranularity:
+		m.ResetGranularity()
+		return nil
+	case ticketrollupdim.FieldBucketStart:
+		m.ResetBucketStart()
+		return nil
+	case ticketrollupdim.FieldDimKind:
+		m.ResetDimKind()
+		return nil
+	case ticketrollupdim.FieldTeamID:
+		m.ResetTeamID()
+		return nil
+	case ticketrollupdim.FieldDimValue:
+		m.ResetDimValue()
+		return nil
+	case ticketrollupdim.FieldCreatedCount:
+		m.ResetCreatedCount()
+		return nil
+	case ticketrollupdim.FieldResolvedCount:
+		m.ResetResolvedCount()
+		return nil
+	case ticketrollupdim.FieldFirstResponseCount:
+		m.ResetFirstResponseCount()
+		return nil
+	case ticketrollupdim.FieldFirstResponseMinutes:
+		m.ResetFirstResponseMinutes()
+		return nil
+	case ticketrollupdim.FieldResolutionMinutes:
+		m.ResetResolutionMinutes()
+		return nil
+	case ticketrollupdim.FieldFrMet:
+		m.ResetFrMet()
+		return nil
+	case ticketrollupdim.FieldFrBreached:
+		m.ResetFrBreached()
+		return nil
+	case ticketrollupdim.FieldResMet:
+		m.ResetResMet()
+		return nil
+	case ticketrollupdim.FieldResBreached:
+		m.ResetResBreached()
+		return nil
+	case ticketrollupdim.FieldCsat1:
+		m.ResetCsat1()
+		return nil
+	case ticketrollupdim.FieldCsat2:
+		m.ResetCsat2()
+		return nil
+	case ticketrollupdim.FieldCsat3:
+		m.ResetCsat3()
+		return nil
+	case ticketrollupdim.FieldCsat4:
+		m.ResetCsat4()
+		return nil
+	case ticketrollupdim.FieldCsat5:
+		m.ResetCsat5()
+		return nil
+	case ticketrollupdim.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown TicketRollupDim field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TicketRollupDimMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TicketRollupDimMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TicketRollupDimMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TicketRollupDimMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TicketRollupDimMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TicketRollupDimMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TicketRollupDimMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown TicketRollupDim unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TicketRollupDimMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown TicketRollupDim edge %s", name)
+}
+
+// TicketRollupMarkMutation represents an operation that mutates the TicketRollupMark nodes in the graph.
+type TicketRollupMarkMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *uuid.UUID
+	tenant_id     *uuid.UUID
+	hours         *[]time.Time
+	appendhours   []time.Time
+	updated_at    *time.Time
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*TicketRollupMark, error)
+	predicates    []predicate.TicketRollupMark
+}
+
+var _ ent.Mutation = (*TicketRollupMarkMutation)(nil)
+
+// ticketrollupmarkOption allows management of the mutation configuration using functional options.
+type ticketrollupmarkOption func(*TicketRollupMarkMutation)
+
+// newTicketRollupMarkMutation creates new mutation for the TicketRollupMark entity.
+func newTicketRollupMarkMutation(c config, op Op, opts ...ticketrollupmarkOption) *TicketRollupMarkMutation {
+	m := &TicketRollupMarkMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTicketRollupMark,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTicketRollupMarkID sets the ID field of the mutation.
+func withTicketRollupMarkID(id uuid.UUID) ticketrollupmarkOption {
+	return func(m *TicketRollupMarkMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *TicketRollupMark
+		)
+		m.oldValue = func(ctx context.Context) (*TicketRollupMark, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().TicketRollupMark.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTicketRollupMark sets the old TicketRollupMark of the mutation.
+func withTicketRollupMark(node *TicketRollupMark) ticketrollupmarkOption {
+	return func(m *TicketRollupMarkMutation) {
+		m.oldValue = func(context.Context) (*TicketRollupMark, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TicketRollupMarkMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TicketRollupMarkMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of TicketRollupMark entities.
+func (m *TicketRollupMarkMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TicketRollupMarkMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *TicketRollupMarkMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().TicketRollupMark.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (m *TicketRollupMarkMutation) SetTenantID(u uuid.UUID) {
+	m.tenant_id = &u
+}
+
+// TenantID returns the value of the "tenant_id" field in the mutation.
+func (m *TicketRollupMarkMutation) TenantID() (r uuid.UUID, exists bool) {
+	v := m.tenant_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTenantID returns the old "tenant_id" field's value of the TicketRollupMark entity.
+// If the TicketRollupMark object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMarkMutation) OldTenantID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTenantID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTenantID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTenantID: %w", err)
+	}
+	return oldValue.TenantID, nil
+}
+
+// ResetTenantID resets all changes to the "tenant_id" field.
+func (m *TicketRollupMarkMutation) ResetTenantID() {
+	m.tenant_id = nil
+}
+
+// SetHours sets the "hours" field.
+func (m *TicketRollupMarkMutation) SetHours(t []time.Time) {
+	m.hours = &t
+	m.appendhours = nil
+}
+
+// Hours returns the value of the "hours" field in the mutation.
+func (m *TicketRollupMarkMutation) Hours() (r []time.Time, exists bool) {
+	v := m.hours
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHours returns the old "hours" field's value of the TicketRollupMark entity.
+// If the TicketRollupMark object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMarkMutation) OldHours(ctx context.Context) (v []time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHours is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHours requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHours: %w", err)
+	}
+	return oldValue.Hours, nil
+}
+
+// AppendHours adds t to the "hours" field.
+func (m *TicketRollupMarkMutation) AppendHours(t []time.Time) {
+	m.appendhours = append(m.appendhours, t...)
+}
+
+// AppendedHours returns the list of values that were appended to the "hours" field in this mutation.
+func (m *TicketRollupMarkMutation) AppendedHours() ([]time.Time, bool) {
+	if len(m.appendhours) == 0 {
+		return nil, false
+	}
+	return m.appendhours, true
+}
+
+// ResetHours resets all changes to the "hours" field.
+func (m *TicketRollupMarkMutation) ResetHours() {
+	m.hours = nil
+	m.appendhours = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *TicketRollupMarkMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *TicketRollupMarkMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the TicketRollupMark entity.
+// If the TicketRollupMark object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketRollupMarkMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *TicketRollupMarkMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// Where appends a list predicates to the TicketRollupMarkMutation builder.
+func (m *TicketRollupMarkMutation) Where(ps ...predicate.TicketRollupMark) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the TicketRollupMarkMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *TicketRollupMarkMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.TicketRollupMark, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *TicketRollupMarkMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *TicketRollupMarkMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (TicketRollupMark).
+func (m *TicketRollupMarkMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TicketRollupMarkMutation) Fields() []string {
+	fields := make([]string, 0, 3)
+	if m.tenant_id != nil {
+		fields = append(fields, ticketrollupmark.FieldTenantID)
+	}
+	if m.hours != nil {
+		fields = append(fields, ticketrollupmark.FieldHours)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, ticketrollupmark.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TicketRollupMarkMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case ticketrollupmark.FieldTenantID:
+		return m.TenantID()
+	case ticketrollupmark.FieldHours:
+		return m.Hours()
+	case ticketrollupmark.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TicketRollupMarkMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case ticketrollupmark.FieldTenantID:
+		return m.OldTenantID(ctx)
+	case ticketrollupmark.FieldHours:
+		return m.OldHours(ctx)
+	case ticketrollupmark.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown TicketRollupMark field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TicketRollupMarkMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case ticketrollupmark.FieldTenantID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTenantID(v)
+		return nil
+	case ticketrollupmark.FieldHours:
+		v, ok := value.([]time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHours(v)
+		return nil
+	case ticketrollupmark.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TicketRollupMark field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TicketRollupMarkMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TicketRollupMarkMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TicketRollupMarkMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown TicketRollupMark numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TicketRollupMarkMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TicketRollupMarkMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TicketRollupMarkMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown TicketRollupMark nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TicketRollupMarkMutation) ResetField(name string) error {
+	switch name {
+	case ticketrollupmark.FieldTenantID:
+		m.ResetTenantID()
+		return nil
+	case ticketrollupmark.FieldHours:
+		m.ResetHours()
+		return nil
+	case ticketrollupmark.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown TicketRollupMark field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TicketRollupMarkMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TicketRollupMarkMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TicketRollupMarkMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TicketRollupMarkMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TicketRollupMarkMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TicketRollupMarkMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TicketRollupMarkMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown TicketRollupMark unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TicketRollupMarkMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown TicketRollupMark edge %s", name)
 }
 
 // TicketSequenceMutation represents an operation that mutates the TicketSequence nodes in the graph.

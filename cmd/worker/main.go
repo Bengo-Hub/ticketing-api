@@ -1,7 +1,7 @@
-// Command worker runs the SLA scans: breaches, pre-breach warnings and escalations. It is the only
-// process that runs them (the API pods do not), and every scan of every tick is claimed fleet-wide
-// through the shared cache, so a second worker replica or a restart inside a period never repeats
-// one.
+// Command worker runs the SLA scans (breaches, pre-breach warnings and escalations) and the
+// analytics rollup. It is the only process that runs them (the API pods do not), and every job of
+// every tick is claimed fleet-wide through the shared cache, so a second worker replica or a
+// restart inside a period never repeats one.
 package main
 
 import (
@@ -21,6 +21,7 @@ import (
 
 	"github.com/bengobox/ticketing-service/internal/config"
 	"github.com/bengobox/ticketing-service/internal/ent"
+	"github.com/bengobox/ticketing-service/internal/modules/analytics"
 	"github.com/bengobox/ticketing-service/internal/modules/tickets"
 	"github.com/bengobox/ticketing-service/internal/platform/events"
 	"github.com/bengobox/ticketing-service/internal/shared/logger"
@@ -74,11 +75,14 @@ func main() {
 	// Every event goes to the outbox in its change's own transaction; the API pods relay them.
 	repo := tickets.NewEntRepository(ormClient, db, events.NewOutbox(db))
 	svc := tickets.NewService(repo, log)
+	rollup := analytics.NewRollup(db, log)
 
 	scans := []scan{
 		{key: "ticketing:sla-breach-scan", run: func(c context.Context, now time.Time) { runBreachCheck(c, repo, svc, log, now) }},
 		{key: "ticketing:sla-warning-scan", run: func(c context.Context, now time.Time) { runWarnings(c, repo, svc, log, now) }},
 		{key: "ticketing:sla-escalation-scan", run: func(c context.Context, now time.Time) { runEscalations(c, repo, svc, log, now) }},
+		// Last, so the SLA scans never wait behind it; its own budget keeps it inside the tick.
+		{key: "ticketing:analytics-rollup", run: func(c context.Context, _ time.Time) { runRollup(c, rollup, log) }},
 	}
 
 	log.Info("sla worker started", zap.Duration("poll_interval", pollInterval))
@@ -169,5 +173,18 @@ func runEscalations(ctx context.Context, repo tickets.Repository, svc *tickets.S
 		if changed {
 			log.Info("ticket escalated", zap.String("ticket_id", e.TicketID.String()), zap.Int("level", e.Level+1))
 		}
+	}
+}
+
+// runRollup brings the analytics rollups up to date: the buckets touched since the watermark,
+// or the next slice of the backfill on a first run, bounded by the rollup's budget.
+func runRollup(ctx context.Context, rollup *analytics.Rollup, log *zap.Logger) {
+	n, err := rollup.Run(ctx)
+	if err != nil {
+		log.Error("analytics rollup failed", zap.Int("tickets", n), zap.Error(err))
+		return
+	}
+	if n > 0 {
+		log.Info("analytics rollup", zap.Int("tickets", n))
 	}
 }

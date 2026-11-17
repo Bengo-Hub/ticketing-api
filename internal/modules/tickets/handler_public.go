@@ -62,6 +62,9 @@ func (h *PublicHandler) RegisterPublicRoutes(r chi.Router) {
 		pub.Get("/tickets/{ticketNumber}", h.GetPublicTicket)
 		pub.Post("/tickets/{ticketNumber}/access", h.RequestTicketAccess)
 		pub.Post("/tickets/{ticketNumber}/comments", h.AddPublicComment)
+		// CSAT survey: the single-use token from the survey email is the only credential.
+		pub.Post("/csat/check", h.CheckCSAT)
+		pub.Post("/csat", h.SubmitCSAT)
 	})
 }
 
