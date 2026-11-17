@@ -51,7 +51,34 @@ type Service struct {
 	routing RulesEvaluator
 	files   FileStore
 	csat    CSATConfig
+	created CreatedObserver
 	now     func() time.Time
+}
+
+// CreatedObserver hears about a ticket after its create committed (the AI auto-classify). It is
+// called on its own goroutine with a copy of the ticket, so it can never hold up or fail the create.
+type CreatedObserver interface {
+	TicketCreated(ctx context.Context, t Ticket)
+}
+
+// SetCreatedObserver wires in the after-commit observer.
+func (s *Service) SetCreatedObserver(o CreatedObserver) { s.created = o }
+
+// notifyCreated runs the observer after the commit, detached from the request, and keeps a panic
+// in it from reaching the process.
+func (s *Service) notifyCreated(ctx context.Context, t *Ticket) {
+	if s.created == nil {
+		return
+	}
+	snapshot := *t
+	go func() {
+		defer func() {
+			if rec := recover(); rec != nil {
+				s.logger.Error("created observer panicked", zap.Any("panic", rec))
+			}
+		}()
+		s.created.TicketCreated(context.WithoutCancel(ctx), snapshot)
+	}()
 }
 
 // NewService creates a new ticket service.
@@ -157,6 +184,7 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 	s.logger.Info("ticket created",
 		zap.String("ticket_id", ticket.ID.String()), zap.String("ticket_number", ticket.TicketNumber))
 	s.broadcast(ticket.TenantID, "ticket.created", map[string]any{"ticket_id": ticket.ID, "ticket_number": ticket.TicketNumber})
+	s.notifyCreated(ctx, ticket)
 	return ticket, nil
 }
 

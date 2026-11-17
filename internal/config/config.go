@@ -10,16 +10,32 @@ import (
 
 // Config holds all application configuration.
 type Config struct {
-	App        AppConfig
-	HTTP       HTTPConfig
-	Postgres   PostgresConfig
-	Redis      RedisConfig
-	Events     EventsConfig
-	Auth       AuthConfig
-	Tenant     TenantConfig
-	Channels   ChannelsConfig
-	Marketflow MarketflowConfig
-	CSAT       CSATConfig
+	App           AppConfig
+	HTTP          HTTPConfig
+	Postgres      PostgresConfig
+	Redis         RedisConfig
+	Events        EventsConfig
+	Auth          AuthConfig
+	Tenant        TenantConfig
+	Channels      ChannelsConfig
+	Marketflow    MarketflowConfig
+	CSAT          CSATConfig
+	AI            AIConfig
+	Subscriptions SubscriptionsConfig
+}
+
+// AIConfig is marketflow-ai (Vera), which runs every model call. ticketing-api builds the prompts
+// and never names a model: marketflow-ai's router picks it from its own provider settings.
+type AIConfig struct {
+	URL string `envconfig:"MARKETFLOW_AI_URL" default:"http://marketflow-ai.marketflow.svc.cluster.local:4001"`
+	// Timeout bounds one AI call. AI calls are never retried, so a slow model costs one wait only.
+	Timeout time.Duration `envconfig:"AI_TIMEOUT" default:"30s"`
+}
+
+// SubscriptionsConfig is subscriptions-api, which owns the prepaid AI credit wallet. The variable
+// name is the fleet-wide SUBSCRIPTION_BASE_URL.
+type SubscriptionsConfig struct {
+	URL string `envconfig:"SUBSCRIPTION_BASE_URL" default:"http://subscription-api.subscriptions.svc.cluster.local:4000"`
 }
 
 // CSATConfig is the satisfaction survey sent on resolve. The link is SurveyURL with

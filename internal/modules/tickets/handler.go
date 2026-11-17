@@ -86,7 +86,6 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		t.With(viewAny).Get("/", h.ListTickets)
 		t.With(staff).Get("/tags", h.ListTags)
 		t.With(change).Put("/bulk", h.BulkUpdate)
-		t.With(access.RequirePermission(permTicketsAdd)).Post("/classify", h.ClassifyTicket)
 		t.With(viewAny).Get("/number/{ticketNumber}", h.GetTicketByNumber)
 		t.With(viewAny).Get("/{ticketId}", h.GetTicket)
 		t.With(access.RequireAnyPermission(permTicketsChange, permTicketsChangeOwn)).Put("/{ticketId}", h.UpdateTicket)

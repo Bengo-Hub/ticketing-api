@@ -3,7 +3,6 @@ package tickets
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 
 	pagination "github.com/Bengo-Hub/pagination"
 	"github.com/go-chi/chi/v5"
@@ -134,66 +133,4 @@ func (h *Handler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
-}
-
-// ClassifyTicket suggests a priority and a category hint for a subject and description from
-// keyword heuristics.
-func (h *Handler) ClassifyTicket(w http.ResponseWriter, r *http.Request) {
-	if _, ok := caller(w, r); !ok {
-		return
-	}
-	var req struct {
-		Subject     string `json:"subject"`
-		Description string `json:"description"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-	if req.Subject == "" && req.Description == "" {
-		respondError(w, http.StatusBadRequest, "subject or description required")
-		return
-	}
-	priority, categoryHint := classifyTicketText(req.Subject + " " + req.Description)
-	respondJSON(w, http.StatusOK, map[string]any{
-		"suggested_priority":      priority,
-		"suggested_category_hint": categoryHint,
-	})
-}
-
-// classifyTicketText applies keyword heuristics to suggest a priority and a category hint.
-func classifyTicketText(text string) (TicketPriority, string) {
-	lower := strings.ToLower(text)
-	priority := PriorityNormal
-	switch {
-	case containsAny(lower, "urgent", "critical", "down", "outage", "breach", "emergency"):
-		priority = PriorityUrgent
-	case containsAny(lower, "high", "asap", "immediately", "blocked"):
-		priority = PriorityHigh
-	case containsAny(lower, "low", "minor", "whenever", "no rush"):
-		priority = PriorityLow
-	}
-	categoryHint := "general"
-	switch {
-	case containsAny(lower, "payment", "invoice", "billing", "charge", "refund"):
-		categoryHint = "billing"
-	case containsAny(lower, "login", "password", "access", "auth", "account"):
-		categoryHint = "account"
-	case containsAny(lower, "bug", "error", "crash", "broken", "not working"):
-		categoryHint = "technical"
-	case containsAny(lower, "feature", "request", "enhancement", "suggestion"):
-		categoryHint = "feature_request"
-	case containsAny(lower, "delivery", "shipping", "order", "tracking"):
-		categoryHint = "order"
-	}
-	return priority, categoryHint
-}
-
-func containsAny(s string, keywords ...string) bool {
-	for _, kw := range keywords {
-		if strings.Contains(s, kw) {
-			return true
-		}
-	}
-	return false
 }

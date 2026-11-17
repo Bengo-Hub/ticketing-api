@@ -52,7 +52,7 @@ The features the leaders share make up the baseline:
 
 - WhatsApp is the first channel, not an add-on, through notifications-api, which the fleet already uses.
 - Pricing is in KES with no per-feature add-ons. Ticketing is part of the existing subscription plans, gated only through entitlements, and core ticket work is never plan-gated.
-- AI (Vera through marketflow-ai) is billed only from the existing prepaid AI credit wallet, with no per-resolution metering.
+- AI (Vera through marketflow-ai) is billed only from the existing prepaid AI credit wallet, one credit per AI call and none for a call that failed, with no per-resolution metering. Built in sprint 13 ([ai.md](ai.md)).
 - The customer is the marketflow contact. Ticketing stores no PII copy, so tickets link to POS orders, ordering orders, projects QA and treasury invoices across the platform.
 - The agent UI works offline, the PWA is mobile-first, and it is in English and Swahili.
 
@@ -61,7 +61,7 @@ The features the leaders share make up the baseline:
 1. **No feature behind an add-on.** An e2e test with a tier-1 tenant creates, assigns, comments on, merges and resolves a ticket, and uses macros and SLA. Proved in sprints 9, 10 and 11.
 2. **Low learning curve.** Seeded defaults (categories, SLA policy, macros, a business-hours calendar with Kenyan public holidays) give a new tenant a working desk with zero configuration. An e2e test runs a fresh tenant from first ticket to resolution without opening the admin pages. Proved in sprint 10.
 3. **No missed duplicate replies.** Collision detection covers viewing and typing. An e2e test with two agents on one ticket shows the second agent the warning within 2 seconds. Proved in sprint 9.
-4. **Predictable cost.** AI calls debit the AI credit wallet and refuse cleanly at zero balance. A unit test with a zero-balance tenant hides the AI suggestion and still saves the ticket. Proved in sprint 13.
+4. **Predictable cost.** AI calls debit the AI credit wallet and refuse cleanly at zero balance. A unit test with a zero-balance tenant hides the AI suggestion and still saves the ticket. Proved in sprint 13 by `TestZeroBalanceHidesSuggestionAndTicketStillSaves` (`internal/modules/ai`): a 402 `ai_credits_exhausted` with no model call and no charge, and a create with auto-classify on still saves.
 5. **Reports stay fast as data grows.** Analytics come from rollup tables and indexed `GROUP BY`, never row loads. A benchmark with 200k tickets keeps `/analytics/*` under 300 ms p95 locally. Proved in sprint 12 by `internal/modules/analytics/benchmark_test.go`; the first recorded run is pending.
 
 ### Sources (read 2026-11-16)
@@ -91,12 +91,12 @@ The features the leaders share make up the baseline:
 | [5](sprints/sprint-5-knowledge-base.md) | Knowledge base | Partial | Full-text search, category list, suggestions |
 | [6](sprints/sprint-6-analytics.md) | Analytics | Done | Finished by sprint 12 |
 | [7](sprints/sprint-7-notifications.md) | Notifications | Partial | Preferences, @mentions, SMS and WhatsApp |
-| [8](sprints/sprint-8-routing.md) | Routing and classification | Partial | Least-loaded fallback, ticket counts, escalation, AI classification |
+| [8](sprints/sprint-8-routing.md) | Routing and classification | Partial | Least-loaded fallback, ticket counts (escalation came in sprint 10, AI classification in sprint 13) |
 | [9](sprints/sprint-9-agent-productivity.md) | Agent productivity | Pending | Keyset paging, full-text search, views, tags, macros, merge, parent-child, bulk, collision presence, @mentions, attachments on R2 |
 | [10](sprints/sprint-10-sla-leaders.md) | SLA that matches the leaders | Built, not deployed | Testcontainers tests for the scans and the report; the notifications-api consumer for warnings and escalations |
 | [11](sprints/sprint-11-channels.md) | Channels | Ingest, publishers and the settings page deployed; remainder in progress | The Stalwart support domain, ingest mailbox and DNS (need the owner to run the keyed calls), CRM contact link at ingest, WhatsApp agent replies and the 24-hour window, forwarding verify step, channel badge and filter, the web widget, and Convert to ticket in the notifications inbox |
 | [12](sprints/sprint-12-analytics-csat.md) | Analytics and CSAT | Built, not deployed | The migration for the compact series and the backlog index, a passing 200k benchmark run, the notifications-api survey email |
-| [13](sprints/sprint-13-ai-vera.md) | AI with Vera | Pending | Classify, summarize, suggested reply, KB suggestions, AI wallet credits, `IsGatingExempt` for codevertex only |
+| [13](sprints/sprint-13-ai-vera.md) | AI with Vera | Built, not deployed | Build and tests, swagger regeneration, the ticketing-ui AI panels (UI sprint 12) |
 | [14](sprints/sprint-14-user-management.md) | User management and role administration (treasury port) | Built, not deployed | Ent generation and the `audit_logs` migration, build and tests, the ticketing-ui pages |
 
 After sprint 13 comes the integration review and test pass: auth-api (including `auth.user.deleted`), notifications-api, marketflow, subscriptions-api, marketflow-ai, projects-api end to end, and the pos, ordering and treasury links shown on a ticket, with Testcontainers repository tests and Playwright e2e tests for the five Fix requirements.
@@ -128,6 +128,7 @@ After sprint 13 comes the integration review and test pass: auth-api (including 
 - [Architecture](architecture.md)
 - [ERD](erd.md)
 - [Integrations](integrations.md)
+- [AI with Vera](ai.md)
 - [Analytics and CSAT](analytics.md)
 - [Superset design](superset-integration.md)
 - [ticketing-ui plan](../../ticketing-ui/docs/plan.md)

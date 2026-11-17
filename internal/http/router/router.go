@@ -17,6 +17,7 @@ import (
 	_ "github.com/bengobox/ticketing-service/docs"
 	"github.com/bengobox/ticketing-service/internal/http/handlers"
 	"github.com/bengobox/ticketing-service/internal/http/metrics"
+	"github.com/bengobox/ticketing-service/internal/modules/ai"
 	"github.com/bengobox/ticketing-service/internal/modules/analytics"
 	"github.com/bengobox/ticketing-service/internal/modules/identity"
 	"github.com/bengobox/ticketing-service/internal/modules/kb"
@@ -44,11 +45,13 @@ type Config struct {
 	KBHandler            *kb.Handler
 	RoutingHandler       *routing.Handler
 	SettingsHandler      *settings.Handler
-	AnalyticsHandler     *analytics.Handler
-	RBACHandler          *rbac.Handler
-	AccessResolver       rbac.Resolver
-	SSEBroker            *sse.Broker
-	TenantResolver       tenantcache.Lookup
+	// AIHandler serves the AI routes (sprint 13); nil leaves them unmounted.
+	AIHandler        *ai.Handler
+	AnalyticsHandler *analytics.Handler
+	RBACHandler      *rbac.Handler
+	AccessResolver   rbac.Resolver
+	SSEBroker        *sse.Broker
+	TenantResolver   tenantcache.Lookup
 	// CRMLinks answers marketflow's "does ticketing still link this contact" check (X-API-Key).
 	CRMLinks *tickets.CRMLinksHandler
 }
@@ -175,5 +178,8 @@ func mountProtected(p chi.Router, cfg Config) {
 	}
 	if cfg.SettingsHandler != nil {
 		cfg.SettingsHandler.RegisterRoutes(p)
+	}
+	if cfg.AIHandler != nil {
+		cfg.AIHandler.RegisterRoutes(p)
 	}
 }

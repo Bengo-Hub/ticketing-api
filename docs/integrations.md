@@ -17,7 +17,8 @@ This page lists every integration ticketing-api has in code today, the internal 
 | email-provisioner (Stalwart support mailboxes) | inbound | `email.inbound.support`, durable `ticketing-email-ingest` | Consumer built (sprint 11); the JMAP reader and publisher are an email-provisioner change |
 | object storage (R2) | outbound | httpware/objectstore | Planned, sprint 9 |
 | shared reports module (`github.com/Bengo-Hub/reports` v0.2.0) | in process | PDF, CSV and Excel export of the analytics views ([analytics.md](analytics.md)) | Built (sprint 12) |
-| marketflow-ai, subscriptions-api AI wallet | outbound | Classification, summaries, replies, credits | Planned, sprint 13 |
+| marketflow-ai (Vera) | outbound | `POST /api/v1/internal/triage` (classify) and `POST /api/v1/agent/run` (summary, suggested reply, KB suggestions, KB draft), X-API-Key and X-Tenant-ID | Built (sprint 13), not deployed |
+| subscriptions-api AI credit wallet | outbound | `GET /api/v1/s2s/credits/ai_credits/check`, `POST /api/v1/s2s/credits/ai_credits/consume`, X-API-Key | Built (sprint 13), not deployed |
 
 ## Internal create: POST /api/v1/internal/tickets
 
@@ -154,6 +155,33 @@ Until then, a customer reply that quotes the subject tag still threads, and anyt
 - **Contact at ingest.** A ticket opened from an email or WhatsApp message links its requester through `POST {MARKETFLOW_API_URL}/api/v1/internal/contacts/upsert` (`X-API-Key` is `INTERNAL_SERVICE_KEY`; the tenant goes as `tenant_id` in the body, which is how marketflow reads it). The call goes through the shared `shared-service-client/crm` client, sends the email or phone with the name split into first and last, is sent once and never retried, and times out after five seconds. The returned id becomes `crm_contact_id`. A failure is logged with ids only and the ticket opens without it. Ticketing keeps no other contact data than the requester fields it already had.
 - **Activity.** Ticket changes for a ticket with a CRM contact publish `crm.activity.log_requested` through the outbox. The CRM service's own stream captures it.
 - **Erasure link check.** `GET /api/v1/s2s/{tenant}/crm-links/{contactID}` with `X-API-Key` answers `{"referenced": true|false}`. It is true when any ticket in any tenant carries the contact in `tickets.crm_contact_id`: CRM contact ids are random UUIDs minted by marketflow, so a match anywhere is the same person, and a ticket held under a mismatched tenant can only answer "referenced", which keeps the contact. A tenant UUID is accepted as given and a slug resolves through auth-api (an unknown slug answers 404). A bad contact id answers 400 and a missing or wrong key 401. Only the flag is returned and logs carry ids only.
+
+## marketflow-ai (Vera), outbound
+
+Sprint 13. ticketing-api calls marketflow-ai through shared-service-client (`internal/clients/vera.go`) with `X-API-Key` (`INTERNAL_SERVICE_KEY`) and `X-Tenant-ID`. AI calls carry no idempotency key, so the shared client never retries them, and each is limited by `AI_TIMEOUT` (30s).
+
+| Route | Used for | Body sent | What ticketing reads |
+|---|---|---|---|
+| `POST /api/v1/internal/triage` | Classify a draft, auto-classify | `subject`, `description`, `tenant_id` | `category` (billing, technical, product, general), `priority`, `confidence`, `reasoning`, `requires_human_review`, `injected`. The neutral answer marketflow-ai gives when its model failed (confidence 0, no reasoning) counts as no answer and is not charged |
+| `POST /api/v1/agent/run` | Summary, suggested reply, KB suggestions, KB draft | `run_id` (the credit key), `tenant_id`, `system_prompt` (ticketing's instructions), `context` (the ticket data), `no_tools: true`, `max_iterations: 1`, `billable: false` | `status` (only `completed` is an answer), `answer`, `stopped_early`, `stop_reason`, `review_notes`, `tainted` |
+
+`no_tools: true` asks for a plain completion with no tool (marketflow-ai `a4a6a07`); an empty `allowed_tools` would still mean the read-only knowledge tools, so ticketing never sends `allowed_tools`. `billable` stays false because ticketing pays for the call itself, once, from the wallet below. marketflow-ai fences the context as data and masks emails and phone numbers, and checks the answer for figures and commitments that are not in the instructions or the data (its `docs/guardrails.md`, layer 4); ticketing adds no screening of its own.
+
+What ticketing passes through to the UI:
+
+- `review_notes` (list of strings) and `tainted` (bool) from `agent/run` go out unchanged on the summary, suggested reply, KB suggestion and KB draft answers, and are kept with the answer in the 24 hour replay cache. The notes are advice for the agent; nothing is blocked because of them.
+- `injected` (bool) from triage goes out on the classify answer. An injected ticket always needs review, and auto-classify never applies its category.
+
+## subscriptions-api AI credit wallet, outbound
+
+Sprint 13. `internal/clients/credits.go`, through shared-service-client with `X-API-Key`. It is the same ledger marketflow-ai and notifications-api spend from (`api_token_wallets`, service `ai_credits`).
+
+| Route | When | Notes |
+|---|---|---|
+| `GET /api/v1/s2s/credits/ai_credits/check?tenant_id=&units=1` | Before every model call | Nothing is spent. `allowed: false` with `reason` (`insufficient_credits`, `no_subscription`, `service_not_activated`) becomes 402 `ai_credits_exhausted`. `exempt: true` (the platform owner only) means no spend follows |
+| `POST /api/v1/s2s/credits/ai_credits/consume` | After a usable answer | `{tenant_id, units: 1, key, description}`, with the key also sent as `Idempotency-Key` so the shared client may retry it. A repeated key answers `replayed: true` and charges nothing |
+
+The description is what the tenant sees on its credit history, for example "Ticketing AI: suggested reply on TKT-000042". subscriptions-api decides the exemption; ticketing keeps no exemption list.
 
 ## Tenant purge
 

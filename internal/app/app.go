@@ -25,6 +25,7 @@ import (
 	"github.com/bengobox/ticketing-service/internal/http/handlers"
 	"github.com/bengobox/ticketing-service/internal/http/metrics"
 	httprouter "github.com/bengobox/ticketing-service/internal/http/router"
+	"github.com/bengobox/ticketing-service/internal/modules/ai"
 	"github.com/bengobox/ticketing-service/internal/modules/analytics"
 	"github.com/bengobox/ticketing-service/internal/modules/identity"
 	"github.com/bengobox/ticketing-service/internal/modules/ingest"
@@ -296,6 +297,26 @@ func New(ctx context.Context) (*App, error) {
 		PlatformSlug:    cfg.Channels.PlatformSlug,
 	}
 	settingsHandler := settings.NewHandler(settingsService, supportAddresses.ForwardingAddress, log)
+
+	// AI with Vera (sprint 13): marketflow-ai runs the models, subscriptions-api's prepaid AI
+	// credit wallet pays for each call. Ticket creates never wait on it: auto-classify (opt-in,
+	// ai.auto_classify) runs after the commit on its own goroutine.
+	var aiAnswers ai.AnswerCache
+	if redisClient != nil {
+		aiAnswers = ai.NewRedisAnswerCache(redisClient)
+	}
+	aiService := ai.NewService(ai.Deps{
+		Model:    clients.NewVeraClient(cfg.AI.URL, cfg.Auth.InternalServiceKey, cfg.AI.Timeout, log),
+		Wallet:   clients.NewCreditsClient(cfg.Subscriptions.URL, cfg.Auth.InternalServiceKey, log),
+		Tickets:  ticketsService,
+		KB:       kbService,
+		Settings: settingsService,
+		Routing:  &routingAdapter{svc: routingService},
+		SSE:      sseBroker,
+		Answers:  aiAnswers,
+	}, log)
+	ticketsService.SetCreatedObserver(aiService)
+	aiHandler := ai.NewHandler(aiService, log)
 	if natsConn != nil && cfg.Channels.Enabled {
 		if js, jsErr := natsConn.JetStream(); jsErr != nil {
 			log.Warn("channel ingest not started", zap.Error(jsErr))
@@ -346,6 +367,7 @@ func New(ctx context.Context) (*App, error) {
 		KBHandler:            kbHandler,
 		RoutingHandler:       routingHandler,
 		SettingsHandler:      settingsHandler,
+		AIHandler:            aiHandler,
 		SSEBroker:            sseBroker,
 		TenantResolver:       tenantResolver,
 		// Analytics read only the rollups ticketing-worker fills, plus indexed live counts.

@@ -14,6 +14,8 @@ ticketing-api is the multi-tenant help desk behind ticketing-ui. Every row it ow
 | SLA policies, routing rules, knowledge base articles | ticketing-api |
 | Email and message delivery, templates | notifications-api, from the `ticketing.>` events |
 | CRM contacts and activity | marketflow |
+| AI models, prompt guardrails | marketflow-ai (Vera); ticketing builds the prompts from its own data |
+| Prepaid AI credit wallet and the AI exemption | subscriptions-api |
 | Attachment files | object storage (upload is planned in sprint 9) |
 
 ## Processes
@@ -37,7 +39,7 @@ cmd/
   seed/       per-tenant seed and knowledge base sets (kb/<set>/*.json)
 internal/
   app/        wiring of every dependency
-  clients/    otp.go, the auth-api public OTP token check
+  clients/    otp.go (auth-api OTP), members.go (auth-api members), vera.go (marketflow-ai), credits.go (subscriptions-api AI credits)
   config/     envconfig settings
   ent/        Ent schema and generated code; migrate/migrations holds the SQL files
   http/
@@ -45,13 +47,14 @@ internal/
     metrics/  Prometheus collectors and middleware
     router/   chi router and the auth chain
   modules/
+    ai/       AI with Vera: classify, summary, suggested reply, KB suggestions, KB draft, credit metering, after-commit auto-classify
     analytics/ rollup job, /analytics views, export through the shared reports module
     identity/ teams, agents, auth.user.* consumer
     ingest/   channel ingest: email and WhatsApp consumers, tenant from recipient, threading, dedupe
     kb/       knowledge base articles
     rbac/     permission catalogue, roles, ticketing users, auth/me
     routing/  routing rules
-    settings/ per-tenant settings document (tenant_settings), GET and PUT /settings/channels
+    settings/ per-tenant settings document (tenant_settings), GET and PUT /settings/channels and /settings/ai
     sla/      SLA policies, business calendars, deadline calculation, the SLA report
       clock/  business-time arithmetic, Kenyan holidays, policy settings (no internal imports)
     tickets/  tickets, comments, attachments, categories, public and internal routes, CSAT surveys, SSE, outbox
@@ -284,6 +287,16 @@ Built in [sprint 11](sprints/sprint-11-channels.md) on the ticketing side. Every
 - **Data ownership.** The requester is a marketflow contact. A ticket keeps only `requester_name`, `requester_email` and `requester_phone` in metadata, as every create path does.
 - **Acknowledgement.** Both consumers use explicit acks and `MaxDeliver` 5. A permanent failure is acknowledged and logged; a transient one is retried with a growing delay.
 
+## AI with Vera
+
+The AI routes and their shapes are in [ai.md](ai.md). The design in short:
+
+- **Where the model runs.** `internal/clients/vera.go` calls marketflow-ai with the internal service key and `X-Tenant-ID`. Classification uses marketflow-ai's ticket triage route; the other four features use its generic task route (`/api/v1/agent/run`) with ticketing's own instructions, the ticket data as the run's context and no tools. marketflow-ai's guardrails (data fencing, masking of emails and phone numbers, the 0.8 confidence cap on injected tickets) apply to every call, so ticketing adds no screening of its own.
+- **What the model reads.** Only the tenant's own records, loaded under the caller's tenant: the ticket (number, subject, description, status, priority, channel), its newest messages as plain text with caps, and for KB suggestions up to 20 of the tenant's own published articles. Requester contact details are never sent. A suggested reply and a KB draft read the public thread only.
+- **How it is paid.** `internal/modules/ai/meter.go`, for every call: a kept answer for the same request key is returned first; otherwise subscriptions-api's credit check for one AI credit, then the model, then one spend under the key `ticketing:ai:<feature>:<ticket or draft>:<request key>`. A refused check is 402 `ai_credits_exhausted` and the model never runs. A wallet that cannot be read stops the call (fail closed). A failed model call is never charged. The answer is kept in Redis for 24 hours under the tenant and the key, so a retry costs nothing and gets the same answer.
+- **Exemption.** subscriptions-api answers `exempt` for the platform owner only, and nothing is spent. There is no local exemption check, so the demo tenant pays like any other.
+- **Never blocking.** Ticket create and update never call AI. `tickets.Service` calls its `CreatedObserver` on a goroutine after the create committed, with panics contained; the AI service is that observer and runs auto-classify only when the tenant set `ai.auto_classify`, with a 45 second limit and 4 at a time per pod.
+
 ## Migrations
 
 Schema changes are versioned Atlas migrations in `internal/ent/migrate/migrations`, embedded in the `ticketing-migrate` binary and recorded in `atlas_schema_revisions`.
@@ -407,6 +420,7 @@ CI (`.github/workflows/deploy.yml`) runs `go vet ./...` and `go test -timeout 30
 | `github.com/Bengo-Hub/pagination` | v0.5.0 | `Parse` and `NewResponse` on every list (offset paging today, keyset in sprint 9) |
 | `github.com/Bengo-Hub/reports` | v0.2.0 | PDF, CSV and Excel export of the analytics views |
 | `github.com/Bengo-Hub/shared-ratelimit` | v0.3.1 | Global and public limits, `TrustedRealIP` |
+| `github.com/Bengo-Hub/shared-service-client` | v0.5.0 | S2S calls to auth-api members, marketflow-ai and subscriptions-api credits (circuit breaker, retries only with an idempotency key); its `crm` package for marketflow contacts |
 | `entgo.io/ent` | v0.14.5 | Schema and queries |
 | `ariga.io/atlas` | v0.32.1 pre-release | Migration executor |
 
@@ -438,6 +452,9 @@ CI (`.github/workflows/deploy.yml`) runs `go vet ./...` and `go test -timeout 30
 | `INGEST_WHATSAPP_THREAD_WINDOW` | `168h` | How long a WhatsApp conversation stays on one ticket |
 | `CSAT_SURVEY_URL` | `https://ticketing.codevertexafrica.com/support/csat` | Public survey page; the link adds `?tenant=<tenant id>&token=<token>`. Empty sends no surveys |
 | `CSAT_TOKEN_TTL` | `168h` | How long a survey link works |
+| `MARKETFLOW_AI_URL` | `http://marketflow-ai.marketflow.svc.cluster.local:4001` | marketflow-ai (Vera), which runs every AI model call |
+| `AI_TIMEOUT` | `30s` | Limit of one AI call; AI calls are never retried |
+| `SUBSCRIPTION_BASE_URL` | `http://subscription-api.subscriptions.svc.cluster.local:4000` | subscriptions-api, owner of the prepaid AI credit wallet |
 
 ## Seed
 

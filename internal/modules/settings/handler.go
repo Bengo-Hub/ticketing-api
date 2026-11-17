@@ -30,6 +30,10 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		c.With(access.RequirePermission("ticketing.settings.manage")).Get("/", h.GetChannels)
 		c.With(access.RequirePermission("ticketing.settings.manage")).Put("/", h.PutChannels)
 	})
+	r.Route("/settings/ai", func(c chi.Router) {
+		c.With(access.RequirePermission("ticketing.settings.manage")).Get("/", h.GetAI)
+		c.With(access.RequirePermission("ticketing.settings.manage")).Put("/", h.PutAI)
+	})
 }
 
 // channelsView is the stored settings plus the email intake address, which is derived, never stored.

@@ -210,6 +210,381 @@ const docTemplate = `{
                 }
             }
         },
+        "/{tenant}/ai/classify": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "marketflow-ai classifies the draft; the label is matched to the tenant's categories and the team comes from its routing rules. Spends one AI credit (none for the platform owner). Send Idempotency-Key to make a retry free.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai"
+                ],
+                "summary": "AI classify a draft ticket",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Request key, 8 to 100 of A-Z a-z 0-9 . _ : -",
+                        "name": "Idempotency-Key",
+                        "in": "header"
+                    },
+                    {
+                        "description": "Draft",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_ai.ClassifyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_ai.Classification"
+                        }
+                    },
+                    "402": {
+                        "description": "ai_credits_exhausted",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "ai_unavailable or ai_credits_unknown",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/ai/tickets/{ticketId}/kb-draft": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Saved as a private draft (status draft, is_public false), never published. The ticket must be resolved or closed. Spends one AI credit.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai"
+                ],
+                "summary": "AI article draft from a resolved ticket",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ticket ID",
+                        "name": "ticketId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Request key",
+                        "name": "Idempotency-Key",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_ai.KBDraft"
+                        }
+                    },
+                    "402": {
+                        "description": "Payment Required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "ticket_not_resolved",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/ai/tickets/{ticketId}/kb-suggestions": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Up to 5 of the tenant's published articles, best first. With no published article the list is empty and nothing is spent; otherwise one AI credit.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai"
+                ],
+                "summary": "AI knowledge base suggestions",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ticket ID",
+                        "name": "ticketId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Request key",
+                        "name": "Idempotency-Key",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_ai.KBSuggestions"
+                        }
+                    },
+                    "402": {
+                        "description": "Payment Required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/ai/tickets/{ticketId}/reply": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "A draft reply to the customer's latest public message. It is only returned; the agent edits it and posts it as a comment. Spends one AI credit.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai"
+                ],
+                "summary": "AI suggested reply",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ticket ID",
+                        "name": "ticketId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Request key",
+                        "name": "Idempotency-Key",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_ai.ReplySuggestion"
+                        }
+                    },
+                    "402": {
+                        "description": "Payment Required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/ai/tickets/{ticketId}/summary": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Internal notes are included (staff only). Spends one AI credit.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai"
+                ],
+                "summary": "AI summary of a ticket thread",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ticket ID",
+                        "name": "ticketId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Request key",
+                        "name": "Idempotency-Key",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_ai.Summary"
+                        }
+                    },
+                    "402": {
+                        "description": "Payment Required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/{tenant}/categories": {
             "get": {
                 "security": [
@@ -848,6 +1223,93 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{tenant}/settings/ai": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Whether new tickets are classified by AI after they are saved (ai.auto_classify, off by default)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "settings"
+                ],
+                "summary": "AI settings",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_settings.AISettings"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Turns auto-classify of new tickets on or off. Each auto-classified ticket spends one AI credit.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Save AI settings",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "AI settings",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_settings.AISettings"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_settings.AISettings"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -2670,6 +3132,83 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "github_com_bengobox_ticketing-service_internal_modules_kb.Article": {
+            "type": "object",
+            "properties": {
+                "author_id": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "excerpt": {
+                    "type": "string"
+                },
+                "helpful_count": {
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "JSON tags match ticketing-ui's KBArticle. Without them every KB route sent Go field names\n(ID, Title, IsPublic) and the admin KB pages read empty fields (found 2026-11-17).",
+                    "type": "string"
+                },
+                "is_public": {
+                    "type": "boolean"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "not_helpful_count": {
+                    "type": "integer"
+                },
+                "published_at": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_bengobox_ticketing-service_internal_modules_kb.ArticleStatus"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "view_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_bengobox_ticketing-service_internal_modules_kb.ArticleStatus": {
+            "type": "string",
+            "enum": [
+                "draft",
+                "published",
+                "archived"
+            ],
+            "x-enum-varnames": [
+                "StatusDraft",
+                "StatusPublished",
+                "StatusArchived"
+            ]
+        },
         "github_com_bengobox_ticketing-service_internal_modules_sla_clock.Holiday": {
             "type": "object",
             "properties": {
@@ -2701,6 +3240,230 @@ const docTemplate = `{
                 "type": "array",
                 "items": {
                     "$ref": "#/definitions/github_com_bengobox_ticketing-service_internal_modules_sla_clock.Interval"
+                }
+            }
+        },
+        "internal_modules_ai.CategoryRef": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_modules_ai.Classification": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "$ref": "#/definitions/internal_modules_ai.CategoryRef"
+                },
+                "confidence": {
+                    "type": "number"
+                },
+                "credits": {
+                    "$ref": "#/definitions/internal_modules_ai.Credits"
+                },
+                "injected": {
+                    "description": "Injected is marketflow-ai's flag for a draft carrying an injection phrase: confidence is then\nat most 0.8, review is always required, and auto-classify never applies it.",
+                    "type": "boolean"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "priority": {
+                    "type": "string"
+                },
+                "reasoning": {
+                    "type": "string"
+                },
+                "requires_human_review": {
+                    "type": "boolean"
+                },
+                "team": {
+                    "$ref": "#/definitions/internal_modules_ai.TeamRef"
+                }
+            }
+        },
+        "internal_modules_ai.ClassifyRequest": {
+            "type": "object",
+            "properties": {
+                "channel": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "subject": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_modules_ai.Credits": {
+            "type": "object",
+            "properties": {
+                "charged": {
+                    "type": "integer"
+                },
+                "exempt": {
+                    "type": "boolean"
+                },
+                "replayed": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "internal_modules_ai.KBDraft": {
+            "type": "object",
+            "properties": {
+                "article": {
+                    "$ref": "#/definitions/github_com_bengobox_ticketing-service_internal_modules_kb.Article"
+                },
+                "credits": {
+                    "$ref": "#/definitions/internal_modules_ai.Credits"
+                },
+                "review_notes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "run": {
+                    "$ref": "#/definitions/internal_modules_ai.RunInfo"
+                },
+                "tainted": {
+                    "type": "boolean"
+                },
+                "ticket_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_modules_ai.KBSuggestion": {
+            "type": "object",
+            "properties": {
+                "article_id": {
+                    "type": "string"
+                },
+                "excerpt": {
+                    "type": "string"
+                },
+                "is_public": {
+                    "type": "boolean"
+                },
+                "rank": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_modules_ai.KBSuggestions": {
+            "type": "object",
+            "properties": {
+                "credits": {
+                    "$ref": "#/definitions/internal_modules_ai.Credits"
+                },
+                "review_notes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "run": {
+                    "$ref": "#/definitions/internal_modules_ai.RunInfo"
+                },
+                "suggestions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_modules_ai.KBSuggestion"
+                    }
+                },
+                "tainted": {
+                    "type": "boolean"
+                },
+                "ticket_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_modules_ai.ReplySuggestion": {
+            "type": "object",
+            "properties": {
+                "credits": {
+                    "$ref": "#/definitions/internal_modules_ai.Credits"
+                },
+                "reply": {
+                    "type": "string"
+                },
+                "review_notes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "run": {
+                    "$ref": "#/definitions/internal_modules_ai.RunInfo"
+                },
+                "tainted": {
+                    "type": "boolean"
+                },
+                "ticket_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_modules_ai.RunInfo": {
+            "type": "object",
+            "properties": {
+                "stop_reason": {
+                    "type": "string"
+                },
+                "stopped_early": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "internal_modules_ai.Summary": {
+            "type": "object",
+            "properties": {
+                "credits": {
+                    "$ref": "#/definitions/internal_modules_ai.Credits"
+                },
+                "review_notes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "run": {
+                    "$ref": "#/definitions/internal_modules_ai.RunInfo"
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "tainted": {
+                    "type": "boolean"
+                },
+                "ticket_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_modules_ai.TeamRef": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
                 }
             }
         },
@@ -2885,7 +3648,7 @@ const docTemplate = `{
         "internal_modules_kb.Article": {
             "type": "object",
             "properties": {
-                "authorID": {
+                "author_id": {
                     "type": "string"
                 },
                 "category": {
@@ -2894,29 +3657,30 @@ const docTemplate = `{
                 "content": {
                     "type": "string"
                 },
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
                 "excerpt": {
                     "type": "string"
                 },
-                "helpfulCount": {
+                "helpful_count": {
                     "type": "integer"
                 },
                 "id": {
+                    "description": "JSON tags match ticketing-ui's KBArticle. Without them every KB route sent Go field names\n(ID, Title, IsPublic) and the admin KB pages read empty fields (found 2026-11-17).",
                     "type": "string"
                 },
-                "isPublic": {
+                "is_public": {
                     "type": "boolean"
                 },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": {}
                 },
-                "notHelpfulCount": {
+                "not_helpful_count": {
                     "type": "integer"
                 },
-                "publishedAt": {
+                "published_at": {
                     "type": "string"
                 },
                 "slug": {
@@ -2931,16 +3695,16 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
-                "tenantID": {
+                "tenant_id": {
                     "type": "string"
                 },
                 "title": {
                     "type": "string"
                 },
-                "updatedAt": {
+                "updated_at": {
                     "type": "string"
                 },
-                "viewCount": {
+                "view_count": {
                     "type": "integer"
                 }
             }
@@ -3194,6 +3958,15 @@ const docTemplate = `{
                 },
                 "sort_order": {
                     "type": "integer"
+                }
+            }
+        },
+        "internal_modules_settings.AISettings": {
+            "type": "object",
+            "properties": {
+                "auto_classify": {
+                    "description": "AutoClassify classifies every new ticket after it is saved, spending one AI credit each.\nOff by default, so no tenant spends credits it did not choose to.",
+                    "type": "boolean"
                 }
             }
         },
